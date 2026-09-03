@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://pause_menu.gd" id="1_pause"]
-[ext_resource type="Theme" path="res://ui/menu_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://ui/pause_menu/pause_menu.gd" id="1_pause"]
+[ext_resource type="Theme" path="res://ui/theme/menu_theme.tres" id="2_theme"]
 
 [node name="PauseMenu" type="CanvasLayer"]
 process_mode = 3

@@ -4,8 +4,8 @@
 - Author: **profpatonildo**
 - Source: https://opengameart.org/content/pixel-art-top-down-dungeon-tileset-and-rpg-character-with-animations
 - License: **CC0 1.0 Universal** (public domain) - no attribution required, commercial use permitted
-- Files: `assets/player/character.png`, `assets/tiles/dungeon.png`, `assets/tiles/jar.png`
-- Editable Aseprite sources kept alongside in `assets/*/src/`
+- Files: `game/player/character.png`, `assets/tiles/dungeon.png`, `assets/tiles/jar.png`
+- Editable Aseprite sources kept alongside in `game/player/src/ and assets/tiles/src/`
 
 Credited voluntarily; CC0 imposes no obligation to do so.
 

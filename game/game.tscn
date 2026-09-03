@@ -1,8 +1,8 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://game.gd" id="1_game"]
-[ext_resource type="PackedScene" path="res://player.tscn" id="2_player"]
-[ext_resource type="PackedScene" path="res://pause_menu.tscn" id="3_pause"]
+[ext_resource type="Script" path="res://game/game.gd" id="1_game"]
+[ext_resource type="PackedScene" path="res://game/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://ui/pause_menu/pause_menu.tscn" id="3_pause"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h"]
 size = Vector2(640, 16)

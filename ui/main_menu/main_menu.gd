@@ -1,7 +1,7 @@
 extends Control
 ## Home screen: starts the game, or quits after confirmation.
 
-const GAME_SCENE := "res://game.tscn"
+const GAME_SCENE := "res://game/game.tscn"
 
 @onready var _play_button: Button = %PlayButton
 @onready var _quit_button: Button = %QuitButton

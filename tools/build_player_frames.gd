@@ -1,9 +1,9 @@
 extends SceneTree
-## Regenerates res://assets/player/player_frames.tres from the source sheet.
+## Regenerates res://game/player/player_frames.tres from the source sheet.
 ## Run: godot --headless --path . --script res://tools/build_player_frames.gd
 
-const SHEET := "res://assets/player/character.png"
-const OUT := "res://assets/player/player_frames.tres"
+const SHEET := "res://game/player/character.png"
+const OUT := "res://game/player/player_frames.tres"
 const FRAME := 32
 
 # Row indices in character.png, verified against the sheet.

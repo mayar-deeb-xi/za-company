@@ -1,5 +1,5 @@
 extends SceneTree
-## Regenerates res://ui/menu_theme.tres.
+## Regenerates res://ui/theme/menu_theme.tres.
 ## Run: godot --headless --path . --script res://tools/build_ui_theme.gd
 ##
 ## Every colour here was sampled from the actual sprite art (see CREDITS.md), so
@@ -9,7 +9,7 @@ extends SceneTree
 ##   #fff8e1  the sword's swing arc      -> text
 ##   #674949  dungeon brick shadow       -> borders
 
-const OUT := "res://ui/menu_theme.tres"
+const OUT := "res://ui/theme/menu_theme.tres"
 
 const BG_DEEP := Color("1b1119")
 const SURFACE := Color("3a3941")

@@ -5,7 +5,7 @@ extends CanvasLayer
 ## paused - it has to, or nothing could unpause it. Everything else in the game
 ## scene stays PAUSABLE and freezes.
 
-const MAIN_MENU_SCENE := "res://main_menu.tscn"
+const MAIN_MENU_SCENE := "res://ui/main_menu/main_menu.tscn"
 
 @onready var _root: Control = $Root
 @onready var _continue_button: Button = %ContinueButton

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://baccfre32cs6j"]
 
-[ext_resource type="Script" uid="uid://cwsurcum1cdd1" path="res://main_menu.gd" id="1_menu"]
-[ext_resource type="Theme" path="res://ui/menu_theme.tres" id="2_theme"]
+[ext_resource type="Script" uid="uid://cwsurcum1cdd1" path="res://ui/main_menu/main_menu.gd" id="1_menu"]
+[ext_resource type="Theme" path="res://ui/theme/menu_theme.tres" id="2_theme"]
 
 [sub_resource type="Gradient" id="Gradient_vignette"]
 offsets = PackedFloat32Array(0.35, 1)
