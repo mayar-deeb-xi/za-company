@@ -1,0 +1,141 @@
+[gd_scene format=3 uid="uid://baccfre32cs6j"]
+
+[ext_resource type="Script" uid="uid://cwsurcum1cdd1" path="res://main_menu.gd" id="1_menu"]
+[ext_resource type="Theme" path="res://ui/menu_theme.tres" id="2_theme"]
+
+[sub_resource type="Gradient" id="Gradient_vignette"]
+offsets = PackedFloat32Array(0.35, 1)
+colors = PackedColorArray(0, 0, 0, 0, 0.0313726, 0.0235294, 0.0392157, 0.9)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_vignette"]
+gradient = SubResource("Gradient_vignette")
+width = 256
+height = 256
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.105882, 0.0666667, 0.0980392, 1)
+
+[node name="Vignette" type="TextureRect" parent="."]
+texture_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("GradientTexture2D_vignette")
+expand_mode = 1
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Menu" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Title" type="Label" parent="CenterContainer/Menu"]
+layout_mode = 2
+theme_type_variation = &"Title"
+text = "ZA COMPANY"
+horizontal_alignment = 1
+
+[node name="Rule" type="ColorRect" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(220, 2)
+layout_mode = 2
+size_flags_horizontal = 4
+color = Color(0.431373, 0.701961, 0.615686, 1)
+
+[node name="RuleGap" type="Control" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="Tagline" type="Label" parent="CenterContainer/Menu"]
+layout_mode = 2
+theme_type_variation = &"Tagline"
+text = "a dungeon crawl"
+horizontal_alignment = 1
+
+[node name="MenuGap" type="Control" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="PlayButton" type="Button" parent="CenterContainer/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "PLAY"
+
+[node name="ButtonGap" type="Control" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="QuitButton" type="Button" parent="CenterContainer/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "QUIT"
+
+[node name="Footer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="Row" type="HBoxContainer" parent="Footer"]
+layout_mode = 2
+
+[node name="Version" type="Label" parent="Footer/Row"]
+layout_mode = 2
+theme_type_variation = &"Footer"
+text = "v0.1"
+
+[node name="Spacer" type="Control" parent="Footer/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Hint" type="Label" parent="Footer/Row"]
+layout_mode = 2
+theme_type_variation = &"Footer"
+text = "F11 FULLSCREEN"
+
+[node name="QuitConfirm" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "QUIT"
+initial_position = 2
+size = Vector2i(280, 130)
+theme = ExtResource("2_theme")
+ok_button_text = "QUIT"
+dialog_text = "Really quit?"

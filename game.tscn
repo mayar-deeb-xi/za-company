@@ -1,0 +1,96 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://game.gd" id="1_game"]
+[ext_resource type="PackedScene" path="res://player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://pause_menu.tscn" id="3_pause"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_h"]
+size = Vector2(640, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_v"]
+size = Vector2(16, 328)
+
+[node name="Game" type="Node2D"]
+y_sort_enabled = true
+script = ExtResource("1_game")
+
+[node name="Background" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="Floor" type="ColorRect" parent="Background"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.129412, 0.121569, 0.145098, 1)
+
+[node name="Walls" type="StaticBody2D" parent="."]
+
+[node name="Top" type="CollisionShape2D" parent="Walls"]
+position = Vector2(320, 8)
+shape = SubResource("RectangleShape2D_h")
+
+[node name="Bottom" type="CollisionShape2D" parent="Walls"]
+position = Vector2(320, 352)
+shape = SubResource("RectangleShape2D_h")
+
+[node name="Left" type="CollisionShape2D" parent="Walls"]
+position = Vector2(8, 180)
+shape = SubResource("RectangleShape2D_v")
+
+[node name="Right" type="CollisionShape2D" parent="Walls"]
+position = Vector2(632, 180)
+shape = SubResource("RectangleShape2D_v")
+
+[node name="WallVisuals" type="Node2D" parent="."]
+
+[node name="Top" type="ColorRect" parent="WallVisuals"]
+offset_right = 640.0
+offset_bottom = 16.0
+color = Color(0.223529, 0.211765, 0.247059, 1)
+
+[node name="Bottom" type="ColorRect" parent="WallVisuals"]
+offset_top = 344.0
+offset_right = 640.0
+offset_bottom = 360.0
+color = Color(0.223529, 0.211765, 0.247059, 1)
+
+[node name="Left" type="ColorRect" parent="WallVisuals"]
+offset_top = 16.0
+offset_right = 16.0
+offset_bottom = 344.0
+color = Color(0.223529, 0.211765, 0.247059, 1)
+
+[node name="Right" type="ColorRect" parent="WallVisuals"]
+offset_left = 624.0
+offset_top = 16.0
+offset_right = 640.0
+offset_bottom = 344.0
+color = Color(0.223529, 0.211765, 0.247059, 1)
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(320, 190)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Hint" type="Label" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.65098, 0.639216, 0.686275, 1)
+offset_top = -14.0
+text = "WASD / arrows to move    Space to attack    F11 fullscreen    Esc to pause"
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="Camera2D" parent="Player" index="2"]
+limit_left = 0
+limit_top = 0
+limit_right = 640
+limit_bottom = 360
+limit_smoothed = true
+
+[node name="PauseMenu" parent="." instance=ExtResource("3_pause")]

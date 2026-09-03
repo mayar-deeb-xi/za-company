@@ -1,0 +1,89 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://pause_menu.gd" id="1_pause"]
+[ext_resource type="Theme" path="res://ui/menu_theme.tres" id="2_theme"]
+
+[node name="PauseMenu" type="CanvasLayer"]
+process_mode = 3
+layer = 10
+script = ExtResource("1_pause")
+
+[node name="Root" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+
+[node name="Overlay" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.105882, 0.0666667, 0.0980392, 0.72)
+
+[node name="CenterContainer" type="CenterContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Root/CenterContainer"]
+layout_mode = 2
+
+[node name="Menu" type="VBoxContainer" parent="Root/CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="Root/CenterContainer/Panel/Menu"]
+layout_mode = 2
+theme_type_variation = &"Heading"
+text = "PAUSED"
+horizontal_alignment = 1
+
+[node name="Rule" type="ColorRect" parent="Root/CenterContainer/Panel/Menu"]
+custom_minimum_size = Vector2(176, 2)
+layout_mode = 2
+size_flags_horizontal = 4
+color = Color(0.431373, 0.701961, 0.615686, 1)
+
+[node name="Gap" type="Control" parent="Root/CenterContainer/Panel/Menu"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="ContinueButton" type="Button" parent="Root/CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "CONTINUE"
+
+[node name="MainMenuButton" type="Button" parent="Root/CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "MAIN MENU"
+
+[node name="QuitButton" type="Button" parent="Root/CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "QUIT"
+
+[node name="QuitConfirm" type="ConfirmationDialog" parent="Root"]
+unique_name_in_owner = true
+title = "QUIT"
+initial_position = 2
+size = Vector2i(280, 130)
+theme = ExtResource("2_theme")
+ok_button_text = "QUIT"
+dialog_text = "Really quit?"
