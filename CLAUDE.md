@@ -39,3 +39,17 @@ Run: `<godot> --headless --path . --script res://tools/<script>.gd`
   close the editor first.
 - All third-party assets are CC0; sources and licenses live in CREDITS.md -
   update it whenever an asset is added.
+
+## Testing
+
+- `tests/` holds SceneTree-script tests: no framework, no dependencies.
+  They drive the real game with synthesized input and exit 0/1.
+- Run the smoke test after any change to scenes, input, or scene flow:
+  `<godot> --headless --path . --fixed-fps 60 --script res://tests/smoke_test.gd`
+- When synthesizing key events set BOTH `keycode` and `physical_keycode`
+  (custom actions match physical, built-in ui_* match keycode).
+- Split into `tests/test_<area>.gd` files when smoke_test.gd gets slow or
+  crowded. Adopt gdUnit4 only once there is real unit-testable logic
+  (damage math, inventory, save data) - not for scene wiring.
+- `tests/` and `tools/` must be excluded from export presets when we set
+  up exports.
