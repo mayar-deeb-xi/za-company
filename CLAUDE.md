@@ -89,6 +89,11 @@ same body and animation set; the differences are cosmetic (hair, clothes, eyes)
 plus at most a one-pixel build tweak, all palette-swapped from the CC0 sheet in
 `game/player/src/` the way biome art is swapped from the dungeon sheet.
 
+The cast sharing one sheet is deliberate and permanent - they all play the same
+game with the same moves, so a new animation drawn once should land on all seven
+at no cost. **Enemies deliberately do NOT work this way**: each owns its own
+sheet, because each is heading somewhere different. See Enemies.
+
 `game/player/characters/roster.gd` is the single source of truth: id, display
 name, frames path, and the `recipe` tools/build_characters.gd bakes into that
 character's `<id>_frames.tres` (textures embedded as
@@ -248,12 +253,32 @@ ledger (`_swing_hits`) lands it once per enemy per swing - so a 10 HP regular
 dies to exactly two swings. Per-character health and attack stats are planned;
 they will join the roster recipe the way looks did.
 
-Enemy looks come from the same CC0 body sheet as the cast: `game/enemies/
-roster.gd` is the bestiary (id, frames path, recipe - looks only, stats live on
-scenes), and tools/build_characters.gd bakes it in the same run as the player
-characters. A dead enemy is `queue_free`d, and since levels are re-instantiated
-per entry, it is back on the next visit - the same no-room-state rule as
-pickups.
+**Every enemy owns its sprite sheet**, and this is the one place enemies and the
+cast are deliberately organised differently. The seven characters share
+`game/player/src/character_cc0.png` forever: they play the same game with the
+same moves, so a new animation drawn once should land on all seven. Enemies are
+the opposite - each is heading somewhere different, and a shared sheet would
+pile every enemy's future moves into one file. So each has
+`game/enemies/<id>/src/<id>.png` of its own.
+
+`tools/build_enemies.gd` is **seed once, slice always**:
+
+- *Seeding* writes that PNG, and only ever when it is missing - a recipe
+  recolours the CC0 body so a new enemy has something to walk around as on day
+  one. It is a starting point, exactly like the level scenes build_levels.gd
+  writes.
+- *Slicing* runs every time, on whatever sheet is actually on disk.
+
+From the moment the PNG exists it is hand-owned art. Draw a new animation into
+one enemy's sheet, re-run the tool, and only that enemy's frames change - the
+recipe never touches it again. Deleting an enemy's PNG and rebuilding is how you
+start its art over from the plain body. An enemy whose sheet grows rows the CC0
+grid does not have adds a `layout` (and `specs`) to its roster entry; the
+default lives in tools/character_art.gd, which is the shaping and slicing engine
+both generators share.
+
+A dead enemy is `queue_free`d, and since levels are re-instantiated per entry,
+it is back on the next visit - the same no-room-state rule as pickups.
 
 Enemies are the one prop a level does NOT own a copy of - types are shared, and
 **which ones a room gets is per-biome data in `tools/biomes.gd`** (`enemies`:
@@ -271,11 +296,14 @@ reason that room has none.
 ## Generated resources - regenerate, don't hand-edit
 
 - `ui/theme/menu_theme.tres`        <- tools/build_ui_theme.gd
-- `game/player/characters/*_frames.tres`, `game/enemies/*/*_frames.tres`
+- `game/player/characters/*_frames.tres`
                                     <- tools/build_characters.gd
+- `game/enemies/*/*_frames.tres`    <- tools/build_enemies.gd, see below
+- sheet shaping & slicing engine    <- tools/character_art.gd (shared by both)
 - playable cast & recipes           <- game/player/characters/roster.gd
                                        (data, edited by hand)
-- bestiary & recipes                <- game/enemies/roster.gd
+- bestiary, sheet paths & seed recipes
+                                    <- game/enemies/roster.gd
                                        (data, edited by hand)
 - `game/levels/*/tileset.tres`, `column_art.tres`, `torch_art.tres`,
   `health_art.tres`, `doorway_out.tres`, `doorway_back.tres`
@@ -295,6 +323,11 @@ not repeat - so build_biomes.gd copies the verified-seamless ones by coordinate
 and draws columns and doorways itself. Its textures are embedded in the `.tres`
 as `PortableCompressedTexture2D` rather than written out as PNGs, so a
 regenerated biome works headless immediately with no `--import` pass.
+
+`tools/build_enemies.gd` is a partial exception: the `_frames.tres` it writes
+are regenerate-freely, but `game/enemies/<id>/src/<id>.png` is hand-owned art it
+only ever creates when missing. It will not overwrite a sheet you have drawn
+into.
 
 `tools/build_levels.gd` is the exception to "regenerate": what it writes - the
 level scene and that level's own door, column, torch and health item scenes -

@@ -1,16 +1,31 @@
 extends RefCounted
-## The bestiary. One entry per enemy type: id, where its SpriteFrames live, and
-## the recipe tools/build_characters.gd bakes for it - enemies wear the same CC0
-## body and animation set as the playable cast, restyled the same way biome art
-## is restyled from the dungeon sheet.
+## The bestiary. One entry per enemy type: id, its own source sheet, where its
+## baked SpriteFrames go, and the recipe that SEEDED that sheet.
 ##
-## Only looks live here. Stats (health, damage, speed, sight) are @exports on
-## enemy_base.gd, set per scene, so a level can retune the copy it places
-## without touching any other.
+## **Every enemy owns its sheet.** `src` is hand-owned art from the moment it
+## exists: tools/build_enemies.gd writes it once, from `recipe`, only if it is
+## missing, and slices whatever is on disk every run after that. Draw a new
+## animation into an enemy's own PNG and rebuild - nothing else in the game
+## moves. That is the whole reason enemies do not share the cast's sheet the way
+## the seven characters do: the cast will always want one animation set between
+## them, while each enemy is heading somewhere different, and one shared sheet
+## would pile every enemy's moves into a single file.
+##
+## `recipe` stays as provenance and as the way back: delete an enemy's PNG, run
+## build_enemies.gd, and its art starts over from the plain CC0 body.
+##
+## An enemy whose sheet grows rows the CC0 grid does not have adds a `layout`
+## (and `specs` if the timing differs) here; without one it uses the CC0 layout
+## seeding produced. See tools/character_art.gd for the default.
+##
+## Only looks live here. Stats (health, damage, speed, sight, and each type's
+## own ability numbers) are @exports on the enemy scripts, set per scene, so a
+## level can retune the copy it places without touching any other.
 
 const ENEMIES := [
 	{
 		"id": "regular",
+		"src": "res://game/enemies/regular/src/regular.png",
 		"frames": "res://game/enemies/regular/regular_frames.tres",
 		"recipe": {
 			"hair": "9db06b", "hair_light": "9db06b",   # unused - bald
@@ -23,6 +38,7 @@ const ENEMIES := [
 	},
 	{
 		"id": "wraith",
+		"src": "res://game/enemies/wraith/src/wraith.png",
 		"frames": "res://game/enemies/wraith/wraith_frames.tres",
 		"recipe": {
 			"hair": "eef1f7", "hair_light": "ffffff",   # white
@@ -38,6 +54,7 @@ const ENEMIES := [
 	},
 	{
 		"id": "warden",
+		"src": "res://game/enemies/warden/src/warden.png",
 		"frames": "res://game/enemies/warden/warden_frames.tres",
 		"recipe": {
 			"hair": "4a3a6b", "hair_light": "6d59a0",   # deep violet
