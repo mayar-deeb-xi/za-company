@@ -76,9 +76,10 @@ const RUNNER_BOTTOM := 10
 const SPAWN_START_Y := 240       # by the south door: you came from the previous level
 const SPAWN_RETURN_Y := 80       # by the north door: you came back from the next one
 
-## The starting-point dressing for health: one torch to hurt on and one heart
-## to heal on, either side of the room, both clear of the door line and the
-## colonnade so the straight walk between the doors stays safe.
+## The starting-point dressing for health: a heart to heal on, and - on the
+## floors whose biome asks for one - a hazard to hurt on, either side of the
+## room, both clear of the door line and the colonnade so the straight walk
+## between the doors stays safe.
 const TORCH_POS := Vector2(120, 152)
 const HEALTH_POS := Vector2(424, 152)
 
@@ -124,7 +125,13 @@ func _build(level: String) -> bool:
 	var bad := false
 	bad = _write_door_scene(dir) or bad
 	bad = _write_column_scene(props, spec) or bad
-	bad = _write_torch_scene(props, spec) or bad
+	if Biomes.has_hazard(level):
+		bad = _write_torch_scene(props, spec) or bad
+	else:
+		# A floor that stops having a hazard stops having the scene for one:
+		# otherwise the level folder keeps a torch nothing points at, and the
+		# next reader has to open the biome to find out which is the truth.
+		_drop("%s/fixtures/torch.tscn" % props)
 	bad = _write_health_scene(props, spec) or bad
 	for type in Biomes.prop_types(level):
 		bad = _write_prop_scene(props, type, spec) or bad
@@ -342,11 +349,14 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 			props.add_child(column)
 			column.owner = root
 
-	var torch := _reload("%s/fixtures/torch.tscn" % props_dir).instantiate()
-	torch.name = "Torch"
-	torch.position = TORCH_POS
-	props.add_child(torch)
-	torch.owner = root
+	# The hazard is per-biome, and a room is allowed to have nothing in it that
+	# hurts: see Biomes.has_hazard().
+	if Biomes.has_hazard(level):
+		var torch := _reload("%s/fixtures/torch.tscn" % props_dir).instantiate()
+		torch.name = "Torch"
+		torch.position = TORCH_POS
+		props.add_child(torch)
+		torch.owner = root
 
 	var health := _reload("%s/fixtures/health_item.tscn" % props_dir).instantiate()
 	health.name = "Health"
@@ -488,3 +498,13 @@ func _pack(root: Node, path: String) -> bool:
 	# This tree was never in the SceneTree, so nothing else will ever free it.
 	root.free()
 	return err != OK
+
+
+## Removes a scene this level no longer has any use for. Only the fixtures can
+## reach this - a floor that gives up its hazard - because they are the ones
+## written unconditionally; a prop scene is written from the biome's own list,
+## so it simply never appears.
+func _drop(path: String) -> void:
+	if FileAccess.file_exists(path):
+		var err := DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+		print("  ", path, " -> removed, ", error_string(err))

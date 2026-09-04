@@ -147,8 +147,14 @@ func _tick(frame: int) -> void:
 		153:
 			_check("attack: releases back to idle (got %s)" % _sprite().animation,
 				String(_sprite().animation).begins_with("idle"))
-			# Health: stand in the torch, then on the heart, then die outright.
-			# One landing is one tick - the player's grace window is the meter.
+			# Health: take one blow, stand on the heart, then die outright. One
+			# landing is one tick - the player's grace window is the meter.
+			#
+			# The blow is dealt directly rather than walked into, because floor
+			# 1 no longer has anything to walk into: the lobby's hazard is gone
+			# and a tutorial room is not allowed one. Hazards are checked two
+			# floors up, on the shared floor, which is the room that has one and
+			# nobody in it.
 			_check("hud: health bar starts full (%s)" % _player().get("health"),
 				_player().get("health") == 100 and _fill().size.x == 66.0
 					and _percent().text == "100%")
@@ -156,9 +162,11 @@ func _tick(frame: int) -> void:
 				% [_player().get("lives"), _hearts().get_child_count()],
 				_player().get("lives") == 3 and _hearts().get_child_count() == 3
 					and _heart_tex(0) == _heart_tex(2))
-			_player().global_position = Vector2(120, 152)
+			_check("level: floor 1 has nothing in it that hurts",
+				_level().get_node_or_null("Props/Torch") == null)
+			_player().call("take_damage", 18)
 		166:
-			_check("torch: standing in the flame costs health (%s)"
+			_check("blow: take_damage() costs health (%s)"
 				% _player().get("health"), _player().get("health") < 100)
 			_check("hud: the bar tracks the hit (%.0f px, '%s')"
 				% [_fill().size.x, _percent().text],
@@ -173,7 +181,7 @@ func _tick(frame: int) -> void:
 			_check("heart: consumed on pickup",
 				_level().get_node_or_null("Props/Health") == null)
 		206:
-			# Waited out the torch hit's grace window, so this lethal hit lands.
+			# Waited out that blow's grace window, so this lethal hit lands.
 			_player().call("take_damage", 9999)
 		256:
 			_check("death: respawns at the level's start with full health (%s at %s)"
@@ -259,6 +267,71 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		501:
 			_key(KEY_W, false)
+			_check("door: the chain continues on into the shared floor (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "SharedFloor")
+			_check("title: the shared floor announces itself (got '%s')"
+				% _title_text(), _title_text() == "THE SHARED FLOOR")
+			# Floor 3 is the room built before its people: the call team and the
+			# media team are both reskins that do not exist yet, so anything
+			# standing here now would be a dungeon guard in an office.
+			_check("level: the shared floor is empty of enemies (%d)"
+				% get_nodes_in_group("enemies").size(),
+				get_nodes_in_group("enemies").is_empty())
+			# One room, two halves, and what is checked is that BOTH halves came
+			# through the regeneration: phones and cubicles on the call side,
+			# glass and lit screens on the media side. Same guard as the other
+			# two floors' dressing checks - a stale build leaves a bare box that
+			# passes every other check on this floor.
+			var halves := ["CallDesk1", "Whiteboard1", "Partition1", "EditDesk1",
+				"Poster1", "CameraRig1"]
+			var gone: Array = halves.filter(func(n: String) -> bool:
+				return _level().get_node_or_null("Props/" + n) == null)
+			_check("level: both halves of the shared floor are dressed (missing %s)"
+				% [gone], gone.is_empty())
+			# The offices are runs of partition segments with a segment left out
+			# for the door, six to a bay. Counted rather than spot-checked,
+			# because a bay that lost a pane is a bay with a hole in it.
+			var glass: Array = _level().get_node("Props").get_children().filter(
+				func(n: Node) -> bool: return n.name.begins_with("Partition"))
+			_check("level: the media half is walled into two offices (%d panes)"
+				% glass.size(), glass.size() == 12)
+			# The hazard check lives here rather than on floor 1, which no
+			# longer has one: this is the floor that has a hazard AND nobody in
+			# it, so standing on the arcing power strip proves hazard_base.gd
+			# hurts without an office boy wandering into the measurement.
+			_health_mark = _player().get("health")
+			_player().global_position = Vector2(120, 152)
+		521:
+			_check("hazard: standing on the power strip costs health (%d -> %s)"
+				% [_health_mark, _player().get("health")],
+				_player().get("health") < _health_mark)
+			# On along the chain, from the same distance every other leg is
+			# walked from.
+			_player().global_position = Vector2(272, 78)
+			_key(KEY_W, true)
+		601:
+			_key(KEY_W, false)
+			_check("door: the chain continues on into Ahmed's office (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "AhmedOffice")
+			_check("title: the boss floor announces itself (got '%s')"
+				% _title_text(), _title_text() == "AHMED'S CORNER OFFICE")
+			# The one thing this room is built around not having. Ahmed is the
+			# only thing in here that is meant to hurt, and he is build step 6 -
+			# so for now the floor is a room with a heart in it and nothing else.
+			_check("level: Ahmed's office has no hazard in it",
+				_level().get_node_or_null("Props/Torch") == null)
+			_check("level: the heart is still placed (%s)"
+				% (_level().get_node_or_null("Props/Health") != null),
+				_level().get_node_or_null("Props/Health") != null)
+			_check("level: no adds at rest on the boss floor (%d)"
+				% get_nodes_in_group("enemies").size(),
+				get_nodes_in_group("enemies").is_empty())
+			_player().global_position = Vector2(272, 78)
+			_key(KEY_W, true)
+		681:
+			_key(KEY_W, false)
 			_check("door: the chain continues on into the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "MarbleHall")
@@ -267,7 +340,7 @@ func _tick(frame: int) -> void:
 				guards.size() == 4)
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		581:
+		761:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into hellfire (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -290,7 +363,7 @@ func _tick(frame: int) -> void:
 			# Turn round and walk back out the way we came in. The wraith is on
 			# the far wall, outside its own 120 px sight of this whole path.
 			_key(KEY_S, true)
-		661:
+		841:
 			_key(KEY_S, false)
 			_check("return: hellfire's south door goes back to the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -300,34 +373,34 @@ func _tick(frame: int) -> void:
 				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		667:
+		847:
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		679:
+		859:
 			_check("pause: Main Menu returns to the menu, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
 					and not paused)
 			# Second run: spend every life and prove the run actually ends.
 			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
-		691:
+		871:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
-		703:
+		883:
 			_check("lives: a new run starts with all three again (%s)"
 				% _player().get("lives"),
 				current_scene.scene_file_path == "res://game/game.tscn"
 					and _player().get("lives") == 3)
 			_player().call("take_damage", 9999)
-		756:
+		936:
 			_check("lives: first death respawns with two left (%s, health %s)"
 				% [_player().get("lives"), _player().get("health")],
 				_player().get("lives") == 2 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		806:
+		986:
 			_check("lives: second death respawns with one left (%s)"
 				% _player().get("lives"),
 				_player().get("lives") == 1 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		856:
+		1036:
 			_check("game over: the last death raises the death screen, paused",
 				paused and _pause_menu().get_node("Root").visible)
 			_check("game over: heading reads YOU DIED (got '%s')"
@@ -341,11 +414,11 @@ func _tick(frame: int) -> void:
 			# resume back into.
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		862:
+		1042:
 			_check("game over: Escape cannot dismiss the death screen",
 				paused and _pause_menu().get_node("Root").visible)
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		874:
+		1054:
 			_check("game over: MAIN MENU leaves the run, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"

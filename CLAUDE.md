@@ -61,7 +61,7 @@ names live in an editor-written cache a fresh headless checkout does not have.
 
 Adding a floor is a data file in `tools/biomes/` plus a `CHAIN` entry;
 **inserting** one mid-chain also stales its NEIGHBOURS' baked door targets -
-rebuild all three: `build_levels.gd -- lobby bullpen marble_hall`. The full
+rebuild all three: `build_levels.gd -- shared_floor ahmed_office marble_hall`.
 recipe is in tools/CLAUDE.md; room anatomy in game/levels/CLAUDE.md.
 
 ## Characters and the player
@@ -150,11 +150,11 @@ only ever creates when missing. It will not overwrite a sheet you have drawn
 into.
 
 `tools/build_levels.gd` is the exception to "regenerate": what it writes - the
-level scene and that level's own door, column, torch and health item scenes -
-is a starting point meant to be dressed by hand in the editor, and re-running
-it overwrites that work. Run it to reset a level or to add a new one, and pass
-level names after `--` to build only those, because a chain of eight means
-adding a floor must not re-roll the seven already dressed:
+level scene and that level's own door, column, heart and - where its biome asks
+for one - hazard scenes - is a starting point meant to be dressed by hand in the
+editor, and re-running it overwrites that work. Run it to reset a level or to
+add a new one, and pass level names after `--` to build only those, because a
+chain of nine means adding a floor must not re-roll the eight already dressed:
 
 ```
 <godot> --headless --path . --script res://tools/build_levels.gd -- lobby
@@ -281,11 +281,11 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
     select, the settings panel from the main menu. Never enters the game.
-  - `test_flow.gd` - select -> game -> movement -> pause -> zoom -> torch ->
-    heart -> death -> wall -> doors -> lives -> game over. It walks the whole
-    chain on foot, so inserting a floor means renumbering the frames after the
-    new leg (~80 frames per door) and it asserts each room's own composition
-    and dressing as it passes through.
+  - `test_flow.gd` - select -> game -> movement -> pause -> zoom -> blow ->
+    heart -> death -> wall -> doors (a hazard en route) -> lives -> game over.
+    It walks the whole chain on foot, so inserting a floor means renumbering
+    the frames after the new leg (~80 frames per door) and it asserts each
+    room's own composition and dressing as it passes through.
   - `test_combat.gd` - guard telegraph and interrupts, wraith, warden, heavy.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`

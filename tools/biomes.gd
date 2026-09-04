@@ -44,13 +44,16 @@ extends RefCounted
 ##   columns  {rows, xs} overriding the generator's colonnade, because a
 ##            furnished room needs the floor a full colonnade takes up.
 ##   hazard   which hazard art the level gets - "torch", "polisher" or
-##            "power_strip".
+##            "power_strip", or "none" for a floor with nothing on it to hurt
+##            you. Omitted means "torch": a floor that has no hazard says so,
+##            rather than the absence of a key deciding it.
 ##   runner   how far the central floor band is tinted towards the accent, i.e.
 ##            whether that band is carpet or just more of the same stone.
 
 ## Floor order. The office floors are being built in front of the two demo
 ## biomes, which stay on the end until they are replaced.
-const CHAIN := ["lobby", "bullpen", "marble_hall", "hellfire"]
+const CHAIN := ["lobby", "bullpen", "shared_floor", "ahmed_office",
+		"marble_hall", "hellfire"]
 
 ## Assembled from the per-floor files at load, keyed by CHAIN name, so every
 ## existing `Biomes.BIOMES[level]` read works exactly as it did when this was
@@ -96,6 +99,15 @@ static func prop_types(level: String) -> Array:
 		if not types.has(type):
 			types.append(type)
 	return types
+
+
+## Whether this floor stands a hazard in the room at all. The lobby is the
+## reason it can say no: floor 1 is where a new player learns to walk, and the
+## one thing a tutorial room must not have is a way to lose health by walking
+## into the scenery. Ahmed's office says no for the opposite reason - the only
+## thing in there that hurts is Ahmed.
+static func has_hazard(level: String) -> bool:
+	return BIOMES[level].get("hazard", "torch") != "none"
 
 
 ## The level one step further along the chain, or "" at the end of it.

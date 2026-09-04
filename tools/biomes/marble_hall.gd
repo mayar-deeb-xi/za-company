@@ -10,6 +10,10 @@ const BIOME := {
 	"accent": "e8c56a",
 	"gamma": 0.85,
 	"floor_band": Vector2(0.30, 1.00),
+	# Demo biome, and now the one with no hazard either: the torch went with
+	# the lobby's polisher, and the floors that still have one are the two
+	# office floors and hellfire.
+	"hazard": "none",
 	# Four guards, one to a corner rather than a line across the top, so they
 	# can be picked off one at a time instead of arriving as a wall.
 	"enemies": [

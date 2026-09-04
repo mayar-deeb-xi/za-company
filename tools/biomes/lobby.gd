@@ -28,8 +28,11 @@ const BIOME := {
 	# temple, and the floor it leaves clear is where the furniture goes.
 	"column": "pillar",
 	"columns": {"rows": [5, 13], "xs": [4, 29]},
-	# The torch reskinned, per DESIGN.md: a floor polisher left running.
-	"hazard": "polisher",
+	# No hazard at all. Floor 1 is where a new player learns to walk, and a
+	# tutorial room must not have a way to lose health by walking into the
+	# scenery - the sparking floor polisher was that, and it is gone. The
+	# polisher art stays in hazard.gd for a floor that wants it.
+	"hazard": "none",
 	# The furniture. Reception faces the way you came in with the dead plant
 	# at the end of the counter, the cooler and a living plant are on the far
 	# wall, the waiting area is the bottom-right corner, and two sign-in

@@ -9,9 +9,11 @@ file is how furniture works and how floors are added.
 
 `tools/props/` holds one file per prop type, shelved by what a prop IS -
 `furniture/` (reception counter, desk, chair, water cooler, sofa, coffee
-table, pot plant alive and dead), `hardware/` (server rack, printer, stacked
-dead monitors, opened tower, toolbox, cable spool, scrap pile, loose debris)
-and `signs/` (the welcome banner, a taped-up notice) - and a biome says which
+table, pot plant alive and dead, call-centre station, media edit bay, glass
+partition), `hardware/` (server rack, printer, stacked dead monitors, opened
+tower, toolbox, cable spool, scrap pile, loose debris, a camera on its
+tripod) and `signs/` (the welcome banner, a taped-up notice, a marker
+wallboard, a printed poster) - and a biome says which
 ones it puts where in its own `props` list, exactly the way it already says
 which enemies it gets. That list drives everything: build_levels.gd writes a
 scene per type into the level's `props/`, paints its picture in the biome's
@@ -33,7 +35,9 @@ type fails at generation time with "nothing in tools/props/ draws 'tabel'".
 colours, the pixel font), kept out of the catalogue by sitting at the root -
 only the shelves are scanned. `fixtures/` is the shelf `known()` refuses:
 levels place column, hazard and heart themselves, so those can be painted but
-never listed as furniture.
+never listed as furniture. The hazard is the one of the three a floor can
+decline - `"hazard": "none"`, and the generator then deletes that level's
+torch.tscn rather than leave a scene nothing points at.
 
 The division of labour between the two generators is by **subject**, not by
 file type: build_biomes.gd paints the ROOM (its tileset and doorways, the only
@@ -68,6 +72,19 @@ on the floor; and nothing in it is red or gold, because the heart pickup is red
 and the hazard's sparks are gold, and litter that borrows either colour is
 litter the player crosses the room to try to pick up.
 
+**A prop can also be architecture.** The colonnade is a fixture the level
+places itself and its layout is a cross product of rows and columns, which
+describes a grid of pillars and nothing else - so the shared floor's glass
+offices are furniture instead. `partition` is 32 px of wall, art and collision
+box both, and a run of positions with one left out of the list is a wall with
+a doorway in it, which no `columns` layout can express. Two things follow from
+walling a room this way. Its glazing is genuinely translucent, because a wall
+is drawn upwards from its foot and an opaque one hides whoever is standing
+behind it - which is the bullpen's lesson about an enemy parked on a divider's
+x, met head on. And a bay is a pocket, so an enemy placed on a floor like this
+one belongs deliberately inside a bay or deliberately outside it, never on the
+doorway.
+
 Solid props matter to the enemies too, not just the player: enemies walk
 straight at the player and slide off whatever they hit, with no pathfinding to
 recover from a pocket. So a furnished room must not be a maze, and nothing solid
@@ -77,8 +94,10 @@ _brush.gd also carries a 5x5 uppercase pixel font, because half of what makes a
 company office funny is what is written on the walls. A sign's words are a
 `TEXT` constant in its own file, not baked into a painter, so a floor can put up
 its own words without new drawing code - the banner says WELCOME / NEW HIRES,
-the notice says OUT OF ORDER, the counter says RECEPTION, and DESIGN.md has wall
-text waiting on four more floors.
+its own words without new drawing code - the banner says WELCOME / NEW HIRES,
+the notice says OUT OF ORDER, the counter says RECEPTION, the shared floor's
+wallboard says SMILE / THEY CAN / HEAR IT and its poster says FIX IT / IN
+POST, and DESIGN.md still has wall text waiting further up the building.
 
 ## Adding and inserting a biome
 
@@ -91,6 +110,7 @@ in front of the two demo biomes - changes its NEIGHBOURS as well, and this is
 the step to get wrong: a door's `target_level` is baked into the level scene by
 the generator, so the level before the new one still points past it and the
 level after it still points back past it until both are rebuilt. Pass all three
-names: `build_levels.gd -- lobby bullpen marble_hall`. build_biomes.gd always
-does every biome, so the doorway textures (each lit by the colour of the place
-on the other side) come out right on their own.
+names: `build_levels.gd -- shared_floor ahmed_office marble_hall`, which is
+exactly what putting Ahmed's office in front of the demo biomes took.
+build_biomes.gd always does every biome, so the doorway textures (each lit by
+the colour of the place on the other side) come out right on their own.

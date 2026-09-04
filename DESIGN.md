@@ -37,20 +37,21 @@ HP stays on combo breakpoints (4 / 3 / 6 hits) — difficulty never scales HP.
 - **Dominic** (guide, front desk): a talking signpost. New `npc_base.gd` +
   one-line dialogue box (`ui/dialogue/`): proximity trigger, one line per
   visit, advance with the attack key. No branching, no quest log. Placed on
-  floors 1, 3, 6, 8.
+  floors 1, 4, 7, 9.
 - **Ivan** (healer, cafeteria): stands in a safe corner, lobs a heart in a
   short tween arc every ~10s. Spawns the existing `pickup_base.gd` heart;
   max ONE of his hearts on the floor at a time (lifeline, not fountain). Heart
-  is live when it lands. Only line: "Eat." Present on floors 2, 3, 5, 6, 7, 8.
+  is live when it lands. Only line: "Eat." Present on floors 2, 4, 6, 7, 8, 9.
 
 Both are friendly: no `player`-group targeting of them, enemies ignore them.
 
-## Floors — 8 levels, one per CHAIN entry
+## Floors — 9 levels, one per CHAIN entry
 
 Elevator is out of order. South door = down, north door = up. Boss floors lock
 the north door until the boss falls (`can_travel()` override). Existing
 placement rules apply everywhere: no enemy's sight reaches the door line, the
-spawns, or the torch/heart stands; the straight door-to-door walk stays safe.
+spawns, or the hazard and heart stands; the straight door-to-door walk stays
+safe.
 
 Each floor announces itself by name for three seconds on arrival, so every
 biome entry needs a `title` - the floor name in caps, as listed below (e.g.
@@ -59,17 +60,19 @@ the room, and the fiction carries which floor it is.
 
 - [x] **F1 The Lobby** (tutorial): glass-and-steel reception, cool blue-grey
   marble, over-lit. Now `CHAIN[0]` and `game.gd`'s `START_LEVEL`: a run begins
-  here. Built: biome palette, tileset, north door to the marble hall, heart, and
+  here. Built: biome palette, tileset, north door to the bullpen, heart, and
   the room deliberately empty of enemies - floor 1 is where a new player learns
   to walk, safely, and test_flow asserts it stays empty. **Dressed**: reception
   counter (Dominic's spot, and Y-sorting already puts him behind it), the dead
   plant at the end of it, water cooler and a living plant on the far wall, a
   waiting area of sofa and coffee table, two sign-in workstations with chairs,
-  the "WELCOME NEW HIRES" banner hanging crooked off one corner, the torch
-  reskinned as the sparking floor polisher, a carpet runner down the middle, and
-  the classical colonnade replaced by four glazed steel pillars. All of it is
+  the "WELCOME NEW HIRES" banner hanging crooked off one corner, a carpet
+  runner down the middle, and the classical colonnade replaced by four glazed
+  steel pillars. Floor 1 has no hazard at all - the sparking floor polisher was
+  cut, because the one thing a room where a new player learns to walk must not
+  have is a way to lose health by walking into the scenery. All of it is
   per-biome data in `tools/biomes.gd` drawn by `tools/props.gd`, so it survives
-  a regeneration and floors 2-8 can reuse the catalogue. Dominic + the 2 office
+  a regeneration and floors 2-9 can reuse the catalogue. Dominic + the 2 office
   boys land with steps 2-3.
   Two lanes are kept deliberately clear of furniture and must stay that way:
   the door line (x 246-300) and the central band (y 122-200, x 86-352).
@@ -93,23 +96,66 @@ the room, and the fiction carries which floor it is.
   have no pathfinding), and no enemy parked on a divider's x, or the divider's
   48px art hides it completely.
   **Still to add**: Ivan (west wall) - he needs the NPC system, build step 4.
-- [ ] **F3 Ahmed's Corner Office** (BOSS): oversized office, golf putter,
+- [x] **F3 The Shared Floor** (breather): one room, two teams, neither of whom
+  asked to share it - and the floor where you first see both of the ones you
+  will meet on their own floors later. The WEST half is the call floor: two
+  rows of identical stations, cubicle dividers between them, a desk phone and
+  a queue of calls on every screen, a printer, a cooler and a break corner
+  nobody sits in, under a wallboard reading SMILE / THEY CAN / HEAR IT. The
+  EAST half is the media team's, walled into two glass-fronted offices you
+  walk into through a gap in the glass, each with a lit edit bay in it - a
+  timeline on one screen and the shot on the other - plus cable, a render
+  tower, a camera still up on its tripod, and a poster reading FIX IT /
+  IN POST. Grey-violet against the bullpen's brown, magenta accent: the media
+  team's colour, which the call floor inherited when the two were moved in
+  together. Built: biome, six new props (`call_desk`, `edit_desk`,
+  `partition`, `whiteboard`, `poster`, `camera_rig`) and the room.
+  The generator's two clear lanes ARE the floor plan here: the door line
+  (x 246-300) runs down between the two halves and the runner band
+  (y 128-176) crosses it, so the dressing goes in the four quadrants and the
+  cross is a pair of office corridors for free. Both stay clear - the power
+  strip stands at (120, 152) on the call side and the heart at (424, 152) on
+  the media side, and that band is the lane a fight will use.
+  The glass is a PROP, not a column style, and that is the one decision to
+  know here: a run of `partition` segments 32 px apart with one left out of
+  the list is a wall with a door in it, which the colonnade's rows-by-columns
+  layout cannot describe. Its glazing is translucent so that an office is
+  somewhere you can be SEEN standing - the same lesson the bullpen's dividers
+  taught the hard way.
+  **Still to add**: its people. `call_center` and `social_media` are both
+  build step 2, so the room is deliberately empty of enemies and test_flow
+  asserts that it stays that way until they exist. When they land they should
+  stay light: this floor sits between the bullpen's four-on-one and Ahmed, and
+  its job is to introduce two teams, not to test anything.
+- [ ] **F4 Ahmed's Corner Office** (BOSS): oversized office, golf putter,
   framed family photo. Small arena, no adds at rest. Ivan + Dominic.
-- [ ] **F4 The Content Studio** (drain): dark room + neon, ring lights,
+  **Built**: the room, and it is the marble hall's room - the same stone and
+  the same classical colonnade, because this is the floor where the building
+  stops pretending to be an office - taken down out of the white. Every stop
+  on the ramp is pulled darker, the hall's gold is brassier, gamma goes above
+  1.0 so mid-tones sit down instead of lifting, and the floor band stops at
+  0.70 rather than the hall's 1.00, which is the number that actually makes a
+  room darker. Two things it deliberately has NOT got: a hazard
+  (`"hazard": "none"` - the only thing in here meant to hurt is Ahmed, and one
+  fight is enough to read at a time) and any enemies, since Ahmed is step 6
+  and the design gives this floor no adds at rest.
+  **Still to add**: Ahmed, and the dressing named above - the oversized desk,
+  the putter and the framed photo are props nobody has drawn yet.
+- [ ] **F5 The Content Studio** (drain): dark room + neon, ring lights,
   "LIVE LAUGH ENGAGE" wall. 3 social_media with overlapping sight radii
   (routing level — standing central costs 6-9 HP/s), 1 office boy by the exit
   forcing one fight inside the field. Hazard: scalding ring light on a fallen
   tripod.
-- [ ] **F5 The Call Center** (denial): cubicle maze, densest columns.
+- [ ] **F6 The Call Center** (denial): cubicle maze, densest columns.
   2 call_center planted at chokepoints, 3 office boys between them. The
   lesson: a slow near guards is lethal. Ivan. Hazard: jammed photocopier.
-- [ ] **F6 Conflict Resolution** (BOSS): company gym, boxing ring painted on
+- [ ] **F7 Conflict Resolution** (BOSS): company gym, boxing ring painted on
   the floor, poster: "TALK IT OUT" crossed out, "GLOVE IT OUT" under it.
   Tight arena, no columns. Mostafa. Ivan.
-- [ ] **F7 The Executive Floor** (mix/exam): dark wood, glass walls, awards
+- [ ] **F8 The Executive Floor** (mix/exam): dark wood, glass walls, awards
   cabinet. 3 office boys + 2 social_media + 1 call_center (center chokepoint).
   Every prize requires stepping into a radius on purpose. Ivan.
-- [ ] **F8 Khaled's Office** (FINAL): penthouse, city window, one desk, one
+- [ ] **F9 Khaled's Office** (FINAL): penthouse, city window, one desk, one
   face-down sticky note. Wide open arena. South door seals behind you.
   Dominic waits outside ("Whatever happens up there… CC me."). Ivan.
 
@@ -120,18 +166,18 @@ heavy's 24. Difficulty scales their damage only, never HP. All three concede
 instead of dying (no queue_free): defeat -> concede animation -> north door
 unlocks.
 
-- [ ] **AHMED — 96 HP, F3.** The relative; teaching boss. Guard swing cycle,
+- [ ] **AHMED — 96 HP, F4.** The relative; teaching boss. Guard swing cycle,
   slightly faster recover, 14 damage. At 64 and 32 HP yells "SECURITY!" and
   summons 1 office boy through the door (cap 2 alive). Standard interrupt
   economy. Defeated: sits in his enormous chair — "I'm telling Mostafa."
-- [ ] **MOSTAFA — 144 HP, F6.** Boxing rhythm fight; his attack is the cycle
+- [ ] **MOSTAFA — 144 HP, F7.** Boxing rhythm fight; his attack is the cycle
   run 3x back-to-back:
   - Jab, jab: 0.25s wind-ups, 6 dmg each, commit_fraction ~1.0
     (effectively uninterruptible; they're swings — step out, they whiff).
   - Hook: 0.7s wind-up, 18 dmg, interruptible early. The one read.
   - Corner rush: dash gap-closer if the player kites to the ring edge.
   - Defeated: takes the gloves off, nods once, points at the ceiling.
-- [ ] **KHALED — 192 HP, F8.** Smooth = never hurries; each phase announced by
+- [ ] **KHALED — 192 HP, F9.** Smooth = never hurries; each phase announced by
   adjusting his cuffs:
   - P1 "The Handshake" (192→128): single strikes, 0.8s telegraph, 20 dmg,
     gliding movement. Standard interrupts. The fair phase.
@@ -158,13 +204,15 @@ Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
 
 ## Build order — each step ships playable
 
-- [ ] 1. Floors as biomes: 8 entries in `tools/biomes.gd` (office palettes),
+- [ ] 1. Floors as biomes: 9 entries in `tools/biomes.gd` (office palettes),
         run build_biomes + build_levels. Per-floor enemy placement AND
         furniture are per-biome data, so a floor is data plus whatever new
         props it needs in `tools/props.gd` - a regenerate rebuilds the dressed
-        room rather than resetting it. **F1 lobby and F2 bullpen done** (2/8);
-        the chain is lobby -> bullpen -> marble_hall -> hellfire, with the two
-        demo biomes still on the end until the office floors replace them.
+        room rather than resetting it. **F1 lobby, F2 bullpen and F3 the
+        shared floor done** (4/9), plus Ahmed's office as a room without its
+        boss in it yet; the chain is lobby -> bullpen -> shared_floor ->
+        ahmed_office -> marble_hall -> hellfire, with the two demo biomes
+        still on the end until the office floors replace them.
         Regenerate one floor at a time: `build_levels.gd -- <level>`, and note
         that inserting a floor changes its NEIGHBOURS' door targets, so
         rebuild those too.
