@@ -60,12 +60,12 @@ extends RefCounted
 ## Floor order, and it is the order a run walks: south door goes back down
 ## the list, north door goes up it. The building is DESIGN.md's ten floors in
 ## its own order, and the two demo biomes are dealt INTO it - the marble hall
-## between the shared floor and the dev floor, hellfire between the bullpen
+## between the hub and the innovation lab, hellfire between asset recovery
 ## and the executive floor - so a run still walks through both of them and
 ## ends where the story ends, in Khaled's office.
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
-		"shared_floor", "marble_hall", "dev_floor", "conflict_resolution",
-		"bullpen", "hellfire", "executive_floor", "khaled_office"]
+		"the_hub", "marble_hall", "innovation_lab", "conflict_resolution",
+		"asset_recovery", "hellfire", "executive_floor", "khaled_office"]
 
 ## Assembled from the per-floor files at load, keyed by CHAIN name, so every
 ## existing `Biomes.BIOMES[level]` read works exactly as it did when this was
@@ -93,7 +93,7 @@ static func dir(level: String) -> String:
 ## differently: the room is a handful of files that never grow (the level scene,
 ## its tileset, its door and one doorway per neighbour), while this holds one
 ## scene per prop the biome uses and grows every time a floor wants a new piece
-## of furniture. The bullpen wanted sixteen, which buried the five files that
+## of furniture. Asset recovery wanted sixteen, which buried the five files that
 ## actually say what the level IS. Inside it, build_levels.gd shelves each
 ## scene the way its painter is shelved in tools/props/ (Props.shelf_of()),
 ## plus fixtures/ for the level-placed column, torch and health item.

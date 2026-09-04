@@ -87,7 +87,7 @@ script = ExtResource("5_4dj01")
 position = Vector2(272, 8)
 monitorable = false
 script = ExtResource("7_3qd3a")
-target_level = "res://game/levels/dev_floor/dev_floor.tscn"
+target_level = "res://game/levels/innovation_lab/innovation_lab.tscn"
 art = ExtResource("8_qosiy")
 
 [node name="Return" type="Area2D" parent="Props" unique_id=1525876529 groups=["door"] instance=ExtResource("6_ntcfv")]
@@ -95,7 +95,7 @@ position = Vector2(272, 296)
 rotation = 3.1415927
 monitorable = false
 script = ExtResource("7_3qd3a")
-target_level = "res://game/levels/shared_floor/shared_floor.tscn"
+target_level = "res://game/levels/the_hub/the_hub.tscn"
 target_spawn = &"returned"
 art = ExtResource("9_nwoxh")
 

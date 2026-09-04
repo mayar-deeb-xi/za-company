@@ -9,13 +9,13 @@ const BIOME := {
 	"title": "THE EXECUTIVE FLOOR",
 	# Mahogany. The one thing every floor below this has in common is that it
 	# was furnished from a catalogue; this one was furnished from an auction,
-	# and the palette is the whole argument - a red-brown wood ramp, where the
-	# bullpen's brown is the yellow of worn laminate and hellfire's is heat.
-	# Nothing in the building is this dark AND this warm at once.
+	# and the palette is the whole argument - a red-brown wood ramp, where
+	# asset recovery's brown is the yellow of worn laminate and hellfire's is
+	# heat. Nothing in the building is this dark AND this warm at once.
 	"ramp": ["120c0a", "2b1a15", "4e3125", "7d5540", "a8825c", "dcc3a0"],
 	# Brass: the inlay, the picture frames, the trolley, the door furniture.
 	# Deeper and oranger than the marble hall's pale gold and less yellow than
-	# the bullpen's amber, which is what keeps three warm floors apart.
+	# asset recovery's amber, which is what keeps three warm floors apart.
 	"accent": "d4a13c",
 	# Above 1.0 sinks the mid-tones and leaves the highlights hot, which is
 	# what polish IS: a dark room with bright edges. The lobby's 0.80 is the

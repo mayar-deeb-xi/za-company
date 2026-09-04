@@ -97,7 +97,7 @@ as children the moment one of them stands next to it.
 
 **A prop that blocks nothing is a tool, not an oversight.** `debris` - litter on
 the floor - has a `blocks` of zero and is the answer to a brief that pulls two
-ways: the bullpen has to look full of junk AND leave floor for a four-on-one
+ways: asset recovery has to look full of junk AND leave floor for a four-on-one
 fight and an AoE. Solid props cannot do both, so the junk is a thick perimeter
 and the middle gets litter. It is also the one prop drawn without an outline,
 since an outline is what gives a prop volume and this is meant to read as marks
@@ -118,13 +118,13 @@ over, so it needs a node of its own in the level scene for a script to find.
 
 **A prop can also be architecture.** The colonnade is a fixture the level
 places itself and its layout is a cross product of rows and columns, which
-describes a grid of pillars and nothing else - so the shared floor's glass
+describes a grid of pillars and nothing else - so the hub's glass
 offices are furniture instead. `partition` is 32 px of wall, art and collision
 box both, and a run of positions with one left out of the list is a wall with
 a doorway in it, which no `columns` layout can express. Two things follow from
 walling a room this way. Its glazing is genuinely translucent, because a wall
 is drawn upwards from its foot and an opaque one hides whoever is standing
-behind it - which is the bullpen's lesson about an enemy parked on a divider's
+behind it - which is asset recovery's lesson about an enemy parked on a divider's
 x, met head on. And a bay is a pocket, so an enemy placed on a floor like this
 one belongs deliberately inside a bay or deliberately outside it, never on the
 doorway.
@@ -151,10 +151,10 @@ wallboard needed to write a number, digits - because half of what makes a
 company office funny is what is written on the walls. A sign's words are a
 `TEXT` constant in its own file, not baked into a painter, so a floor can put up
 its own words without new drawing code - the banner says WELCOME / NEW HIRES,
-the notice says OUT OF ORDER, the counter says RECEPTION, the shared floor's
+the notice says OUT OF ORDER, the counter says RECEPTION, the hub's
 whiteboard says SMILE / THEY CAN / HEAR IT and its poster says FIX IT / IN
 POST, the call floor's wallboard says CALLS / WAITING / 142 with the figure in
-red, the dev floor's whiteboard says DO NOT ERASE under a diagram it does not
+red, the innovation lab's whiteboard says DO NOT ERASE under a diagram it does not
 explain, its build board says BUILD / FAILED, and the executive floor's
 portrait says only FOUNDER on a brass plaque - one word, because a portrait
 that has to explain who it is of is not a portrait of anybody important.

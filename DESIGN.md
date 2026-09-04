@@ -59,23 +59,25 @@ straight door-to-door walk stays safe.
 
 **This list is in chain order.** `tools/biomes.gd`'s `CHAIN` is the floor plan
 the game actually walks, and the numbers below match it: lobby ->
-content_studio -> call_center -> ahmed_office -> shared_floor -> dev_floor ->
-conflict_resolution -> bullpen, with the two demo biomes (marble_hall,
-hellfire) still parked on the end until F9 and F10 replace them. They are
-deliberately not in this list - they are placeholders, not floors of the
-building. Reordering is one edit to `CHAIN` plus a full build_levels.gd run,
-since every door target is baked into a level scene.
+content_studio -> call_center -> ahmed_office -> the_hub -> innovation_lab ->
+conflict_resolution -> asset_recovery -> executive_floor -> khaled_office.
+The two demo biomes are dealt into that order rather than parked on the end
+of it - `marble_hall` sits between F5 and F6, `hellfire` between F8 and F9 -
+and they are deliberately not in this list, because they are placeholders
+rather than floors of the building. Reordering is one edit to `CHAIN` plus a
+build_levels.gd run naming every level whose neighbours moved, since each
+door target is baked into a level scene.
 
 One consequence of this order worth knowing, because it is a choice rather
-than an accident: Ahmed, the teaching boss, arrives fourth, and the bullpen's
-four-on-one - which is where the heavy attack is taught - lands seventh,
-after both bosses. If that reads wrong in play, the fix is the CHAIN edit
-above, not a rewrite of any room.
+than an accident: Ahmed, the teaching boss, arrives fourth, and the
+four-on-one on asset recovery - which is where the heavy attack is taught -
+lands seventh, after both bosses. If that reads wrong in play, the fix is
+the CHAIN edit above, not a rewrite of any room.
 
 Each floor announces itself by name for three seconds on arrival, so every
 biome entry needs a `title` - the floor name in caps, as listed below (e.g.
-"THE BULLPEN"). Floor numbers are deliberately not in the card: the card names
-the room, and the fiction carries which floor it is.
+"ASSET RECOVERY"). Floor numbers are deliberately not in the card: the card
+names the room, and the fiction carries which floor it is.
 
 - [x] **F1 The Lobby** (tutorial): glass-and-steel reception, cool blue-grey
   marble, over-lit. Now `CHAIN[0]` and `game.gd`'s `START_LEVEL`: a run begins
@@ -106,7 +108,7 @@ the room, and the fiction carries which floor it is.
   the ramp never reaches white, so the brightest things in it are the lights
   standing on the floor and the sign on the wall. Neon violet accent: the media
   team's magenta pushed to the end of the tube, and the first floor to carry
-  it - the shared floor further up says the same colour more quietly. Dressed
+  it - the hub further up says the same colour more quietly. Dressed
   as a working studio: a paper sweep with the interview couch and the plant
   that is in every shot in front of it, a light either side, a camera looking
   at the lot of it, the stream station in the far corner, a green room of couch
@@ -131,7 +133,7 @@ the room, and the fiction carries which floor it is.
   2 call_center planted at chokepoints, 3 office boys between them. The
   lesson: a slow near guards is lethal. Ivan. Hazard: jammed photocopier.
   **Built**: the room, and it is the densest one in the game - eighteen
-  dividers in three rows, half again the bullpen's full colonnade, which is
+  dividers in three rows, half again asset recovery's full colonnade, which is
   what makes it a maze rather than an open plan. Ten identical stations in the
   pockets the dividers leave, in three ranks, with the middle rank thinned to
   two against the side walls: this floor's lesson only lands in a room you were
@@ -164,7 +166,7 @@ the room, and the fiction carries which floor it is.
   and the design gives this floor no adds at rest.
   **Still to add**: Ahmed, and the dressing named above - the oversized desk,
   the putter and the framed photo are props nobody has drawn yet.
-- [x] **F5 The Shared Floor** (breather): one room, two teams, neither of whom
+- [x] **F5 The Hub** (breather): one room, two teams, neither of whom
   asked to share it - and the floor where the two teams whose own floors you
   have just walked through are crammed into one room. The WEST half is the call
   floor: two
@@ -175,9 +177,9 @@ the room, and the fiction carries which floor it is.
   walk into through a gap in the glass, each with a lit edit bay in it - a
   timeline on one screen and the shot on the other - plus cable, a render
   tower, a camera still up on its tripod, and a poster reading FIX IT /
-  IN POST. Grey-violet against the bullpen's brown, magenta accent: the media
-  team's colour, which the call floor inherited when the two were moved in
-  together. Built: biome, six new props (`call_desk`, `edit_desk`,
+  IN POST. Grey-violet against the brown of asset recovery, magenta accent:
+  the media team's colour, which the call floor inherited when the two were
+  moved in together. Built: biome, six new props (`call_desk`, `edit_desk`,
   `partition`, `whiteboard`, `poster`, `camera_rig`) and the room.
   The generator's two clear lanes ARE the floor plan here: the door line
   (x 246-300) runs down between the two halves and the runner band
@@ -189,22 +191,22 @@ the room, and the fiction carries which floor it is.
   know here: a run of `partition` segments 32 px apart with one left out of
   the list is a wall with a door in it, which the colonnade's rows-by-columns
   layout cannot describe. Its glazing is translucent so that an office is
-  somewhere you can be SEEN standing - the same lesson the bullpen's dividers
-  taught the hard way.
+  somewhere you can be SEEN standing - the same lesson the dividers on asset
+  recovery taught the hard way.
   **Still to add**: its people. `call_center` and `social_media` are both
   build step 2, so the room is deliberately empty of enemies and test_flow
   asserts that it stays that way until they exist. When they land they should
-  stay light: this floor lands just past Ahmed and before the dev floor, and
-  its job is to be a breather rather than a test of anything.
-- [x] **F6 The Dev Floor** (light relief): where the software gets written, and
-  the brightest room in the building after the lobby. Warm off-white and pale
-  wood, the floor the company spent the refurbishment budget on - the exact
-  opposite of the content studio four floors down, and that contrast is doing
-  work rather than just being pretty: nothing else in the building is this
-  bright, so the screens on these desks are the DARKEST things in the room
-  instead of the lightest, which is how a floor full of monitors reads as a
-  floor full of monitors. Editor blue for an accent, the one colour no other
-  floor has.
+  stay light: this floor lands just past Ahmed and before the innovation
+  lab, and its job is to be a breather rather than a test of anything.
+- [x] **F6 The Innovation Lab** (light relief): where the software gets
+  written, and the brightest room in the building after the lobby. Warm
+  off-white and pale wood, the floor the company spent the refurbishment
+  budget on - the exact opposite of the content studio four floors down, and
+  that contrast is doing work rather than just being pretty: nothing else in
+  the building is this bright, so the screens on these desks are the DARKEST
+  things in the room instead of the lightest, which is how a floor full of
+  monitors reads as a floor full of monitors. Editor blue for an accent, the
+  one colour no other floor has.
   **Built**: seven workstations - two along the north wall, three across the
   south, one either side of the east - the whiteboard, the build screen, the
   service wall (racks, tower, coffee, water) and a breakout of sofa, table and
@@ -236,7 +238,7 @@ the room, and the fiction carries which floor it is.
   the floor, poster: "TALK IT OUT" crossed out, "GLOVE IT OUT" under it.
   Tight arena, no columns. Mostafa. Ivan.
   **Built**: the room, and it is the only room in the game with no colour in
-  it. Every other floor has a cast - the lobby blue, the bullpen brown, the
+  it. Every other floor has a cast - the lobby blue, asset recovery brown, the
   call floor green - and this one is plain concrete and rubber, so the single
   warm thing in it is the paint on the floor: grey room, red ring. The ring
   is DESIGN's, painted rather than built, and it is the first prop in the
@@ -259,11 +261,11 @@ the room, and the fiction carries which floor it is.
   to read at a time, and a boss room that also burns you is a boss room where
   the death was the floor's fault.
   **Still to add**: Mostafa, and Ivan.
-- [x] **F8 The Bullpen** (crowd): the office boys' OWN floor - the back of house
-  where the company's broken hardware goes and mostly stays. Dim warm brown
-  against every other floor in the building, amber accent, dividers as columns
-  (the
-  full colonnade of twelve, which is what breaks the sight lines that let four
+- [x] **F8 Asset Recovery** (crowd): the office boys' OWN floor - the back of
+  house where the company's broken hardware goes and mostly stays, under a
+  sign about recovering value from it. Dim warm brown against every other
+  floor in the building, amber accent, dividers as columns (the full
+  colonnade of twelve, which is what breaks the sight lines that let four
   boys be pulled one at a time). Built: biome, `office_boy` (step 2's first
   reskin), and the room - a server bank along the top wall with one red light,
   e-waste heaped down both side walls, a photocopier with an OUT OF ORDER
@@ -410,7 +412,7 @@ Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
         props it needs in `tools/props.gd` - a regenerate rebuilds the dressed
         room rather than resetting it. **ALL TEN ROOMS EXIST**, in chain
         order: F1 the lobby, F2 the content studio, F3 the call center, F5 the
-        shared floor, F6 the dev floor, F7 the gym, F8 the bullpen, F9 the
+        hub, F6 the innovation lab, F7 the gym, F8 asset recovery, F9 the
         executive floor and F10 Khaled's office are dressed, and F4 Ahmed's
         office is a room waiting for its boss. Every one of them is empty of
         enemies except F8, which has its four office boys - the cast goes in
@@ -420,7 +422,7 @@ Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
         `hellfire` between F8 and F9, so a run walks all ten floors in
         DESIGN.md's own order and ends where the story ends, in Khaled's
         office. Both are still demo rooms and both still hold the only fights
-        above the bullpen, which is what keeps the flow suite's enemy checks
+        above asset recovery, which is what keeps the flow suite's enemy checks
         somewhere real while the reskins are unbuilt.
         Moving hellfire mid-chain cost it a placement: it gained a north door,
         and its enemies had been lined along the north wall on the assumption

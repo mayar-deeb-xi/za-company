@@ -5,7 +5,7 @@ extends RefCounted
 ##
 ## The glazing is genuinely translucent, and that is load-bearing rather than
 ## decorative. A prop's art is drawn upwards from its foot, so a waist-high
-## wall covers everything standing behind it - the lesson the bullpen's
+## wall covers everything standing behind it - the lesson asset recovery's
 ## dividers taught, where an enemy parked on a divider's x simply could not be
 ## seen. An office you can walk into has to be an office you can be seen in,
 ## so the upper two thirds of this is glass you read through and only the kick

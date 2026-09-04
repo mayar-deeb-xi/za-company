@@ -1,5 +1,5 @@
 extends RefCounted
-## The whiteboard on the dev floor, and the joke is not written on it - it is
+## The whiteboard on the innovation lab, and the joke is not written on it - it is
 ## DRAWN on it. Four boxes, some arrows between them, one arrow that goes back
 ## where it came from, and DO NOT ERASE along the bottom in red, which is the
 ## note every whiteboard in every engineering office in the world carries.

@@ -1,5 +1,5 @@
 extends RefCounted
-## Floor 5 of THE NEW HIRE - where the content gets made.
+## Floor 2 of THE NEW HIRE - where the content gets made.
 ##
 ## Data only, read by tools/biomes.gd; the key reference lives there.
 
@@ -13,7 +13,7 @@ const BIOME := {
 	# the room; here the palette gets out of the way of the fixtures.
 	"ramp": ["07080e", "141827", "252c44", "3e4668", "5f6b98", "8f9ccc"],
 	# Neon violet - the media team's magenta pushed to the end of the tube.
-	# The shared floor downstairs is where that colour is introduced as
+	# The hub downstairs is where that colour is introduced as
 	# something the team brought with them; this is where they own the room.
 	"accent": "a64dff",
 	# Above 1.0 pushes mid-tones down and leaves the highlights hot, which is

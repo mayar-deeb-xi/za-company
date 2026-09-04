@@ -105,7 +105,7 @@ room is built by mixing them rather than by adding more of the same:
   17 is the next stop down if that reads as a slog.
 - **`office_boy/`** - the regular, reskinned as the company's maintenance staff
   for floor 2 (see above). Identical numbers, its own sheet, no script.
-  Placement in the bullpen has one extra rule that is easy to miss and produced
+  Placement in asset recovery has one extra rule that is easy to miss and produced
   an invisible enemy first time: a divider's art is 48 px tall, so an enemy
   parked at a divider's x with a smaller y than the divider's foot is drawn
   BEHIND it and cannot be seen until it walks out.
@@ -222,7 +222,7 @@ it is back on the next visit - the same no-room-state rule as pickups.
 Enemies are the one prop a level does NOT own a copy of - types are shared, and
 **which ones a room gets is per-biome data in `tools/biomes.gd`** (`enemies`:
 type + position), not one constant in the generator. Composition is most of
-what makes one room feel unlike the next: the lobby is empty, the bullpen is
+what makes one room feel unlike the next: the lobby is empty, asset recovery is
 four office boys one to a quadrant, the marble hall is four guards one to a
 corner rather than a line across the top so they can be taken on one at a
 time, and hellfire is four of those plus two wraiths and a warden - where things

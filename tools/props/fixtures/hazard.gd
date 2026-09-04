@@ -59,7 +59,7 @@ static func paint(spec: Dictionary) -> Image:
 
 
 
-## DESIGN.md's hazard for the bullpen: an overloaded power strip on the floor,
+## DESIGN.md's hazard for asset recovery: an overloaded power strip on the floor,
 ## arcing, with far too much plugged into it. Lower and flatter than the other
 ## two hazards - it is something you tread ON rather than walk INTO - so the
 ## sparks do most of the work of being visible, and there are more of them than

@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://cgm8u7oh8o5e8"]
 
-[ext_resource type="Script" uid="uid://cmb3qiqlctsfu" path="res://game/levels/level.gd" id="1_cpf5d"]
+[ext_resource type="Script" path="res://game/levels/level.gd" id="1_cpf5d"]
 [ext_resource type="TileSet" path="res://game/levels/khaled_office/tileset.tres" id="2_or5ks"]
 [ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/openings/city_window.tscn" id="3_wci0w"]
 [ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/furniture/chair.tscn" id="4_nxfsa"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/furniture/sofa.tscn" id="10_w5afp"]
 [ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/furniture/bar_cart.tscn" id="11_djto5"]
 [ext_resource type="PackedScene" path="res://game/levels/khaled_office/door.tscn" id="12_keke3"]
+[ext_resource type="Script" path="res://game/levels/door_base.gd" id="13_amvgg"]
 [ext_resource type="Texture2D" path="res://game/levels/khaled_office/doorway_back.tres" id="14_83wwc"]
 
 [node name="KhaledOffice" type="Node2D" unique_id=1698801012]
@@ -25,54 +26,56 @@ tile_set = ExtResource("2_or5ks")
 
 [node name="Walls" type="TileMapLayer" parent="." unique_id=1943991376]
 y_sort_enabled = true
-tile_map_data = PackedByteArray("AAAAAAAAAAADAAEAAAABAAAAAAACAAEAAAACAAAAAAACAAEAAAADAAAAAAACAAEAAAAEAAAAAAACAAEAAAAFAAAAAAACAAEAAAAGAAAAAAACAAEAAAAHAAAAAAACAAEAAAAIAAAAAAACAAEAAAAJAAAAAAACAAEAAAAKAAAAAAACAAEAAAALAAAAAAACAAEAAAAMAAAAAAACAAEAAAANAAAAAAACAAEAAAAOAAAAAAACAAEAAAAPAAAAAAACAAEAAAAQAAAAAAACAAEAAAARAAAAAAACAAEAAAASAAAAAAACAAEAAAATAAAAAAACAAEAAAAUAAAAAAACAAEAAAAVAAAAAAACAAEAAAAWAAAAAAACAAEAAAAXAAAAAAACAAEAAAAYAAAAAAACAAEAAAAZAAAAAAACAAEAAAAaAAAAAAACAAEAAAAbAAAAAAACAAEAAAAcAAAAAAACAAEAAAAdAAAAAAACAAEAAAAeAAAAAAACAAEAAAAfAAAAAAACAAEAAAAgAAAAAAACAAEAAAAhAAAAAAADAAEAAAAAAAEAAAAAAAEAAAAhAAEAAAAAAAEAAAAAAAIAAAAAAAEAAAAhAAIAAAAAAAEAAAAAAAMAAAAAAAEAAAAhAAMAAAAAAAEAAAAAAAQAAAAAAAEAAAAhAAQAAAAAAAEAAAAAAAUAAAAAAAEAAAAhAAUAAAAAAAEAAAAAAAYAAAAAAAEAAAAhAAYAAAAAAAEAAAAAAAcAAAAAAAEAAAAhAAcAAAAAAAEAAAAAAAgAAAAAAAEAAAAhAAgAAAAAAAEAAAAAAAkAAAAAAAEAAAAhAAkAAAAAAAEAAAAAAAoAAAAAAAEAAAAhAAoAAAAAAAEAAAAAAAsAAAAAAAEAAAAhAAsAAAAAAAEAAAAAAAwAAAAAAAEAAAAhAAwAAAAAAAEAAAAAAA0AAAAAAAEAAAAhAA0AAAAAAAEAAAAAAA4AAAAAAAEAAAAhAA4AAAAAAAEAAAAAAA8AAAAAAAEAAAAhAA8AAAAAAAEAAAAAABAAAAAAAAEAAAAhABAAAAAAAAEAAAAAABEAAAAAAAEAAAAhABEAAAAAAAEAAAAAABIAAAADAAEAAAABABIAAAAAAAEAAAACABIAAAAAAAEAAAADABIAAAAAAAEAAAAEABIAAAAAAAEAAAAFABIAAAAAAAEAAAAGABIAAAAAAAEAAAAHABIAAAAAAAEAAAAIABIAAAAAAAEAAAAJABIAAAAAAAEAAAAKABIAAAAAAAEAAAALABIAAAAAAAEAAAAMABIAAAAAAAEAAAANABIAAAAAAAEAAAAOABIAAAAAAAEAAAAPABIAAAAAAAEAAAASABIAAAAAAAEAAAATABIAAAAAAAEAAAAUABIAAAAAAAEAAAAVABIAAAAAAAEAAAAWABIAAAAAAAEAAAAXABIAAAAAAAEAAAAYABIAAAAAAAEAAAAZABIAAAAAAAEAAAAaABIAAAAAAAEAAAAbABIAAAAAAAEAAAAcABIAAAAAAAEAAAAdABIAAAAAAAEAAAAeABIAAAAAAAEAAAAfABIAAAAAAAEAAAAgABIAAAAAAAEAAAAhABIAAAADAAEAAAA=")
+tile_map_data = PackedByteArray("AAAAAAAAAAADAAEAAAABAAAAAAACAAEAAAACAAAAAAACAAEAAAADAAAAAAACAAEAAAAEAAAAAAACAAEAAAAFAAAAAAACAAEAAAAGAAAAAAACAAEAAAAHAAAAAAACAAEAAAAIAAAAAAACAAEAAAAJAAAAAAACAAEAAAAKAAAAAAACAAEAAAALAAAAAAACAAEAAAAMAAAAAAACAAEAAAANAAAAAAACAAEAAAAOAAAAAAACAAEAAAAPAAAAAAACAAEAAAAQAAAAAAACAAEAAAARAAAAAAACAAEAAAASAAAAAAACAAEAAAATAAAAAAACAAEAAAAUAAAAAAACAAEAAAAVAAAAAAACAAEAAAAWAAAAAAACAAEAAAAXAAAAAAACAAEAAAAYAAAAAAACAAEAAAAZAAAAAAACAAEAAAAaAAAAAAACAAEAAAAbAAAAAAACAAEAAAAcAAAAAAACAAEAAAAdAAAAAAACAAEAAAAeAAAAAAACAAEAAAAfAAAAAAACAAEAAAAgAAAAAAACAAEAAAAhAAAAAAADAAEAAAAAAAEAAAAAAAEAAAAhAAEAAAAAAAEAAAAAAAIAAAAAAAEAAAAhAAIAAAAAAAEAAAAAAAMAAAAAAAEAAAAhAAMAAAAAAAEAAAAAAAQAAAAAAAEAAAAhAAQAAAAAAAEAAAAAAAUAAAAAAAEAAAAhAAUAAAAAAAEAAAAAAAYAAAAAAAEAAAAhAAYAAAAAAAEAAAAAAAcAAAAAAAEAAAAhAAcAAAAAAAEAAAAAAAgAAAAAAAEAAAAhAAgAAAAAAAEAAAAAAAkAAAAAAAEAAAAhAAkAAAAAAAEAAAAAAAoAAAAAAAEAAAAhAAoAAAAAAAEAAAAAAAsAAAAAAAEAAAAhAAsAAAAAAAEAAAAAAAwAAAAAAAEAAAAhAAwAAAAAAAEAAAAAAA0AAAAAAAEAAAAhAA0AAAAAAAEAAAAAAA4AAAAAAAEAAAAhAA4AAAAAAAEAAAAAAA8AAAAAAAEAAAAhAA8AAAAAAAEAAAAAABAAAAAAAAEAAAAhABAAAAAAAAEAAAAAABEAAAAAAAEAAAAhABEAAAAAAAEAAAAAABIAAAADAAEAAAABABIAAAAAAAEAAAACABIAAAAAAAEAAAADABIAAAAAAAEAAAAEABIAAAAAAAEAAAAFABIAAAAAAAEAAAAGABIAAAAAAAEAAAAHABIAAAAAAAEAAAAIABIAAAAAAAEAAAAJABIAAAAAAAEAAAAKABIAAAAAAAEAAAALABIAAAAAAAEAAAAMABIAAAAAAAEAAAANABIAAAAAAAEAAAAOABIAAAAAAAEAAAAPABIAAAAAAAEAAAAQABIA//////////8RABIA//////////8SABIAAAAAAAEAAAATABIAAAAAAAEAAAAUABIAAAAAAAEAAAAVABIAAAAAAAEAAAAWABIAAAAAAAEAAAAXABIAAAAAAAEAAAAYABIAAAAAAAEAAAAZABIAAAAAAAEAAAAaABIAAAAAAAEAAAAbABIAAAAAAAEAAAAcABIAAAAAAAEAAAAdABIAAAAAAAEAAAAeABIAAAAAAAEAAAAfABIAAAAAAAEAAAAgABIAAAAAAAEAAAAhABIAAAADAAEAAAA=")
 tile_set = ExtResource("2_or5ks")
 
 [node name="Props" type="Node2D" parent="." unique_id=1936304257]
 y_sort_enabled = true
 
-[node name="CityWindow1" parent="Props" unique_id=883283605 instance=ExtResource("3_wci0w")]
+[node name="CityWindow1" type="Node2D" parent="Props" unique_id=883283605 instance=ExtResource("3_wci0w")]
 position = Vector2(32, 18)
 
-[node name="Chair1" parent="Props" unique_id=1341760907 instance=ExtResource("4_nxfsa")]
+[node name="Chair1" type="StaticBody2D" parent="Props" unique_id=1341760907 instance=ExtResource("4_nxfsa")]
 position = Vector2(150, 100)
 
-[node name="ExecDesk1" parent="Props" unique_id=603848880 instance=ExtResource("5_0psmc")]
+[node name="ExecDesk1" type="StaticBody2D" parent="Props" unique_id=603848880 instance=ExtResource("5_0psmc")]
 position = Vector2(150, 136)
 
-[node name="StickyNote1" parent="Props" unique_id=243700945 instance=ExtResource("6_ehf36")]
+[node name="StickyNote1" type="Node2D" parent="Props" unique_id=243700945 instance=ExtResource("6_ehf36")]
 position = Vector2(174, 138)
 
-[node name="Plant1" parent="Props" unique_id=1855270211 instance=ExtResource("7_apq2v")]
+[node name="Plant1" type="StaticBody2D" parent="Props" unique_id=1855270211 instance=ExtResource("7_apq2v")]
 position = Vector2(36, 104)
 
-[node name="Plant2" parent="Props" unique_id=1855270212 instance=ExtResource("7_apq2v")]
+[node name="Plant2" type="StaticBody2D" parent="Props" unique_id=1855270212 instance=ExtResource("7_apq2v")]
 position = Vector2(508, 104)
 
-[node name="Table1" parent="Props" unique_id=1998799916 instance=ExtResource("8_usd7h")]
+[node name="Table1" type="StaticBody2D" parent="Props" unique_id=1998799916 instance=ExtResource("8_usd7h")]
 position = Vector2(430, 108)
 
-[node name="Rug1" parent="Props" unique_id=198983218 instance=ExtResource("9_kkrdu")]
-position = Vector2(167, 155)
+[node name="Rug1" type="Node2D" parent="Props" unique_id=198983218 instance=ExtResource("9_kkrdu")]
+position = Vector2(164, 170)
 
-[node name="Plant3" parent="Props" unique_id=1855270213 instance=ExtResource("7_apq2v")]
+[node name="Plant3" type="StaticBody2D" parent="Props" unique_id=1855270213 instance=ExtResource("7_apq2v")]
 position = Vector2(36, 210)
 
-[node name="Sofa1" parent="Props" unique_id=124966093 instance=ExtResource("10_w5afp")]
+[node name="Sofa1" type="StaticBody2D" parent="Props" unique_id=124966093 instance=ExtResource("10_w5afp")]
 position = Vector2(60, 250)
 
-[node name="Table2" parent="Props" unique_id=1998799917 instance=ExtResource("8_usd7h")]
+[node name="Table2" type="StaticBody2D" parent="Props" unique_id=1998799917 instance=ExtResource("8_usd7h")]
 position = Vector2(60, 270)
 
-[node name="BarCart1" parent="Props" unique_id=1389336291 instance=ExtResource("11_djto5")]
+[node name="BarCart1" type="StaticBody2D" parent="Props" unique_id=1389336291 instance=ExtResource("11_djto5")]
 position = Vector2(496, 214)
 
-[node name="Sofa2" parent="Props" unique_id=124966094 instance=ExtResource("10_w5afp")]
+[node name="Sofa2" type="StaticBody2D" parent="Props" unique_id=124966094 instance=ExtResource("10_w5afp")]
 position = Vector2(486, 262)
 
-[node name="Return" parent="Props" unique_id=1925929971 instance=ExtResource("12_keke3")]
+[node name="Return" type="Area2D" parent="Props" unique_id=1925929971 groups=["door"] instance=ExtResource("12_keke3")]
 position = Vector2(272, 296)
 rotation = 3.1415927
+monitorable = false
+script = ExtResource("13_amvgg")
 target_level = "res://game/levels/executive_floor/executive_floor.tscn"
 target_spawn = &"returned"
 art = ExtResource("14_83wwc")

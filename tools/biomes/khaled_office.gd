@@ -8,8 +8,8 @@ const BIOME := {
 	"node": "KhaledOffice",
 	"title": "KHALED'S OFFICE",
 	# Cold, and the only ramp in the game with no warmth anywhere in it. Every
-	# floor below has a temperature - the bullpen's worn brown, the executive
-	# floor's mahogany, the dev floor's pale wood - and this one is charcoal
+	# floor below has a temperature - asset recovery's worn brown, the executive
+	# floor's mahogany, the innovation lab's pale wood - and this one is charcoal
 	# and glass going up to a blue-white, so the room reads as a place that was
 	# specified rather than furnished.
 	"ramp": ["0a0b0f", "1b1e26", "343946", "5c6373", "9aa2b2", "e8ecf3"],

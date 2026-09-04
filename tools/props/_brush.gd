@@ -11,7 +11,7 @@ extends RefCounted
 ## Fixed colours that appear in SEVERAL props are here too; a colour one prop
 ## owns outright (the cooler's water, the plant's leaves) lives in that prop's
 ## own file. Everything else comes off the biome's ramp through shade(), so the
-## same painter yields a lobby-blue desk and a bullpen-brown one.
+## same painter yields a lobby-blue desk and a asset-recovery brown one.
 
 const Biomes := preload("res://tools/biomes.gd")
 

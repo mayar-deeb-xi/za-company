@@ -12,7 +12,7 @@ const BIOME := {
 	"floor_band": Vector2(0.02, 0.42),
 	# Hellfire has TWO doors now. It used to be the end of the chain, so these
 	# enemies could line the far wall from the one spawn you ever arrived on
-	# and nobody walked past them; sitting between the bullpen and the
+	# and nobody walked past them; sitting between asset recovery and the
 	# executive floor, the walk from door to door goes straight up the middle
 	# of the room, and every sight radius in here has to clear the lane at
 	# x 246-300 the way every office floor's does.
@@ -21,7 +21,7 @@ const BIOME := {
 	# x < 166 or x > 380, a wraith's 120 means x < 126 or x > 420, and the
 	# warden's 130 - the longest look in the game - means x < 116 or x > 430.
 	# They are also kept off the colonnade's own x (64-80, 144-160, 384-400,
-	# 464-480 at the row they stand in), which is the bullpen's lesson: an
+	# 464-480 at the row they stand in), which is asset recovery's lesson: an
 	# enemy parked behind 48 px of column cannot be seen at all.
 	"enemies": [
 		{"type": "regular", "at": Vector2(44, 48)},

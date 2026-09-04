@@ -1,0 +1,20 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_4vpgj"]
+_data = PackedByteArray("AAADAAUAAAABAAAADgAAAA8AAAB8AAAAUklGRnQAAABXRUJQVlA4TGgAAAAvDYADEEegqJEkNbbMBo5+p6CNJDV1jK+BX23bRm7ycmzv/r/7+Q8AsOZ8+6kKFoqZeLj/vxkNbCLZijQWOAXggPpKuIQQEZOt70e0CiL6PwE4hbbWSv9w7/tp3kejewMFwClUMwvgFA==")
+size_override = Vector2(14, 15)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oeofj"]
+size = Vector2(11, 5)
+
+[node name="Chair" type="StaticBody2D" unique_id=62300169]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=688285693]
+position = Vector2(-7, -15)
+texture = SubResource("PortableCompressedTexture2D_4vpgj")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=912404451]
+position = Vector2(0, -2.5)
+shape = SubResource("RectangleShape2D_oeofj")

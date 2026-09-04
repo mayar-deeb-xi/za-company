@@ -139,7 +139,7 @@ position = Vector2(272, 296)
 rotation = 3.1415927
 monitorable = false
 script = ExtResource("13_u5qtm")
-target_level = "res://game/levels/bullpen/bullpen.tscn"
+target_level = "res://game/levels/asset_recovery/asset_recovery.tscn"
 target_spawn = &"returned"
 art = ExtResource("15_cxa8a")
 

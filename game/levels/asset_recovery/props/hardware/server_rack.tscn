@@ -1,0 +1,20 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_a24up"]
+_data = PackedByteArray("AAADAAUAAAABAAAAFgAAACAAAAC0AAAAUklGRqwAAABXRUJQVlA4TJ8AAAAvFcAHEG+gqJEkZZkOnuT9pJ0wtY0kNe8dNiOjPSqgf0VtIznb+28X1/FHcDjmPwDAvRcRESJiMveoFswVEYp066zey//few/Y1tae5GQDHAawCVLSee3M4ToMLR0148UDA0T0n2jaZnF1e0OleV6Sc90kS6VRugrnAfryCOcCZT3PGQnA7/Lx2z/nITOHZz/3eIZVURV4LmAFK/ZUEgAA")
+size_override = Vector2(22, 32)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nua46"]
+size = Vector2(18, 7)
+
+[node name="ServerRack" type="StaticBody2D" unique_id=1831563508]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=551589399]
+position = Vector2(-11, -32)
+texture = SubResource("PortableCompressedTexture2D_a24up")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=422434813]
+position = Vector2(0, -3.5)
+shape = SubResource("RectangleShape2D_nua46")

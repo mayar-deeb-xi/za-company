@@ -7,7 +7,7 @@ const BIOME := {
 	"node": "ConflictResolution",
 	"title": "CONFLICT RESOLUTION",
 	# The only room in the game with no colour in it at all. Every other floor
-	# has a cast - the lobby blue, the bullpen brown, the call floor green -
+	# has a cast - the lobby blue, asset recovery brown, the call floor green -
 	# and this one is plain concrete and rubber, so the single warm thing in it
 	# is the paint on the floor. That is the whole look: grey room, red ring.
 	"ramp": ["121212", "272727", "474747", "757575", "a5a5a5", "dcdcdc"],

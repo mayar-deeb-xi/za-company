@@ -30,7 +30,7 @@
   maintenance floor's hardware and junk, the call floor's phones and its lit
   wallboard, the media team's glass partitioning, edit bays, ring lights and
   paper backdrop, the gym's punch bags, weight racks and the boxing ring
-  painted on its floor, the dev floor's workstations, coffee machine,
+  painted on its floor, the innovation lab's workstations, coffee machine,
   whiteboard diagram and build board, the executive floor's awards cabinets,
   boardroom table, drinks trolley, founder's portrait and rug, the penthouse's
   city window, its one bare desk and the note lying face down on it, the signs

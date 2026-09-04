@@ -83,7 +83,7 @@ static func _pillar(spec: Dictionary) -> Image:
 ## A 16x48 cubicle divider: fabric panel in a metal frame, on feet. DESIGN.md's
 ## "dividers as columns" for the open-plan floors - the same slot in the level
 ## that holds a pillar downstairs, because what a room uses to break up its
-## floor is exactly what changes between a lobby and a bullpen.
+## floor is exactly what changes between a lobby and a recovery floor.
 ##
 ## Shorter in the frame than the pillar and the column deliberately: a divider
 ## is something you see over, and drawing it floor-to-ceiling would wall the

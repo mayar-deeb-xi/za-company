@@ -22,7 +22,7 @@ const BIOME := {
 	# Barely any: worn carpet tile, not carpet.
 	"runner": 0.10,
 	# DESIGN.md's "densest columns" - eighteen dividers in three rows, half
-	# again as many as the bullpen's full colonnade, which is what makes this a
+	# again as many as asset recovery's full colonnade, which is what makes this a
 	# maze rather than an open plan. The xs are the generator's own, and they
 	# are what keeps the room legal: the nearest divider to the door line sits
 	# at x 232 and the next at 312, so the straight walk between the doors

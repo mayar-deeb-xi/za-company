@@ -74,7 +74,7 @@ game/levels/
 **A level folder is split by what a file IS, not by its type,** and the split is
 between two groups that behave completely differently. The room is a handful of
 files that never grow. `props/` holds one scene per prop the biome uses and
-grows every time a floor wants new furniture - the bullpen wanted sixteen, which
+grows every time a floor wants new furniture - asset recovery wanted sixteen, which
 buried the five files that say what the level actually is. Inside `props/` the
 scenes sit on the same shelves as their painters in `tools/props/` (the
 generator asks `Props.shelf_of()` where to put each one), so finding a prop's
@@ -87,7 +87,7 @@ right beside its collision shape. There used to be a matching `<prop>_art.tres`
 next to every prop scene, and every one of those had exactly one consumer: its
 own sibling. That is precisely what a sub-resource is for, and the collision box
 was already stored that way - the texture was the odd one out, for no reason.
-Removing them halved a level folder (bullpen 37 files to 21, lobby 28 to 16).
+Removing them halved a level folder (asset recovery 37 files to 21, lobby 28 to 16).
 
 The two doorway textures are the exception and stay as files, because they are
 the one texture assigned **per instance**: the level scene hands `doorway_out`
@@ -107,7 +107,7 @@ are untouched by the choice - only the art differs. The split
 exists because the classical column is most of what makes the marble hall read
 as a hall, and it was also most of what made the office lobby read as a temple.
 What a room uses to break up its floor is exactly what changes between a lobby
-and a bullpen. A biome can also override the colonnade's `columns` layout (a
+and a recovery floor. A biome can also override the colonnade's `columns` layout (a
 furnished room needs the floor a full colonnade takes up), hand in an EMPTY one
 for no colonnade at all (the gym: a tight arena with nothing in it to hide
 behind, and no column scene in its folder either), and ask for a `runner`,
@@ -115,7 +115,7 @@ which tints the central floor band toward the accent so it reads as carpet
 rather than as more of the same stone.
 
 A room can also be divided by FURNITURE rather than by its column style, and
-the shared floor is the case: its media half is walled into two glass-fronted
+the hub is the case: its media half is walled into two glass-fronted
 offices by a run of `partition` props, because a `columns` layout is rows
 times columns and so cannot leave a gap where a door goes. The glass is
 translucent on purpose - a wall is drawn upwards from its foot, so an opaque

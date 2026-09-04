@@ -153,7 +153,7 @@ func _tick(frame: int) -> void:
 			# The blow is dealt directly rather than walked into, because floor
 			# 1 no longer has anything to walk into: the lobby's hazard is gone
 			# and a tutorial room is not allowed one. Hazards are checked two
-			# floors up, on the shared floor, which is the room that has one and
+			# floors up, on the hub, which is the room that has one and
 			# nobody in it.
 			_check("hud: health bar starts full (%s)" % _player().get("health"),
 				_player().get("health") == 100 and _fill().size.x == 66.0
@@ -268,7 +268,7 @@ func _tick(frame: int) -> void:
 			_check("title: the call center announces itself (got '%s')"
 				% _title_text(), _title_text() == "THE CALL CENTER")
 			# DESIGN.md's densest floor, and the density IS the room: eighteen
-			# dividers in three rows rather than the bullpen's twelve in two.
+			# dividers in three rows rather than asset recovery's twelve in two.
 			# Counted, because a maze that lost a row is not a maze.
 			var maze: Array = _level().get_node("Props").get_children().filter(
 				func(n: Node) -> bool: return n.name.begins_with("Column"))
@@ -316,12 +316,12 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		661:
 			_key(KEY_W, false)
-			_check("door: the chain continues on into the shared floor (got %s)"
+			_check("door: the chain continues on into the hub (got %s)"
 				% ("<none>" if _level() == null else _level().name),
-				_level() != null and _level().name == "SharedFloor")
-			_check("title: the shared floor announces itself (got '%s')"
-				% _title_text(), _title_text() == "THE SHARED FLOOR")
-			_check("level: the shared floor is empty of enemies (%d)"
+				_level() != null and _level().name == "TheHub")
+			_check("title: the hub announces itself (got '%s')"
+				% _title_text(), _title_text() == "THE HUB")
+			_check("level: the hub is empty of enemies (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").is_empty())
 			# One room, two halves, and what is checked is that BOTH halves came
@@ -333,7 +333,7 @@ func _tick(frame: int) -> void:
 				"Poster1", "CameraRig1"]
 			var gone: Array = halves.filter(func(n: String) -> bool:
 				return _level().get_node_or_null("Props/" + n) == null)
-			_check("level: both halves of the shared floor are dressed (missing %s)"
+			_check("level: both halves of the hub are dressed (missing %s)"
 				% [gone], gone.is_empty())
 			# The offices are runs of partition segments with a segment left out
 			# for the door, six to a bay. Counted rather than spot-checked,
@@ -368,17 +368,17 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		841:
 			_key(KEY_W, false)
-			_check("door: the chain continues on into the dev floor (got %s)"
+			_check("door: the chain continues on into the innovation lab (got %s)"
 				% ("<none>" if _level() == null else _level().name),
-				_level() != null and _level().name == "DevFloor")
-			_check("title: the dev floor announces itself (got '%s')"
-				% _title_text(), _title_text() == "THE DEV FLOOR")
+				_level() != null and _level().name == "InnovationLab")
+			_check("title: the innovation lab announces itself (got '%s')"
+				% _title_text(), _title_text() == "THE INNOVATION LAB")
 			# Seven workstations, and the count is the check because the pods
 			# ARE the room: two along the north wall, three across the south,
 			# and one either side of the east.
 			var pods: Array = _level().get_node("Props").get_children().filter(
 				func(n: Node) -> bool: return n.name.begins_with("DevDesk"))
-			_check("level: seven workstations on the dev floor (%d)"
+			_check("level: seven workstations on the innovation lab (%d)"
 				% pods.size(), pods.size() == 7)
 			# The two things written on this floor's walls, and the two things
 			# that make it read as an engineering floor rather than an office
@@ -388,12 +388,12 @@ func _tick(frame: int) -> void:
 				"Sofa1"]
 			var wanting: Array = fitted.filter(func(n: String) -> bool:
 				return _level().get_node_or_null("Props/" + n) == null)
-			_check("level: the dev floor is dressed as one (missing %s)"
+			_check("level: the innovation lab is dressed as one (missing %s)"
 				% [wanting], wanting.is_empty())
 			_check("level: it has the power strip and no heart",
 				_level().get_node_or_null("Props/Torch") != null
 					and _level().get_node_or_null("Props/Health") == null)
-			_check("level: the dev floor is empty of enemies for now (%d)"
+			_check("level: the innovation lab is empty of enemies for now (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").is_empty())
 			_player().global_position = Vector2(272, 78)
@@ -439,11 +439,11 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		1001:
 			_key(KEY_W, false)
-			_check("door: the chain continues on into the bullpen (got %s)"
+			_check("door: the chain continues on into asset recovery (got %s)"
 				% ("<none>" if _level() == null else _level().name),
-				_level() != null and _level().name == "Bullpen")
-			_check("title: the bullpen announces itself (got '%s')"
-				% _title_text(), _title_text() == "THE BULLPEN")
+				_level() != null and _level().name == "AssetRecovery")
+			_check("title: asset recovery announces itself (got '%s')"
+				% _title_text(), _title_text() == "ASSET RECOVERY")
 			# The one floor above the lobby that has its people already, and they
 			# are the COMPANY's - office boys, not dungeon guards. The scene path
 			# is what proves that, since build_levels.gd names every enemy
@@ -451,7 +451,7 @@ func _tick(frame: int) -> void:
 			var boys := get_nodes_in_group("enemies")
 			var reskinned: Array = boys.filter(func(e: Node) -> bool:
 				return e.scene_file_path.contains("office_boy"))
-			_check("enemies: the bullpen fields four office boys (%d of %d)"
+			_check("enemies: asset recovery fields four office boys (%d of %d)"
 				% [reskinned.size(), boys.size()],
 				boys.size() == 4 and reskinned.size() == 4)
 			_check("enemies: an office boy is a reskin, so it has a guard's health (%s)"
@@ -471,7 +471,7 @@ func _tick(frame: int) -> void:
 				"CableSpool1", "ScrapPile1", "Debris1", "Notice1"]
 			var absent: Array = junk.filter(func(n: String) -> bool:
 				return _level().get_node_or_null("Props/" + n) == null)
-			_check("level: the bullpen is dressed as a repair floor (missing %s)"
+			_check("level: asset recovery is dressed as a repair floor (missing %s)"
 				% [absent], absent.is_empty())
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)

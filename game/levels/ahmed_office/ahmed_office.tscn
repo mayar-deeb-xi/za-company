@@ -65,7 +65,7 @@ position = Vector2(472, 224)
 position = Vector2(272, 8)
 monitorable = false
 script = ExtResource("5_tk2tj")
-target_level = "res://game/levels/shared_floor/shared_floor.tscn"
+target_level = "res://game/levels/the_hub/the_hub.tscn"
 art = ExtResource("6_7v8hx")
 
 [node name="Return" type="Area2D" parent="Props" unique_id=142416511 groups=["door"] instance=ExtResource("4_o7t6o")]
