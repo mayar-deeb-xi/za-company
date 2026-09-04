@@ -1,3 +1,14 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Export output
+/build/
+/exports/
+*.pck
+*.zip
+
+# OS / sync junk
+desktop.ini
+Thumbs.db
+.DS_Store
