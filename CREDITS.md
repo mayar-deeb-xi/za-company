@@ -4,8 +4,8 @@
 - Author: **profpatonildo**
 - Source: https://opengameart.org/content/pixel-art-top-down-dungeon-tileset-and-rpg-character-with-animations
 - License: **CC0 1.0 Universal** (public domain) - no attribution required, commercial use permitted
-- Files: `game/player/character.png`, `assets/tiles/dungeon.png`, `game/props/jar/jar.png`
-- Editable Aseprite sources kept alongside in `game/player/src/`, `game/props/jar/src/` and `assets/tiles/src/`
+- Files: `game/player/character.png`, `assets/tiles/dungeon.png`, `assets/props/jar/jar.png`
+- Editable Aseprite sources kept alongside in `game/player/src/`, `assets/props/jar/src/` and `assets/tiles/src/`
 - `game/player/character.png` is a **restyle** of that sheet, not the original:
   black curly hair, fair skin, grey shirt, blue jeans. The untouched CC0 sheet is
   kept at `game/player/src/character_cc0.png`; `tools/build_character_sheet.gd`

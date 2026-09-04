@@ -7,7 +7,8 @@ viewport, 2x player camera zoom, pixel snapping on).
 
 - `ui/<screen>/` - one folder per screen; scene + script together
 - `game/` - gameplay; `game/<entity>/` owns its scene, script, art, frames
-- `assets/` - ONLY files shared across features (fonts, tilesets, audio)
+- `assets/` - ONLY files shared across features (fonts, tilesets, audio), plus
+  source art no feature owns yet; it moves into the feature that claims it
 - `autoload/` - global singletons registered in project.godot
 - `tools/` - editor-side generator scripts run headless; never game code
 
@@ -27,33 +28,57 @@ its own tiles, props and spawn markers, and answers two questions - `bounds()`
 for the camera limits and `spawn_position(name)` for where to stand. Nothing in
 game.gd names a specific map beyond `START_LEVEL`.
 
-- `game/levels/level.gd` - base script every level scene runs
-- `game/levels/<biome>/` - the scene plus that biome's tileset and column art
-- `game/props/<name>/` - anything you place *in* a map, shared across biomes:
-  - `door/` - walk-in Area2D; it only emits `travelled`, game.gd does the swap
-  - `column/` - pillar prop, origin at its foot so Y-sorting works
+**A level owns everything in it.** Its folder holds its own tileset, its own
+column and doorway art, and its own `column.tscn` and `door.tscn` - no level
+borrows another's. Levels are meant to diverge: different styles, different
+props, different enemies, doors that lock.
 
-`props/` is a peer of `levels/`, not a child of it, for the same reason enemies
-will be: a prop is placed in a map, it is not part of the map system. Biome
-skins for a shared prop (`door_marble.tres`) stay beside the prop rather than in
-the level that uses them - which level consumes which skin flips whenever CHAIN
-is reordered, and files should not move when that happens.
+```
+game/levels/
+  level.gd            base script every level scene runs
+  door_base.gd        the ONE shared thing: how a door tells game.gd
+  <biome>/
+    <biome>.tscn  door.tscn  column.tscn
+    tileset.tres  column_art.tres  doorway_out.tres  doorway_back.tres
+```
+
+`door_base.gd` is shared because game.gd is what performs the swap, so every
+door has to report it the same way. Everything else about a door is the level's:
+override `can_travel()` in a level's own script for a lock, or restructure that
+level's `door.tscn` freely. A column has no shared behaviour at all and carries
+no script.
 
 Doors are found through the `door` group and levels are typed via `preload`
 rather than by `class_name`: global class names live in an editor-written cache
 that a fresh checkout running headless does not have yet.
 
-Adding a biome: add it to `BIOMES` in build_biomes.gd, then to `LEVELS` and
-`CHAIN` in build_levels.gd. `CHAIN` order is what each door points at, wrapping
-at the end.
+Each level has a door north to the next in `CHAIN` and a door south to the one
+before, so the two ends of the chain have one door instead of two. Doorways sit
+in a gap cut through the wall ring; the door scene carries its own `Seal` body
+across that gap, so the map stays closed whether or not the transition fires -
+and that is the body a locked door will keep. A south door is the same scene
+rotated half a turn, which is why the doorway art is directional rather than
+mirrored.
+
+Spawns are named for how you arrived: `start` (in from the previous level, by
+the south door) and `returned` (back from the next one, by the north door).
+Both sit clear of a threshold so arriving never re-triggers the door.
+
+Adding a biome: one edit to `tools/biomes.gd`, then run build_biomes.gd and
+build_levels.gd. Appending to `CHAIN` gives the previous last level a north door
+automatically.
 
 ## Generated resources - regenerate, don't hand-edit
 
 - `ui/theme/menu_theme.tres`        <- tools/build_ui_theme.gd
 - `game/player/character.png`       <- tools/build_character_sheet.gd
 - `game/player/player_frames.tres`  <- tools/build_player_frames.gd
-- `game/levels/*/[biome]_tileset.tres`, `*_column.tres`,
-  `game/props/door/door_*.tres`     <- tools/build_biomes.gd
+- `game/levels/*/tileset.tres`, `column_art.tres`,
+  `doorway_out.tres`, `doorway_back.tres`
+                                    <- tools/build_biomes.gd
+- `game/levels/*/*.tscn` (level, door, column)
+                                    <- tools/build_levels.gd, see below
+- biome list & chain order          <- tools/biomes.gd (data, edited by hand)
 - project settings & input map      <- tools/setup_project.gd
 
 Run: `<godot> --headless --path . --script res://tools/<script>.gd`
@@ -61,13 +86,14 @@ Run: `<godot> --headless --path . --script res://tools/<script>.gd`
 Biome art is palette-swapped from `assets/tiles/dungeon.png`. Only a handful of
 tiles in that sheet are modular - the rest are pre-composed room motifs that do
 not repeat - so build_biomes.gd copies the verified-seamless ones by coordinate
-and draws columns and doors itself. Its textures are embedded in the `.tres` as
-`PortableCompressedTexture2D` rather than written out as PNGs, so a regenerated
-biome works headless immediately with no `--import` pass.
+and draws columns and doorways itself. Its textures are embedded in the `.tres`
+as `PortableCompressedTexture2D` rather than written out as PNGs, so a
+regenerated biome works headless immediately with no `--import` pass.
 
-`tools/build_levels.gd` is the exception to "regenerate": the level scenes it
-writes are a starting point meant to be dressed by hand in the editor, and
-re-running it overwrites that work. Run it to reset a level or to add a new one.
+`tools/build_levels.gd` is the exception to "regenerate": what it writes - the
+level scene and that level's own door and column scenes - is a starting point
+meant to be dressed by hand in the editor, and re-running it overwrites that
+work. Run it to reset a level or to add a new one.
 
 ## Workflow
 

@@ -1,15 +1,19 @@
 extends SceneTree
-## Regenerates the per-biome tilesets and props (columns, doors).
+## Regenerates each level's own art: tileset, column, and one doorway texture
+## per neighbouring level.
 ## Run: godot --headless --path . --script res://tools/build_biomes.gd
 ##
+## Everything lands in the level's own folder - no level borrows another's art.
 ## Floors and walls are palette-swapped from the shared dungeon sheet, so they
 ## keep the pixel structure of the art the player sprite already matches.
-## Columns and doors have no counterpart in that sheet and are drawn here.
+## Columns and doorways have no counterpart in that sheet and are drawn here.
 ##
 ## Every texture is embedded in its .tres as a lossless
 ## PortableCompressedTexture2D instead of being written out as a PNG: a
 ## regenerated biome is then usable headless straight away, with no --import
 ## pass, which matters because the Godot editor is usually open.
+
+const Biomes := preload("res://tools/biomes.gd")
 
 const SRC := "res://assets/tiles/dungeon.png"
 const TILE := 16
@@ -22,8 +26,8 @@ const FLOOR_PLAIN := Vector2i(11, 11)
 const WALL := Vector2i(7, 6)
 const WALL_ALT := Vector2i(6, 0)
 
-## Atlas layout shared by every biome, so level scenes are theme-agnostic:
-## row 0 walks, row 1 blocks.
+## Atlas layout shared by every biome, so the level generator can paint any of
+## them with the same coordinates: row 0 walks, row 1 blocks.
 const ATLAS := {
 	"floor": Vector2i(0, 0),
 	"floor_alt": Vector2i(1, 0),
@@ -38,34 +42,9 @@ const ATLAS_COLS := 4
 const ATLAS_ROWS := 2
 const SOLID_ROW := 1
 
-## Value ramps. Index 0 is deepest shadow, the last entry is the brightest
-## highlight; source pixels are mapped onto the ramp by luminance.
-##
-## `gamma` bends that mapping before the ramp is sampled. Above 1.0 it pushes
-## mid-tones down while leaving the top of the ramp intact, so hellfire walls
-## read as scorched brick with embers still glowing in the mortar.
-##
-## `floor_band` then confines floors to a slice of the ramp. Walls and props may
-## use its full length, but a floor that reaches the hot end of the hellfire
-## ramp turns into gold flooring, and the player sprite stops reading against
-## it - so hell floors are pinned to the dark half whatever the source tile's
-## own brightness was.
-const BIOMES := {
-	"marble": {
-		"dir": "res://game/levels/marble_hall",
-		"ramp": ["2f323c", "6e7382", "a9aebb", "d5d9e2", "f0f2f6", "ffffff"],
-		"accent": "e8c56a",
-		"gamma": 0.85,
-		"floor_band": Vector2(0.30, 1.00),
-	},
-	"hellfire": {
-		"dir": "res://game/levels/hellfire",
-		"ramp": ["120309", "3a0b12", "71160f", "b8300d", "f0761a", "ffd45e"],
-		"accent": "ffd45e",
-		"gamma": 2.1,
-		"floor_band": Vector2(0.02, 0.42),
-	},
-}
+## A doorway fills the 2-tile gap cut in the wall ring, plus one row of floor.
+const DOOR_W := 32
+const DOOR_H := 32
 
 
 func _initialize() -> void:
@@ -89,23 +68,30 @@ func _initialize() -> void:
 	print("source luminance range %.3f .. %.3f" % [lo, hi])
 
 	var failed := false
-	for name in BIOMES:
-		print(name, ":")
-		failed = _build_biome(name, sheet, lo, hi) or failed
+	for level in Biomes.CHAIN:
+		print(level, ":")
+		failed = _build(level, sheet, lo, hi) or failed
 	quit(1 if failed else 0)
 
 
-func _build_biome(name: String, sheet: Image, lo: float, hi: float) -> bool:
-	var spec: Dictionary = BIOMES[name]
-	var dir: String = spec["dir"]
+func _build(level: String, sheet: Image, lo: float, hi: float) -> bool:
+	var spec: Dictionary = Biomes.BIOMES[level]
+	var dir: String = Biomes.dir(level)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 
-	var atlas := _build_atlas(sheet, spec, lo, hi)
 	var bad := false
-	bad = _save(_tileset(atlas), "%s/%s_tileset.tres" % [dir, name]) or bad
-	bad = _save(_texture(_column(spec)), "%s/%s_column.tres" % [dir, name]) or bad
-	bad = _save(_texture(_door(spec)),
-		"res://game/props/door/door_%s.tres" % name) or bad
+	bad = _save(_tileset(_build_atlas(sheet, spec, lo, hi)),
+		"%s/tileset.tres" % dir) or bad
+	bad = _save(_texture(_column(spec)), "%s/column_art.tres" % dir) or bad
+
+	# One doorway per neighbour: this level's own stonework framing a passage
+	# lit by the colour of the place on the other side of it.
+	for pair in [["out", Biomes.next_of(level)], ["back", Biomes.previous_of(level)]]:
+		if pair[1] == "":
+			continue
+		var beyond := Color(Biomes.BIOMES[pair[1]]["accent"])
+		bad = _save(_texture(_doorway(spec, beyond)),
+			"%s/doorway_%s.tres" % [dir, pair[0]]) or bad
 	return bad
 
 
@@ -138,8 +124,7 @@ func _build_atlas(sheet: Image, spec: Dictionary, lo: float, hi: float) -> Image
 				var shade := pow(clampf(t, 0.0, 1.0), gamma)
 				if key.begins_with("floor"):
 					shade = band.x + shade * (band.y - band.x)
-				img.set_pixel(to.x * TILE + x, to.y * TILE + y,
-					_ramp(ramp, shade, 1.0))
+				img.set_pixel(to.x * TILE + x, to.y * TILE + y, _ramp(ramp, shade, 1.0))
 
 	# wall_lit gets a bright top course: it caps the wall ring so the inner
 	# face of the border catches light instead of reading as a flat band.
@@ -223,46 +208,57 @@ func _column_half_width(y: int) -> int:
 	return 7
 
 
-## A 32x48 arch. The opening is filled with the accent colour so a doorway
-## reads as lit from the far side - the biome you are about to walk into.
-func _door(spec: Dictionary) -> Image:
-	var w := 32
-	var h := 48
-	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+## A 32x32 doorway that drops into the 2-tile gap cut in the wall ring.
+##
+## The top half is the gap itself - this biome's stone cut into jambs either
+## side of a passage lit by `beyond`, brightest deep in. The bottom half is the
+## floor in front of it, carrying only the light that spills out, so the level's
+## own floor tiles still show through.
+##
+## Directional on purpose: a south door is this same texture rotated half a
+## turn, which puts the wall half back in the wall and the spill back on the
+## floor. Mirroring it would not.
+func _doorway(spec: Dictionary, beyond: Color) -> Image:
+	var img := Image.create(DOOR_W, DOOR_H, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
 	var ramp: Array = spec["ramp"]
 	var gamma: float = spec["gamma"]
-	var accent := Color(spec["accent"])
-	var cx := 15.5
-	for y in h:
-		for x in w:
-			if not _in_arch(x, y, cx, 13.0, 18):
-				continue
-			if _in_arch(x, y, cx, 9.0, 14):
-				# Fade the glow from bright at the threshold to dark at the top.
-				var g := clampf(float(y - 12) / float(h - 16), 0.0, 1.0)
-				img.set_pixel(x, y, accent.darkened(1.0 - g * 0.85))
-				continue
-			var t := 0.62
-			if absf(float(x) - cx) > 12.0 or y >= h - 2:
-				t = 0.10
-			elif float(x) < cx:
-				t = 0.86 - 0.02 * float(y % 6)
-			else:
-				t = 0.40 - 0.02 * float(y % 6)
-			if y % 6 == 0:
-				t = minf(t, 0.24)              # mortar course
-			img.set_pixel(x, y, _ramp(ramp, t, gamma))
+	var jamb_w := 6
+	var cx := (DOOR_W - 1) / 2.0
+	for y in DOOR_H:
+		for x in DOOR_W:
+			var in_jamb := x < jamb_w or x >= DOOR_W - jamb_w
+			if y < TILE:
+				if in_jamb:
+					img.set_pixel(x, y, _ramp(ramp, _jamb_shade(x, y, cx), gamma))
+				elif x == jamb_w or x == DOOR_W - jamb_w - 1:
+					img.set_pixel(x, y, _ramp(ramp, 0.04, gamma))      # inner lip
+				else:
+					# Brightest at the far end, dimming towards the threshold, so
+					# the gap reads as depth rather than a painted rectangle.
+					img.set_pixel(x, y,
+						beyond.darkened(0.10 + float(y) / float(TILE) * 0.45))
+			elif in_jamb and y < TILE + 4:
+				# Feet of the jambs, sitting on the floor.
+				img.set_pixel(x, y, _ramp(ramp, _jamb_shade(x, y, cx) * 0.7, gamma))
+			elif not in_jamb:
+				# Light thrown onto the floor, fading out over one tile.
+				var fade := 1.0 - float(y - TILE) / float(TILE)
+				var across := 1.0 - clampf(absf(float(x) - cx) / 10.0, 0.0, 1.0)
+				var spill := beyond
+				spill.a = fade * fade * across * 0.55
+				img.set_pixel(x, y, spill)
 	return img
 
 
-## Rounded-top opening: a half-circle cap of `radius` sitting on straight jambs.
-func _in_arch(x: int, y: int, cx: float, radius: float, top: int) -> bool:
-	if y < top - int(radius):
-		return false
-	if y < top:
-		return Vector2(float(x) - cx, float(y - top)).length() <= radius
-	return absf(float(x) - cx) <= radius
+## Jamb stonework: lit from the left like everything else, coursed, and darker
+## than the wall around it so the gap reads as cut into the ring.
+func _jamb_shade(x: int, y: int, cx: float) -> float:
+	if x <= 1 or x >= DOOR_W - 2:
+		return 0.10                                                # outer edge
+	if y % 5 == 0:
+		return 0.15                                                # mortar course
+	return 0.58 if float(x) < cx else 0.30
 
 
 func _ramp(ramp: Array, t: float, gamma: float) -> Color:

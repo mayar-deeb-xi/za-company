@@ -16,7 +16,7 @@ const FADE_SECONDS := 0.28
 ## declare: global class names come from a cache the editor writes, which a
 ## fresh checkout running headless does not have yet.
 const LevelType := preload("res://game/levels/level.gd")
-const DoorType := preload("res://game/props/door/door.gd")
+const DoorType := preload("res://game/levels/door_base.gd")
 
 @onready var _player: CharacterBody2D = $Player
 @onready var _camera: Camera2D = $Player/Camera2D

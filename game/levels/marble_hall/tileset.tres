@@ -1,12 +1,12 @@
 [gd_resource type="TileSet" format=4]
 
-[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_hfx6m"]
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_mogxl"]
 _data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAABkAQAAUklGRlwBAABXRUJQVlA4TFABAAAvP8AHAH+gtpGkNvse7yEkJ0aNJElp9Ax3j4gJURRJUpu9TM7wwwAemP/4/48+8cZb43jvufeaffLO66WopTpnMK1YCCIKzrAQwK22bXkSr/NtkOPSZgEhMgHu9iCdM8Vf4u6yArXzD4CuQJ/K3veJp4/ovwO3bSPJmlMzs+sAfUU/sU+UiT9ie18x/GYrjpqIrRh+KyvakRLls7XDKR2sWsZs+0lyWi6XWr/pwXTjK6cUq6XDKR2sdqyL1tdVMBAMio8uA+L/CeM3RryDiAIQ/0hwHwBT4oME98jlcmnxDuLhIXkj3tEQ1oB+zD1Y6ylAz6PgHtrlcnX+hmjiJqgn4c+4hzFaAZgR7woGg+K5R81lxDeeJ0gYQrdEDZ/y3ENf53I3tYgPBrXiHuu1iF++eHgQzzfco7iytSU+SJBDE5om5XXQ+DNAT8o6Rejn6xk=")
 size_override = Vector2(64, 32)
 keep_compressed_buffer = true
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_aneqq"]
-texture = SubResource("PortableCompressedTexture2D_hfx6m")
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4ftxe"]
+texture = SubResource("PortableCompressedTexture2D_mogxl")
 0:0/0 = 0
 1:0/0 = 0
 2:0/0 = 0
@@ -22,4 +22,4 @@ texture = SubResource("PortableCompressedTexture2D_hfx6m")
 
 [resource]
 physics_layer_0/collision_layer = 1
-sources/0 = SubResource("TileSetAtlasSource_aneqq")
+sources/0 = SubResource("TileSetAtlasSource_4ftxe")

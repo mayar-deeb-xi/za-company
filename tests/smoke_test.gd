@@ -87,10 +87,14 @@ func _process(_delta: float) -> bool:
 				_level() != null and _level().name == "MarbleHall")
 			_check("level: player spawned on the level's start marker (%s)"
 				% _player().global_position,
-				_player().global_position == Vector2(320, 288))
+				_player().global_position == Vector2(272, 240))
 			_check("level: camera limits come from the wall ring (%d x %d)"
 				% [_camera().limit_right, _camera().limit_bottom],
-				_camera().limit_right == 640 and _camera().limit_bottom == 352)
+				_camera().limit_right == 544 and _camera().limit_bottom == 304)
+			_check("level: doorway is a real gap in the wall ring, sealed by the door",
+				(_level().get_node("Walls") as TileMapLayer)
+					.get_cell_source_id(Vector2i(16, 0)) == -1
+				and _level().get_node("Props/Exit/Seal") is StaticBody2D)
 			_mark = _player().global_position
 			_key(KEY_W, true)
 		50:
@@ -131,29 +135,39 @@ func _process(_delta: float) -> bool:
 				% _player().global_position.x,
 				_player().global_position.x > 16.0)
 			_key(KEY_A, false)
-			# Walk into the arch at the top of the hall. Approaching on foot
-			# rather than teleporting onto the trigger is the point: this is the
-			# path a player actually takes through the door.
-			_player().global_position = Vector2(320, 84)
+			# Walk north into the doorway. Approaching on foot rather than
+			# teleporting onto the threshold is the point: this is the path a
+			# player actually takes through the door.
+			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		300:
 			_key(KEY_W, false)
-			_check("door: walking into the arch loads hellfire (got %s)"
+			_check("door: walking north into the doorway loads hellfire (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "Hellfire")
-			_check("door: player arrives on the destination's start marker (%s)"
+			_check("door: player arrives by hellfire's south door (%s)"
 				% _player().global_position,
-				_player().global_position.distance_to(Vector2(320, 288)) < 40.0)
+				_player().global_position.distance_to(Vector2(272, 240)) < 40.0)
 			_check("door: transition faded back in",
 				(current_scene.get_node("Transition/Fade") as ColorRect).color.a < 0.01)
 			_check("door: camera limits reapplied for the new level (%d x %d)"
 				% [_camera().limit_right, _camera().limit_bottom],
-				_camera().limit_right == 640 and _camera().limit_bottom == 352)
+				_camera().limit_right == 544 and _camera().limit_bottom == 304)
+			# Turn round and walk back out the way we came in.
+			_key(KEY_S, true)
+		380:
+			_key(KEY_S, false)
+			_check("return: hellfire's south door goes back to the marble hall (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "MarbleHall")
+			_check("return: player arrives by the door they left through (%s)"
+				% _player().global_position,
+				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		306:
+		386:
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		318:
+		398:
 			_check("pause: Main Menu returns to the menu, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
