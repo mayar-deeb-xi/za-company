@@ -104,7 +104,7 @@ const CHARACTERS := [
 			"eye": "c9578f",                            # pink
 			"shirt": "7d7c46", "shirt_dark": "51502c",  # olive shirt
 			"pants": "e8e8ec", "pants_dark": "bcbcc8",  # white pants
-			"hair_style": "straight", "beard": false, "build": "normal",
+			"hair_style": "straight", "beard": false, "build": "skinny",
 		},
 	},
 ]
