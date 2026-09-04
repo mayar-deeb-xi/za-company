@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bqohpo8qwk6se"
-path="res://.godot/imported/jar.png-d25aa925d736ad1ea345e24711896baf.ctex"
+uid="uid://qkkcsc02n71v"
+path="res://.godot/imported/character_cc0.png-272d16f1161904e29f96d876f472d43f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/tiles/jar.png"
-dest_files=["res://.godot/imported/jar.png-d25aa925d736ad1ea345e24711896baf.ctex"]
+source_file="res://game/player/src/character_cc0.png"
+dest_files=["res://.godot/imported/character_cc0.png-272d16f1161904e29f96d876f472d43f.ctex"]
 
 [params]
 

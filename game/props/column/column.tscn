@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://game/props/column/column.gd" id="1_column"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_plinth"]
+size = Vector2(11, 6)
+
+[node name="Column" type="StaticBody2D"]
+script = ExtResource("1_column")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+centered = false
+position = Vector2(-8, -48)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_plinth")
