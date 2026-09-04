@@ -365,7 +365,7 @@ Difficulty must never scale either side of that equality. The wildfire's ember
 tone is `SRC_FIRE`, recoloured to the spark colour darkened, so each
 character's fire matches their sparks - violet for the black-haired, gold for
 the bald. One test-side consequence: a synthesized Space left held is no longer
-inert - smoke_test's mash window must end on a release, or the player stands in
+inert - a test's mash window must end on a release, or the player stands in
 the charge stance for every later movement check.
 
 **Every enemy owns its sprite sheet**, and this is the one place enemies and the
@@ -419,8 +419,8 @@ time, and hellfire is four of those plus two wraiths and a warden - where things
 start following you and taking your legs. Positions are chosen so
 no enemy's sight reaches the door line, the spawns or the torch and heart stands
 - the straight walk between the two doors stays safe in every biome, and the
-smoke test's early sections depend on nothing aggroing until the combat run
-deliberately walks into range. The warden's 130 px is the longest look in the
+flow and combat tests depend on nothing aggroing until a check deliberately
+walks into range. The warden's 130 px is the longest look in the
 game and every walkable line in the marble hall falls inside it, which is the
 reason that room has none.
 
@@ -556,7 +556,7 @@ rather than waiting for `_process`, because the tree is paused while the panel
 is open. Two footer lines on the panel state the split outright.
 
 The panel must fit the 640x360 design viewport - it is at 325px with three rows,
-and the smoke test measures it so a fourth row cannot quietly overflow.
+and test_menu.gd measures it so a fourth row cannot quietly overflow.
 
 ## Workflow
 
@@ -574,9 +574,24 @@ and the smoke test measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1.
-- Run the smoke test after any change to scenes, input, or scene flow:
-  `<godot> --headless --path . --fixed-fps 60 --script res://tests/smoke_test.gd`
+  They drive the real game with synthesized input and exit 0/1. Three suites,
+  each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
+  settings backup, node getters) and overriding `_tick(frame)`:
+  - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
+    select, the settings panel from the main menu. Never enters the game.
+  - `test_flow.gd` - select -> game -> movement -> pause -> zoom -> torch ->
+    heart -> death -> wall -> doors -> lives -> game over.
+  - `test_combat.gd` - guard telegraph and interrupts, wraith, warden, heavy.
+- Run all after any change to scenes, input, or scene flow:
+  `<godot> --headless --path . --script res://tests/run_all.gd`
+  (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).
+- **One suite = one Godot process = one clean world.** That is the design, not
+  a convenience: when everything was one smoke test, each section had to leave
+  the game exactly as the next expected, and the failures that produced were in
+  the test - a combo's lunge drifting the player out of a later section's
+  geometry, an enemy spawned into a still-resolving swing. Keep new checks in
+  the suite whose world they need; start a new suite rather than making one
+  file's sections depend on each other.
 - When synthesizing key events set BOTH `keycode` and `physical_keycode`
   (custom actions match physical, built-in ui_* match keycode).
 - Level checks read the swapped-in child through `has_method("spawn_position")`
@@ -586,18 +601,18 @@ and the smoke test measures it so a fourth row cannot quietly overflow.
   is compiled before the autoload list reaches the compiler. Reach them with
   `root.get_node("/root/Settings")` and `call()`. Ordinary game scripts, loaded
   later as part of a scene, use the names normally.
-- Anything touching `user://` must put it back. The smoke test backs up
-  `settings.cfg` before it starts, clears it so the run is a clean install, and
-  restores it at the end - so running tests never changes how the developer's
-  own game opens, and their own saved zoom never decides whether a check about
-  framing passes.
+- Anything touching `user://` must put it back. helpers.gd backs up
+  `settings.cfg` before each suite, clears it so the run is a clean install,
+  and restores it at the end - so running tests never changes how the
+  developer's own game opens, and their own saved zoom never decides whether a
+  check about framing passes.
 - Setting `current_scene` is NOT enough to make `/root/<Autoload>` resolvable;
   it works from `_process`, not from `_initialize`, and the null that comes
   back there fails quietly enough to look like a logic bug.
 - `OptionButton.select()` does not emit `item_selected`; simulate a click by
   emitting it too, or the handler never runs.
-- Split into `tests/test_<area>.gd` files when smoke_test.gd gets slow or
-  crowded. Adopt gdUnit4 only once there is real unit-testable logic
-  (damage math, inventory, save data) - not for scene wiring.
+- Adopt gdUnit4 only once there is real unit-testable logic beyond what the
+  suites cover in passing (inventory, save data) - not for scene wiring, which
+  is the hard part here and which no framework drives.
 - `tests/` and `tools/` must be excluded from export presets when we set
   up exports.
