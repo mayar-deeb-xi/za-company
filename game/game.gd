@@ -17,10 +17,15 @@ const FADE_SECONDS := 0.28
 ## fresh checkout running headless does not have yet.
 const LevelType := preload("res://game/levels/level.gd")
 const DoorType := preload("res://game/levels/door_base.gd")
+const PlayerType := preload("res://game/player/player.gd")
+const HudType := preload("res://ui/hud/hud.gd")
+const PauseMenuType := preload("res://ui/pause_menu/pause_menu.gd")
 
-@onready var _player: CharacterBody2D = $Player
+@onready var _player: PlayerType = $Player
 @onready var _camera: Camera2D = $Camera2D
 @onready var _fade: ColorRect = $Transition/Fade
+@onready var _hud: HudType = $HUD/Hud
+@onready var _pause_menu: PauseMenuType = $PauseMenu
 
 var _level: LevelType
 var _travelling := false
@@ -29,11 +34,32 @@ var _bounds := Rect2()
 
 
 func _ready() -> void:
+	# Re-applied live: zoom is reachable from the pause menu, with the game
+	# sitting right behind the panel.
+	Display.changed.connect(_apply_zoom)
+	# The player owns its health and lives; game.gd only wires them to the HUD
+	# and decides what a death means. Pushed once here so the HUD never starts
+	# blank.
+	_player.health_changed.connect(_hud.set_health)
+	_player.lives_changed.connect(_hud.set_lives)
+	_player.died.connect(_on_player_died)
+	_hud.set_health(_player.health, PlayerType.MAX_HEALTH)
+	_hud.set_lives(_player.lives, PlayerType.MAX_LIVES)
 	_enter_level(START_LEVEL, &"start")
 
 
 func _process(_delta: float) -> void:
 	_camera.global_position = _camera_target()
+
+
+## Zoom decides how much world fits on screen, which in turn decides whether
+## _camera_target() frames the room whole or follows the player around it.
+func _apply_zoom() -> void:
+	_camera.zoom = Vector2.ONE * Display.zoom()
+	# Reposition here rather than waiting for _process: the tree is paused while
+	# the settings panel is open, so nothing else would run until it closes.
+	_camera.global_position = _camera_target()
+	_camera.reset_smoothing()
 
 
 ## Fade out, swap, fade back in. Input is suspended for the whole trip so a key
@@ -51,6 +77,51 @@ func _travel(level_path: String, spawn: StringName) -> void:
 	await out.finished
 
 	_enter_level(level_path, spawn)
+
+	var back := create_tween()
+	back.tween_property(_fade, "color:a", 0.0, FADE_SECONDS)
+	await back.finished
+
+	_player.set_physics_process(true)
+	_travelling = false
+
+
+## Each death spends one of the player's lives. While any remain, dying costs
+## the ground covered in this room; the last one ends the run.
+func _on_player_died() -> void:
+	if _player.lose_life() > 0:
+		_respawn()
+	else:
+		_game_over()
+
+
+## The run is over: the pause overlay comes up as a death screen (YOU DIED,
+## CONTINUE disabled) with the room still visible behind it, frozen by the
+## tree pause. Leaving through MAIN MENU builds a fresh player next run, so
+## health and lives reset by construction.
+func _game_over() -> void:
+	_player.velocity = Vector2.ZERO
+	_pause_menu.show_game_over()
+
+
+## Death with lives to spare is a fade back to this room's start marker with
+## full health. Reuses the travel fade so dying and arriving read as the same
+## kind of cut.
+func _respawn() -> void:
+	# A death can land mid-transition (a hazard right beside a door); let the
+	# travel finish rather than fight it for the fade.
+	while _travelling:
+		await get_tree().process_frame
+	_travelling = true
+	_player.set_physics_process(false)
+	_player.velocity = Vector2.ZERO
+
+	var out := create_tween()
+	out.tween_property(_fade, "color:a", 1.0, FADE_SECONDS)
+	await out.finished
+
+	_player.global_position = _level.spawn_position(&"start")
+	_player.revive()
 
 	var back := create_tween()
 	back.tween_property(_fade, "color:a", 0.0, FADE_SECONDS)
@@ -84,8 +155,7 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 	# smoothing history - otherwise the camera glides across from wherever the
 	# level we just left had put it.
 	_bounds = _level.bounds()
-	_camera.global_position = _camera_target()
-	_camera.reset_smoothing()
+	_apply_zoom()
 
 
 ## Where the camera wants to be, decided per axis:

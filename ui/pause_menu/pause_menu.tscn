@@ -44,6 +44,7 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="Heading" type="Label" parent="Root/CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
 text = "PAUSED"

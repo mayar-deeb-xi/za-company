@@ -5,6 +5,18 @@ extends CharacterBody2D
 const SPEED := 90.0
 const ACCELERATION := 900.0
 const FRICTION := 1100.0
+const MAX_HEALTH := 100
+## How many times health can hit zero before the run ends. The player node is
+## built fresh by each new game scene, so a new run starts full again.
+const MAX_LIVES := 3
+## Grace period after a hit. Doubles as the drain rate for standing in a
+## hazard: hazards push damage every physics frame and this window is what
+## meters that pressure into discrete hits.
+const HURT_GRACE_SECONDS := 0.8
+
+signal health_changed(health: int, max_health: int)
+signal lives_changed(lives: int, max_lives: int)
+signal died
 
 ## Preloaded by path rather than via `class_name`, like the rest of the project.
 const Roster := preload("res://game/player/characters/roster.gd")
@@ -13,9 +25,13 @@ enum Facing { DOWN, UP, SIDE }
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 
+var health := MAX_HEALTH
+var lives := MAX_LIVES
+
 var _facing: Facing = Facing.DOWN
 var _facing_left := false
 var _attacking := false
+var _grace := 0.0
 
 
 func _ready() -> void:
@@ -34,6 +50,12 @@ func _apply_character() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _grace > 0.0:
+		_grace = maxf(_grace - delta, 0.0)
+		# Blink for as long as the grace lasts, so a hit reads on the character
+		# and not only on the HUD bar.
+		_sprite.visible = _grace == 0.0 or fmod(_grace, 0.2) >= 0.1
+
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 
 	if not _attacking and Input.is_action_just_pressed("attack"):
@@ -92,3 +114,39 @@ func _on_animation_finished() -> void:
 	if _attacking:
 		_attacking = false
 		_apply_animation("idle")
+
+
+func take_damage(amount: int) -> void:
+	if _grace > 0.0 or health <= 0:
+		return
+	health = maxi(health - amount, 0)
+	_grace = HURT_GRACE_SECONDS
+	health_changed.emit(health, MAX_HEALTH)
+	if health == 0:
+		died.emit()
+
+
+## Returns false when nothing was healed, so a pickup can stay on the floor
+## for a player who is already full.
+func heal(amount: int) -> bool:
+	if health >= MAX_HEALTH or health <= 0:
+		return false
+	health = mini(health + amount, MAX_HEALTH)
+	health_changed.emit(health, MAX_HEALTH)
+	return true
+
+
+## One life gone. Returns how many remain, so game.gd can choose respawn or
+## game over from the same call instead of racing a second signal.
+func lose_life() -> int:
+	lives = maxi(lives - 1, 0)
+	lives_changed.emit(lives, MAX_LIVES)
+	return lives
+
+
+## Back to full, called by game.gd when it respawns the player after a death.
+func revive() -> void:
+	health = MAX_HEALTH
+	_grace = 0.0
+	_sprite.visible = true
+	health_changed.emit(health, MAX_HEALTH)

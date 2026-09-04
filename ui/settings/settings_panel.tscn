@@ -36,7 +36,7 @@ layout_mode = 2
 
 [node name="Menu" type="VBoxContainer" parent="CenterContainer/Panel"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="Heading" type="Label" parent="CenterContainer/Panel/Menu"]
 layout_mode = 2
@@ -57,18 +57,18 @@ layout_mode = 2
 [node name="Rows" type="GridContainer" parent="CenterContainer/Panel/Menu"]
 layout_mode = 2
 theme_override_constants/h_separation = 16
-theme_override_constants/v_separation = 10
+theme_override_constants/v_separation = 8
 columns = 2
 
 [node name="ModeLabel" type="Label" parent="CenterContainer/Panel/Menu/Rows"]
 layout_mode = 2
 size_flags_vertical = 1
 theme_type_variation = &"SettingLabel"
-text = "DISPLAY"
+text = "WINDOW MODE"
 
 [node name="ModeOption" type="OptionButton" parent="CenterContainer/Panel/Menu/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 36)
+custom_minimum_size = Vector2(180, 32)
 layout_mode = 2
 
 [node name="WindowSizeLabel" type="Label" parent="CenterContainer/Panel/Menu/Rows"]
@@ -79,13 +79,30 @@ text = "WINDOW SIZE"
 
 [node name="WindowSizeOption" type="OptionButton" parent="CenterContainer/Panel/Menu/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 36)
+custom_minimum_size = Vector2(180, 32)
 layout_mode = 2
 
-[node name="Note" type="Label" parent="CenterContainer/Panel/Menu"]
+[node name="ZoomLabel" type="Label" parent="CenterContainer/Panel/Menu/Rows"]
+layout_mode = 2
+size_flags_vertical = 1
+theme_type_variation = &"SettingLabel"
+text = "ZOOM"
+
+[node name="ZoomOption" type="OptionButton" parent="CenterContainer/Panel/Menu/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 32)
+layout_mode = 2
+
+[node name="NoteSize" type="Label" parent="CenterContainer/Panel/Menu"]
 layout_mode = 2
 theme_type_variation = &"Footer"
-text = "ONLY APPLIES IN WINDOWED MODE"
+text = "WINDOW SIZE SCALES THE PICTURE"
+horizontal_alignment = 1
+
+[node name="NoteZoom" type="Label" parent="CenterContainer/Panel/Menu"]
+layout_mode = 2
+theme_type_variation = &"Footer"
+text = "ZOOM CHANGES HOW MUCH YOU SEE"
 horizontal_alignment = 1
 
 [node name="BackGap" type="Control" parent="CenterContainer/Panel/Menu"]
@@ -94,7 +111,7 @@ layout_mode = 2
 
 [node name="BackButton" type="Button" parent="CenterContainer/Panel/Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(176, 40)
+custom_minimum_size = Vector2(176, 36)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "BACK"

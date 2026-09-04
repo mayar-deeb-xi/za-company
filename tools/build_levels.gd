@@ -15,6 +15,8 @@ const Biomes := preload("res://tools/biomes.gd")
 
 const LEVEL_SCRIPT := "res://game/levels/level.gd"
 const DOOR_SCRIPT := "res://game/levels/door_base.gd"
+const HAZARD_SCRIPT := "res://game/levels/hazard_base.gd"
+const PICKUP_SCRIPT := "res://game/levels/pickup_base.gd"
 
 const TILE := 16
 const COLS := 34                 # 544 px
@@ -46,6 +48,12 @@ const RUNNER_BOTTOM := 10
 const SPAWN_START_Y := 240       # by the south door: you came from the previous level
 const SPAWN_RETURN_Y := 80       # by the north door: you came back from the next one
 
+## The starting-point dressing for health: one torch to hurt on and one heart
+## to heal on, either side of the room, both clear of the door line and the
+## colonnade so the straight walk between the doors stays safe.
+const TORCH_POS := Vector2(120, 152)
+const HEALTH_POS := Vector2(424, 152)
+
 
 func _initialize() -> void:
 	var failed := false
@@ -65,6 +73,8 @@ func _build(level: String) -> bool:
 	var bad := false
 	bad = _write_column_scene(dir) or bad
 	bad = _write_door_scene(dir) or bad
+	bad = _write_torch_scene(dir) or bad
+	bad = _write_health_scene(dir) or bad
 	bad = _write_level_scene(level, dir, tileset) or bad
 	return bad
 
@@ -141,6 +151,63 @@ func _write_door_scene(dir: String) -> bool:
 	return _pack(root, "%s/door.tscn" % dir)
 
 
+## The level's own standing torch: walking into the fire hurts. Behaviour is
+## the shared hazard_base.gd; the art, shape and anything extra are this
+## level's to change.
+func _write_torch_scene(dir: String) -> bool:
+	var root := Area2D.new()
+	root.name = "Torch"
+	root.monitorable = false
+	root.set_script(load(HAZARD_SCRIPT))
+
+	var sprite := Sprite2D.new()
+	sprite.name = "Sprite2D"
+	sprite.centered = false
+	# Foot origin, like the column: what Y-sorting reads.
+	sprite.position = Vector2(-8, -24)
+	sprite.texture = load("%s/torch_art.tres" % dir) as Texture2D
+	root.add_child(sprite)
+	sprite.owner = root
+
+	var shape := CollisionShape2D.new()
+	shape.name = "CollisionShape2D"
+	shape.position = Vector2(0, -3)
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(10, 6)
+	shape.shape = rect
+	root.add_child(shape)
+	shape.owner = root
+
+	return _pack(root, "%s/torch.tscn" % dir)
+
+
+## The level's own heal pickup, on the shared pickup_base.gd.
+func _write_health_scene(dir: String) -> bool:
+	var root := Area2D.new()
+	root.name = "Health"
+	root.monitorable = false
+	root.set_script(load(PICKUP_SCRIPT))
+
+	var sprite := Sprite2D.new()
+	sprite.name = "Sprite2D"
+	sprite.centered = false
+	sprite.position = Vector2(-4, -8)
+	sprite.texture = load("%s/health_art.tres" % dir) as Texture2D
+	root.add_child(sprite)
+	sprite.owner = root
+
+	var shape := CollisionShape2D.new()
+	shape.name = "CollisionShape2D"
+	shape.position = Vector2(0, -4)
+	var circle := CircleShape2D.new()
+	circle.radius = 6.0
+	shape.shape = circle
+	root.add_child(shape)
+	shape.owner = root
+
+	return _pack(root, "%s/health_item.tscn" % dir)
+
+
 func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
 	var root := Node2D.new()
 	root.name = Biomes.BIOMES[level]["node"]
@@ -166,6 +233,18 @@ func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
 			column.position = Vector2(col * TILE + TILE / 2, (row + 1) * TILE)
 			props.add_child(column)
 			column.owner = root
+
+	var torch := _reload("%s/torch.tscn" % dir).instantiate()
+	torch.name = "Torch"
+	torch.position = TORCH_POS
+	props.add_child(torch)
+	torch.owner = root
+
+	var health := _reload("%s/health_item.tscn" % dir).instantiate()
+	health.name = "Health"
+	health.position = HEALTH_POS
+	props.add_child(health)
+	health.owner = root
 
 	var door_scene := _reload("%s/door.tscn" % dir)
 	var next: String = Biomes.next_of(level)

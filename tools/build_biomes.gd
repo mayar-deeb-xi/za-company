@@ -1,6 +1,6 @@
 extends SceneTree
-## Regenerates each level's own art: tileset, column, and one doorway texture
-## per neighbouring level.
+## Regenerates each level's own art: tileset, column, torch, heal pickup, and
+## one doorway texture per neighbouring level.
 ## Run: godot --headless --path . --script res://tools/build_biomes.gd
 ##
 ## Everything lands in the level's own folder - no level borrows another's art.
@@ -46,6 +46,25 @@ const SOLID_ROW := 1
 const DOOR_W := 32
 const DOOR_H := 32
 
+## Flame colours shared by every biome's torch: fire has to read as fire
+## everywhere, while the stand under it is the biome's own stone.
+const FLAME_EDGE := Color("b8300d")
+const FLAME_BODY := Color("f0761a")
+const FLAME_CORE := Color("ffd45e")
+
+## The heal pickup, identical in every biome on purpose: red means health
+## everywhere. Row-major mask, X = filled.
+const HEART := [
+	".XX...XX.",
+	"XXXX.XXXX",
+	"XXXXXXXXX",
+	"XXXXXXXXX",
+	".XXXXXXX.",
+	"..XXXXX..",
+	"...XXX...",
+	"....X....",
+]
+
 
 func _initialize() -> void:
 	var sheet := Image.load_from_file(ProjectSettings.globalize_path(SRC))
@@ -83,6 +102,8 @@ func _build(level: String, sheet: Image, lo: float, hi: float) -> bool:
 	bad = _save(_tileset(_build_atlas(sheet, spec, lo, hi)),
 		"%s/tileset.tres" % dir) or bad
 	bad = _save(_texture(_column(spec)), "%s/column_art.tres" % dir) or bad
+	bad = _save(_texture(_torch(spec)), "%s/torch_art.tres" % dir) or bad
+	bad = _save(_texture(_heart()), "%s/health_art.tres" % dir) or bad
 
 	# One doorway per neighbour: this level's own stonework framing a passage
 	# lit by the colour of the place on the other side of it.
@@ -193,6 +214,64 @@ func _column(spec: Dictionary) -> Image:
 			elif y == 0 or y == 10 or y == 40:
 				t = maxf(t, 0.92)
 			img.set_pixel(left + dx, y, _ramp(ramp, t, gamma))
+	return img
+
+
+## A 16x24 standing torch: biome-stone stem and plinth with fire on top.
+## Drawn, like the column - the source sheet has no torch to sample.
+func _torch(spec: Dictionary) -> Image:
+	var img := Image.create(16, 24, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var ramp: Array = spec["ramp"]
+	var gamma: float = spec["gamma"]
+
+	# Stem, lit from the left like everything else in the biome.
+	for y in range(10, 22):
+		img.set_pixel(7, y, _ramp(ramp, 0.62, gamma))
+		img.set_pixel(8, y, _ramp(ramp, 0.28, gamma))
+	# Bowl the flame sits in.
+	for x in range(5, 11):
+		img.set_pixel(x, 9, _ramp(ramp, 0.20, gamma))
+		img.set_pixel(x, 10, _ramp(ramp, 0.75 if x <= 7 else 0.40, gamma))
+	# Plinth.
+	for x in range(6, 10):
+		img.set_pixel(x, 21, _ramp(ramp, 0.85, gamma))
+	for x in range(5, 11):
+		img.set_pixel(x, 22, _ramp(ramp, 0.50 if x <= 7 else 0.30, gamma))
+		img.set_pixel(x, 23, _ramp(ramp, 0.10, gamma))
+
+	# Teardrop flame, hottest low and centred, dark-edged all round so it holds
+	# its shape against both a pale and a hot floor.
+	var half_widths := [1, 2, 3, 3, 3, 3, 2]
+	for i in half_widths.size():
+		var y: int = 2 + i
+		var hw: int = half_widths[i]
+		for x in range(8 - hw, 8 + hw):
+			var c := FLAME_BODY
+			if i == 0 or x == 8 - hw or x == 8 + hw - 1:
+				c = FLAME_EDGE
+			elif i >= 3 and x >= 7 and x <= 8:
+				c = FLAME_CORE
+			img.set_pixel(x, y, c)
+	return img
+
+
+## The HEART mask coloured: lighter lobes, darker point, one pink glint.
+func _heart() -> Image:
+	var w: int = HEART[0].length()
+	var img := Image.create(w, HEART.size(), false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for y in HEART.size():
+		for x in w:
+			if HEART[y][x] != "X":
+				continue
+			var c := Color("c8283c")
+			if y <= 1:
+				c = Color("e0465a")
+			elif y >= 5:
+				c = Color("8c1626")
+			img.set_pixel(x, y, c)
+	img.set_pixel(2, 1, Color("f2a0aa"))
 	return img
 
 

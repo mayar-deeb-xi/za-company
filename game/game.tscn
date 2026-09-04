@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://game/game.gd" id="1_game"]
 [ext_resource type="PackedScene" path="res://game/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://ui/pause_menu/pause_menu.tscn" id="3_pause"]
+[ext_resource type="PackedScene" path="res://ui/hud/hud.tscn" id="4_hud"]
 
 [node name="Game" type="Node2D"]
 y_sort_enabled = true
@@ -28,17 +29,7 @@ position_smoothing_speed = 8.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
-[node name="Hint" type="Label" parent="HUD"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0.65098, 0.639216, 0.686275, 1)
-offset_top = -14.0
-text = "WASD / arrows to move    Space to attack    Walk into the arch    Esc to pause"
-horizontal_alignment = 1
-vertical_alignment = 2
+[node name="Hud" parent="HUD" instance=ExtResource("4_hud")]
 
 [node name="Transition" type="CanvasLayer" parent="."]
 layer = 5

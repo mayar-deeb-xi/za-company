@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/levels/pickup_base.gd" id="1_ngx5o"]
+[ext_resource type="Texture2D" path="res://game/levels/marble_hall/health_art.tres" id="2_2oo77"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_cldik"]
+radius = 6.0
+
+[node name="Health" type="Area2D" unique_id=931838755]
+monitorable = false
+script = ExtResource("1_ngx5o")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1556564669]
+position = Vector2(-4, -8)
+texture = ExtResource("2_2oo77")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1812695184]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_cldik")

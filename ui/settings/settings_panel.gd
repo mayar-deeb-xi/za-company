@@ -12,6 +12,7 @@ signal closed
 
 @onready var _mode: OptionButton = %ModeOption
 @onready var _window_size: OptionButton = %WindowSizeOption
+@onready var _zoom: OptionButton = %ZoomOption
 @onready var _back_button: Button = %BackButton
 
 ## Parallel to the window-size dropdown's items.
@@ -26,6 +27,7 @@ func _ready() -> void:
 	visible = false
 	_mode.item_selected.connect(_on_mode_selected)
 	_window_size.item_selected.connect(_on_window_size_selected)
+	_zoom.item_selected.connect(_on_zoom_selected)
 	_back_button.pressed.connect(close)
 
 
@@ -75,7 +77,26 @@ func _refresh() -> void:
 		_window_size.add_item(_size_label(_sizes[i]), i)
 	_window_size.select(_sizes.find(current))
 
+	_zoom.clear()
+	for i in Display.ZOOMS.size():
+		_zoom.add_item(_zoom_label(Display.ZOOMS[i]), i)
+	_zoom.select(maxi(Display.ZOOMS.find(Display.zoom()), 0))
+
 	_update_window_size_availability()
+
+
+## A percentage, which is what a game exposing zoom at all conventionally shows,
+## and the only labelling here that stays true. A name like "WHOLE ROOM"
+## describes the zoom against the size of the room the player happens to be in,
+## so it turns into a lie the first time a level is bigger than the screen -
+## while the setting only ever controlled the magnification. Two extra steps sit
+## between 100% and 200%, because that jump is otherwise straight from the whole
+## room to a quarter of it.
+##
+## Derived from Display.ZOOMS rather than kept beside it, so adding a level is
+## one edit and no dropdown row can go missing or land out of order.
+func _zoom_label(level: float) -> String:
+	return "%d%%" % roundi(level * 100.0)
 
 
 ## Names the whole multiple alongside the pixels. The game renders at a fixed
@@ -103,3 +124,8 @@ func _on_mode_selected(index: int) -> void:
 func _on_window_size_selected(index: int) -> void:
 	if index >= 0 and index < _sizes.size():
 		Display.set_window_size(_sizes[index])
+
+
+func _on_zoom_selected(index: int) -> void:
+	if index >= 0 and index < Display.ZOOMS.size():
+		Display.set_zoom(Display.ZOOMS[index])

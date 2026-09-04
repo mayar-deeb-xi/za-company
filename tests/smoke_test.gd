@@ -1,6 +1,7 @@
 extends SceneTree
-## End-to-end smoke test: menu -> character select -> game -> move -> attack ->
-## pause -> settings -> wall -> door -> menu -> settings.
+## End-to-end smoke test: menu -> character select -> game -> move -> pause ->
+## settings -> attack -> torch -> heart -> death -> wall -> door -> menu ->
+## settings -> new run -> three deaths -> game over.
 ##
 ## Run headless (see CLAUDE.md for the binary path):
 ##   <godot> --headless --path . --fixed-fps 60 --script res://tests/smoke_test.gd
@@ -16,6 +17,7 @@ var _f := 0
 var _checks := 0
 var _fails: Array[String] = []
 var _mark := Vector2.ZERO
+var _health_mark := 0
 var _settings_backup := PackedByteArray()
 var _settings_existed := false
 
@@ -49,10 +51,32 @@ func _camera() -> Camera2D:
 	return current_scene.get_node("Camera2D")
 
 
+## The red part of the HUD health bar; its width is the readout players get.
+func _fill() -> ColorRect:
+	return current_scene.get_node("HUD/Hud").get_node("%Fill")
+
+
+func _percent() -> Label:
+	return current_scene.get_node("HUD/Hud").get_node("%Percent")
+
+
+func _hearts() -> HBoxContainer:
+	return current_scene.get_node("HUD/Hud").get_node("%Hearts")
+
+
+func _heart_tex(i: int) -> Texture2D:
+	return (_hearts().get_child(i) as TextureRect).texture
+
+
 ## How much world the camera actually shows, which is what decides whether a
 ## level is framed whole or scrolled.
 func _view_size() -> Vector2:
 	return root.get_visible_rect().size / _camera().zoom
+
+
+## An autoload's constants are not properties, so get() cannot reach them.
+func _zooms() -> Array:
+	return _autoload("Display").get_script().get_script_constant_map()["ZOOMS"]
 
 
 func _pause_menu() -> CanvasLayer:
@@ -81,6 +105,18 @@ func _panel(host: Node) -> Control:
 
 func _mode_option(host: Node) -> OptionButton:
 	return _panel(host).get_node("%ModeOption")
+
+
+## The size the UI is designed against, which is not what a headless run's
+## viewport reports.
+func _base_viewport() -> Vector2:
+	return Vector2(
+		ProjectSettings.get_setting("display/window/size/viewport_width", 640),
+		ProjectSettings.get_setting("display/window/size/viewport_height", 360))
+
+
+func _zoom_option(host: Node) -> OptionButton:
+	return _panel(host).get_node("%ZoomOption")
 
 
 func _window_size_option(host: Node) -> OptionButton:
@@ -143,6 +179,16 @@ func _initialize() -> void:
 func _process(_delta: float) -> bool:
 	_f += 1
 	match _f:
+		1:
+			# From here the run is a clean install: whatever the developer has
+			# picked for themselves - a zoom of 2 will do it - must not decide
+			# whether a check about framing or window size passes.
+			# _restore_settings() hands their own file back at the end.
+			#
+			# Frame 1 rather than _initialize: setting current_scene is not
+			# enough to make an autoload reachable by absolute path, and the
+			# null that comes back there fails quietly.
+			_autoload("Settings").call("clear")
 		4:
 			_check("menu: Play has keyboard focus",
 				(current_scene.get_node("%PlayButton") as Button).has_focus())
@@ -232,9 +278,42 @@ func _process(_delta: float) -> bool:
 		122:
 			_check("settings: opens from the pause menu, still paused",
 				_panel(_pause_menu()).visible and paused)
-			_check("settings: display dropdown takes focus",
+			_check("settings: window mode dropdown takes focus",
 				(_panel(_pause_menu()).get_node("%ModeOption") as OptionButton)
 					.has_focus())
+			# Off the centre line first, or following and centring would put the
+			# camera in the same place and the next check would prove nothing.
+			_player().global_position = Vector2(100, 200)
+			# Zoom in from the pause menu. It has to take effect immediately,
+			# with the tree paused, or the player cannot see what they picked.
+			_pick(_zoom_option(_pause_menu()), _zooms().find(2.0))
+		125:
+			_check("zoom: 200%% takes effect while still paused (zoom %s)"
+				% _camera().zoom, _camera().zoom == Vector2(2, 2) and paused)
+			_check("zoom: the view is now smaller than the level (%s vs %s)"
+				% [_view_size(), _level().bounds().size],
+				_view_size().x < _level().bounds().size.x)
+			_check("zoom: camera follows the player instead of centring (%s)"
+				% _camera().global_position,
+				_camera().global_position.x != _level().bounds().get_center().x)
+			_check("zoom: choice is saved", _saved(&"zoom", 0) == 2)
+			# Labelled by percentage, not by how much of a room it happens to
+			# show: a name like "WHOLE ROOM" stops being true once a level is
+			# bigger than the screen.
+			_check("zoom: every level in Display.ZOOMS is offered, as a percentage",
+				_zoom_option(_pause_menu()).item_count == _zooms().size()
+				and _zoom_option(_pause_menu())
+					.get_item_text(_zooms().find(1.5)) == "150%")
+			# The jump straight from the whole room to a quarter of it was too big.
+			var between: Array = _zooms().filter(func(z): return z > 1.0 and z < 2.0)
+			_check("zoom: two steps sit between 100%% and 200%% (%s)" % [between],
+				between.size() == 2)
+			_pick(_zoom_option(_pause_menu()), 0)
+		127:
+			_check("zoom: back to 100%% re-centres on the level (%s)"
+				% _camera().global_position,
+				_camera().zoom == Vector2(1, 1)
+					and _camera().global_position == _level().bounds().get_center())
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
 		128:
@@ -256,9 +335,52 @@ func _process(_delta: float) -> bool:
 		177:
 			_check("attack: releases back to idle (got %s)" % _sprite().animation,
 				String(_sprite().animation).begins_with("idle"))
+			# Health: stand in the torch, then on the heart, then die outright.
+			# One landing is one tick - the player's grace window is the meter.
+			_check("hud: health bar starts full (%s)" % _player().get("health"),
+				_player().get("health") == 100 and _fill().size.x == 66.0
+					and _percent().text == "100%")
+			_check("hud: three full hearts to start (%s lives, %d icons)"
+				% [_player().get("lives"), _hearts().get_child_count()],
+				_player().get("lives") == 3 and _hearts().get_child_count() == 3
+					and _heart_tex(0) == _heart_tex(2))
+			_player().global_position = Vector2(120, 152)
+		190:
+			_check("torch: standing in the flame costs health (%s)"
+				% _player().get("health"), _player().get("health") < 100)
+			_check("hud: the bar tracks the hit (%.0f px, '%s')"
+				% [_fill().size.x, _percent().text],
+				_fill().size.x < 66.0
+					and _percent().text == "%d%%" % int(_player().get("health")))
+			_health_mark = _player().get("health")
+			_player().global_position = Vector2(424, 152)
+		200:
+			_check("heart: healed on touch (%d -> %s)"
+				% [_health_mark, _player().get("health")],
+				int(_player().get("health")) > _health_mark)
+			_check("heart: consumed on pickup",
+				_level().get_node_or_null("Props/Health") == null)
+		230:
+			# Waited out the torch hit's grace window, so this lethal hit lands.
+			_player().call("take_damage", 9999)
+		280:
+			_check("death: respawns at the level's start with full health (%s at %s)"
+				% [_player().get("health"), _player().global_position],
+				_player().get("health") == 100
+					and _player().global_position.distance_to(Vector2(272, 240)) < 1.0)
+			_check("death: hud bar refilled (%.0f px, '%s')"
+				% [_fill().size.x, _percent().text],
+				_fill().size.x == 66.0 and _percent().text == "100%")
+			_check("death: one life spent, hud dims the last heart (%s left)"
+				% _player().get("lives"),
+				_player().get("lives") == 2
+					and _heart_tex(0) == _heart_tex(1)
+					and _heart_tex(2) != _heart_tex(0))
+			_check("death: fade cleared",
+				(current_scene.get_node("Transition/Fade") as ColorRect).color.a < 0.01)
 			_player().global_position = Vector2(40, 180)
 			_key(KEY_A, true)
-		267:
+		370:
 			_check("collision: tiled left wall blocks the player (x=%.1f)"
 				% _player().global_position.x,
 				_player().global_position.x > 16.0)
@@ -268,7 +390,7 @@ func _process(_delta: float) -> bool:
 			# player actually takes through the door.
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		342:
+		445:
 			_key(KEY_W, false)
 			_check("door: walking north into the doorway loads hellfire (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -283,7 +405,7 @@ func _process(_delta: float) -> bool:
 				_camera().global_position == _level().bounds().get_center())
 			# Turn round and walk back out the way we came in.
 			_key(KEY_S, true)
-		422:
+		525:
 			_key(KEY_S, false)
 			_check("return: hellfire's south door goes back to the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -293,24 +415,31 @@ func _process(_delta: float) -> bool:
 				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		428:
+		531:
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		440:
+		543:
 			_check("pause: Main Menu returns to the menu, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
 					and not paused)
 			(current_scene.get_node("%SettingsButton") as Button).pressed.emit()
-		446:
+		549:
 			_check("settings: opens from the main menu too",
 				_panel(current_scene).visible)
+			# Measured against the DESIGN viewport, not the runtime one: a
+			# headless window reports its own size, and 640x360 is the size the
+			# panel has to survive. Guards the page as more rows are added.
+			var box := _panel(current_scene).get_node(
+				"CenterContainer/Panel") as Control
+			_check("settings: the panel fits the 640x360 screen (%s)" % box.size,
+				box.size.x <= _base_viewport().x and box.size.y <= _base_viewport().y)
 			_check("settings: display dropdown offers windowed and fullscreen",
 				_mode_option(current_scene).item_count == 2)
 			_check("settings: window size dropdown is populated (%d entries)"
 				% _window_size_option(current_scene).item_count,
 				_window_size_option(current_scene).item_count > 0)
 			_pick(_mode_option(current_scene), 1)
-		452:
+		555:
 			_check("settings: choosing fullscreen is saved",
 				_saved(&"fullscreen", false) == true)
 			# Window size means nothing in fullscreen, so the dropdown has to
@@ -318,19 +447,19 @@ func _process(_delta: float) -> bool:
 			_check("settings: window size dropdown tracks the window mode",
 				_window_size_option(current_scene).disabled == _is_fullscreen())
 			_pick(_mode_option(current_scene), 0)
-		458:
+		561:
 			_check("settings: switching back to windowed is saved",
 				_saved(&"fullscreen", true) == false)
 			_check("settings: window size dropdown is usable in windowed mode",
 				not _window_size_option(current_scene).disabled)
 			_pick(_window_size_option(current_scene), 0)
-		464:
+		567:
 			_check("settings: window size choice is applied and saved (%s)"
 				% _first_window_size(),
 				_display_window_size() == _first_window_size()
 				and _saved(&"window_size", Vector2i.ZERO) == _first_window_size())
 			(_panel(current_scene).get_node("%BackButton") as Button).pressed.emit()
-		470:
+		573:
 			_check("settings: Back closes the panel and restores focus",
 				not _panel(current_scene).visible
 				and (current_scene.get_node("%SettingsButton") as Button).has_focus())
@@ -344,5 +473,48 @@ func _process(_delta: float) -> bool:
 				and saved.get_value("display", "fullscreen", true) == false
 				and saved.get_value("display", "window_size", Vector2i.ZERO)
 					== _first_window_size())
+			# Second run: spend every life and prove the run actually ends.
+			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
+		585:
+			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
+		597:
+			_check("lives: a new run starts with all three again (%s)"
+				% _player().get("lives"),
+				current_scene.scene_file_path == "res://game/game.tscn"
+					and _player().get("lives") == 3)
+			_player().call("take_damage", 9999)
+		650:
+			_check("lives: first death respawns with two left (%s, health %s)"
+				% [_player().get("lives"), _player().get("health")],
+				_player().get("lives") == 2 and _player().get("health") == 100)
+			_player().call("take_damage", 9999)
+		700:
+			_check("lives: second death respawns with one left (%s)"
+				% _player().get("lives"),
+				_player().get("lives") == 1 and _player().get("health") == 100)
+			_player().call("take_damage", 9999)
+		750:
+			_check("game over: the last death raises the death screen, paused",
+				paused and _pause_menu().get_node("Root").visible)
+			_check("game over: heading reads YOU DIED (got '%s')"
+				% (_pause_menu().get_node("%Heading") as Label).text,
+				(_pause_menu().get_node("%Heading") as Label).text == "YOU DIED")
+			_check("game over: CONTINUE is disabled, MAIN MENU has focus",
+				(_pause_menu().get_node("%ContinueButton") as Button).disabled
+					and (_pause_menu().get_node("%MainMenuButton") as Button)
+						.has_focus())
+			# Escape must not dismiss a finished run - there is nothing to
+			# resume back into.
+			_key(KEY_ESCAPE, true)
+			_key(KEY_ESCAPE, false)
+		756:
+			_check("game over: Escape cannot dismiss the death screen",
+				paused and _pause_menu().get_node("Root").visible)
+			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
+		768:
+			_check("game over: MAIN MENU leaves the run, unpaused (got %s)"
+				% current_scene.scene_file_path,
+				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
+					and not paused)
 			_finish()
 	return false

@@ -19,6 +19,23 @@ const SCALES := [2, 3, 4, 5, 6]
 ## Matches the window override in project.godot.
 const DEFAULT_SCALE := 3
 
+## Camera zoom, which is the setting that actually changes how much of a level
+## is on screen - window size only makes the same picture bigger.
+##
+## At 1 the 640x360 view holds a whole 544x304 room and the camera sits still;
+## anything above that scrolls. 4 shows about ten tiles across, which is as close
+## as a top-down game can get before the player stops seeing what is walking at
+## them.
+##
+## 1.25 and 1.5 are the deliberate exception to the whole-numbers rule that
+## governs SCALES. A fractional zoom means a source pixel covers 1.25 screen
+## pixels, so neighbouring pixels are drawn at different sizes - the cost of
+## having any step at all between "the whole room" and "half of it", since 2 is
+## the next whole number and it is a big jump. Both are quarters, so a 16 px tile
+## still lands on a whole 20 or 24 px, which keeps the tile grid itself even.
+const ZOOMS := [1.0, 1.25, 1.5, 2.0, 3.0, 4.0]
+const DEFAULT_ZOOM := 1.0
+
 const FULLSCREEN_MODES := [
 	DisplayServer.WINDOW_MODE_FULLSCREEN,
 	DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN,
@@ -82,6 +99,20 @@ func set_window_size(size: Vector2i) -> void:
 	Settings.set_value(SECTION, &"window_size", size)
 	if not is_fullscreen():
 		_resize(size)
+	changed.emit()
+
+
+## How much of the world is on screen. Stored here beside the window settings
+## because it is the same question from the player's side - "how big is the
+## game?" - but applied by game.gd, which is what owns a camera.
+## Cast rather than trusted: a settings.cfg written before the fractional steps
+## existed holds a plain int here.
+func zoom() -> float:
+	return float(Settings.get_value(SECTION, &"zoom", DEFAULT_ZOOM))
+
+
+func set_zoom(level: float) -> void:
+	Settings.set_value(SECTION, &"zoom", level)
 	changed.emit()
 
 
