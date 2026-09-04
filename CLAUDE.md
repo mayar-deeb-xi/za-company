@@ -62,7 +62,7 @@ names live in an editor-written cache a fresh headless checkout does not have.
 
 Adding a floor is a data file in `tools/biomes/` plus a `CHAIN` entry;
 **inserting** one mid-chain also stales its NEIGHBOURS' baked door targets -
-rebuild all three: `build_levels.gd -- shared_floor ahmed_office marble_hall`.
+rebuild all three: `build_levels.gd -- <before> <new> <after>`. The full
 recipe is in tools/CLAUDE.md; room anatomy in game/levels/CLAUDE.md.
 
 ## Characters and the player

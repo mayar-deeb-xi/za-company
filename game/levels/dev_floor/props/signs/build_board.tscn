@@ -5,8 +5,8 @@ _data = PackedByteArray("AAADAAUAAAABAAAAOAAAACIAAAAIAQAAUklGRgABAABXRUJQVlA4TPM
 size_override = Vector2(56, 34)
 keep_compressed_buffer = true
 
-[node name="BuildBoard" type="Node2D" unique_id=950495608]
+[node name="BuildBoard" type="Node2D" unique_id=1927905794]
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=492139447]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1693515009]
 texture = SubResource("PortableCompressedTexture2D_0rv6g")
 centered = false

@@ -156,12 +156,20 @@ Adding a biome: one new data file in `tools/biomes/` plus its name in
 `tools/biomes.gd`'s `CHAIN`, then run build_biomes.gd and build_levels.gd.
 Appending to `CHAIN` gives the previous last level a north door automatically.
 
-**Inserting** one in the middle - which is how the office floors are being built
-in front of the two demo biomes - changes its NEIGHBOURS as well, and this is
-the step to get wrong: a door's `target_level` is baked into the level scene by
-the generator, so the level before the new one still points past it and the
-level after it still points back past it until both are rebuilt. Pass all three
-names: `build_levels.gd -- shared_floor ahmed_office marble_hall`, which is
-exactly what putting Ahmed's office in front of the demo biomes took.
+**Inserting** one in the middle - which is how the office floors were built
+in front of the two demo biomes - changes its NEIGHBOURS as well, and this
+is the step to get wrong: a door's `target_level` is baked into the level
+scene by the generator, so the level before the new one still points past it
+and the level after it still points back past it until both are rebuilt.
+Pass all three names: `build_levels.gd -- <before> <new> <after>`.
+
+**Reordering** is the same problem with a longer blast radius. Moving the
+marble hall and hellfire into the middle of the building changed seven levels'
+neighbours at once, and every one of them had to be named; when in doubt, name
+them all. It cost hellfire a placement too - it gained a north door, and its
+enemies had been lined along the north wall on the assumption that nobody ever
+walked past them. A room that gains a door has to re-earn the rule every other
+room keeps: every sight radius clear of the lane the two doors line up on.
+
 build_biomes.gd always does every biome, so the doorway textures (each lit by
 the colour of the place on the other side) come out right on their own.

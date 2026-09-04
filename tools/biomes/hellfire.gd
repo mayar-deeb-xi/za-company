@@ -10,18 +10,26 @@ const BIOME := {
 	"accent": "ffd45e",
 	"gamma": 2.1,
 	"floor_band": Vector2(0.02, 0.42),
-	# The escalation: the same two guards, plus the two that do something
-	# other than damage. Both have wide sight, so they sit along the far
-	# wall from the spawn you arrive on - the warden especially, since its
-	# 130 px is the longest look in the game and every walkable line in the
-	# marble hall falls inside it, which is why that room has none.
+	# Hellfire has TWO doors now. It used to be the end of the chain, so these
+	# enemies could line the far wall from the one spawn you ever arrived on
+	# and nobody walked past them; sitting between the bullpen and the
+	# executive floor, the walk from door to door goes straight up the middle
+	# of the room, and every sight radius in here has to clear the lane at
+	# x 246-300 the way every office floor's does.
+	#
+	# That lane costs each type a different width: a guard's 80 px means
+	# x < 166 or x > 380, a wraith's 120 means x < 126 or x > 420, and the
+	# warden's 130 - the longest look in the game - means x < 116 or x > 430.
+	# They are also kept off the colonnade's own x (64-80, 144-160, 384-400,
+	# 464-480 at the row they stand in), which is the bullpen's lesson: an
+	# enemy parked behind 48 px of column cannot be seen at all.
 	"enemies": [
-		{"type": "regular", "at": Vector2(64, 48)},
-		{"type": "regular", "at": Vector2(170, 48)},
-		{"type": "regular", "at": Vector2(374, 48)},
-		{"type": "regular", "at": Vector2(480, 48)},
-		{"type": "wraith", "at": Vector2(272, 48)},
-		{"type": "wraith", "at": Vector2(424, 280)},
+		{"type": "regular", "at": Vector2(44, 48)},
+		{"type": "regular", "at": Vector2(130, 48)},
+		{"type": "regular", "at": Vector2(410, 48)},
+		{"type": "regular", "at": Vector2(496, 48)},
+		{"type": "wraith", "at": Vector2(452, 96)},
+		{"type": "wraith", "at": Vector2(440, 272)},
 		{"type": "warden", "at": Vector2(64, 152)},
 	],
 }

@@ -358,6 +358,16 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		761:
 			_key(KEY_W, false)
+			_check("door: the chain continues on into the marble hall (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "MarbleHall")
+			var guards := get_nodes_in_group("enemies")
+			_check("enemies: the marble hall fields four guards (%d)" % guards.size(),
+				guards.size() == 4)
+			_player().global_position = Vector2(272, 78)
+			_key(KEY_W, true)
+		841:
+			_key(KEY_W, false)
 			_check("door: the chain continues on into the dev floor (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "DevFloor")
@@ -388,7 +398,7 @@ func _tick(frame: int) -> void:
 				get_nodes_in_group("enemies").is_empty())
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		841:
+		921:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into the gym (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -427,7 +437,7 @@ func _tick(frame: int) -> void:
 				get_nodes_in_group("enemies").is_empty())
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		921:
+		1001:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into the bullpen (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -465,7 +475,32 @@ func _tick(frame: int) -> void:
 				% [absent], absent.is_empty())
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		1001:
+		1081:
+			_key(KEY_W, false)
+			_check("door: the chain continues on into hellfire (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "Hellfire")
+			# Still up, and reading the room we are in now: a second card cuts the
+			# first one off rather than queueing behind it.
+			_check("title: a new room replaces the last one's name (got '%s' at %.2f)"
+				% [_title_text(), _title().modulate.a],
+				_title_text() == "HELLFIRE" and _title().modulate.a == 1.0)
+			# Per-biome composition, second half: hellfire is the room that
+			# escalates, and both of its extras are identified by their own
+			# exports rather than by class, the way everything here avoids the
+			# class cache.
+			var here := get_nodes_in_group("enemies")
+			var drainers := here.filter(func(e): return e.get("drain_per_second") != null)
+			var slowers := here.filter(func(e): return e.get("slow_seconds") != null)
+			_check("enemies: hellfire fields all three types (%d: %dD %dS)"
+				% [here.size(), drainers.size(), slowers.size()],
+				here.size() == 7 and drainers.size() == 2 and slowers.size() == 1)
+			# Straight on through, and the walk is the check: hellfire keeps
+			# every sight radius off the door line like every other floor, so
+			# seven enemies in the room still let the player cross it.
+			_player().global_position = Vector2(272, 78)
+			_key(KEY_W, true)
+		1161:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into the executive floor (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -505,7 +540,7 @@ func _tick(frame: int) -> void:
 				get_nodes_in_group("enemies").is_empty())
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		1081:
+		1241:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into Khaled's office (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -540,46 +575,15 @@ func _tick(frame: int) -> void:
 			_check("level: Khaled's office is empty until Khaled exists (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").is_empty())
-			_player().global_position = Vector2(272, 78)
-			_key(KEY_W, true)
-		1161:
-			_key(KEY_W, false)
-			_check("door: the chain continues on into the marble hall (got %s)"
-				% ("<none>" if _level() == null else _level().name),
-				_level() != null and _level().name == "MarbleHall")
-			var guards := get_nodes_in_group("enemies")
-			_check("enemies: the marble hall fields four guards (%d)" % guards.size(),
-				guards.size() == 4)
-			_player().global_position = Vector2(272, 78)
-			_key(KEY_W, true)
-		1241:
-			_key(KEY_W, false)
-			_check("door: the chain continues on into hellfire (got %s)"
-				% ("<none>" if _level() == null else _level().name),
-				_level() != null and _level().name == "Hellfire")
-			# Still up, and reading the room we are in now: a second card cuts the
-			# first one off rather than queueing behind it.
-			_check("title: a new room replaces the last one's name (got '%s' at %.2f)"
-				% [_title_text(), _title().modulate.a],
-				_title_text() == "HELLFIRE" and _title().modulate.a == 1.0)
-			# Per-biome composition, second half: hellfire is the room that
-			# escalates, and both of its extras are identified by their own
-			# exports rather than by class, the way everything here avoids the
-			# class cache.
-			var here := get_nodes_in_group("enemies")
-			var drainers := here.filter(func(e): return e.get("drain_per_second") != null)
-			var slowers := here.filter(func(e): return e.get("slow_seconds") != null)
-			_check("enemies: hellfire fields all three types (%d: %dD %dS)"
-				% [here.size(), drainers.size(), slowers.size()],
-				here.size() == 7 and drainers.size() == 2 and slowers.size() == 1)
-			# Turn round and walk back out the way we came in. The wraith is on
-			# the far wall, outside its own 120 px sight of this whole path.
+			# The end of the chain, so there is nothing north of here to walk
+			# to: turn round instead and prove the way back down still works.
 			_key(KEY_S, true)
 		1321:
 			_key(KEY_S, false)
-			_check("return: hellfire's south door goes back to the marble hall (got %s)"
+			_check("return: the penthouse goes back down to the executive floor"
+				+ " (got %s)"
 				% ("<none>" if _level() == null else _level().name),
-				_level() != null and _level().name == "MarbleHall")
+				_level() != null and _level().name == "ExecutiveFloor")
 			_check("return: player arrives by the door they left through (%s)"
 				% _player().global_position,
 				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)

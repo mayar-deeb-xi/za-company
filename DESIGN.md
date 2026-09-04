@@ -335,11 +335,13 @@ the room, and the fiction carries which floor it is.
   - `city_window`, which opens a shelf. `openings/` exists because a window is
     none of the other four things a prop can be - not furniture, hardware, a
     sign or paint on the floor, but a hole cut through the building's shell -
-    and the boxing ring opened `markings/` on exactly that argument. It is
-    480 px of glass with a 96 px hole in the middle of it, because the north
-    wall of a level has a doorway in it and a panoramic window drawn across
-    that doorway would glaze the way out. The sky and the city are fixed
-    colours; only the frame and the sill take the room's.
+    and the boxing ring opened `markings/` on exactly that argument. It runs
+    480 px unbroken, wall to wall, and it can only do that because the
+    penthouse is the END of the chain: a level with a floor above it has a
+    doorway cut through its north wall, and a panoramic window drawn across
+    that doorway would glaze the way out. It carried a 96 px hole for exactly
+    that reason until Khaled's office became the last room. The sky and the
+    city are fixed colours; only the frame and the sill take the room's.
   - `exec_desk`, and the point of it is what is NOT on it: every other desk in
     the building is buried, and this one is a mirror-polished slab with a pen
     laid square to the edge. A man who does no work in the room where the work
@@ -413,14 +415,18 @@ Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
         office is a room waiting for its boss. Every one of them is empty of
         enemies except F8, which has its four office boys - the cast goes in
         by hand, floor by floor.
-        The two demo biomes, `marble_hall` and `hellfire`, are still on the
-        end of the chain, and they are no longer holding anybody's place: the
-        run now walks the whole building and then two rooms past the top of
-        it. Dropping them is a CHAIN edit plus a rebuild of khaled_office
-        (which loses its north door and becomes the end of the chain) plus
-        three legs off tests/test_flow.gd - and the last of those is the one
-        to think about, since the flow suite's door, hazard and enemy checks
-        currently live partly in those two rooms.
+        The two demo biomes are not on the end of the chain any more - they
+        are dealt INTO the building, `marble_hall` between F5 and F6 and
+        `hellfire` between F8 and F9, so a run walks all ten floors in
+        DESIGN.md's own order and ends where the story ends, in Khaled's
+        office. Both are still demo rooms and both still hold the only fights
+        above the bullpen, which is what keeps the flow suite's enemy checks
+        somewhere real while the reskins are unbuilt.
+        Moving hellfire mid-chain cost it a placement: it gained a north door,
+        and its enemies had been lined along the north wall on the assumption
+        that nobody ever walked past them. They now clear the door lane at
+        x 246-300 by each type's own sight radius, like every office floor's
+        do.
         Regenerate one floor at a time: `build_levels.gd -- <level>`, and note
         that inserting a floor changes its NEIGHBOURS' door targets, so
         rebuild those too.

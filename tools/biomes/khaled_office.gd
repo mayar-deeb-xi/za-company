@@ -44,19 +44,19 @@ const BIOME := {
 	# the only thing in it is the rug, which blocks nothing: no prop here has a
 	# collision box anywhere inside x 150-400, y 150-280.
 	#
-	# The floor also keeps the two lanes every floor keeps - the door line
-	# (x 246-300) and the middle band - and on this one the door line runs
-	# through the window as well, which is why `city_window` is 480 px of glass
-	# with a 96 px hole in the middle of it rather than two panels either side.
+	# There is ONE door in this room. The penthouse is the end of the chain, so
+	# nothing is cut through its north wall - which is why the window runs
+	# 480 px unbroken, and why the only lane to keep clear runs from the south
+	# door up to the desk rather than the whole height of the room.
 	"props": [
 		# ---- The north wall, which is not a wall ---------------------------
-		# The room, in one prop. Placed at x 32 so its opening lands on the
-		# level's own doorway.
+		# The room, in one prop, wall to wall.
 		{"type": "city_window", "at": Vector2(32, 18)},
 		# ---- The one desk, with its back to the city -----------------------
-		# West of the door line rather than centred on it, because the walk
-		# between the two doors has to stay a walk. The chair is listed first
-		# so it reads behind the desk; Y-sorting does the rest.
+		# West of the middle rather than on it, because the arena wants the
+		# floor and because a desk dead ahead of the door is a desk you walk
+		# into. The chair is listed first so it reads behind the desk;
+		# Y-sorting does the rest.
 		{"type": "chair", "at": Vector2(150, 100)},
 		{"type": "exec_desk", "at": Vector2(150, 136)},
 		# Two pixels south of the desk's foot, which is what puts it ON the

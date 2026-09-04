@@ -57,12 +57,15 @@ extends RefCounted
 ##   runner   how far the central floor band is tinted towards the accent, i.e.
 ##            whether that band is carpet or just more of the same stone.
 
-## Floor order, and it is the order a run walks: south door goes back down the
-## list, north door goes up it. The two demo biomes stay on the end until the
-## office floors replace them.
+## Floor order, and it is the order a run walks: south door goes back down
+## the list, north door goes up it. The building is DESIGN.md's ten floors in
+## its own order, and the two demo biomes are dealt INTO it - the marble hall
+## between the shared floor and the dev floor, hellfire between the bullpen
+## and the executive floor - so a run still walks through both of them and
+## ends where the story ends, in Khaled's office.
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
-		"shared_floor", "dev_floor", "conflict_resolution", "bullpen",
-		"executive_floor", "khaled_office", "marble_hall", "hellfire"]
+		"shared_floor", "marble_hall", "dev_floor", "conflict_resolution",
+		"bullpen", "hellfire", "executive_floor", "khaled_office"]
 
 ## Assembled from the per-floor files at load, keyed by CHAIN name, so every
 ## existing `Biomes.BIOMES[level]` read works exactly as it did when this was
