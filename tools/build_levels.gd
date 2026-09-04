@@ -54,13 +54,10 @@ const SPAWN_RETURN_Y := 80       # by the north door: you came back from the nex
 const TORCH_POS := Vector2(120, 152)
 const HEALTH_POS := Vector2(424, 152)
 
-## The starting-point dressing for combat: two guards, one per top corner.
-## Unlike torches and hearts, the enemy scene is shared from game/enemies/ -
-## a level that wants its own variant swaps the instance in the editor.
-## Positions sit outside a guard's sight of the door line, the spawns and the
-## torch/heart stands, so nothing chases a player who keeps to the safe walk.
-const ENEMY_SCENE := "res://game/enemies/regular/regular.tscn"
-const ENEMY_POSITIONS := [Vector2(64, 48), Vector2(480, 48)]
+## Enemies are the one prop a level does NOT own a copy of: types are shared
+## from game/enemies/<type>/, and which ones a room gets is per-biome data in
+## tools/biomes.gd. A level that wants a variant swaps the instance by hand.
+const ENEMY_SCENE := "res://game/enemies/%s/%s.tscn"
 
 
 func _initialize() -> void:
@@ -254,11 +251,13 @@ func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
 	props.add_child(health)
 	health.owner = root
 
-	var enemy_scene := _reload(ENEMY_SCENE)
-	for i in ENEMY_POSITIONS.size():
-		var enemy := enemy_scene.instantiate()
+	var roster: Array = Biomes.BIOMES[level].get("enemies", [])
+	for i in roster.size():
+		var spec: Dictionary = roster[i]
+		var type: String = spec["type"]
+		var enemy := _reload(ENEMY_SCENE % [type, type]).instantiate()
 		enemy.name = "Enemy%d" % (i + 1)
-		enemy.position = ENEMY_POSITIONS[i]
+		enemy.position = spec["at"]
 		props.add_child(enemy)
 		enemy.owner = root
 

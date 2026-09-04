@@ -103,13 +103,23 @@ match on `_ready`; an unknown saved id keeps the default look.
 
 ## Health
 
-The player owns its health (player.gd): `MAX_HEALTH`, `take_damage()`, `heal()`,
-and a grace window after each hit during which the sprite blinks and further
-damage is ignored. That window is deliberately the only rate limiter in the
-system - hazards and enemies press `take_damage()` every physics frame they
-overlap the player and carry no timers of their own, so tuning
-`HURT_GRACE_SECONDS` retunes every hazard and enemy at once. Hazards and pickups reach the
+The player owns its health (player.gd): `MAX_HEALTH`, `take_damage()`,
+`drain()`, `heal()`, and a grace window after each hit during which the sprite
+blinks and further damage is ignored. Hazards, pickups and enemies reach the
 player by the `player` group + `has_method`, never by type.
+
+**Two kinds of harm, and the split between them is the thing to get right.** A
+*blow* (`take_damage()`) is metered by the grace window and opens a fresh one.
+That window is the only rate limiter for blows anywhere in the game, so hazards
+and melee enemies press it every physics frame they overlap the player, carry
+no timers of their own, and all retune together from `HURT_GRACE_SECONDS`. A
+*drain* (`drain()`) is continuous harm that already knows its own rate - an
+aura, a poison - and sits outside the grace window in both directions: never
+blocked by one, never opens one. Routing a drain through `take_damage()` is the
+obvious first move and is wrong twice over: an unrelated torch clip would
+swallow a second of it, and the sprite would blink as though the player were
+being struck once a second. Both funnel into `_lose_health()`, so death fires
+identically whichever killed you.
 
 The player also owns its lives (`MAX_LIVES`, 3): each death spends one via
 `lose_life()`, whose return value lets game.gd choose respawn or game over from
@@ -140,20 +150,55 @@ have to read the same in every biome.
 ## Enemies
 
 `game/enemies/enemy_base.gd` is the base every type builds on: an enemy stands
-guard until the player comes within `sight_radius`, chases while they stay
-inside it, and presses its touch on the player every physics frame of contact -
-no timers of its own, the player's grace window meters the pressure, exactly
-like hazards. Stats (`max_health`, `contact_damage`, `speed`, `sight_radius`)
-are @exports, so a level can retune the instance it places. Enemies find the
-player by group + `has_method`, doors ignore them (door_base.gd filters on the
-`player` group), and each type lives in `game/enemies/<type>/`.
+guard until the player comes within `sight_radius`, closes the ground to
+`stop_distance` and holds there facing them, and presses its touch on the
+player every physics frame of contact - no timers of its own, the player's
+grace window meters the pressure, exactly like hazards. Stats (`max_health`,
+`contact_damage`, `speed`, `sight_radius`, `stop_distance`) are @exports, so a
+level can retune the instance it places. Enemies find the player by group +
+`has_method`, doors ignore them (door_base.gd filters on the `player` group),
+and each type lives in `game/enemies/<type>/`.
 
-**`_touch(player)` is the seam between enemy types.** The base deals
-`contact_damage`; a later type that freezes, shoves or poisons overrides
-`_touch()` in its own script extending the base, and inherits chase, health and
-death untouched. The first type, `regular/` (10 HP, 5 damage), carries no
-script of its own - its scene runs enemy_base.gd directly, the way torches run
-hazard_base.gd.
+**An arrived enemy stops rather than keeps pressing.** Driving on into the
+player buys no ground - two CharacterBody2Ds block at the sum of their radii,
+10 px for everything so far - it only grinds the bodies together and slides the
+enemy around the player in a circle. `stop_distance` (12) is bounded on both
+sides and the second bound is the easy one to break when adding a type: it must
+exceed those 10 px or the enemy never stops short of the grind, and stay under
+the reach of that type's own Touch shape (its radius + the player's 5) or the
+enemy parks just outside its own effect and nothing ever happens. The regular's
+touch radius is 9 for exactly this reason - at the original 7 it reached 12 and
+tied with the stop distance. `walk` also now plays only while actually
+advancing, so a held enemy does not moonwalk on the spot.
+
+**`_touch(player, delta)` is the seam between enemy types.** The base deals
+`contact_damage`; a type that freezes, shoves or drains overrides `_touch()` in
+its own script extending the base, and inherits chase, health and death
+untouched. `delta` is that frame's worth of contact, which is what any effect
+with a rate of its own needs. Two smaller seams travel with it, because an
+effect is rarely only damage: `_contact_state()` is what contact looks like
+(the base lunges, the wraith keeps walking) and `_resting_tint()` is how the
+enemy reads while it works. The base resolves `modulate` in one place after
+`_touch()` has run, with the hurt flash outranking whatever a type wants, and
+sets `touching_player` first so an override can read it.
+
+Two types so far:
+
+- **`regular/`** - 10 HP, 5 contact damage, speed 55, sight 80. Carries no
+  script of its own: its scene runs enemy_base.gd directly, the way torches run
+  hazard_base.gd.
+- **`wraith/`** - 10 HP, no attack at all, speed 45, sight 120, and standing
+  near it costs one health per second. It is the reason `drain()` exists (see
+  Health). Its `_contact_state()` is `idle`: having arrived it has no attack to
+  play and nowhere left to walk, so it just stands over you facing your way
+  while your health goes, which reads worse than a lunge would. The aura is
+  just the Touch area tuned wide, because "near you" and "touching you" are the
+  same question and the base already answers it; the
+  fractional remainder (`_owed`) is deliberately kept when contact breaks, so
+  dancing on the edge of the aura cannot reset the tick. It glows cold while
+  feeding so the health ticking down has a visible cause. Being one of the cast
+  drained of colour - straight hair, normal build, white on dark blue - is the
+  point of the look: it reads as a person, not a monster.
 
 The player's side of the fight is `ATTACK_POWER` (5, player.gd) pressed through
 a Hitbox Area2D that `_start_attack()` parks one step ahead of the body in the
@@ -167,11 +212,18 @@ roster.gd` is the bestiary (id, frames path, recipe - looks only, stats live on
 scenes), and tools/build_characters.gd bakes it in the same run as the player
 characters. A dead enemy is `queue_free`d, and since levels are re-instantiated
 per entry, it is back on the next visit - the same no-room-state rule as
-pickups. Each generated level starts with two `regular` guards in its top
-corners (`ENEMY_POSITIONS` in build_levels.gd), placed so their sight never
-reaches the door line, the spawns or the torch/heart stands - the smoke test's
-early sections rely on nothing aggroing until the combat run deliberately walks
-into a guard's sight.
+pickups.
+
+Enemies are the one prop a level does NOT own a copy of - types are shared, and
+**which ones a room gets is per-biome data in `tools/biomes.gd`** (`enemies`:
+type + position), not one constant in the generator. Composition is most of
+what makes one room feel unlike the next: the marble hall is two guards you can
+walk past, and hellfire is the same two plus the wraith, which is where
+something starts following you. Positions are chosen so no enemy's sight
+reaches the door line, the spawns or the torch and heart stands - the straight
+walk between the two doors stays safe in every biome, and the smoke test's
+early sections depend on nothing aggroing until the combat run deliberately
+walks into a guard.
 
 ## Generated resources - regenerate, don't hand-edit
 
@@ -188,7 +240,8 @@ into a guard's sight.
 - `game/levels/*/*.tscn` (level, door, column, torch, health item;
   enemy instances placed in the level scene)
                                     <- tools/build_levels.gd, see below
-- biome list & chain order          <- tools/biomes.gd (data, edited by hand)
+- biome list, chain order, per-room enemies
+                                    <- tools/biomes.gd (data, edited by hand)
 - project settings & input map      <- tools/setup_project.gd
 
 Run: `<godot> --headless --path . --script res://tools/<script>.gd`

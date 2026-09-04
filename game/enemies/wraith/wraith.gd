@@ -1,0 +1,56 @@
+extends "res://game/enemies/enemy_base.gd"
+## The wraith. It never strikes: it simply follows, and being near it costs the
+## player a point of health every second.
+##
+## This is the first enemy whose harm has a clock of its own, and it is where
+## the two kinds of harm in the game separate. Contact damage is deliberately
+## unmetered - a regular presses take_damage() every physics frame and the
+## player's grace window decides how often that lands - but a drain IS a rate
+## already, so it accumulates here and presses the player's drain() instead:
+## no grace, no blink, no competing with whatever last hit them.
+##
+## The aura is just the Touch area, tuned wide: "near you" and "touching you"
+## are the same question, so the base's overlap machinery answers both.
+
+## Health per second of proximity. Fractional and float on purpose - the rate
+## is the tunable thing, and it can be pushed well under 1 without the effect
+## vanishing.
+@export var drain_per_second := 1.0
+
+## A cold glow while it feeds, so health ticking down has a visible cause.
+const FEED_TINT := Color(0.55, 0.85, 1.0)
+const FEED_PULSE_HZ := 1.6
+
+## Fraction of a health point owed but not yet whole. Deliberately NOT cleared
+## when contact breaks: keeping it means stepping out and back in resumes the
+## tick rather than restarting it, so dancing on the edge of the aura cannot
+## drain the wraith of its bite.
+var _owed := 0.0
+var _feed_time := 0.0
+
+
+## Health is an integer, so the rate is banked and spent in whole points. The
+## remainder carries, which keeps the rate true across frames of any length.
+func _touch(player: Node2D, delta: float) -> void:
+	if not player.has_method("drain"):
+		return
+	_feed_time += delta
+	_owed += delta * drain_per_second
+	var points := int(_owed)
+	if points > 0:
+		_owed -= points
+		player.call("drain", points)
+
+
+## It has no attack to play and, having arrived, nowhere left to walk. It just
+## stands over you facing your way while your health goes - which is the whole
+## threat, and reads worse than a lunge would.
+func _contact_state() -> String:
+	return "idle"
+
+
+func _resting_tint() -> Color:
+	if not touching_player:
+		return Color.WHITE
+	var pulse := 0.5 + 0.5 * sin(_feed_time * TAU * FEED_PULSE_HZ)
+	return Color.WHITE.lerp(FEED_TINT, pulse)

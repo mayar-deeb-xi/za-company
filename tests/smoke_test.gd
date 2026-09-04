@@ -2,7 +2,7 @@ extends SceneTree
 ## End-to-end smoke test: menu -> character select -> game -> move -> pause ->
 ## settings -> attack -> torch -> heart -> death -> wall -> door -> menu ->
 ## settings -> new run -> three deaths -> game over -> third run -> enemy
-## chase -> contact damage -> two swings kill an enemy.
+## chase -> contact damage -> two swings kill a guard -> wraith drain.
 ##
 ## Run headless (see CLAUDE.md for the binary path):
 ##   <godot> --headless --path . --fixed-fps 60 --script res://tests/smoke_test.gd
@@ -20,6 +20,7 @@ var _fails: Array[String] = []
 var _mark := Vector2.ZERO
 var _health_mark := 0
 var _enemy: Node2D
+var _wraith: Node2D
 var _settings_backup := PackedByteArray()
 var _settings_existed := false
 
@@ -405,7 +406,16 @@ func _process(_delta: float) -> bool:
 			_check("door: camera reframed on the new level (%s)"
 				% _camera().global_position,
 				_camera().global_position == _level().bounds().get_center())
-			# Turn round and walk back out the way we came in.
+			# Per-biome composition: hellfire is the room that escalates. The
+			# wraith is identified by its own export rather than by class, the
+			# same way everything else here avoids the class cache.
+			var here := get_nodes_in_group("enemies")
+			var drainers := here.filter(func(e): return e.get("drain_per_second") != null)
+			_check("enemies: hellfire adds a wraith to its two guards (%d of %d)"
+				% [drainers.size(), here.size()],
+				here.size() == 3 and drainers.size() == 1)
+			# Turn round and walk back out the way we came in. The wraith is on
+			# the far wall, outside its own 120 px sight of this whole path.
 			_key(KEY_S, true)
 		525:
 			_key(KEY_S, false)
@@ -545,6 +555,13 @@ func _process(_delta: float) -> bool:
 			# hit of the guard's contact damage.
 			_check("enemies: touch costs contact damage, metered by grace (%s)"
 				% _player().get("health"), _player().get("health") == 95)
+			# Arrived and stopped: past its stop_distance it would be grinding
+			# against the player's collision at the 10 px the two bodies block
+			# at, and sliding around them.
+			var guard_gap: float = _enemy.global_position.distance_to(
+				_player().global_position)
+			_check("enemies: the guard stops short instead of grinding in (%.1f px)"
+				% guard_gap, guard_gap > 10.0 and guard_gap < 14.0)
 			_key(KEY_SPACE, true)
 		868:
 			_key(KEY_SPACE, false)
@@ -559,6 +576,57 @@ func _process(_delta: float) -> bool:
 			_check("attack: the second swing kills - the guard is gone (%d left)"
 				% get_nodes_in_group("enemies").size(),
 				not is_instance_valid(_enemy)
+					and get_nodes_in_group("enemies").size() == 1)
+			# The wraith, placed by hand rather than walked to in hellfire: the
+			# drain is a rate, and a rate needs contact to start on a frame the
+			# test knows. It is the real scene either way.
+			var wraith_scene := load("res://game/enemies/wraith/wraith.tscn") as PackedScene
+			_wraith = wraith_scene.instantiate()
+			_level().get_node("Props").add_child(_wraith)
+			_wraith.global_position = Vector2(272, 152)
+			_health_mark = _player().get("health")
+		1070:
+			# 140 frames of contact at one point per second. Exactly two, and
+			# nothing like the 5-a-hit a regular would have dealt in that time -
+			# which is the check that it really has no attack.
+			_check("wraith: drains one point per second of proximity (%d -> %s)"
+				% [_health_mark, _player().get("health")],
+				_health_mark - int(_player().get("health")) == 2)
+			# Held at stop_distance, not grinding into the player's collision and
+			# not stalled out of its own aura either - and never attacking.
+			var gap: float = _wraith.global_position.distance_to(_player().global_position)
+			_check("wraith: holds station close by instead of pushing in (%.1f px, '%s')"
+				% [gap, _wraith.get_node("AnimatedSprite2D").animation],
+				gap > 10.0 and gap < 14.0
+					and not String(_wraith.get_node("AnimatedSprite2D").animation)
+						.begins_with("attack"))
+			# The point of drain() existing. Land a normal hit to open a grace
+			# window, then stay well inside it: a drain routed through
+			# take_damage() would be swallowed whole and the loss would be the
+			# 5 of the hit alone. The rate is turned up so the tick lands inside
+			# 0.8s rather than straddling it.
+			_wraith.set("drain_per_second", 4.0)
+			_health_mark = _player().get("health")
+			_player().call("take_damage", 5)
+		1100:
+			# 30 frames later - still inside HURT_GRACE_SECONDS.
+			_check("wraith: the drain lands during the grace window a hit opens (lost %d)"
+				% (_health_mark - int(_player().get("health"))),
+				_health_mark - int(_player().get("health")) >= 6)
+			_key(KEY_SPACE, true)
+		1104:
+			_key(KEY_SPACE, false)
+		1130:
+			_check("wraith: takes ATTACK_POWER like anything else (health %s)"
+				% (str(_wraith.get("health")) if is_instance_valid(_wraith) else "<freed>"),
+				is_instance_valid(_wraith) and _wraith.get("health") == 5)
+			_key(KEY_SPACE, true)
+		1134:
+			_key(KEY_SPACE, false)
+		1164:
+			_check("wraith: dies to two swings like the guards (%d enemies left)"
+				% get_nodes_in_group("enemies").size(),
+				not is_instance_valid(_wraith)
 					and get_nodes_in_group("enemies").size() == 1)
 			_finish()
 	return false

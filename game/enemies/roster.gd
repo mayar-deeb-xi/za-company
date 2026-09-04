@@ -21,4 +21,19 @@ const ENEMIES := [
 			"hair_style": "bald", "beard": false, "build": "skinny",
 		},
 	},
+	{
+		"id": "wraith",
+		"frames": "res://game/enemies/wraith/wraith_frames.tres",
+		"recipe": {
+			"hair": "eef1f7", "hair_light": "ffffff",   # white
+			"skin": "d7dde9",                           # bloodless, cooler than
+			                                            # the hair so it reads
+			"eye": "1b2a52",                            # dark blue
+			"shirt": "232f5c", "shirt_dark": "141c38",  # dark blue
+			"pants": "1b2450", "pants_dark": "0e1430",
+			# Straight hair, normal build: deliberately one of the cast, drained
+			# of colour, rather than a monster.
+			"hair_style": "straight", "beard": false, "build": "normal",
+		},
+	},
 ]

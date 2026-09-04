@@ -150,11 +150,31 @@ func _on_animation_finished() -> void:
 		_apply_animation("idle")
 
 
+## A blow: metered by the grace window, and it opens a fresh one.
 func take_damage(amount: int) -> void:
 	if _grace > 0.0 or health <= 0:
 		return
-	health = maxi(health - amount, 0)
 	_grace = HURT_GRACE_SECONDS
+	_lose_health(amount)
+
+
+## Health lost to a continuous effect rather than a blow - an aura, a poison,
+## anything that sets its own rate. Deliberately outside the grace window in
+## both directions: it is not blocked by one and it does not open one.
+##
+## The grace window exists to stop discrete hits stacking every physics frame,
+## which is the wrong meter for something that already knows how fast it should
+## work. Routed through take_damage(), a drain would be swallowed for 0.8s
+## every time an unrelated torch clipped the player, and would blink the sprite
+## as though they were being struck once a second.
+func drain(amount: int) -> void:
+	if health <= 0:
+		return
+	_lose_health(amount)
+
+
+func _lose_health(amount: int) -> void:
+	health = maxi(health - amount, 0)
 	health_changed.emit(health, MAX_HEALTH)
 	if health == 0:
 		died.emit()
