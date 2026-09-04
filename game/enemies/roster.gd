@@ -15,8 +15,11 @@ extends RefCounted
 ## build_enemies.gd, and its art starts over from the plain CC0 body.
 ##
 ## An enemy whose sheet grows rows the CC0 grid does not have adds a `layout`
-## (and `specs` if the timing differs) here; without one it uses the CC0 layout
-## seeding produced. See tools/character_art.gd for the default.
+## (and `specs` if the timing differs) here; without one it uses `CC0_LAYOUT` in
+## tools/character_art.gd - the layout seeding produced, frozen. The cast's
+## layout is a separate constant in tools/build_characters.gd on purpose, so a
+## new PLAYER animation can never tell an enemy to slice a row its own sheet
+## does not have.
 ##
 ## Only looks live here. Stats (health, damage, speed, sight, and each type's
 ## own ability numbers) are @exports on the enemy scripts, set per scene, so a

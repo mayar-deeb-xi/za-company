@@ -10,6 +10,16 @@ const MAX_HEALTH := 100
 ## characters grow their own stats this moves into the roster recipe the same
 ## way looks did.
 const ATTACK_POWER := 5
+## Damage the thrust - the combo's second hit - deals. Reached only through a
+## swing (a press during one, or just after), so it can never be spammed alone,
+## which is what lets it outhit the swing without upsetting any balance.
+const THRUST_POWER := 7
+## After a swing ends, a press within this window still chains the thrust, so
+## deliberate timing combos as reliably as mashing does.
+const COMBO_GRACE_SECONDS := 0.2
+## Forward push at the moment the thrust starts - the art lunges, so the body
+## does too. FRICTION eats it in about a tenth of a second.
+const LUNGE_SPEED := 130.0
 ## How many times health can hit zero before the run ends. The player node is
 ## built fresh by each new game scene, so a new run starts full again.
 const MAX_LIVES := 3
@@ -46,7 +56,13 @@ var slow_seconds := 0.0
 
 var _facing: Facing = Facing.DOWN
 var _facing_left := false
-var _attacking := false
+## The attack animation currently playing ("" when none), the one buffered to
+## chain after it, and how long a late press can still chain a thrust. A press
+## mid-attack is buffered rather than dropped - dropped inputs read as the game
+## eating the button, and combos live or die on that feel.
+var _attack := ""
+var _buffered := ""
+var _combo_grace := 0.0
 var _grace := 0.0
 ## Enemies already struck by the current swing, so a swing lands once per enemy
 ## rather than once per physics frame it overlaps them.
@@ -81,13 +97,21 @@ func _physics_process(delta: float) -> void:
 			slow_factor = 1.0
 		_sprite.modulate = SLOW_TINT if slow_seconds > 0.0 else Color.WHITE
 
+	if _combo_grace > 0.0:
+		_combo_grace = maxf(_combo_grace - delta, 0.0)
+
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 
-	if not _attacking and Input.is_action_just_pressed("attack"):
-		_start_attack()
+	if Input.is_action_just_pressed("attack"):
+		if _attack == "":
+			_start_attack("attack2" if _combo_grace > 0.0 else "attack")
+		else:
+			# Mid-swing chains the thrust; mid-thrust queues the next swing.
+			_buffered = "attack2" if _attack == "attack" else "attack"
 
-	if _attacking:
-		# Attacks root the character in place.
+	if _attack != "":
+		# Attacks root the character in place; the thrust's opening lunge
+		# decays under the same friction.
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
 		_strike()
 	elif direction != Vector2.ZERO:
@@ -135,23 +159,40 @@ func _apply_animation(state: String, restart := false) -> void:
 		_sprite.play(anim)
 
 
-func _start_attack() -> void:
-	_attacking = true
+func _start_attack(anim: String) -> void:
+	_attack = anim
+	_buffered = ""
+	_combo_grace = 0.0
 	_swing_hits.clear()
-	_hitbox.position = _hitbox_offset()
-	_apply_animation("attack", true)
+	_hitbox.position = _hitbox_offset(anim == "attack2")
+	if anim == "attack2":
+		velocity = _facing_vector() * LUNGE_SPEED
+	_apply_animation(anim, true)
 
 
-## The hitbox sits one step ahead of the body in whatever direction the swing
-## faces, and stays live for the whole animation.
-func _hitbox_offset() -> Vector2:
+## The hitbox sits one step ahead of the body in whatever direction the attack
+## faces, and stays live for the whole animation. The thrust parks it further
+## out: its blade visibly outreaches the swing's arc, and the hitbox keeps that
+## promise - the reach is the reward the player feels immediately.
+func _hitbox_offset(thrust := false) -> Vector2:
 	match _facing:
 		Facing.UP:
-			return Vector2(0, -14)
+			return Vector2(0, -18) if thrust else Vector2(0, -14)
 		Facing.SIDE:
-			return Vector2(-11 if _facing_left else 11, -4)
+			var reach := 16 if thrust else 11
+			return Vector2(-reach if _facing_left else reach, -4)
 		_:
-			return Vector2(0, 6)
+			return Vector2(0, 10) if thrust else Vector2(0, 6)
+
+
+func _facing_vector() -> Vector2:
+	match _facing:
+		Facing.UP:
+			return Vector2.UP
+		Facing.SIDE:
+			return Vector2.LEFT if _facing_left else Vector2.RIGHT
+		_:
+			return Vector2.DOWN
 
 
 ## Group + method rather than type, like every cross-feature touch in this
@@ -162,13 +203,22 @@ func _strike() -> void:
 			continue
 		if body.has_method("take_damage"):
 			_swing_hits[body] = true
-			body.call("take_damage", ATTACK_POWER)
+			body.call("take_damage",
+				THRUST_POWER if _attack == "attack2" else ATTACK_POWER)
 
 
 func _on_animation_finished() -> void:
-	if _attacking:
-		_attacking = false
-		_apply_animation("idle")
+	if _attack == "":
+		return
+	var finished := _attack
+	_attack = ""
+	if _buffered != "":
+		_start_attack(_buffered)
+		return
+	# A late press can still chain off a swing; the thrust ends the chain.
+	if finished == "attack":
+		_combo_grace = COMBO_GRACE_SECONDS
+	_apply_animation("idle")
 
 
 ## A blow: metered by the grace window, and it opens a fresh one.

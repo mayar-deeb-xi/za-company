@@ -27,6 +27,9 @@ const SRC_SHIRT_DARK := "284e43"
 const SRC_PANTS := "674949"
 const SRC_PANTS_DARK := "50282f"
 const SRC_SLASH := "fff8e1"
+## Combo sparks (attack2 rows). Doubles as the default spark colour: a bald
+## recipe has no hair to tint them from, so they stay this gold.
+const SRC_SPARK := "ffd04d"
 
 # Only these colours count as "the body" when picking a seam for a build tweak:
 # attack frames also contain the slash arc, whose bounds would drag the seam off
@@ -42,16 +45,25 @@ const SERRATE_PERIOD := 2
 const SIDE_LIMIT := 0.6
 const HIGHLIGHT_PERIOD := 3
 
-## Animation layout of the CC0 sheet: row indices, verified against it. The sheet
-## only draws a right-facing profile; "side" is flipped for left. A sheet that
-## grows animations of its own overrides this in its roster entry - which is the
-## whole point of each enemy owning its sheet.
-const DEFAULT_LAYOUT := {
+## Animation layout of the PRISTINE CC0 sheet: row indices, verified against it.
+## The sheet only draws a right-facing profile; "side" is flipped for left.
+##
+## **Frozen, like the seed body it describes.** This is what a freshly seeded
+## enemy sheet contains, and nothing else. It is deliberately NOT "the layout
+## everything uses": the cast keeps its own in build_characters.gd, so a new
+## player animation adds a row there without reaching over here. Were the two
+## shared, adding row 9 for the player would tell every enemy to slice a row its
+## own 9-row sheet does not have, and the frames would come back empty with
+## nothing to say why.
+##
+## An enemy sheet that grows rows of its own declares a `layout` in its roster
+## entry, which is the whole point of each enemy owning its sheet.
+const CC0_LAYOUT := {
 	"down": {"idle": 0, "walk": 1, "attack": 6},
 	"up": {"idle": 2, "walk": 3, "attack": 7},
 	"side": {"idle": 4, "walk": 5, "attack": 8},
 }
-const DEFAULT_SPECS := {
+const CC0_SPECS := {
 	"idle": {"frames": 1, "fps": 1.0, "loop": true},
 	"walk": {"frames": 4, "fps": 10.0, "loop": true},
 	"attack": {"frames": 4, "fps": 14.0, "loop": false},
@@ -200,6 +212,20 @@ static func _add_beard(img: Image, ox: int, oy: int) -> void:
 			img.set_pixelv(p, _c(SRC_HAIR))
 
 
+## Spark colour for a recipe: the hair colour raised to flash intensity, so a
+## near-black head still throws sparks that read on a dark floor; SRC_SPARK's
+## gold where there is no hair to take it from. Nudged off an exact match with
+## the hair so the curl-highlight pass can never mistake sparks for hair rim.
+static func _spark_hex(recipe: Dictionary) -> String:
+	if recipe["hair_style"] == "bald":
+		return SRC_SPARK
+	var c := _c(recipe["hair"])
+	c.v = maxf(c.v, 0.9)
+	if c.to_html(false) == recipe["hair"]:
+		c = c.lightened(0.15)
+	return c.to_html(false)
+
+
 # --- build tweaks: one duplicated or removed pixel column / row ---------------
 
 
@@ -313,6 +339,7 @@ static func restyle(src_path: String, recipe: Dictionary) -> Image:
 		SRC_PANTS: recipe["pants"],
 		SRC_PANTS_DARK: recipe["pants_dark"],
 		SRC_SLASH: SRC_SLASH,
+		SRC_SPARK: _spark_hex(recipe),
 	}
 	var unknown := {}
 	for y in img.get_height():

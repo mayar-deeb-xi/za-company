@@ -14,7 +14,29 @@ extends SceneTree
 const Art := preload("res://tools/character_art.gd")
 const Roster := preload("res://game/player/characters/roster.gd")
 
+## The cast's sheet. Living art: unlike the frozen body enemies are seeded from
+## (game/enemies/src/body_cc0.png), this one is meant to grow.
 const SRC := "res://game/player/src/character_cc0.png"
+
+## What the cast's sheet holds, and the ONE place to edit when it grows.
+##
+## Deliberately the cast's own copy rather than character_art.gd's CC0_LAYOUT,
+## even though the two are identical today. They describe different things: that
+## one is a fact about a frozen file, this one is a description of art under
+## active development. Draw a new row into the sheet, add it here, and the seven
+## characters pick it up with nothing else in the game moving - which is exactly
+## what sharing one constant would have prevented.
+const CAST_LAYOUT := {
+	"down": {"idle": 0, "walk": 1, "attack": 6, "attack2": 9},
+	"up": {"idle": 2, "walk": 3, "attack": 7, "attack2": 10},
+	"side": {"idle": 4, "walk": 5, "attack": 8, "attack2": 11},
+}
+const CAST_SPECS := {
+	"idle": {"frames": 1, "fps": 1.0, "loop": true},
+	"walk": {"frames": 4, "fps": 10.0, "loop": true},
+	"attack": {"frames": 4, "fps": 14.0, "loop": false},
+	"attack2": {"frames": 4, "fps": 14.0, "loop": false},
+}
 
 
 func _initialize() -> void:
@@ -28,7 +50,7 @@ func _initialize() -> void:
 			quit(1)
 			return
 		var out: String = entry["frames"]
-		var frames := Art.slice(sheet, Art.DEFAULT_LAYOUT, Art.DEFAULT_SPECS)
+		var frames := Art.slice(sheet, CAST_LAYOUT, CAST_SPECS)
 		var err := ResourceSaver.save(frames, out)
 		print("saved ", out, " -> ", error_string(err))
 		if err != OK:

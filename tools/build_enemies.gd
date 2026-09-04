@@ -28,8 +28,17 @@ extends SceneTree
 const Art := preload("res://tools/character_art.gd")
 const Bestiary := preload("res://game/enemies/roster.gd")
 
-## The body a new enemy is seeded from - the same CC0 sheet the cast wears.
-const SEED_SRC := "res://game/player/src/character_cc0.png"
+## The body a new enemy is seeded from: a FROZEN copy of the pristine CC0 sheet,
+## kept under game/enemies/ rather than read out of game/player/src/.
+##
+## That copy is the point. The cast's sheet is living art - a new player
+## animation gets drawn into it - and if enemies were seeded from that file, an
+## enemy created after the change would silently inherit whatever the player had
+## grown since. Seeding has to be reproducible: the enemy made today and the one
+## made in six months should start from the same body.
+##
+## It is deliberately never edited. Draw on an enemy's own sheet instead.
+const SEED_SRC := "res://game/enemies/src/body_cc0.png"
 
 
 func _initialize() -> void:
@@ -69,9 +78,11 @@ func _build(entry: Dictionary) -> bool:
 		return false
 	sheet.convert(Image.FORMAT_RGBA8)
 
+	# Falls back to the layout SEEDING produced, never to the cast's - an enemy
+	# nobody has redrawn holds exactly the rows the frozen body had.
 	var frames := Art.slice(sheet,
-		entry.get("layout", Art.DEFAULT_LAYOUT),
-		entry.get("specs", Art.DEFAULT_SPECS))
+		entry.get("layout", Art.CC0_LAYOUT),
+		entry.get("specs", Art.CC0_SPECS))
 	var out: String = entry["frames"]
 	var err := ResourceSaver.save(frames, out)
 	print("  ", out, " -> ", error_string(err))

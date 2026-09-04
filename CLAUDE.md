@@ -91,8 +91,13 @@ plus at most a one-pixel build tweak, all palette-swapped from the CC0 sheet in
 
 The cast sharing one sheet is deliberate and permanent - they all play the same
 game with the same moves, so a new animation drawn once should land on all seven
-at no cost. **Enemies deliberately do NOT work this way**: each owns its own
-sheet, because each is heading somewhere different. See Enemies.
+at no cost. Adding one is two edits: draw the row into
+`game/player/src/character_cc0.png`, then add it to `CAST_LAYOUT` in
+tools/build_characters.gd. Nothing outside the cast can see either change.
+
+**Enemies deliberately do NOT work this way**: each owns its own sheet and is
+seeded from a frozen copy of the body, because each is heading somewhere
+different and the cast's sheet is going to keep moving. See Enemies.
 
 `game/player/characters/roster.gd` is the single source of truth: id, display
 name, frames path, and the `recipe` tools/build_characters.gd bakes into that
@@ -246,12 +251,26 @@ adding more of the same:
   `super()` the base has settled `touching_player` for the frame, and one read
   covers however many are standing in it.
 
-The player's side of the fight is `ATTACK_POWER` (5, player.gd) pressed through
-a Hitbox Area2D that `_start_attack()` parks one step ahead of the body in the
-facing direction. The hitbox stays live for the whole swing animation but a
-ledger (`_swing_hits`) lands it once per enemy per swing - so a 10 HP regular
-dies to exactly two swings. Per-character health and attack stats are planned;
-they will join the roster recipe the way looks did.
+The player's side of the fight is two attacks on the one attack button. A press
+starts the swing (`ATTACK_POWER` 5); pressing again during it, or within
+`COMBO_GRACE_SECONDS` after, chains the thrust (`attack2` rows 9-11 of the cast
+sheet, `THRUST_POWER` 7), which lunges a step forward (`LUNGE_SPEED`, decayed by
+the same friction that roots attacks) and parks the Hitbox further out to match
+its visibly longer blade. **A press mid-attack is buffered, never dropped** -
+mashing alternates swing-thrust cleanly, and a dropped press reads as the game
+eating the button. Getting hit deliberately does NOT break the combo: the game
+has no hitstun, so a silently swallowed buffer would read as dropped input, and
+melee happens inside enemy contact where hits are constant - the thrust's cost
+is commitment (rooted through two animations, lunging toward danger), not a
+hidden reset. Damage goes through a Hitbox Area2D that `_start_attack()` parks
+one step ahead of the body in the facing direction; it stays live for the whole
+animation but a ledger (`_swing_hits`) lands each attack once per enemy - so a
+10 HP regular dies to two presses whichever pair they make (5+5 or 5+7; the
+thrust's edge only starts to matter above 10 HP, which is deliberate). The
+thrust's sparks are tinted per character by `_spark_hex` in character_art.gd:
+the hair colour raised to flash intensity (near-black hair would vanish on dark
+floors), `SRC_SPARK` gold where a bald head has none. Per-character health and
+attack stats are planned; they will join the roster recipe the way looks did.
 
 **Every enemy owns its sprite sheet**, and this is the one place enemies and the
 cast are deliberately organised differently. The seven characters share
@@ -264,10 +283,25 @@ pile every enemy's future moves into one file. So each has
 `tools/build_enemies.gd` is **seed once, slice always**:
 
 - *Seeding* writes that PNG, and only ever when it is missing - a recipe
-  recolours the CC0 body so a new enemy has something to walk around as on day
-  one. It is a starting point, exactly like the level scenes build_levels.gd
-  writes.
+  recolours the body from `game/enemies/src/body_cc0.png` so a new enemy has
+  something to walk around as on day one. It is a starting point, exactly like
+  the level scenes build_levels.gd writes.
 - *Slicing* runs every time, on whatever sheet is actually on disk.
+
+**`game/enemies/src/body_cc0.png` is a frozen copy of the pristine CC0 sheet,
+and the copy is the whole point.** The cast's `game/player/src/character_cc0.png`
+is living art that will grow animations; seeding from it would mean an enemy
+created after a player animation was drawn silently started from a different
+body than the enemies before it. Seeding has to be reproducible, so enemies read
+their own frozen copy and it is never edited.
+
+The same split applies to the animation layout, and this one bites harder: the
+cast's layout is `CAST_LAYOUT` in build_characters.gd, while enemies fall back to
+`CC0_LAYOUT` in character_art.gd. They are deliberately NOT one constant, and
+the thrust is now the proof: `attack2` lives in rows 9-11 of the cast's sheet
+only, and sharing the constant would have told every enemy to slice rows its
+own 9-row sheet does not have, with the frames coming back empty and nothing to
+say why.
 
 From the moment the PNG exists it is hand-owned art. Draw a new animation into
 one enemy's sheet, re-run the tool, and only that enemy's frames change - the
