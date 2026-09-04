@@ -10,15 +10,15 @@ keep_compressed_buffer = true
 [sub_resource type="CircleShape2D" id="CircleShape2D_mao7e"]
 radius = 6.0
 
-[node name="Health" type="Area2D" unique_id=1128942691]
+[node name="Health" type="Area2D" unique_id=1292679467]
 monitorable = false
 script = ExtResource("1_dgmi4")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1616394631]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=590902460]
 position = Vector2(-4, -8)
 texture = SubResource("PortableCompressedTexture2D_2bhdw")
 centered = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=185253750]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1086246017]
 position = Vector2(0, -4)
 shape = SubResource("CircleShape2D_mao7e")

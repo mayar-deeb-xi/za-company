@@ -121,24 +121,34 @@ door, torch or heart is the level's: override `can_travel()` in a level's own
 script for a lock, or restructure that level's scenes freely. A column has no
 shared behaviour at all and carries no script.
 
-**A room is furnished from data, not by hand.** `tools/props.gd` is the prop
-catalogue - office furniture (reception counter, desk, chair, water cooler,
+**A room is furnished from data, not by hand.** `tools/props/` holds one file
+per prop type - office furniture (reception counter, desk, chair, water cooler,
 sofa, coffee table, pot plant alive and dead), the maintenance floor's hardware
 (server rack, printer, stacked dead monitors, opened tower, toolbox, cable
 spool, scrap pile, loose debris) and signs (the welcome banner, a taped-up
 notice) - and a biome says which ones it puts where in its own `props` list,
-exactly the way it already says which enemies it gets. That one list drives everything: build_levels.gd
-writes a scene per type into the level's `props/`, paints its picture in the
-biome's palette and bakes it in, then instances them. So a floor cannot place
-furniture nothing draws, and `build_levels.gd -- lobby` reproduces the dressed
-room rather than resetting it to a bare box - which is what makes the
-generator's "re-running overwrites hand-dressing" warning survivable for eight
-floors.
+exactly the way it already says which enemies it gets. That list drives
+everything: build_levels.gd writes a scene per type into the level's `props/`,
+paints its picture in the biome's palette and bakes it in, then instances them.
+`build_levels.gd -- lobby` therefore reproduces the dressed room rather than
+resetting it to a bare box - which is what makes the generator's "re-running
+overwrites hand-dressing" warning survivable for eight floors.
+
+**The folder is the catalogue.** `tools/props.gd` is only the facade the
+generators call; it resolves `{"type": "desk"}` to `tools/props/desk.gd` by
+filename, with no registry in between. Each prop file declares its `SIZE`, its
+`BLOCKS`, optionally its `PIN`, and a `paint(spec)` - so adding a prop to the
+game is one new 30-90 line file plus a position in a floor's data, and a typo'd
+type fails at generation time with "nothing in tools/props/ draws 'tabel'".
+`_brush.gd` is the shared painting kit (the primitives, the multi-user fixed
+colours, the pixel font); its underscore is what keeps it out of the catalogue.
+column.gd, hazard.gd and heart.gd are the FIXTURES - levels place those
+themselves, so they carry no SIZE and cannot be placed as furniture.
 
 The division of labour between the two generators is by **subject**, not by
 file type: build_biomes.gd paints the ROOM (its tileset and doorways, the only
-art a level scene points at as files) and props.gd paints everything standing
-in the room. One consequence to know: re-palettizing a prop needs
+art a level scene points at as files) and tools/props/ paints everything
+standing in the room. One consequence to know: re-palettizing a prop needs
 build_levels.gd, not just build_biomes.gd, because that is where its picture
 gets baked in.
 
@@ -147,14 +157,14 @@ reason: the shared dungeon sheet has no furniture in it. Bodies come out of the
 biome's own ramp through `Biomes.shade()`, so a desk in hellfire is a hellfire
 desk for free. Only what has to read the same everywhere is fixed - water,
 foliage, a monitor's dark screen - the argument that already fixes fire and
-hearts. Two numbers are load-bearing in props.gd. `blocks` is the collision box,
-and a prop blocks only its base (the column's trick) so the player passes behind
-its upper half and Y-sorting draws the two in the right order; a `blocks` of
-zero is decor, and gets a bare Node2D rather than a body with no shape. And
-heights are measured against the 24 px standing torch, which is about as tall as
-a character: the first draft ignored that reference and drew a 30 px desk, which
-looks like nothing on its own and makes the whole cast read as children the
-moment one of them stands next to it.
+hearts. Two numbers are load-bearing in every prop file. `BLOCKS` is the
+collision box, and a prop blocks only its base (the column's trick) so the
+player passes behind its upper half and Y-sorting draws the two in the right
+order; a `BLOCKS` of zero is decor, and gets a bare Node2D rather than a body
+with no shape. And heights are measured against the 24 px standing torch, which
+is about as tall as a character: the first draft ignored that reference and drew
+a 30 px desk, which looks like nothing on its own and makes the whole cast read
+as children the moment one of them stands next to it.
 
 **A prop that blocks nothing is a tool, not an oversight.** `debris` - litter on
 the floor - has a `blocks` of zero and is the answer to a brief that pulls two
@@ -171,12 +181,12 @@ straight at the player and slide off whatever they hit, with no pathfinding to
 recover from a pocket. So a furnished room must not be a maze, and nothing solid
 should sit on the line an enemy walks from its post to the middle of the room.
 
-props.gd also carries a 5x5 uppercase pixel font, because half of what makes a
-company office funny is what is written on the walls. Sign text is catalogue
-data (`text`), not baked into a painter, so a floor can put up its own words
-without new code - the banner says WELCOME / NEW HIRES, the notice says OUT OF
-ORDER, the counter says RECEPTION, and DESIGN.md has wall text waiting on four
-more floors.
+_brush.gd also carries a 5x5 uppercase pixel font, because half of what makes a
+company office funny is what is written on the walls. A sign's words are a
+`TEXT` constant in its own file, not baked into a painter, so a floor can put up
+its own words without new drawing code - the banner says WELCOME / NEW HIRES,
+the notice says OUT OF ORDER, the counter says RECEPTION, and DESIGN.md has wall
+text waiting on four more floors.
 
 Doors are found through the `door` group and levels are typed via `preload`
 rather than by `class_name`: global class names live in an editor-written cache
@@ -206,9 +216,9 @@ Without re-arming on `body_exited`, the door ahead of you is spent before you
 ever walk to it and the chain dead-ends at the second room, which is invisible
 in a two-level chain where nobody ever arrives and then walks on.
 
-Adding a biome: one edit to `tools/biomes.gd`, then run build_biomes.gd and
-build_levels.gd. Appending to `CHAIN` gives the previous last level a north door
-automatically.
+Adding a biome: one new data file in `tools/biomes/` plus its name in
+`tools/biomes.gd`'s `CHAIN`, then run build_biomes.gd and build_levels.gd.
+Appending to `CHAIN` gives the previous last level a north door automatically.
 
 **Inserting** one in the middle - which is how the office floors are being built
 in front of the two demo biomes - changes its NEIGHBOURS as well, and this is
@@ -596,11 +606,15 @@ reason that room has none.
 - `game/levels/*/<biome>.tscn`, `door.tscn`, `props/*.tscn` (art embedded in
   each; enemy and prop instances placed in the level scene)
                                     <- tools/build_levels.gd, see below
-- every picture of a thing standing in a room, plus the pixel font
-                                    <- tools/props.gd (catalogue data and
-                                       painters, edited by hand)
-- biome list, chain order, per-room enemies and furniture
-                                    <- tools/biomes.gd (data, edited by hand)
+- every picture of a thing standing in a room
+                                    <- tools/props/<type>.gd, one file per
+                                       prop; tools/props.gd is the facade that
+                                       finds them BY FILENAME, and _brush.gd is
+                                       the shared painting kit + pixel font
+- chain order + per-floor helpers   <- tools/biomes.gd
+- each floor's palette, furniture and enemies
+                                    <- tools/biomes/<level>.gd, one data file
+                                       per floor (edited by hand)
 - project settings & input map      <- tools/setup_project.gd
 
 Run: `<godot> --headless --path . --script res://tools/<script>.gd`

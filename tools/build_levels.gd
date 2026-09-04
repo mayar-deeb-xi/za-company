@@ -166,6 +166,11 @@ func _write_column_scene(dir: String, spec: Dictionary) -> bool:
 ## DESIGN.md's arcing power strip and jammed photocopier - are hazards, and will
 ## carry hazard_base.gd exactly the way the torch does.
 func _write_prop_scene(dir: String, type: String, spec: Dictionary) -> bool:
+	# The friendly failure: a biome placing a type tools/props/ has no file for
+	# should say so, not die inside a null texture three calls later.
+	if not Props.known(type):
+		printerr("  nothing in tools/props/ draws '%s'" % type)
+		return true
 	var blocks := Props.blocks(type)
 	var solid := blocks != Vector2.ZERO
 	var root: Node2D = StaticBody2D.new() if solid else Node2D.new()
@@ -346,6 +351,8 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	var placed := {}
 	for spec in Biomes.BIOMES[level].get("props", []):
 		var type: String = spec["type"]
+		if not Props.known(type):
+			continue   # _write_prop_scene already reported it; do not cascade
 		placed[type] = placed.get(type, 0) + 1
 		var prop := _reload("%s/%s.tscn" % [props_dir, type]).instantiate()
 		prop.name = "%s%d" % [type.to_pascal_case(), placed[type]]
