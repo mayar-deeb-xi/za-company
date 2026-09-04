@@ -5,8 +5,8 @@ _data = PackedByteArray("AAADAAUAAAABAAAALgAAACgAAAA0AQAAUklGRiwBAABXRUJQVlA4TB8
 size_override = Vector2(46, 40)
 keep_compressed_buffer = true
 
-[node name="Neon" type="Node2D" unique_id=1158733639]
+[node name="Neon" type="Node2D" unique_id=2066574751]
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1311728175]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=687678410]
 texture = SubResource("PortableCompressedTexture2D_upoex")
 centered = false

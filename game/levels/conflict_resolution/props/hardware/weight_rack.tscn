@@ -8,13 +8,13 @@ keep_compressed_buffer = true
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kamj5"]
 size = Vector2(40, 7)
 
-[node name="WeightRack" type="StaticBody2D" unique_id=2143722815]
+[node name="WeightRack" type="StaticBody2D" unique_id=1322787021]
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1838789334]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=955944127]
 position = Vector2(-22, -26)
 texture = SubResource("PortableCompressedTexture2D_8tcpj")
 centered = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1337083538]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1082652325]
 position = Vector2(0, -3.5)
 shape = SubResource("RectangleShape2D_kamj5")

@@ -67,6 +67,18 @@ standing in the room. One consequence to know: re-palettizing a prop needs
 build_levels.gd, not just build_biomes.gd, because that is where its picture
 gets baked in.
 
+**A re-run with unchanged data writes a byte-identical file**, and
+`stable_ids.gd` is why that holds. Two identifiers used to churn: the engine
+mints a random per-node `unique_id` every time a scene is packed, and a
+headless save drops the `uid="uid://..."` the editor stamps into a bare
+header - so the editor and the generators took turns rewriting every file.
+Both generators now route every save through stable_ids.gd, which re-derives
+node ids from (file, parent, name) - the engine preserves ids it finds on
+load, so the editor never re-rolls them - and splices the captured uid back.
+The payoff is that `git diff` after a regen shows real changes only, and an
+EMPTY diff is the proof a re-run reproduced the dressed room. Run the file
+standalone to normalize scenes already on disk without regenerating them.
+
 ## Drawing a prop
 
 Props are drawn, not sampled, like the columns and torches and for the same

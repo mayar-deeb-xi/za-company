@@ -136,6 +136,11 @@ game/enemies/CLAUDE.md.
                                     <- tools/biomes/<level>.gd, one data file
                                        per floor (edited by hand)
 - project settings & input map      <- tools/setup_project.gd
+- stable ids in regenerated files   <- tools/stable_ids.gd (both level
+                                       generators call it around every save,
+                                       so a re-run with unchanged data is a
+                                       byte-identical file; run it alone to
+                                       normalize scenes without regenerating)
 
 Run: `<godot> --headless --path . --script res://tools/<script>.gd`
 

@@ -22,6 +22,7 @@ extends SceneTree
 
 const Biomes := preload("res://tools/biomes.gd")
 const Props := preload("res://tools/props.gd")
+const StableIds := preload("res://tools/stable_ids.gd")
 
 const SRC := "res://assets/tiles/dungeon.png"
 const TILE := 16
@@ -245,6 +246,9 @@ func _ramp(ramp: Array, t: float, gamma: float) -> Color:
 
 
 func _save(res: Resource, path: String) -> bool:
+	var kept_uid := StableIds.uid_of(path)
 	var err := ResourceSaver.save(res, path)
+	if err == OK:
+		StableIds.stabilize(path, kept_uid)
 	print("  ", path, " -> ", error_string(err))
 	return err != OK

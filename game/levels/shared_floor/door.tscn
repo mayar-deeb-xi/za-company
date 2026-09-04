@@ -8,19 +8,19 @@ size = Vector2(32, 16)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_y26lf"]
 size = Vector2(26, 10)
 
-[node name="Door" type="Area2D" unique_id=1571020988 groups=["door"]]
+[node name="Door" type="Area2D" unique_id=935435223 groups=["door"]]
 monitorable = false
 script = ExtResource("1_usds2")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=340783332]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2062838718]
 position = Vector2(-16, -8)
 centered = false
 
-[node name="Seal" type="StaticBody2D" parent="." unique_id=1195453952]
+[node name="Seal" type="StaticBody2D" parent="." unique_id=2112391926]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Seal" unique_id=702971856]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Seal" unique_id=164446715]
 shape = SubResource("RectangleShape2D_104mf")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=942111030]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1567909028]
 position = Vector2(0, 13)
 shape = SubResource("RectangleShape2D_y26lf")

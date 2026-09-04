@@ -38,6 +38,7 @@ extends SceneTree
 
 const Biomes := preload("res://tools/biomes.gd")
 const Props := preload("res://tools/props.gd")
+const StableIds := preload("res://tools/stable_ids.gd")
 
 const LEVEL_SCRIPT := "res://game/levels/level.gd"
 const DOOR_SCRIPT := "res://game/levels/door_base.gd"
@@ -504,8 +505,11 @@ func _reload(path: String) -> PackedScene:
 func _pack(root: Node, path: String) -> bool:
 	var packed := PackedScene.new()
 	var err := packed.pack(root)
+	var kept_uid := StableIds.uid_of(path)
 	if err == OK:
 		err = ResourceSaver.save(packed, path)
+	if err == OK:
+		StableIds.stabilize(path, kept_uid)
 	print("  ", path, " -> ", error_string(err))
 	# This tree was never in the SceneTree, so nothing else will ever free it.
 	root.free()
