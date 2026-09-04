@@ -30,6 +30,10 @@ const SRC_SLASH := "fff8e1"
 ## Combo sparks (attack2 rows). Doubles as the default spark colour: a bald
 ## recipe has no hair to tint them from, so they stay this gold.
 const SRC_SPARK := "ffd04d"
+## The wildfire's darker ember tone (heavy-attack finale rows). Recoloured to
+## the recipe's spark colour darkened, so each character's fire matches their
+## sparks - one flame reads white core, spark middle, ember tip.
+const SRC_FIRE := "e07820"
 
 # Only these colours count as "the body" when picking a seam for a build tweak:
 # attack frames also contain the slash arc, whose bounds would drag the seam off
@@ -340,6 +344,7 @@ static func restyle(src_path: String, recipe: Dictionary) -> Image:
 		SRC_PANTS_DARK: recipe["pants_dark"],
 		SRC_SLASH: SRC_SLASH,
 		SRC_SPARK: _spark_hex(recipe),
+		SRC_FIRE: _c(_spark_hex(recipe)).darkened(0.35).to_html(false),
 	}
 	var unknown := {}
 	for y in img.get_height():

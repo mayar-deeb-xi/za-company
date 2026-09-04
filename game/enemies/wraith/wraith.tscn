@@ -12,6 +12,7 @@ radius = 16.0
 [node name="Wraith" type="CharacterBody2D" groups=["enemies"]]
 motion_mode = 1
 script = ExtResource("1_wraith")
+max_health = 17
 contact_damage = 0
 speed = 45.0
 sight_radius = 120.0

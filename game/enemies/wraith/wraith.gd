@@ -3,19 +3,30 @@ extends "res://game/enemies/enemy_base.gd"
 ## player a point of health every second.
 ##
 ## This is the first enemy whose harm has a clock of its own, and it is where
-## the two kinds of harm in the game separate. Contact damage is deliberately
-## unmetered - a regular presses take_damage() every physics frame and the
-## player's grace window decides how often that lands - but a drain IS a rate
-## already, so it accumulates here and presses the player's drain() instead:
-## no grace, no blink, no competing with whatever last hit them.
+## the kinds of harm in the game separate. A regular's blow is a discrete event
+## the player's grace window meters against everything else hitting them - but a
+## drain IS a rate already, so it accumulates here and presses the player's
+## drain() instead: no grace, no blink, no competing with whatever last hit them.
 ##
 ## The aura is just the Touch area, tuned wide: "near you" and "touching you"
 ## are the same question, so the base's overlap machinery answers both.
+##
+## **It has no swing, so there is nothing to interrupt - and that is its
+## identity, not an omission.** Every other enemy can be staggered out of its
+## attack; this one cannot, because it has no attack, only proximity. It is the
+## single thing in the game that hitting does not stop, which leaves exactly two
+## answers to it: leave, or kill it. Being the squishiest of the three is the
+## other half of that bargain.
 
 ## Health per second of proximity. Fractional and float on purpose - the rate
 ## is the tunable thing, and it can be pushed well under 1 without the effect
 ## vanishing.
 @export var drain_per_second := 1.0
+
+
+## No wind-up, no strike, nothing to stagger. Its harm is _touch(), every frame.
+func _attacks() -> bool:
+	return false
 
 ## A cold glow while it feeds, so health ticking down has a visible cause.
 const FEED_TINT := Color(0.55, 0.85, 1.0)

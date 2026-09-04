@@ -27,15 +27,21 @@ const SRC := "res://game/player/src/character_cc0.png"
 ## characters pick it up with nothing else in the game moving - which is exactly
 ## what sharing one constant would have prevented.
 const CAST_LAYOUT := {
-	"down": {"idle": 0, "walk": 1, "attack": 6, "attack2": 9},
-	"up": {"idle": 2, "walk": 3, "attack": 7, "attack2": 10},
-	"side": {"idle": 4, "walk": 5, "attack": 8, "attack2": 11},
+	"down": {"idle": 0, "walk": 1, "attack": 6, "attack2": 9,
+		"charge": 12, "heavy": 15, "wildfire": 18},
+	"up": {"idle": 2, "walk": 3, "attack": 7, "attack2": 10,
+		"charge": 13, "heavy": 16, "wildfire": 19},
+	"side": {"idle": 4, "walk": 5, "attack": 8, "attack2": 11,
+		"charge": 14, "heavy": 17, "wildfire": 20},
 }
 const CAST_SPECS := {
 	"idle": {"frames": 1, "fps": 1.0, "loop": true},
 	"walk": {"frames": 4, "fps": 10.0, "loop": true},
 	"attack": {"frames": 4, "fps": 14.0, "loop": false},
 	"attack2": {"frames": 4, "fps": 14.0, "loop": false},
+	"charge": {"frames": 2, "fps": 5.0, "loop": true},
+	"heavy": {"frames": 4, "fps": 14.0, "loop": false},
+	"wildfire": {"frames": 4, "fps": 14.0, "loop": false},
 }
 
 

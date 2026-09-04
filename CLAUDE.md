@@ -196,26 +196,69 @@ touch radius is 9 for exactly this reason - at the original 7 it reached 12 and
 tied with the stop distance. `walk` also now plays only while actually
 advancing, so a held enemy does not moonwalk on the spot.
 
-**`_touch(player, delta)` is the seam between enemy types.** The base deals
-`contact_damage`; a type that freezes, shoves or drains overrides `_touch()` in
-its own script extending the base, and inherits chase, health and death
-untouched. `delta` is that frame's worth of contact, which is what any effect
-with a rate of its own needs. Two smaller seams travel with it, because an
-effect is rarely only damage: `_contact_state()` is what contact looks like (the
-base lunges, the others stand), `_resting_tint()` is how the enemy reads while
-it works, and `_can_advance()` lets a type root itself while it winds up. The
-base resolves `modulate` in one place after `_touch()` has run, with the hurt
-flash outranking whatever a type wants, and sets `touching_player` first so an
-override can read it.
+**An enemy hurts you by finishing an attack, not by touching you.** The cycle is
+CHASE -> WINDUP -> STRIKE -> RECOVER, with STAGGER hanging off WINDUP for an
+attack that got interrupted; the enemy only moves in CHASE, so a swing is
+something you can see coming and step out of. Contact alone costs nothing - that
+is what makes the telegraph mean anything, and it is how the wraith and the
+warden already worked, so this brought the plain melee enemy in line with them
+rather than inventing a new idea.
+
+**Damage interrupts a wind-up, and two rules keep that from being a spam
+button.** Unbounded, "any hit cancels" is a stun-lock: a fresh wind-up can
+always be hit at its start, so mashing would beat every enemy in the game.
+`commit_fraction` (0.6) is the point past which the enemy is committed - a late
+hit still damages it but the blow lands anyway, which makes interrupting a
+timing decision rather than a check on button speed. `interrupt_cooldown` (1.2s)
+is the load-bearing one: having been interrupted once, an enemy cannot be
+interrupted again for a while, so an interrupt is a resource spent on the attack
+that most needs stopping. The player is deliberately NOT interruptible in
+return - being staggered out of a combo by chip damage feels dreadful, and
+asymmetry in the player's favour is the right kind of unfair.
+
+The numbers come off the player's combo, which is the clock everything else is
+measured against. Damage lands on an attack's first frame and the chain has no
+gaps, so cumulative damage is 5 / 12 / 17 / 24 / 29 / 36 at 0.29s intervals -
+which is why enemy health is 24, 17 and 36 rather than round numbers. Each is
+"dies in exactly N hits". At the old 10 health every enemy died in 0.29s and no
+telegraph could exist inside that.
+
+**`_touch_strike(player)` is the seam between melee types**, called on the frame
+the wind-up completes for each player still in range. `_touch(player, delta)` is
+still there for per-frame contact and still hands over `delta`, because a
+continuous effect with a rate of its own - the wraith's drain - is exactly what
+it is for. `_attacks()` says whether a type uses the cycle at all, and
+`_windup_needs_contact()` whether stepping out of range unwinds it (false for a
+swing, which lands on air; true for something that has to hold you).
+
+Smaller seams travel with those, because an effect is rarely only damage:
+`_contact_state()` is what contact looks like between attacks,
+`_windup_state()` and `_windup_tint()` are what the telegraph looks and reads
+like, `_resting_tint()` is how the enemy reads the rest of the time, and
+`_can_advance()` lets a type root itself. The base resolves `modulate` in one
+place, with the hurt flash outranking a wind-up and a wind-up outranking
+`_resting_tint()`, and settles `touching_player` and the phase before any
+override is asked.
+
+**A charge and a swing are the same shape**, which is worth knowing before
+writing a fourth type: wind up, land it if it completes, recover, interruptible
+early and committed late. The warden looked like it needed a clock of its own
+and did not - it is four overrides on the same cycle, and taking them
+individually is what earns it the interrupt rules for free. `_attacks()` is for
+a type with no attack at all, not for a type whose attack is unusual.
 
 Three types so far, and they deliberately threaten in three different ways -
 damage, drain, and denial - so a room is built by mixing them rather than by
 adding more of the same:
 
-- **`regular/`** - 10 HP, 5 contact damage, speed 55, sight 80. Carries no
-  script of its own: its scene runs enemy_base.gd directly, the way torches run
-  hazard_base.gd.
-- **`wraith/`** - 10 HP, no attack at all, speed 45, sight 120, and standing
+- **`regular/`** - 24 HP, 10 damage on a completed strike, speed 55, sight 80,
+  0.45s wind-up. Carries no script of its own: its scene runs enemy_base.gd
+  directly, the way torches run hazard_base.gd, so the base's defaults ARE the
+  regular's numbers. It is the only type that uses the swing cycle, and the one
+  the interrupt rules exist for. `max_health` is the number most likely to want
+  retuning - four guards in the marble hall is sixteen hits between them, and
+  17 is the next stop down if that reads as a slog.
+- **`wraith/`** - 17 HP, no attack at all, speed 45, sight 120, and standing
   near it costs one health per second. It is the reason `drain()` exists (see
   Health). Its `_contact_state()` is `idle`: having arrived it has no attack to
   play and nowhere left to walk, so it just stands over you facing your way
@@ -227,12 +270,37 @@ adding more of the same:
   feeding so the health ticking down has a visible cause. Being one of the cast
   drained of colour - straight hair, normal build, white on dark blue - is the
   point of the look: it reads as a person, not a monster.
-- **`warden/`** - 10 HP, no damage of any kind, speed 50, sight 130, a 48 px
+
+  It opts out of the attack cycle (`_attacks()` false), so **it is the one thing
+  in the game that hitting does not stagger** - deliberately, since it has no
+  attack to stagger, only proximity. That leaves exactly two answers to it,
+  leave or kill it, and being the softest of the three at three hits is the
+  other half of that bargain.
+- **`warden/`** - 36 HP, no damage of any kind, speed 50, sight 130, a 48 px
   area, and a 2-second wind-up that slows everyone still inside to half speed
   for 4. It is pure area denial: harmless alone, and the reason the guards and
-  the wraith in hellfire are dangerous. Its `_touch()` is deliberately empty -
-  what its area costs you is settled by the wind-up, not by the frame-by-frame
-  contact the base meters.
+  the wraiths in hellfire are dangerous. What its area costs you is settled by
+  the wind-up, never by contact.
+
+  **It runs the base's cycle**, with its charge as the wind-up and its slow as
+  the strike, so its numbers are the ordinary `windup_seconds` (2.0),
+  `commit_fraction` (0.75), `recover_seconds` (0.6) and `interrupt_cooldown`
+  (1.5). Three counters, each deliberately just barely sufficient: walk out and
+  `_windup_needs_contact()` unwinds it; hit it early and stagger it, once,
+  because its interrupt cooldown outlasts the charge it interrupts; or kill it,
+  which at 36 health is 1.43s of unbroken combo against a 2s charge - a race you
+  can just win with enough left to cover closing the distance. Leave it too late
+  and none of them work.
+
+  Its telegraph is three readings of `_windup_progress()`: the drawn ring
+  (`charge_ring.gd`), the violet `_windup_tint()`, and the sprite's four attack
+  frames held to the charge's pace rather than looping six times through it.
+  The ring exists because 48 px of floor is six times the width of the body and
+  no animation on a 32 px sprite can say where an area ends; it copies its
+  radius off the Touch shape on `_ready`, so the drawing cannot lie about the
+  reach. Because all three read the one number, an interrupt wipes the sweep,
+  drops the tint and resets the sprite in the frame it lands - legible without a
+  line of code of its own.
 
   Three things about it are load-bearing. It **plants at the rim** of its area
   rather than in your face, and that falls out of `_can_advance()` returning
@@ -251,8 +319,8 @@ adding more of the same:
   `super()` the base has settled `touching_player` for the frame, and one read
   covers however many are standing in it.
 
-The player's side of the fight is two attacks on the one attack button. A press
-starts the swing (`ATTACK_POWER` 5); pressing again during it, or within
+The player's side of the fight is three attacks on the one attack button. A
+press starts the swing (`ATTACK_POWER` 5); pressing again during it, or within
 `COMBO_GRACE_SECONDS` after, chains the thrust (`attack2` rows 9-11 of the cast
 sheet, `THRUST_POWER` 7), which lunges a step forward (`LUNGE_SPEED`, decayed by
 the same friction that roots attacks) and parks the Hitbox further out to match
@@ -265,12 +333,29 @@ is commitment (rooted through two animations, lunging toward danger), not a
 hidden reset. Damage goes through a Hitbox Area2D that `_start_attack()` parks
 one step ahead of the body in the facing direction; it stays live for the whole
 animation but a ledger (`_swing_hits`) lands each attack once per enemy - so a
-10 HP regular dies to two presses whichever pair they make (5+5 or 5+7; the
-thrust's edge only starts to matter above 10 HP, which is deliberate). The
-thrust's sparks are tinted per character by `_spark_hex` in character_art.gd:
-the hair colour raised to flash intensity (near-black hair would vanish on dark
-floors), `SRC_SPARK` gold where a bald head has none. Per-character health and
-attack stats are planned; they will join the roster recipe the way looks did.
+24 HP guard dies to one full mash cycle (5+7+5+7). The thrust's sparks are
+tinted per character by `_spark_hex` in character_art.gd: the hair colour
+raised to flash intensity (near-black hair would vanish on dark floors),
+`SRC_SPARK` gold where a bald head has none. Per-character health and attack
+stats are planned; they will join the roster recipe the way looks did.
+
+**The heavy is the hold.** A press always swings first - waiting to see whether
+the press is a hold would lag every basic attack - and a button still held when
+an attack ends (with nothing buffered) flows into the `charge` stance: rooted,
+looping the wind-up while sparks spiral inward. `CHARGE_SECONDS` (1.0) later
+the loop doubles speed as the ready cue; releasing then fires `heavy` - the
+spin - which always erupts into `wildfire`, and the pair deals `HEAVY_POWER`
+(15) through the Spinbox, a 17 px circle on player.tscn, to EVERY enemy inside
+it, once per enemy across both animations (the ledger is not cleared between
+them). Releasing early just returns to idle - the press's swing already
+happened, so a tap stays a tap, mashing stays the combo, and holding is the
+heavy: three moves, one button. 15 beats the combo's 12 because it costs a full
+second of rooted, interruptible charging at melee range. The wildfire's ember
+tone is `SRC_FIRE`, recoloured to the spark colour darkened, so each
+character's fire matches their sparks - violet for the black-haired, gold for
+the bald. One test-side consequence: a synthesized Space left held is no longer
+inert - smoke_test's mash window must end on a release, or the player stands in
+the charge stance for every later movement check.
 
 **Every enemy owns its sprite sheet**, and this is the one place enemies and the
 cast are deliberately organised differently. The seven characters share
@@ -317,9 +402,10 @@ it is back on the next visit - the same no-room-state rule as pickups.
 Enemies are the one prop a level does NOT own a copy of - types are shared, and
 **which ones a room gets is per-biome data in `tools/biomes.gd`** (`enemies`:
 type + position), not one constant in the generator. Composition is most of
-what makes one room feel unlike the next: the marble hall is two guards you can
-walk past, and hellfire is the same two plus the wraith and the warden, which is
-where things start following you and taking your legs. Positions are chosen so
+what makes one room feel unlike the next: the marble hall is four guards, one to
+a corner rather than a line across the top so they can be taken on one at a
+time, and hellfire is four of those plus two wraiths and a warden - where things
+start following you and taking your legs. Positions are chosen so
 no enemy's sight reaches the door line, the spawns or the torch and heart stands
 - the straight walk between the two doors stays safe in every biome, and the
 smoke test's early sections depend on nothing aggroing until the combat run

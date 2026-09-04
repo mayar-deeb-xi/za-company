@@ -17,6 +17,13 @@ const THRUST_POWER := 7
 ## After a swing ends, a press within this window still chains the thrust, so
 ## deliberate timing combos as reliably as mashing does.
 const COMBO_GRACE_SECONDS := 0.2
+## Damage the heavy attack - the charged spin plus its wildfire - deals to
+## EVERY enemy inside the Spinbox circle. Costs a full second of rooted,
+## interruptible charging, so it outhits the whole combo (5+7).
+const HEAVY_POWER := 15
+## How long the charge stance must be held before a release unleashes the
+## heavy. The charge loop doubles speed as the ready cue.
+const CHARGE_SECONDS := 1.0
 ## Forward push at the moment the thrust starts - the art lunges, so the body
 ## does too. FRICTION eats it in about a tenth of a second.
 const LUNGE_SPEED := 130.0
@@ -45,6 +52,7 @@ enum Facing { DOWN, UP, SIDE }
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var _hitbox: Area2D = $Hitbox
+@onready var _spinbox: Area2D = $Spinbox
 
 var health := MAX_HEALTH
 var lives := MAX_LIVES
@@ -63,6 +71,12 @@ var _facing_left := false
 var _attack := ""
 var _buffered := ""
 var _combo_grace := 0.0
+## Charge stance: entered by still holding the button when an attack ends,
+## rooted while it lasts. Releasing at CHARGE_SECONDS or more unleashes the
+## heavy; releasing earlier just returns to idle - the press's swing already
+## happened, so an early release loses nothing.
+var _charging := false
+var _charge := 0.0
 var _grace := 0.0
 ## Enemies already struck by the current swing, so a swing lands once per enemy
 ## rather than once per physics frame it overlaps them.
@@ -102,14 +116,26 @@ func _physics_process(delta: float) -> void:
 
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 
-	if Input.is_action_just_pressed("attack"):
+	if not _charging and Input.is_action_just_pressed("attack"):
 		if _attack == "":
 			_start_attack("attack2" if _combo_grace > 0.0 else "attack")
 		else:
 			# Mid-swing chains the thrust; mid-thrust queues the next swing.
 			_buffered = "attack2" if _attack == "attack" else "attack"
 
-	if _attack != "":
+	if _charging:
+		_charge += delta
+		# The ready cue: the charge loop pulses at double speed.
+		_sprite.speed_scale = 2.0 if _charge >= CHARGE_SECONDS else 1.0
+		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
+		if not Input.is_action_pressed("attack"):
+			_charging = false
+			_sprite.speed_scale = 1.0
+			if _charge >= CHARGE_SECONDS:
+				_start_attack("heavy")
+			else:
+				_apply_animation("idle")
+	elif _attack != "":
 		# Attacks root the character in place; the thrust's opening lunge
 		# decays under the same friction.
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
@@ -164,7 +190,8 @@ func _start_attack(anim: String) -> void:
 	_buffered = ""
 	_combo_grace = 0.0
 	_swing_hits.clear()
-	_hitbox.position = _hitbox_offset(anim == "attack2")
+	if anim != "heavy":
+		_hitbox.position = _hitbox_offset(anim == "attack2")
 	if anim == "attack2":
 		velocity = _facing_vector() * LUNGE_SPEED
 	_apply_animation(anim, true)
@@ -196,22 +223,44 @@ func _facing_vector() -> Vector2:
 
 
 ## Group + method rather than type, like every cross-feature touch in this
-## project: the player never names an enemy script.
+## project: the player never names an enemy script. The heavy hits through the
+## Spinbox circle - all around, as the spin and its fire ring promise - and its
+## ledger spans the spin AND the wildfire, so it lands once per enemy total.
 func _strike() -> void:
-	for body in _hitbox.get_overlapping_bodies():
+	var heavy := _attack == "heavy" or _attack == "wildfire"
+	var area := _spinbox if heavy else _hitbox
+	var power := ATTACK_POWER
+	if heavy:
+		power = HEAVY_POWER
+	elif _attack == "attack2":
+		power = THRUST_POWER
+	for body in area.get_overlapping_bodies():
 		if _swing_hits.has(body) or not body.is_in_group("enemies"):
 			continue
 		if body.has_method("take_damage"):
 			_swing_hits[body] = true
-			body.call("take_damage",
-				THRUST_POWER if _attack == "attack2" else ATTACK_POWER)
+			body.call("take_damage", power)
 
 
 func _on_animation_finished() -> void:
 	if _attack == "":
 		return
 	var finished := _attack
+	# The heavy always erupts into its wildfire before anything else - the
+	# ledger is NOT cleared, so the pair lands once per enemy between them.
+	if finished == "heavy":
+		_attack = "wildfire"
+		_apply_animation("wildfire", true)
+		return
 	_attack = ""
+	# Still holding when an attack ends (and nothing buffered) flows into the
+	# charge stance; a tap has long since released by now.
+	if _buffered == "" and finished != "wildfire" \
+			and Input.is_action_pressed("attack"):
+		_charging = true
+		_charge = 0.0
+		_apply_animation("charge", true)
+		return
 	if _buffered != "":
 		_start_attack(_buffered)
 		return
@@ -294,6 +343,18 @@ func revive() -> void:
 	# still slowed by whatever killed you is a second punishment for one death.
 	slow_factor = 1.0
 	slow_seconds = 0.0
+	# So does whatever the player was mid-way through with the attack button.
+	# Without this, a death during the charge stance respawns a player still
+	# rooted in it - or, released during the fade, popping a wildfire at the
+	# spawn - and a death mid-swing carries a live attack across the fade.
+	_attack = ""
+	_buffered = ""
+	_charging = false
+	_charge = 0.0
+	_combo_grace = 0.0
+	_swing_hits.clear()
+	_sprite.speed_scale = 1.0
+	_apply_animation("idle")
 	_sprite.visible = true
 	_sprite.modulate = Color.WHITE
 	health_changed.emit(health, MAX_HEALTH)

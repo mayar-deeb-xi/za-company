@@ -30,9 +30,13 @@ const BIOMES := {
 		"accent": "e8c56a",
 		"gamma": 0.85,
 		"floor_band": Vector2(0.30, 1.00),
+		# Four guards, one to a corner rather than a line across the top, so they
+		# can be picked off one at a time instead of arriving as a wall.
 		"enemies": [
 			{"type": "regular", "at": Vector2(64, 48)},
 			{"type": "regular", "at": Vector2(480, 48)},
+			{"type": "regular", "at": Vector2(150, 264)},
+			{"type": "regular", "at": Vector2(400, 264)},
 		],
 	},
 	"hellfire": {
@@ -48,8 +52,11 @@ const BIOMES := {
 		# marble hall falls inside it, which is why that room has none.
 		"enemies": [
 			{"type": "regular", "at": Vector2(64, 48)},
+			{"type": "regular", "at": Vector2(170, 48)},
+			{"type": "regular", "at": Vector2(374, 48)},
 			{"type": "regular", "at": Vector2(480, 48)},
 			{"type": "wraith", "at": Vector2(272, 48)},
+			{"type": "wraith", "at": Vector2(424, 280)},
 			{"type": "warden", "at": Vector2(64, 152)},
 		],
 	},

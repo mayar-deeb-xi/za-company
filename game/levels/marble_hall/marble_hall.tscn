@@ -80,6 +80,12 @@ position = Vector2(64, 48)
 [node name="Enemy2" parent="Props" instance=ExtResource("11_enemy")]
 position = Vector2(480, 48)
 
+[node name="Enemy3" parent="Props" instance=ExtResource("11_enemy")]
+position = Vector2(150, 264)
+
+[node name="Enemy4" parent="Props" instance=ExtResource("11_enemy")]
+position = Vector2(400, 264)
+
 [node name="Exit" type="Area2D" parent="Props" unique_id=1928899934 groups=["door"] instance=ExtResource("8_nwoxh")]
 position = Vector2(272, 8)
 monitorable = false
