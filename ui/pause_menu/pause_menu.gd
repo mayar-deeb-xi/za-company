@@ -7,15 +7,22 @@ extends CanvasLayer
 
 const MAIN_MENU_SCENE := "res://ui/main_menu/main_menu.tscn"
 
+## Typed by preloaded script rather than by `class_name`: global class names come
+## from a cache the editor writes, which a fresh headless checkout lacks.
+const SettingsPanelType := preload("res://ui/settings/settings_panel.gd")
+
 @onready var _root: Control = $Root
 @onready var _continue_button: Button = %ContinueButton
+@onready var _settings_button: Button = %SettingsButton
 @onready var _menu_button: Button = %MainMenuButton
 @onready var _quit_button: Button = %QuitButton
 @onready var _quit_confirm: ConfirmationDialog = %QuitConfirm
+@onready var _settings: SettingsPanelType = %SettingsPanel
 
 
 func _ready() -> void:
 	_continue_button.pressed.connect(resume)
+	_settings_button.pressed.connect(_on_settings_pressed)
 	_menu_button.pressed.connect(_on_main_menu_pressed)
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_quit_confirm.confirmed.connect(_on_quit_confirmed)
@@ -25,8 +32,9 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if not event.is_action_pressed("ui_cancel"):
 		return
-	# While the quit dialog is open, Escape belongs to the dialog.
-	if _quit_confirm.visible:
+	# While the quit dialog or the settings panel is open, Escape belongs to it:
+	# it should back out one step, not unpause the game underneath.
+	if _quit_confirm.visible or _settings.is_open():
 		return
 	get_viewport().set_input_as_handled()
 	if is_paused():
@@ -46,8 +54,17 @@ func pause() -> void:
 
 
 func resume() -> void:
+	# Close settings on the way out, or it would still be open behind the next
+	# pause - hidden along with Root, then revealed again on top of the menu.
+	if _settings.is_open():
+		_settings.close()
 	_root.visible = false
 	get_tree().paused = false
+
+
+func _on_settings_pressed() -> void:
+	# Hand the panel the button to hand focus back to when it closes.
+	_settings.open(_settings_button)
 
 
 func _on_main_menu_pressed() -> void:

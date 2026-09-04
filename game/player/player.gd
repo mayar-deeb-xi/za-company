@@ -6,6 +6,9 @@ const SPEED := 90.0
 const ACCELERATION := 900.0
 const FRICTION := 1100.0
 
+## Preloaded by path rather than via `class_name`, like the rest of the project.
+const Roster := preload("res://game/player/characters/roster.gd")
+
 enum Facing { DOWN, UP, SIDE }
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -16,8 +19,18 @@ var _attacking := false
 
 
 func _ready() -> void:
+	_apply_character()
 	_sprite.animation_finished.connect(_on_animation_finished)
 	_apply_animation("idle")
+
+
+## Every character shares the same animation set, so becoming one is a frames
+## swap. An unknown saved id keeps the scene's default look rather than crashing.
+func _apply_character() -> void:
+	var id: String = Settings.get_value(&"player", &"character", Roster.DEFAULT_ID)
+	var path := Roster.frames_path(id)
+	if path != "" and path != _sprite.sprite_frames.resource_path:
+		_sprite.sprite_frames = load(path)
 
 
 func _physics_process(delta: float) -> void:

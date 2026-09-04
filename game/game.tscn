@@ -20,7 +20,11 @@ grow_vertical = 2
 color = Color(0.0470588, 0.0431373, 0.0627451, 1)
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(320, 288)
+position = Vector2(272, 240)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
@@ -49,6 +53,3 @@ mouse_filter = 2
 color = Color(0, 0, 0, 0)
 
 [node name="PauseMenu" parent="." instance=ExtResource("3_pause")]
-
-[node name="Camera2D" parent="Player" index="2"]
-limit_smoothed = true

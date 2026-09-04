@@ -37,6 +37,12 @@ func _initialize() -> void:
 	ProjectSettings.set_setting("input/attack", _action([_key(KEY_SPACE), _key(KEY_J)]))
 	ProjectSettings.set_setting("input/toggle_fullscreen", _action([_key(KEY_F11)]))
 
+	# Order matters: autoloads are readied in the order they appear here, and
+	# display.gd reads its saved values from Settings during _ready. Clearing
+	# Display first re-appends it, which is what puts Settings ahead of it on a
+	# project that already had Display registered.
+	ProjectSettings.clear("autoload/Display")
+	ProjectSettings.set_setting("autoload/Settings", "*res://autoload/settings.gd")
 	ProjectSettings.set_setting("autoload/Display", "*res://autoload/display.gd")
 
 	var err := ProjectSettings.save()

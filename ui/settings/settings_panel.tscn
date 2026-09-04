@@ -1,0 +1,100 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/settings/settings_panel.gd" id="1_settings"]
+[ext_resource type="Theme" path="res://ui/theme/menu_theme.tres" id="2_theme"]
+
+[node name="SettingsPanel" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_settings")
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.105882, 0.0666667, 0.0980392, 0.88)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
+layout_mode = 2
+
+[node name="Menu" type="VBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="CenterContainer/Panel/Menu"]
+layout_mode = 2
+theme_type_variation = &"Heading"
+text = "SETTINGS"
+horizontal_alignment = 1
+
+[node name="Rule" type="ColorRect" parent="CenterContainer/Panel/Menu"]
+custom_minimum_size = Vector2(260, 2)
+layout_mode = 2
+size_flags_horizontal = 4
+color = Color(0.431373, 0.701961, 0.615686, 1)
+
+[node name="Gap" type="Control" parent="CenterContainer/Panel/Menu"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="Rows" type="GridContainer" parent="CenterContainer/Panel/Menu"]
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="ModeLabel" type="Label" parent="CenterContainer/Panel/Menu/Rows"]
+layout_mode = 2
+size_flags_vertical = 1
+theme_type_variation = &"SettingLabel"
+text = "DISPLAY"
+
+[node name="ModeOption" type="OptionButton" parent="CenterContainer/Panel/Menu/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 36)
+layout_mode = 2
+
+[node name="WindowSizeLabel" type="Label" parent="CenterContainer/Panel/Menu/Rows"]
+layout_mode = 2
+size_flags_vertical = 1
+theme_type_variation = &"SettingLabel"
+text = "WINDOW SIZE"
+
+[node name="WindowSizeOption" type="OptionButton" parent="CenterContainer/Panel/Menu/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 36)
+layout_mode = 2
+
+[node name="Note" type="Label" parent="CenterContainer/Panel/Menu"]
+layout_mode = 2
+theme_type_variation = &"Footer"
+text = "ONLY APPLIES IN WINDOWED MODE"
+horizontal_alignment = 1
+
+[node name="BackGap" type="Control" parent="CenterContainer/Panel/Menu"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "BACK"

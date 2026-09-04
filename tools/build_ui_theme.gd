@@ -108,6 +108,35 @@ func _initialize() -> void:
 	theme.set_constant("shadow_offset_x", "Heading", 0)
 	theme.set_constant("shadow_offset_y", "Heading", 3)
 
+	# ---- Settings controls -----------------------------------------------
+	# OptionButton inherits Button's styleboxes through the theme's class
+	# fallback, but the popup it opens is a separate control and stays stock
+	# grey unless it is styled here too.
+	theme.set_font("font", "OptionButton", mini)
+	theme.set_font_size("font_size", "OptionButton", 16)
+	theme.set_constant("arrow_margin", "OptionButton", 6)
+
+	var popup := _flat(SURFACE.darkened(0.35), ACCENT)
+	popup.content_margin_left = 6
+	popup.content_margin_right = 6
+	popup.content_margin_top = 6
+	popup.content_margin_bottom = 6
+	theme.set_stylebox("panel", "PopupMenu", popup)
+	theme.set_stylebox("hover", "PopupMenu", _flat(SURFACE_HI, SURFACE_HI, 0))
+	theme.set_font("font", "PopupMenu", mini)
+	theme.set_font_size("font_size", "PopupMenu", 16)
+	theme.set_color("font_color", "PopupMenu", TEXT_DIM)
+	theme.set_color("font_hover_color", "PopupMenu", TEXT)
+	theme.set_color("font_separator_color", "PopupMenu", BORDER)
+	theme.set_constant("v_separation", "PopupMenu", 6)
+
+	# Row labels sit beside their control, so they read quieter than a heading
+	# but brighter than the footer.
+	theme.set_type_variation("SettingLabel", "Label")
+	theme.set_font("font", "SettingLabel", mini)
+	theme.set_font_size("font_size", "SettingLabel", 16)
+	theme.set_color("font_color", "SettingLabel", TEXT)
+
 	# ---- Quit dialog -----------------------------------------------------
 	var panel := _flat(SURFACE.darkened(0.35), BORDER)
 	panel.content_margin_left = 20

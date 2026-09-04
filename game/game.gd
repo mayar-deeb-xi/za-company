@@ -19,15 +19,21 @@ const LevelType := preload("res://game/levels/level.gd")
 const DoorType := preload("res://game/levels/door_base.gd")
 
 @onready var _player: CharacterBody2D = $Player
-@onready var _camera: Camera2D = $Player/Camera2D
+@onready var _camera: Camera2D = $Camera2D
 @onready var _fade: ColorRect = $Transition/Fade
 
 var _level: LevelType
 var _travelling := false
+## World-space extent of the level on screen now; drives the camera.
+var _bounds := Rect2()
 
 
 func _ready() -> void:
 	_enter_level(START_LEVEL, &"start")
+
+
+func _process(_delta: float) -> void:
+	_camera.global_position = _camera_target()
 
 
 ## Fade out, swap, fade back in. Input is suspended for the whole trip so a key
@@ -73,15 +79,35 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 			door.travelled.connect(_travel)
 
 	_player.global_position = _level.spawn_position(spawn)
-	_apply_camera_limits(_level.bounds())
 
-
-## Camera limits come from the level rather than the scene file, so each map can
-## be its own size without game.tscn knowing anything about it.
-func _apply_camera_limits(rect: Rect2) -> void:
-	_camera.limit_left = int(rect.position.x)
-	_camera.limit_top = int(rect.position.y)
-	_camera.limit_right = int(rect.end.x)
-	_camera.limit_bottom = int(rect.end.y)
-	# Otherwise the camera glides across from wherever the last level left it.
+	# Frame the new level before the first frame of it is drawn, then drop the
+	# smoothing history - otherwise the camera glides across from wherever the
+	# level we just left had put it.
+	_bounds = _level.bounds()
+	_camera.global_position = _camera_target()
 	_camera.reset_smoothing()
+
+
+## Where the camera wants to be, decided per axis:
+##
+## - the level is wider/taller than the screen -> follow the player, stopping at
+##   the walls so the void outside the map never comes into view
+## - the level already fits -> sit on its centre and show the whole room
+##
+## Deliberately not Camera2D's own limits: those cannot express the second case.
+## Asked to keep a 544 px room inside a 640 px view they contradict themselves,
+## and the camera ends up jammed against one edge.
+func _camera_target() -> Vector2:
+	var view := get_viewport_rect().size / _camera.zoom
+	var half := view * 0.5
+	var centre := _bounds.get_center()
+	var target := _player.global_position
+	if view.x >= _bounds.size.x:
+		target.x = centre.x
+	else:
+		target.x = clampf(target.x, _bounds.position.x + half.x, _bounds.end.x - half.x)
+	if view.y >= _bounds.size.y:
+		target.y = centre.y
+	else:
+		target.y = clampf(target.y, _bounds.position.y + half.y, _bounds.end.y - half.y)
+	return target
