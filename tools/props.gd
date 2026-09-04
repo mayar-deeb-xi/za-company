@@ -1,15 +1,16 @@
 extends RefCounted
 ## The front door to tools/props/ - the folder IS the catalogue.
 ##
-## The catalogue is shelved by what a prop IS - furniture/, hardware/, signs/,
-## fixtures/ - and every file on a shelf is one placeable prop type, named by
-## its filename alone: `{"type": "desk"}` in a biome's props list resolves to
-## whichever shelf holds desk.gd, no registry in between and no shelf name in
-## the data. A shelf is where a file sits, never part of its name, so
-## re-shelving a prop touches no floor's data. Adding a prop to the game is
-## writing one new file on the shelf it belongs to and giving it a position in
-## tools/biomes.gd - nothing else changes, this file included. Two shelves
-## claiming one name is an error at first lookup.
+## The catalogue is shelved by what a prop IS - furniture/, hardware/,
+## signs/, markings/, openings/, fixtures/ - and every file on a shelf is one
+## placeable prop type, named by its filename alone: `{"type": "desk"}` in a
+## biome's props list resolves to whichever shelf holds desk.gd, no registry
+## in between and no shelf name in the data. A shelf is where a file sits,
+## never part of its name, so re-shelving a prop touches no floor's data.
+## Adding a prop to the game is writing one new file on the shelf it belongs
+## to and giving it a position in tools/biomes.gd - nothing else changes, this
+## file included, and a shelf that does not exist yet is made by putting the
+## first file on it. Two shelves claiming one name is an error at first lookup.
 ##
 ## A prop file declares what the generators need to wrap it in a scene:
 ##

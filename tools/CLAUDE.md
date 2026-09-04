@@ -10,22 +10,24 @@ file is how furniture works and how floors are added.
 `tools/props/` holds one file per prop type, shelved by what a prop IS -
 `furniture/` (reception counter, desk, chair, water cooler, sofa, coffee table,
 pot plant alive and dead, call-centre station, media edit bay, engineer's
-workstation, boardroom table, filter coffee machine, drinks trolley, glass
-partition, awards cabinet), `hardware/` (server rack, printer, stacked dead
-monitors, opened tower, toolbox, cable spool, scrap pile, loose debris, a
-camera on its tripod, a ring light, a paper backdrop, a punch bag, a rack of
-weights), `signs/` (the welcome banner, a taped-up notice, two whiteboards -
-one lettered, one an architecture diagram nobody may erase - two printed
-posters, two lit boards with a number on them and the founder's portrait) and
-`markings/` (what is spread on the floor rather than stood on it: the gym's
-boxing ring and the executive floor's rug) - and a biome says which ones it
-puts where in its own `props` list, exactly the way it already says which
-enemies it gets. That list drives everything:
+workstation, boardroom table, the executive's own bare desk, filter coffee
+machine, drinks trolley, glass partition, awards cabinet), `hardware/` (server
+rack, printer, stacked dead monitors, opened tower, toolbox, cable spool,
+scrap pile, loose debris, a camera on its tripod, a ring light, a paper
+backdrop, a punch bag, a rack of weights), `signs/` (the welcome banner, a
+taped-up notice, two whiteboards - one lettered, one an architecture diagram
+nobody may erase - two printed posters, two lit boards with a number on them,
+the founder's portrait and one sticky note lying face down), `markings/` (what
+is spread on the floor rather than stood on it: the gym's boxing ring and the
+executive floor's rug) and `openings/` (what is cut through the building's
+shell rather than stood against it: the penthouse's city window) - and a biome
+says which ones it puts where in its own `props` list, exactly the way it
+already says which enemies it gets. That list drives everything:
 build_levels.gd writes a scene per type into the level's `props/`, paints its
 picture in the biome's palette and bakes it in, then instances them.
 `build_levels.gd -- lobby` therefore reproduces the dressed room rather than
 resetting it to a bare box - which is what makes the generator's "re-running
-overwrites hand-dressing" warning survivable for eleven floors.
+overwrites hand-dressing" warning survivable for twelve floors.
 
 **The folder is the catalogue, and the shelves are only organisation.**
 `tools/props.gd` is the facade the generators call; it scans the shelves once
@@ -43,8 +45,20 @@ levels place column, hazard and heart themselves, so those can be painted but
 never listed as furniture. All three are a floor's to decline - an empty
 `columns` layout, `"hazard": "none"`, and `"heart": true` left unsaid - and the
 generator then deletes that level's column.tscn, torch.tscn or
-health_item.tscn rather than leave a scene nothing points at. The gym declines
-all three and its `fixtures/` folder is empty.
+health_item.tscn rather than leave a scene nothing points at. The gym and
+Khaled's office both decline all three, and both have an empty `fixtures/`
+folder to show for it.
+
+**And a shelf that does not exist yet is made by putting the first file on
+it.** props.gd enumerates the directories under `tools/props/` rather than
+holding a list of them, so a new shelf is a new folder and nothing else -
+build_levels.gd shelves the level's scene to match on its own. Two shelves
+have been opened this way and both for the same reason: `markings/` because
+the boxing ring is neither furniture, hardware nor a sign but paint on the
+floor, and `openings/` because the city window is none of those four either -
+it is a hole cut through the building's shell. The test is whether shelving
+the new prop somewhere existing would make the catalogue lie about what that
+shelf holds. A window is not a sign just because signs also hang on walls.
 
 The division of labour between the two generators is by **subject**, not by
 file type: build_biomes.gd paints the ROOM (its tileset and doorways, the only
@@ -78,6 +92,17 @@ since an outline is what gives a prop volume and this is meant to read as marks
 on the floor; and nothing in it is red or gold, because the heart pickup is red
 and the hazard's sparks are gold, and litter that borrows either colour is
 litter the player crosses the room to try to pick up.
+
+**Putting something ON a surface is a canvas trick, not a Y-sort one.** Every
+prop is drawn upwards from its foot and Y-sorting reads the node's y, so an
+object lying on a desk cannot simply be placed where it lies: pinned there it
+sorts BEFORE the desk and the desk is drawn over it. `sticky_note` is the
+worked case. Its canvas is 30 px tall with the note in the top ten and the
+rest transparent; it is placed two pixels SOUTH of the desk's foot, so it
+sorts after the desk, and its art - twenty pixels up from that foot - lands on
+the desktop. The alternative, painting the note into the desk, was rejected
+for a reason that has nothing to do with drawing: the ending turns the note
+over, so it needs a node of its own in the level scene for a script to find.
 
 **A prop can also be architecture.** The colonnade is a fixture the level
 places itself and its layout is a cross product of rows and columns, which
@@ -121,7 +146,9 @@ red, the dev floor's whiteboard says DO NOT ERASE under a diagram it does not
 explain, its build board says BUILD / FAILED, and the executive floor's
 portrait says only FOUNDER on a brass plaque - one word, because a portrait
 that has to explain who it is of is not a portrait of anybody important.
-DESIGN.md still has wall text waiting further up the building.
+The last sign in the building has no `TEXT` at all: the penthouse's
+`sticky_note` is face down, so what it says is four grey smudges of ink coming
+through the back of it, and the ending is where it gets turned over.
 
 ## Adding and inserting a biome
 

@@ -45,8 +45,9 @@ specific map beyond `START_LEVEL`.
 and its own copy of every prop it places, palette baked in - no level borrows
 another's. Everything standing in a room lives in its `props/`, on the same
 shelves as the painters in `tools/props/` (`fixtures/`, `furniture/`,
-`hardware/`, `markings/`, `signs/`); the fixtures shelf is named by ROLE, so
-hazard.gd paints `torch.tscn` and heart.gd paints `health_item.tscn`.
+`hardware/`, `markings/`, `openings/`, `signs/`); the fixtures shelf is named
+by ROLE, so hazard.gd paints `torch.tscn` and heart.gd paints
+`health_item.tscn`.
 
 **A room is furnished from data, not by hand**: a floor's palette, furniture
 and enemies are one hand-edited file, `tools/biomes/<level>.gd`, so
@@ -124,7 +125,8 @@ game/enemies/CLAUDE.md.
 - every picture of a thing standing in a room
                                     <- tools/props/<shelf>/<type>.gd, one file
                                        per prop shelved by kind (furniture/,
-                                       hardware/, signs/, fixtures/);
+                                       hardware/, signs/, markings/,
+                                       openings/, fixtures/);
                                        tools/props.gd is the facade that finds
                                        them BY FILENAME across the shelves,
                                        and _brush.gd is the shared painting
@@ -154,7 +156,7 @@ level scene and that level's own door, plus - where its biome asks for them -
 its column, hazard and heart scenes - is a starting point meant to be dressed by
 hand in the editor, and re-running it overwrites that work. Run it to reset a
 level or to add a new one, and pass level names after `--` to build only those,
-because a chain of eleven means adding a floor must not re-roll the ten already
+because a chain of twelve means adding a floor must not re-roll the eleven already
 dressed:
 
 ```

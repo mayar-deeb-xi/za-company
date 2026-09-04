@@ -319,9 +319,43 @@ the room, and the fiction carries which floor it is.
   No debris anywhere on this floor, and the absence is deliberate: every floor
   below it has litter because every floor below it is used.
   **Still to add**: its six, and Ivan.
-- [ ] **F10 Khaled's Office** (FINAL): penthouse, city window, one desk, one
+- [x] **F10 Khaled's Office** (FINAL): penthouse, city window, one desk, one
   face-down sticky note. Wide open arena. South door seals behind you.
   Dominic waits outside ("Whatever happens up there… CC me."). Ivan.
+  **Built**: the only ramp in the game with no warmth anywhere in it -
+  charcoal and glass up to a blue-white - and a platinum accent, which is not
+  a colour so much as the absence of one. That is the gym's argument made the
+  other way round: the gym is grey so its red paint is the only warm thing in
+  it, and this room is grey so the CITY is. Everything with a colour in here
+  is on the far side of the glass.
+  The second floor to hand in an empty `columns` layout, after the gym, and
+  the third to take no hazard, after Ahmed's office and the gym. Nothing solid
+  stands anywhere in the middle: the arena is x 150-400 by y 150-280 and the
+  only thing in it is the rug, which blocks nothing. Three new props:
+  - `city_window`, which opens a shelf. `openings/` exists because a window is
+    none of the other four things a prop can be - not furniture, hardware, a
+    sign or paint on the floor, but a hole cut through the building's shell -
+    and the boxing ring opened `markings/` on exactly that argument. It is
+    480 px of glass with a 96 px hole in the middle of it, because the north
+    wall of a level has a doorway in it and a panoramic window drawn across
+    that doorway would glaze the way out. The sky and the city are fixed
+    colours; only the frame and the sill take the room's.
+  - `exec_desk`, and the point of it is what is NOT on it: every other desk in
+    the building is buried, and this one is a mirror-polished slab with a pen
+    laid square to the edge. A man who does no work in the room where the work
+    is decided.
+  - `sticky_note`, face down, shelved with the signs because it IS one - the
+    only one in the game turned over. It is a prop of its own rather than a
+    detail painted into the desk because the ending turns it over and needs a
+    node to find, and `StickyNote1` is that node. Its canvas is 30 px tall
+    with the note in the top ten, which is how anything lying ON a desk is
+    placed at all: given a foot two pixels south of the desk's it sorts after
+    it, and its art, twenty pixels up, lands on the desktop.
+  The rug and the drinks trolley are the executive floor's, one storey down,
+  which is the catalogue working as intended - in a room with no hue in it the
+  rug comes out platinum on slate.
+  **Still to add**: Khaled, Ivan, and the south door sealing behind you, which
+  is a `can_travel()` override on this level's own script.
 
 ## Bosses — overrides on enemy_base.gd's cycle, built in this order
 
@@ -372,12 +406,21 @@ Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
         run build_biomes + build_levels. Per-floor enemy placement AND
         furniture are per-biome data, so a floor is data plus whatever new
         props it needs in `tools/props.gd` - a regenerate rebuilds the dressed
-        room rather than resetting it. **Nine of the ten rooms exist**, in
-        chain order: F1 the lobby, F2 the content studio, F3 the call center,
-        F5 the shared floor, F6 the dev floor, F7 the gym, F8 the bullpen and
-        F9 the executive floor are dressed, and F4 Ahmed's office is a room
-        waiting for its boss. F10 is the one still to build, and the two demo
-        biomes hold its place on the end of the chain until it is.
+        room rather than resetting it. **ALL TEN ROOMS EXIST**, in chain
+        order: F1 the lobby, F2 the content studio, F3 the call center, F5 the
+        shared floor, F6 the dev floor, F7 the gym, F8 the bullpen, F9 the
+        executive floor and F10 Khaled's office are dressed, and F4 Ahmed's
+        office is a room waiting for its boss. Every one of them is empty of
+        enemies except F8, which has its four office boys - the cast goes in
+        by hand, floor by floor.
+        The two demo biomes, `marble_hall` and `hellfire`, are still on the
+        end of the chain, and they are no longer holding anybody's place: the
+        run now walks the whole building and then two rooms past the top of
+        it. Dropping them is a CHAIN edit plus a rebuild of khaled_office
+        (which loses its north door and becomes the end of the chain) plus
+        three legs off tests/test_flow.gd - and the last of those is the one
+        to think about, since the flow suite's door, hazard and enemy checks
+        currently live partly in those two rooms.
         Regenerate one floor at a time: `build_levels.gd -- <level>`, and note
         that inserting a floor changes its NEIGHBOURS' door targets, so
         rebuild those too.

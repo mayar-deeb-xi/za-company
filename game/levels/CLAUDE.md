@@ -62,10 +62,12 @@ game/levels/
     props/            EVERYTHING STANDING IN IT - one scene each, on the
                       same shelves as tools/props/
       fixtures/         column.tscn, torch.tscn, health_item.tscn - each only
-                        where the biome asks for it, and the gym asks for none
+                        where the biome asks for it - the gym and the
+                        penthouse ask for none
       furniture/        desk.tscn  chair.tscn ...      whatever it
       hardware/         server_rack.tscn  printer.tscn ...  places,
       markings/         boxing_ring.tscn  rug.tscn          by kind
+      openings/         city_window.tscn                    of thing
       signs/            notice.tscn ...
 ```
 
@@ -98,9 +100,10 @@ cubicle divider, and `hazard` picks the standing torch, a sparking floor
 polisher, an arcing power strip, a ring light knocked over and left at full
 output, a photocopier jammed with the fuser still going - or `"none"`, which is
 a floor with nothing on it that hurts (the lobby, because a tutorial room must
-not have one, and Ahmed's office, because the only thing in there meant to hurt
-is Ahmed). Every style keeps the same canvas size and foot, so the scenes and
-collision boxes are untouched by the choice - only the art differs. The split
+not have one, and Ahmed's office, the gym and the penthouse, because a room
+built around one fight is a room where a burn is the floor's fault). Every
+style keeps the same canvas size and foot, so the scenes and collision boxes
+are untouched by the choice - only the art differs. The split
 exists because the classical column is most of what makes the marble hall read
 as a hall, and it was also most of what made the office lobby read as a temple.
 What a room uses to break up its floor is exactly what changes between a lobby
@@ -159,12 +162,13 @@ in a two-level chain where nobody ever arrives and then walks on.
 
 Both of a level's health fixtures are per-biome now, and both default the way
 the game wants: a hazard unless the floor says `"hazard": "none"` (the lobby,
-Ahmed's office and the marble hall say it), and NO heart unless the floor says
-`"heart": true` - which only the lobby does. Floor 1 is where a player finds out
-what a heal is; from floor 2 up the supply is meant to be Ivan carrying one to
-you, not a room leaving one lying about. A declined fixture gets neither the
-instance nor the scene: the generator deletes the stale `torch.tscn` or
-`health_item.tscn` rather than leave a level folder holding a fixture nothing
-points at. Their art comes from build_biomes.gd like everything else: the stand
-and plinth in the biome's own ramp, the flame and the heart in fixed colours,
-because fire and health have to read the same in every biome.
+Ahmed's office, the gym, the penthouse and the marble hall say it), and NO
+heart unless the floor says `"heart": true` - which only the lobby does. Floor
+1 is where a player finds out what a heal is; from floor 2 up the supply is
+meant to be Ivan carrying one to you, not a room leaving one lying about. A
+declined fixture gets neither the instance nor the scene: the generator
+deletes the stale `torch.tscn` or `health_item.tscn` rather than leave a level
+folder holding a fixture nothing points at. Their art comes from
+build_biomes.gd like everything else: the stand and plinth in the biome's own
+ramp, the flame and the heart in fixed colours, because fire and health have
+to read the same in every biome.

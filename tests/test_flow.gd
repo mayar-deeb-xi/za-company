@@ -507,6 +507,43 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		1081:
 			_key(KEY_W, false)
+			_check("door: the chain continues on into Khaled's office (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "KhaledOffice")
+			_check("title: the penthouse announces itself (got '%s')"
+				% _title_text(), _title_text() == "KHALED'S OFFICE")
+			# DESIGN.md asks for a wide open arena, and this is what one is:
+			# nothing SOLID anywhere in the middle of the room. The rug there
+			# blocks nothing, and every other prop is against a wall - so the
+			# last fight in the game has the floor its three phases need, and
+			# a piece of furniture nudged into the middle fails here.
+			var middle := Rect2(150, 150, 250, 130)
+			var inside: Array = _level().get_node("Props").get_children().filter(
+				func(n: Node) -> bool:
+					return n is StaticBody2D and middle.has_point(n.position))
+			_check("level: the arena is clear of everything solid (%d in it)"
+				% inside.size(), inside.is_empty())
+			# The window, the one desk and the note that is turned over - the
+			# three things DESIGN.md names for this room, and StickyNote1 is
+			# the node the ending will have to find.
+			var fitted := ["CityWindow1", "ExecDesk1", "StickyNote1", "Rug1"]
+			var wanting: Array = fitted.filter(func(n: String) -> bool:
+				return _level().get_node_or_null("Props/" + n) == null)
+			_check("level: the window, the desk and the note (missing %s)"
+				% [wanting], wanting.is_empty())
+			var columns: Array = _level().get_node("Props").get_children().filter(
+				func(n: Node) -> bool: return n.name.begins_with("Column"))
+			_check("level: no colonnade, no hazard, no heart (%d columns)"
+				% columns.size(), columns.is_empty()
+					and _level().get_node_or_null("Props/Torch") == null
+					and _level().get_node_or_null("Props/Health") == null)
+			_check("level: Khaled's office is empty until Khaled exists (%d)"
+				% get_nodes_in_group("enemies").size(),
+				get_nodes_in_group("enemies").is_empty())
+			_player().global_position = Vector2(272, 78)
+			_key(KEY_W, true)
+		1161:
+			_key(KEY_W, false)
 			_check("door: the chain continues on into the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "MarbleHall")
@@ -515,7 +552,7 @@ func _tick(frame: int) -> void:
 				guards.size() == 4)
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		1161:
+		1241:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into hellfire (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -538,7 +575,7 @@ func _tick(frame: int) -> void:
 			# Turn round and walk back out the way we came in. The wraith is on
 			# the far wall, outside its own 120 px sight of this whole path.
 			_key(KEY_S, true)
-		1241:
+		1321:
 			_key(KEY_S, false)
 			_check("return: hellfire's south door goes back to the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -548,34 +585,34 @@ func _tick(frame: int) -> void:
 				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		1247:
+		1327:
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		1259:
+		1339:
 			_check("pause: Main Menu returns to the menu, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
 					and not paused)
 			# Second run: spend every life and prove the run actually ends.
 			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
-		1271:
+		1351:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
-		1283:
+		1363:
 			_check("lives: a new run starts with all three again (%s)"
 				% _player().get("lives"),
 				current_scene.scene_file_path == "res://game/game.tscn"
 					and _player().get("lives") == 3)
 			_player().call("take_damage", 9999)
-		1336:
+		1416:
 			_check("lives: first death respawns with two left (%s, health %s)"
 				% [_player().get("lives"), _player().get("health")],
 				_player().get("lives") == 2 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		1386:
+		1466:
 			_check("lives: second death respawns with one left (%s)"
 				% _player().get("lives"),
 				_player().get("lives") == 1 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		1436:
+		1516:
 			_check("game over: the last death raises the death screen, paused",
 				paused and _pause_menu().get_node("Root").visible)
 			_check("game over: heading reads YOU DIED (got '%s')"
@@ -589,11 +626,11 @@ func _tick(frame: int) -> void:
 			# resume back into.
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		1442:
+		1522:
 			_check("game over: Escape cannot dismiss the death screen",
 				paused and _pause_menu().get_node("Root").visible)
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		1454:
+		1534:
 			_check("game over: MAIN MENU leaves the run, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"

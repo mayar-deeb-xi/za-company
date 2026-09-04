@@ -32,9 +32,10 @@
   paper backdrop, the gym's punch bags, weight racks and the boxing ring
   painted on its floor, the dev floor's workstations, coffee machine,
   whiteboard diagram and build board, the executive floor's awards cabinets,
-  boardroom table, drinks trolley, founder's portrait and rug, the signs and
-  the neon, and the 5x5 pixel font (`tools/props/`) - all drawn in code, since
-  the dungeon sheet has no furniture or hardware in it to derive from.
+  boardroom table, drinks trolley, founder's portrait and rug, the penthouse's
+  city window, its one bare desk and the note lying face down on it, the signs
+  and the neon, and the 5x5 pixel font (`tools/props/`) - all drawn in code,
+  since the dungeon sheet has no furniture or hardware in it to derive from.
 - `game/enemies/office_boy/src/office_boy.png` was seeded as a restyle of the
   frozen CC0 body like every other enemy sheet, and is hand-owned from now on.
 

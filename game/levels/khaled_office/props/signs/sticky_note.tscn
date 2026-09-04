@@ -1,0 +1,13 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_s60m2"]
+_data = PackedByteArray("AAADAAUAAAABAAAADgAAAB4AAACEAAAAUklGRnwAAABXRUJQVlA4TG8AAAAvDUAHEDegqI0UaC8U4F8UP1yAHDWNpED3IQD/uugRQIUCRW2kQHuBB/y/cIMEpMx/ANA9q9ruun8z50/AJrLtKi+/Pk9CAiiIhSMBUMA8/x64tNQR/Z8A+1xAE+chrlfcAtjNVjwCRChEd/dhPxEA")
+size_override = Vector2(14, 30)
+keep_compressed_buffer = true
+
+[node name="StickyNote" type="Node2D" unique_id=4153956]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1658359213]
+position = Vector2(-7, -30)
+texture = SubResource("PortableCompressedTexture2D_s60m2")
+centered = false

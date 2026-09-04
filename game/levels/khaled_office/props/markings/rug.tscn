@@ -1,0 +1,12 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_oq4ix"]
+_data = PackedByteArray("AAADAAUAAAABAAAA2AAAAGAAAAAUAgAAUklGRgwCAABXRUJQVlA4TP8BAAAv18AXEEegpm0kNndj+R+fQlXTSAocvfKAEgU/qIkkhQ1+TSqxkIEgECSExaYdbIUAoOOfZv4jv6vcUWlJqZUBciRJrqqHBwzKAM2VwAIi1gGUAV+6wJ3T2v3EztI9DdeI/jNw2zZOYhdQgXRn2j80Y5PJUdOMHzIpGCr80eJ/8bDDUSCn9vj674aDCeS0A53og0hQYaYE6TTTgWR2mvGA4E40wLsvCvAGThlt+j2WwRqWcXtVAHtRlNf+CiSzEHKeoh6SWQx5T+GD27B0u09RhvCDUxZ9WrnM7etYOas7yzjJ2Yd1YtREjxCwuQjBfbm8y8B52eZcBM6bLi5zGuDdFwvgHooEaJcUHVoXFRzuSyfvFIDaFQOQrhABgK4SHnCuVEg4L6tzHhDOm3Lsy9ebgwHvZ146wgLcy5z3nqAA9zPnvPQUCTwvcxt7TyDQGqJMv6Myrb4OsV+9qX1Y63wJcW7CAac64wGoGhMAmBt/R+QBqL29hqYAVmVzAKySSYBWwWwA7pKdqYC8Xv+CXIBer7sgDyhJAV6wgBQxYBYsZq9BOoVQ+SlegWQWQs5T1EMyiyHvKWohmQWR+xRlCD84ZdGnlcuQfc24PeY+XH7txH2Y8wPw9mGCcWKC2/4U4A2csyz2tHwZ6UDkASVJwAoiHAWyEBr58UIlBcNkctQAAA==")
+size_override = Vector2(216, 96)
+keep_compressed_buffer = true
+
+[node name="Rug" type="Node2D" unique_id=533714594]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=409737496]
+texture = SubResource("PortableCompressedTexture2D_oq4ix")
+centered = false

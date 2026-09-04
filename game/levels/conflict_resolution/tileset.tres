@@ -1,4 +1,4 @@
-[gd_resource type="TileSet" format=4]
+[gd_resource type="TileSet" format=4 uid="uid://d03go0ggxs0y5"]
 
 [sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_i6ybt"]
 _data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAABkAQAAUklGRlwBAABXRUJQVlA4TFABAAAvP8AHAH+gtpGkNvve4CEkognUNpLUZt8bPIRENIHaRpLa7HuDh5CIJpj/OOdEREREVdVa9d7VWjEzEUFE3nuY2b1XRBhj+P8D3GrblicRoObbgPNbR8UCFlsArfztMsFf4Szg0PoCOkGkwrp/BVaIvO8dTx/Rfwdu20aSNadmZtcB+oplcA3q4BOcXxvWn18MNz3kxbD+XDcMIhXktb/DHQ5xOxsvL/eau3q90v/NGGYUX7lD4r4OdzjEg1gX/a8rb8bz1EdlEfUN4KadU58CkYio/wfsIyKb6j3AHrlcbl59CiTJ7J/6VFeoRexj9qC2UwieR8Ie1uVyHf4G9HDj2Un4GXs4Z5WIbKvPeJ6nnj3abkF993k84IBtKW2mjGcPe53L/bWj3vOsYo+jdtSXv5JEPW/Yo7R/dqbeA3DSg8akXAfdPxOxk1LPAfv8aAE=")
