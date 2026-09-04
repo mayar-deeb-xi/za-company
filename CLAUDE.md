@@ -120,10 +120,13 @@ enemies reach the player by the `player` group + `has_method`, never by type.
 
 **Three ways the world reaches the player, and the splits between them are the
 thing to get right.** A *blow* (`take_damage()`) is metered by the grace window
-and opens a fresh one.
-That window is the only rate limiter for blows anywhere in the game, so hazards
-and melee enemies press it every physics frame they overlap the player, carry
-no timers of their own, and all retune together from `HURT_GRACE_SECONDS`. A
+and opens a fresh one. That window is the only rate limiter for blows anywhere
+in the game, and it is per-difficulty (`Difficulty.grace_seconds()`, read once
+at spawn) because it is secretly the CROWD dial: a guard's full attack cycle is
+0.8s, so a grace of 0.8 (EASY) swallows every extra guard's strikes and N
+enemies hit like one, 0.65 (MEDIUM) lets a pair partly interleave, and 0.5
+(HARD) makes a crowd a real threat. Retuning it retunes every hazard and enemy
+at once. A
 *drain* (`drain()`) is continuous harm that already knows its own rate - an
 aura, a poison - and sits outside the grace window in both directions: never
 blocked by one, never opens one. Routing a drain through `take_damage()` is the
@@ -259,7 +262,9 @@ adding more of the same:
   retuning - four guards in the marble hall is sixteen hits between them, and
   17 is the next stop down if that reads as a slog.
 - **`wraith/`** - 17 HP, no attack at all, speed 45, sight 120, and standing
-  near it costs one health per second. It is the reason `drain()` exists (see
+  near it costs three health per second (1 was flavour, not threat: 100 seconds
+  to matter; at 3, two of them cost about half a guard's output from the one
+  source that cannot be staggered). It is the reason `drain()` exists (see
   Health). Its `_contact_state()` is `idle`: having arrived it has no attack to
   play and nowhere left to walk, so it just stands over you facing your way
   while your health goes, which reads worse than a lunge would. The aura is
@@ -349,8 +354,14 @@ spin - which always erupts into `wildfire`, and the pair deals `HEAVY_POWER`
 it, once per enemy across both animations (the ledger is not cleared between
 them). Releasing early just returns to idle - the press's swing already
 happened, so a tap stays a tap, mashing stays the combo, and holding is the
-heavy: three moves, one button. 15 beats the combo's 12 because it costs a full
-second of rooted, interruptible charging at melee range. The wildfire's ember
+heavy: three moves, one button. `HEAVY_POWER` is **exactly a guard's health, and
+the equality is the design**: an AoE that does not kill the basic enemy thins no
+crowd and never repays its ~1.9 rooted seconds - at its original 15 it was
+strictly the wrong button, 10.8 damage/s single-target against the combo's 21
+with nothing dead at the end. At 24 it one-shots a guard and a wraith while its
+single-target rate (~15.6/s with the entry swing) stays below the combo's, so
+the combo remains correct against one enemy and the heavy against a crowd.
+Difficulty must never scale either side of that equality. The wildfire's ember
 tone is `SRC_FIRE`, recoloured to the spark colour darkened, so each
 character's fire matches their sparks - violet for the black-haired, gold for
 the bald. One test-side consequence: a synthesized Space left held is no longer
@@ -457,9 +468,34 @@ scenes are already dressed: their trigger sits at y=13, snug against the seal,
 where the generator still writes 38 - regenerate a door and that tuning is
 gone.
 
+## Difficulty
+
+Three modes - EASY / MEDIUM / HARD - picked by one cycling MODE button on the
+main menu (a separate screen was not worth a three-way choice; the label always
+says where you are). The choice persists through Settings (section `game`, key
+`difficulty`), default MEDIUM, applied-but-never-saved like every default.
+
+`autoload/difficulty.gd` (`Difficulty`) owns the modes and their numbers.
+**Difficulty scales what the world deals, never enemy health**: the HP numbers
+(24 / 17 / 36) are exact breakpoints on the player's combo - four hits, three,
+six, heavy one-shot - and a multiplier would shred them on two of three modes.
+So a guard dies identically on every mode; the modes change what being slow
+costs you. Two dials per mode:
+
+- `damage_scale` (0.6 / 1.0 / 1.5) multiplies every blow and drain - guard
+  strikes, torches, wraith drain.
+- `grace_seconds` (0.8 / 0.65 / 0.5) is the player's grace window, i.e. the
+  crowd dial - see Health.
+
+Consumers read their numbers ONCE, where they spawn, never live - the mode is
+only choosable at the main menu, a new run builds a fresh player and fresh
+rooms, so there is no mid-fight rescaling and deliberately no `changed` signal.
+MEDIUM is the tuned baseline; every number in enemy scenes and in this file is
+a MEDIUM number.
+
 ## Settings
 
-Two autoloads, split by responsibility:
+Three autoloads, split by responsibility:
 
 - `autoload/settings.gd` (`Settings`) owns `user://settings.cfg` and nothing
   else - sections, keys, write-through on change. A future audio or controls
@@ -467,10 +503,11 @@ Two autoloads, split by responsibility:
 - `autoload/display.gd` (`Display`) applies window mode and windowed size, and
   persists through Settings. Every window change goes through it, F11 included,
   so a hotkey press is remembered exactly like a menu choice.
+- `autoload/difficulty.gd` (`Difficulty`) owns the game modes - see Difficulty.
 
-`Settings` must stay registered **before** `Display` - display.gd reads its
-saved values during `_ready`. tools/setup_project.gd clears the Display entry
-before re-adding it, which is what enforces that order.
+`Settings` must stay registered **before** the other two - both read their
+saved values during `_ready`. tools/setup_project.gd clears their entries
+before re-adding them, which is what enforces that order.
 
 **A default is applied but never saved.** Nothing is written until the player
 actually picks something, so an untouched install keeps launching the way

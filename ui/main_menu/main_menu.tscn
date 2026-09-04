@@ -95,6 +95,17 @@ text = "PLAY"
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
+[node name="ModeButton" type="Button" parent="CenterContainer/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "MODE: MEDIUM"
+
+[node name="ModeGap" type="Control" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
 [node name="SettingsButton" type="Button" parent="CenterContainer/Menu"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(176, 40)

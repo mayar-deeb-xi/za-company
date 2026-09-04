@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 Settings="*res://autoload/settings.gd"
 Display="*res://autoload/display.gd"
+Difficulty="*res://autoload/difficulty.gd"
 
 [display]
 

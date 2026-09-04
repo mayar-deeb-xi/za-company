@@ -122,6 +122,10 @@ var _interrupt_locked := 0.0
 
 func _ready() -> void:
 	health = max_health
+	# Difficulty scales what the world DEALS, applied once at spawn. Health is
+	# deliberately untouched: 24 / 17 / 36 are exact breakpoints on the player's
+	# combo, and a multiplier would shred them on two of the three modes.
+	contact_damage = roundi(contact_damage * Difficulty.damage_scale())
 
 
 func _physics_process(delta: float) -> void:

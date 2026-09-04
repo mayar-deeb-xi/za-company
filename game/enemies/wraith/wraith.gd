@@ -18,10 +18,21 @@ extends "res://game/enemies/enemy_base.gd"
 ## answers to it: leave, or kill it. Being the squishiest of the three is the
 ## other half of that bargain.
 
-## Health per second of proximity. Fractional and float on purpose - the rate
-## is the tunable thing, and it can be pushed well under 1 without the effect
-## vanishing.
-@export var drain_per_second := 1.0
+## Health per second of proximity, scaled by difficulty at spawn. Fractional
+## and float on purpose - the rate is the tunable thing. 3 rather than the
+## original 1 because at 1 it took 100 seconds to matter: two of them together
+## now cost about half a guard's output, from the one source that cannot be
+## staggered and that ignores the grace window - which is exactly the pressure
+## a wraith is for.
+@export var drain_per_second := 3.0
+
+
+func _ready() -> void:
+	super()
+	# The drain is a blow-rate in disguise, so it rides the same dial as every
+	# other harm the world deals; the base has already scaled contact_damage,
+	# which a wraith does not use.
+	drain_per_second *= Difficulty.damage_scale()
 
 
 ## No wind-up, no strike, nothing to stagger. Its harm is _touch(), every frame.

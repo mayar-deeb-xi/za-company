@@ -18,9 +18,13 @@ const THRUST_POWER := 7
 ## deliberate timing combos as reliably as mashing does.
 const COMBO_GRACE_SECONDS := 0.2
 ## Damage the heavy attack - the charged spin plus its wildfire - deals to
-## EVERY enemy inside the Spinbox circle. Costs a full second of rooted,
-## interruptible charging, so it outhits the whole combo (5+7).
-const HEAVY_POWER := 15
+## EVERY enemy inside the Spinbox circle. Exactly a regular's health on purpose:
+## an AoE that does not KILL the basic enemy thins no crowd and so never repays
+## the ~1.9 rooted seconds it costs - at 15 it was strictly the wrong button.
+## At 24 it one-shots a guard and a wraith while its single-target rate
+## (~15.6/s counting the entry swing) stays below the light combo's 21, so the
+## combo is still right against one enemy and the heavy right against a crowd.
+const HEAVY_POWER := 24
 ## How long the charge stance must be held before a release unleashes the
 ## heavy. The charge loop doubles speed as the ready cue.
 const CHARGE_SECONDS := 1.0
@@ -30,10 +34,13 @@ const LUNGE_SPEED := 130.0
 ## How many times health can hit zero before the run ends. The player node is
 ## built fresh by each new game scene, so a new run starts full again.
 const MAX_LIVES := 3
-## Grace period after a hit. Doubles as the drain rate for standing in a
-## hazard: hazards push damage every physics frame and this window is what
-## meters that pressure into discrete hits.
-const HURT_GRACE_SECONDS := 0.8
+## Grace period after a hit - set per difficulty mode from Difficulty at spawn.
+## It meters ALL blows: hazards and enemies push damage with no timers of their
+## own and this window is what turns that pressure into discrete hits. It is
+## also the crowd dial, which is why difficulty owns it: a guard's attack cycle
+## is 0.8s, so grace at 0.8 (EASY) means extra guards' strikes are swallowed and
+## N enemies hit like one, while 0.5 (HARD) lets a crowd interleave.
+var _grace_window := 0.8
 ## Floor on how far a slow may go. Below roughly this the player is not really
 ## playing any more, and no combination of sources should get there.
 const MIN_SLOW_FACTOR := 0.2
@@ -85,6 +92,9 @@ var _swing_hits := {}
 
 func _ready() -> void:
 	_apply_character()
+	# Read once at spawn, like every difficulty number: the mode can only change
+	# at the main menu, and a new run builds a fresh player.
+	_grace_window = Difficulty.grace_seconds()
 	_sprite.animation_finished.connect(_on_animation_finished)
 	_apply_animation("idle")
 
@@ -274,7 +284,7 @@ func _on_animation_finished() -> void:
 func take_damage(amount: int) -> void:
 	if _grace > 0.0 or health <= 0:
 		return
-	_grace = HURT_GRACE_SECONDS
+	_grace = _grace_window
 	_lose_health(amount)
 
 

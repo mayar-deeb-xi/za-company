@@ -214,6 +214,41 @@ func _process(_delta: float) -> bool:
 			_check("menu: Quit opens the confirmation dialog",
 				(current_scene.get_node("%QuitConfirm") as ConfirmationDialog).visible)
 			(current_scene.get_node("%QuitConfirm") as ConfirmationDialog).hide()
+			# MODE: one cycling button, three states. All checked in one frame -
+			# everything here is synchronous, including an enemy's _ready reading
+			# its difficulty numbers the moment it is added.
+			var mode := current_scene.get_node("%ModeButton") as Button
+			_check("mode: defaults to MEDIUM without saving (%s)" % mode.text,
+				mode.text == "MODE: MEDIUM"
+					and not _autoload("Settings").call("has", &"game", &"difficulty"))
+			mode.pressed.emit()
+			_check("mode: a press cycles to HARD and saves the pick (%s)" % mode.text,
+				mode.text == "MODE: HARD" and _autoload("Settings").call(
+					"get_value", &"game", &"difficulty", "") == "hard")
+			# Difficulty scales what the world deals, never enemy health - the
+			# health numbers are exact combo breakpoints on every mode.
+			var hard_guard := (load("res://game/enemies/regular/regular.tscn")
+				as PackedScene).instantiate()
+			root.add_child(hard_guard)
+			_check("mode: HARD guards hit half again as hard, same health (%s dmg, %s hp)"
+				% [hard_guard.get("contact_damage"), hard_guard.get("max_health")],
+				hard_guard.get("contact_damage") == 15
+					and hard_guard.get("max_health") == 24)
+			hard_guard.free()
+			mode.pressed.emit()
+			var easy_guard := (load("res://game/enemies/regular/regular.tscn")
+				as PackedScene).instantiate()
+			root.add_child(easy_guard)
+			_check("mode: EASY guards hit softer, same health (%s dmg)"
+				% easy_guard.get("contact_damage"),
+				mode.text == "MODE: EASY" and easy_guard.get("contact_damage") == 6)
+			easy_guard.free()
+			mode.pressed.emit()
+			_check("mode: a third press comes round to MEDIUM (%s)" % mode.text,
+				mode.text == "MODE: MEDIUM")
+			# The rest of the run assumes a clean install; drop what the
+			# cycling just saved.
+			_autoload("Settings").call("clear")
 			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
 		20:
 			_check("play: opens the character select (got %s)" % current_scene.scene_file_path,
@@ -639,6 +674,10 @@ func _process(_delta: float) -> bool:
 			_wraith = wraith_scene.instantiate()
 			_level().get_node("Props").add_child(_wraith)
 			_wraith.global_position = Vector2(272, 152)
+			# Pinned to a known rate AFTER _ready has applied the difficulty
+			# scale: the shipped default is 3/s and mode-dependent, and this
+			# section proves the metering, not the tuning.
+			_wraith.set("drain_per_second", 1.0)
 			_health_mark = _player().get("health")
 		1217:
 			# 142 frames of contact at one point per second. Exactly two, and
@@ -768,6 +807,15 @@ func _process(_delta: float) -> bool:
 				String(_sprite().animation).begins_with("charge"))
 			_check("heavy: the swing missed the guard behind the blade (%s)"
 				% str(_enemy.get("health")), _enemy.get("health") == 24)
+			# A warden joins the blast zone, placed late enough that its own
+			# 2s wind-up is nowhere near the 75% commit point when the heavy
+			# lands - so the hit staggers it and no slow muddies the checks. It
+			# is the ledger's witness: at 36 health it SURVIVES the heavy, so a
+			# wildfire double-hit would show up where a dead guard hides it.
+			var ws := load("res://game/enemies/warden/warden.tscn") as PackedScene
+			_warden = ws.instantiate()
+			_level().get_node("Props").add_child(_warden)
+			_warden.global_position = Vector2(272, 158)
 		1920:
 			# ~70 frames of charge - past CHARGE_SECONDS. Release unleashes.
 			_key(KEY_SPACE, false)
@@ -775,10 +823,18 @@ func _process(_delta: float) -> bool:
 			_check("heavy: the spin erupts into the wildfire (got %s)"
 				% _sprite().animation,
 				String(_sprite().animation).begins_with("wildfire"))
+			# HEAVY_POWER is exactly a guard's health, and that equality IS the
+			# design: an AoE that does not kill the basic enemy thins no crowd.
+			_check("heavy: one-shots a guard (%s)"
+				% ("<freed>" if not is_instance_valid(_enemy)
+					else str(_enemy.get("health"))),
+				not is_instance_valid(_enemy))
 		1985:
-			_check("heavy: costs HEAVY_POWER once across spin and fire (%s)"
-				% (str(_enemy.get("health")) if is_instance_valid(_enemy) else "<freed>"),
-				is_instance_valid(_enemy) and _enemy.get("health") == 9)
+			_check("heavy: costs HEAVY_POWER once across spin and fire (%s of 36)"
+				% (str(_warden.get("health")) if is_instance_valid(_warden) else "<freed>"),
+				is_instance_valid(_warden) and _warden.get("health") == 12)
+			if is_instance_valid(_warden):
+				_warden.queue_free()
 			# Last: a warden's charge is interruptible too, now that it runs the
 			# base's cycle rather than a clock of its own. Clear the guard out
 			# first so nothing else is landing hits.
