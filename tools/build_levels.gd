@@ -132,7 +132,10 @@ func _build(level: String) -> bool:
 		# otherwise the level folder keeps a torch nothing points at, and the
 		# next reader has to open the biome to find out which is the truth.
 		_drop("%s/fixtures/torch.tscn" % props)
-	bad = _write_health_scene(props, spec) or bad
+	if Biomes.has_heart(level):
+		bad = _write_health_scene(props, spec) or bad
+	else:
+		_drop("%s/fixtures/health_item.tscn" % props)
 	for type in Biomes.prop_types(level):
 		bad = _write_prop_scene(props, type, spec) or bad
 	bad = _write_level_scene(level, dir, props, tileset) or bad
@@ -358,11 +361,13 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 		props.add_child(torch)
 		torch.owner = root
 
-	var health := _reload("%s/fixtures/health_item.tscn" % props_dir).instantiate()
-	health.name = "Health"
-	health.position = HEALTH_POS
-	props.add_child(health)
-	health.owner = root
+	# Same as the hazard: a heart is per-biome, and almost no floor has one.
+	if Biomes.has_heart(level):
+		var health := _reload("%s/fixtures/health_item.tscn" % props_dir).instantiate()
+		health.name = "Health"
+		health.position = HEALTH_POS
+		props.add_child(health)
+		health.owner = root
 
 	# The biome's furniture, from the same list that decided which art to paint.
 	# Suffixed by type the way enemies are numbered, so two desks are Desk1 and

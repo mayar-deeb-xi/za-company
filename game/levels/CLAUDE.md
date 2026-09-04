@@ -61,8 +61,8 @@ game/levels/
     door.tscn           how it connects
     props/            EVERYTHING STANDING IN IT - one scene each, on the
                       same shelves as tools/props/
-      fixtures/         column.tscn  health_item.tscn  torch.tscn (only if
-                        its biome asks for a hazard)
+      fixtures/         column.tscn, plus torch.tscn and health_item.tscn
+                        only where the biome asks for them
       furniture/        desk.tscn  chair.tscn ...      whatever it
       hardware/         server_rack.tscn  printer.tscn ...  places,
       signs/            notice.tscn ...                    by kind
@@ -94,18 +94,19 @@ level, not a prop scene.
 Architecture and the hazard are per-biome **styles**, not one look for the whole
 game: `column` picks the fluted classical stone, a glazed steel pillar or a
 cubicle divider, and `hazard` picks the standing torch, a sparking floor
-polisher, an arcing power strip - or `"none"`, which is a floor with nothing on
-it that hurts (the lobby, because a tutorial room must not have one, and
-Ahmed's office, because the only thing in there meant to hurt is Ahmed). Every
-style keeps the same canvas size and foot, so the scenes and collision boxes are
-untouched by the choice - only the art differs. The split exists because the
-classical column is most of what makes the marble hall read as a hall, and it
-was also most of what made the office lobby read as a temple. What a room uses
-to break up its floor is exactly what changes between a lobby and a bullpen. A
-biome can also override the colonnade's `columns` layout (a furnished room needs
-the floor a full colonnade takes up) and ask for a `runner`, which tints the
-central floor band toward the accent so it reads as carpet rather than as more
-of the same stone.
+polisher, an arcing power strip, a ring light knocked over and left at full
+output, a photocopier jammed with the fuser still going - or `"none"`, which is
+a floor with nothing on it that hurts (the lobby, because a tutorial room must
+not have one, and Ahmed's office, because the only thing in there meant to hurt
+is Ahmed). Every style keeps the same canvas size and foot, so the scenes and
+collision boxes are untouched by the choice - only the art differs. The split
+exists because the classical column is most of what makes the marble hall read
+as a hall, and it was also most of what made the office lobby read as a temple.
+What a room uses to break up its floor is exactly what changes between a lobby
+and a bullpen. A biome can also override the colonnade's `columns` layout (a
+furnished room needs the floor a full colonnade takes up) and ask for a
+`runner`, which tints the central floor band toward the accent so it reads as
+carpet rather than as more of the same stone.
 
 A room can also be divided by FURNITURE rather than by its column style, and
 the shared floor is the case: its media half is walled into two glass-fronted
@@ -149,12 +150,14 @@ in a two-level chain where nobody ever arrives and then walks on.
 
 ## Dressing
 
-Each level places one heart (on `pickup_base.gd`, heals on touch, stays if you
-are full), and - if its biome asks for one - one hazard (on `hazard_base.gd`,
-hurts on touch). A floor that says `"hazard": "none"` gets neither the instance
-nor the scene: the generator deletes a stale `torch.tscn` rather than leave a
-level folder holding a fixture nothing points at, and three floors say it - the
-lobby, Ahmed's office and the marble hall. Their art comes from build_biomes.gd
-like everything else: the stand and plinth in the biome's own ramp, the flame
-and the heart in fixed colours, because fire and health have to read the same in
-every biome.
+Both of a level's health fixtures are per-biome now, and both default the way
+the game wants: a hazard unless the floor says `"hazard": "none"` (the lobby,
+Ahmed's office and the marble hall say it), and NO heart unless the floor says
+`"heart": true` - which only the lobby does. Floor 1 is where a player finds out
+what a heal is; from floor 2 up the supply is meant to be Ivan carrying one to
+you, not a room leaving one lying about. A declined fixture gets neither the
+instance nor the scene: the generator deletes the stale `torch.tscn` or
+`health_item.tscn` rather than leave a level folder holding a fixture nothing
+points at. Their art comes from build_biomes.gd like everything else: the stand
+and plinth in the biome's own ramp, the flame and the heart in fixed colours,
+because fire and health have to read the same in every biome.

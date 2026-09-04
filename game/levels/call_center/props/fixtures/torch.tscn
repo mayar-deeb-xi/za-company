@@ -1,0 +1,24 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://game/levels/hazard_base.gd" id="1_uivwl"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_llxpu"]
+_data = PackedByteArray("AAADAAUAAAABAAAAEAAAABgAAACyAAAAUklGRqoAAABXRUJQVlA4TJ0AAAAvD8AFEFegGrIV6gpcg3ien5lmk0EKZWImABkthFKWWxBJdk9RJEnN5X8WcH+E4BdBSJn/AMD9/2dGpHYIB+uUILE2V/sB09i2o1x2Ooj/kgLQawvpI3GROGrAR9FmVjqI6L/Ctm2Qjnl3ABMAxtkbQD1qCuyMZYbtDdSz6UB9Tn2BerY1IFXZFhHxQS3ic+n833WLfgVXoB40oEkJAA==")
+size_override = Vector2(16, 24)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_p711h"]
+size = Vector2(10, 6)
+
+[node name="Torch" type="Area2D" unique_id=1093776945]
+monitorable = false
+script = ExtResource("1_uivwl")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1579942327]
+position = Vector2(-8, -24)
+texture = SubResource("PortableCompressedTexture2D_llxpu")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=297857866]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_p711h")

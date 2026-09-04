@@ -1,0 +1,20 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_vpdyi"]
+_data = PackedByteArray("AAADAAUAAAABAAAASAAAACwAAABMAwAAUklGRkQDAABXRUJQVlA4TDgDAAAvR8AKEDfEKJIkRVV7jL/z7+O88eyuBgZtIzmKr33jT+lxMWojyVF7c/itjj+Ogzf/ZtO22ZNUfWN+XqPfm4o0mv37dHu6zzYrxuu69uRsgCGAIQSBMASwIIQgLBCEMBCEBYEgFNGrQDKLBYEw/l6uKDGZV/Hn/gOBBRbAABbxRoANRJ4LcIKKNFAhFCpEGoVIozi+7fx/kChJsmlb+/nNtW2fa9u2bdu2553vfrPW7oi553xARP+Jpm1WFbc7HP/pt3/003F+OdIvn+ZI3x3p7w/Hh4HfXq/ZyNT86vbBxf3T2+eX9fZ0f3GwvTo/NWLm9dobnJhd2tw/vXl8/fiyXh9vTvc3l2YnBvF6x2cW1veOrx6e30HE76qeH66O99YXZsZ78bpGp+dXdw4NQcRvmowPd1bnp0e78NqFy8Lbx1cQ8auqx1vxsrgdr7nP4snVwwuI+EXVw9WJ5b5mvEabR5f3TyDiJ1X3l0e2G/Hq2oeEW/tnt48g4kdVt2f7W+Kh9jq8KjevH0DED6qu3a7CK0cEEd9rQi7HKwO8AxHfqQIuwyupaukXbghBxNeqTvY2xP0tVSV4hRWNXWM2QcSXmmyPdTVWFOJ5LM4Jz0HE56rEc5Y9eHkl1W6CiE80uV1dkoeXI+wWru0cgYiPVO2sibvFOXiZ+WX1LoKI9zW5XF+Wn4mXjggi3tOEnI6XJmyyuAsi3lVluUmchpdq2DE0ObeyBSLeUrUyNznUYZyKlySsaRUuboCIN1QtiltrxEl4iRZ7DEHEa5qMeywn4iUggohXNCEn4MUnZeSV1rQZgogXNRm31ZTmZSTF48UigojnNSHH4sXY7BSCiOdUTQ512o7Bi0YEEc9oQo7GizQsqmjuHZsGEU+rGuttrigyjsSLMCwQDk+CiCdVDYsLjCPwwg09woFxEPG4qgGxxzgcLywyzk0Q8Zgmt+Miw/BCDbMKyxo6R0DEI6o6G8oKs4xD8UKEyTZBxAOabCeLQ/CCw6KEucWVzb0g4l5VzZXFueKosGC8IIvZhiDiTk3G2ZaD8AINUzI9pbVtIOI2VbWlnswU40C8fz4NTArwac7/rP3xi8y++UVeLw==")
+size_override = Vector2(72, 44)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wco2t"]
+size = Vector2(64, 6)
+
+[node name="Backdrop" type="StaticBody2D" unique_id=889322258]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2031338524]
+position = Vector2(-36, -44)
+texture = SubResource("PortableCompressedTexture2D_vpdyi")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=455603738]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_wco2t")

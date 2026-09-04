@@ -13,7 +13,8 @@ table, pot plant alive and dead, call-centre station, media edit bay, glass
 partition), `hardware/` (server rack, printer, stacked dead monitors, opened
 tower, toolbox, cable spool, scrap pile, loose debris, a camera on its
 tripod) and `signs/` (the welcome banner, a taped-up notice, a marker
-wallboard, a printed poster) - and a biome says which
+wallboard, a printed poster, a lit wallboard with a number on it) - and a biome
+says which
 ones it puts where in its own `props` list, exactly the way it already says
 which enemies it gets. That list drives everything: build_levels.gd writes a
 scene per type into the level's `props/`, paints its picture in the biome's
@@ -35,9 +36,10 @@ type fails at generation time with "nothing in tools/props/ draws 'tabel'".
 colours, the pixel font), kept out of the catalogue by sitting at the root -
 only the shelves are scanned. `fixtures/` is the shelf `known()` refuses:
 levels place column, hazard and heart themselves, so those can be painted but
-never listed as furniture. The hazard is the one of the three a floor can
-decline - `"hazard": "none"`, and the generator then deletes that level's
-torch.tscn rather than leave a scene nothing points at.
+never listed as furniture. Two of the three are a floor's to decline -
+`"hazard": "none"` and the absent `"heart": true` - and the generator then
+deletes that level's torch.tscn or health_item.tscn rather than leave a scene
+nothing points at.
 
 The division of labour between the two generators is by **subject**, not by
 file type: build_biomes.gd paints the ROOM (its tileset and doorways, the only
@@ -90,14 +92,15 @@ straight at the player and slide off whatever they hit, with no pathfinding to
 recover from a pocket. So a furnished room must not be a maze, and nothing solid
 should sit on the line an enemy walks from its post to the middle of the room.
 
-_brush.gd also carries a 5x5 uppercase pixel font, because half of what makes a
+_brush.gd also carries a 5x5 pixel font - uppercase and, since the call floor's
+wallboard needed to write a number, digits - because half of what makes a
 company office funny is what is written on the walls. A sign's words are a
 `TEXT` constant in its own file, not baked into a painter, so a floor can put up
 its own words without new drawing code - the banner says WELCOME / NEW HIRES,
-its own words without new drawing code - the banner says WELCOME / NEW HIRES,
 the notice says OUT OF ORDER, the counter says RECEPTION, the shared floor's
-wallboard says SMILE / THEY CAN / HEAR IT and its poster says FIX IT / IN
-POST, and DESIGN.md still has wall text waiting further up the building.
+whiteboard says SMILE / THEY CAN / HEAR IT and its poster says FIX IT / IN
+POST, the call floor's wallboard says CALLS / WAITING / 142 with the figure in
+red, and DESIGN.md still has wall text waiting further up the building.
 
 ## Adding and inserting a biome
 

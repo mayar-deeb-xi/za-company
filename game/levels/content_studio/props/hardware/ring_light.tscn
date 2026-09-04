@@ -1,0 +1,20 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_y7ak8"]
+_data = PackedByteArray("AAADAAUAAAABAAAAFgAAACoAAABYAQAAUklGRlABAABXRUJQVlA4TEMBAAAvFUAKEFfBKJIkRbm8rz2ScP7t8Z0Phm3bOOL1fv+//7DPNpIkJ/1auci4yN8hBQgAQdu2Sdpq/Lkc4OP//394D0MRiOAwiCAQoigKMQQiGEQhRBGIQeT1vf15CCGSUiHFQi2dsTd6X8zPyfbdwJUkyaZ1bdv27H+D72ie/iP6z8BtI0VpuwwHvwAAkA07iJI0TaLANmSgpVphVnXDNA1dlYWWSqG7ST3uM6V9rBNXBwDNy7p9niVK87x3maeB4qQ93WIbfeooZtzuJECJeG9j0y+YcF34cUeH7y7O95mE73nPSxxlTUXousHRYAvsMHYb9jthvyn2+2P/Ffa/AuhuUo/7fBzHPO9jnbg6EKlWmFXdi6GrstBSgZZs2EH0IokC25CBr+dcgdI/cxMh2IiwB/0/sFy4FinFK+hxXgP7DKjnBQA=")
+size_override = Vector2(22, 42)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2ccen"]
+size = Vector2(12, 6)
+
+[node name="RingLight" type="StaticBody2D" unique_id=174193593]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2037245550]
+position = Vector2(-11, -42)
+texture = SubResource("PortableCompressedTexture2D_y7ak8")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=444772668]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_2ccen")

@@ -150,11 +150,12 @@ only ever creates when missing. It will not overwrite a sheet you have drawn
 into.
 
 `tools/build_levels.gd` is the exception to "regenerate": what it writes - the
-level scene and that level's own door, column, heart and - where its biome asks
-for one - hazard scenes - is a starting point meant to be dressed by hand in the
-editor, and re-running it overwrites that work. Run it to reset a level or to
-add a new one, and pass level names after `--` to build only those, because a
-chain of nine means adding a floor must not re-roll the eight already dressed:
+level scene and that level's own door, column and - where its biome asks for
+them - hazard and heart scenes - is a starting point meant to be dressed by hand
+in the editor, and re-running it overwrites that work. Run it to reset a level
+or to add a new one, and pass level names after `--` to build only those,
+because a chain of nine means adding a floor must not re-roll the eight already
+dressed:
 
 ```
 <godot> --headless --path . --script res://tools/build_levels.gd -- lobby

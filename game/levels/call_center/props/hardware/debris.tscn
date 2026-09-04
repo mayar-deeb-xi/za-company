@@ -1,0 +1,13 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_0kp7c"]
+_data = PackedByteArray("AAADAAUAAAABAAAAGAAAAAkAAACKAAAAUklGRoIAAABXRUJQVlA4THUAAAAvFwACEE+gqJEUNkkV0HkSTKA0khTmCR6XOqEf+lcoUGoiSWGeUMcKJ5jBf4cEZuY/ALDVVZU9ITex76zMrZ7zPcCqtq0oG5z/XgQjGIEU5jACEejs3CCi/xPg1zo/0S5mkSiVhhTOe7nIp80xibRmFia3PQAA")
+size_override = Vector2(24, 9)
+keep_compressed_buffer = true
+
+[node name="Debris" type="Node2D" unique_id=437146404]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=992052451]
+position = Vector2(-12, -9)
+texture = SubResource("PortableCompressedTexture2D_0kp7c")
+centered = false

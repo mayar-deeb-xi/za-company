@@ -10,15 +10,15 @@ keep_compressed_buffer = true
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_jca0f"]
 size = Vector2(10, 6)
 
-[node name="Torch" type="Area2D" unique_id=426204391]
+[node name="Torch" type="Area2D" unique_id=1215033750]
 monitorable = false
 script = ExtResource("1_2frg7")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1683608591]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1797047574]
 position = Vector2(-8, -24)
 texture = SubResource("PortableCompressedTexture2D_h3eit")
 centered = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1943827851]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1804188962]
 position = Vector2(0, -3)
 shape = SubResource("RectangleShape2D_jca0f")

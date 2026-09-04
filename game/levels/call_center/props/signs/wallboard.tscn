@@ -1,0 +1,12 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_v7sa0"]
+_data = PackedByteArray("AAADAAUAAAABAAAAOgAAACgAAAAeAQAAUklGRhYBAABXRUJQVlA4TAoBAAAvOcAJAE+gqJEk5blZA0waTx0bOydm2zaZ2j7QwsazHM2EpKaRFKi6+o6vQxSm0YAPFMx/eFUAAOEfUSfU62nz1/MZO+C4tm0nYdlBrIR0/5zwGZrmdmEBBO/c+NvlZ7SAiP4zcNtIUXvkY3pFEtfrJaar2OzX4T3MqcKrk4Y3Mg4MlAMrWWkNlD5ACzBvwII7pJWeXkgtaaKqvOj1WpCmFjns9y8fKXrqw0wZtwET1oX01BQrKV0AQCJFagpze9hgD6TO6NvwgtQbSX0PA2N+lT96+TdfF0dXdc9KqcBv+hCpeKRpKgIPE6lSIlXhqJ7VswqFStOHXvnPL//nWGCyDu+cS0xjk0Q1AQ==")
+size_override = Vector2(58, 40)
+keep_compressed_buffer = true
+
+[node name="Wallboard" type="Node2D" unique_id=1832462171]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1858923865]
+texture = SubResource("PortableCompressedTexture2D_v7sa0")
+centered = false

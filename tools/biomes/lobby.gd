@@ -33,6 +33,9 @@ const BIOME := {
 	# scenery - the sparking floor polisher was that, and it is gone. The
 	# polisher art stays in hazard.gd for a floor that wants it.
 	"hazard": "none",
+	# The one floor in the game that puts a heart on the floor. Floor 1 is where
+	# a player finds out what a heal is; everywhere above it, healing is Ivan.
+	"heart": true,
 	# The furniture. Reception faces the way you came in with the dead plant
 	# at the end of the counter, the cooler and a living plant are on the far
 	# wall, the waiting area is the bottom-right corner, and two sign-in

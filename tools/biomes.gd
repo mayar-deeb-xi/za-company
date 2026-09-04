@@ -43,17 +43,22 @@ extends RefCounted
 ##            (cubicle partition).
 ##   columns  {rows, xs} overriding the generator's colonnade, because a
 ##            furnished room needs the floor a full colonnade takes up.
-##   hazard   which hazard art the level gets - "torch", "polisher" or
-##            "power_strip", or "none" for a floor with nothing on it to hurt
-##            you. Omitted means "torch": a floor that has no hazard says so,
-##            rather than the absence of a key deciding it.
+##   hazard   which hazard art the level gets - "torch", "polisher",
+##            "power_strip", "fallen_light" or "copier", or "none" for a floor
+##            with nothing on it to hurt you. Omitted means "torch": a floor
+##            that has no hazard says so, rather than the absence of a key
+##            deciding it.
+##   heart    true to stand a heal pickup in the room. Omitted means NO, and
+##            that default is the rule rather than a convenience - only the
+##            lobby hands one out, and from floor 2 up healing is Ivan's job.
 ##   runner   how far the central floor band is tinted towards the accent, i.e.
 ##            whether that band is carpet or just more of the same stone.
 
-## Floor order. The office floors are being built in front of the two demo
-## biomes, which stay on the end until they are replaced.
-const CHAIN := ["lobby", "bullpen", "shared_floor", "ahmed_office",
-		"marble_hall", "hellfire"]
+## Floor order, and it is the order a run walks: south door goes back down the
+## list, north door goes up it. The two demo biomes stay on the end until the
+## office floors replace them.
+const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
+		"shared_floor", "bullpen", "marble_hall", "hellfire"]
 
 ## Assembled from the per-floor files at load, keyed by CHAIN name, so every
 ## existing `Biomes.BIOMES[level]` read works exactly as it did when this was
@@ -108,6 +113,15 @@ static func prop_types(level: String) -> Array:
 ## thing in there that hurts is Ahmed.
 static func has_hazard(level: String) -> bool:
 	return BIOMES[level].get("hazard", "torch") != "none"
+
+
+## Whether this floor puts a heart on its floor, and the default is NO - which
+## is the whole of the rule. Healing is not something a room hands out: the
+## lobby is the one floor that does, because floor 1 is where a player finds out
+## what a heal even is, and from floor 2 up the supply is Ivan, who brings it to
+## you (DESIGN.md, build step 4). A floor that wants one says `"heart": true`.
+static func has_heart(level: String) -> bool:
+	return BIOMES[level].get("heart", false)
 
 
 ## The level one step further along the chain, or "" at the end of it.

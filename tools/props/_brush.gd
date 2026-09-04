@@ -32,7 +32,8 @@ const PCB := Color("2f6b3a")
 const PAPER := Color("f4f1e6")
 const INK := Color("1e1c1a")
 
-## A 5x5 uppercase font, one glyph per key, advanced 6 px. Small enough to
+## A 5x5 font, uppercase and digits, one glyph per key, advanced 6 px. Small
+## enough to
 ## letter a banner inside the 640x360 viewport and still be read: half of what
 ## makes a company office funny is what is written on the walls, and DESIGN.md
 ## hangs wall text on four more floors. Row-major, X = filled.
@@ -65,6 +66,18 @@ const FONT := {
 	"Z": ["XXXXX", "...X.", "..X..", ".X...", "XXXXX"],
 	"!": ["..X..", "..X..", "..X..", ".....", "..X.."],
 	"-": [".....", ".....", "XXXXX", ".....", "....."],
+	# Digits, added for the call floor's wallboard: a board that counts calls
+	# and cannot write a number is a board with nothing to say.
+	"0": [".XXX.", "X..XX", "X.X.X", "XX..X", ".XXX."],
+	"1": ["..X..", ".XX..", "..X..", "..X..", ".XXX."],
+	"2": ["XXXX.", "....X", "..XX.", ".X...", "XXXXX"],
+	"3": ["XXXX.", "....X", ".XXX.", "....X", "XXXX."],
+	"4": ["X..X.", "X..X.", "XXXXX", "...X.", "...X."],
+	"5": ["XXXXX", "X....", "XXXX.", "....X", "XXXX."],
+	"6": [".XXX.", "X....", "XXXX.", "X...X", ".XXX."],
+	"7": ["XXXXX", "....X", "...X.", "..X..", ".X..."],
+	"8": [".XXX.", "X...X", ".XXX.", "X...X", ".XXX."],
+	"9": [".XXX.", "X...X", ".XXXX", "....X", ".XXX."],
 }
 const GLYPH_W := 5
 const GLYPH_H := 5

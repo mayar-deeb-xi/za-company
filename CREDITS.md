@@ -22,12 +22,15 @@
   wall tiles are palette-swapped copies of it (see `tools/build_biomes.gd`).
   CC0 permits this without restriction. The columns and door arches in those
   same files are original work, not derived from the sheet.
-- The lobby's and bullpen's tilesets are derived the same way. Everything else
-  in those rooms is original work with no third-party source: the glazed
-  pillar, the cubicle divider, the sparking floor polisher and the arcing power
-  strip (`tools/build_biomes.gd`), and the office furniture, the maintenance
-  floor's hardware and junk, the signs and the 5x5 pixel font
-  (`tools/props.gd`) - all drawn in code, since the dungeon sheet has no
+- Every office floor's tileset is derived the same way. Everything else in
+  those rooms is original work with no third-party source: the glazed pillar,
+  the cubicle divider, and the four office hazards - the sparking floor
+  polisher, the arcing power strip, the fallen ring light and the jammed
+  copier (`tools/props/fixtures/`) - plus the office furniture, the
+  maintenance floor's hardware and junk, the call floor's phones and its lit
+  wallboard, the media team's glass partitioning, edit bays, ring lights and
+  paper backdrop, the signs and the neon, and the 5x5 pixel font
+  (`tools/props/`) - all drawn in code, since the dungeon sheet has no
   furniture or hardware in it to derive from.
 - `game/enemies/office_boy/src/office_boy.png` was seeded as a restyle of the
   frozen CC0 body like every other enemy sheet, and is hand-owned from now on.

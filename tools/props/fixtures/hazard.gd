@@ -47,6 +47,10 @@ static func paint(spec: Dictionary) -> Image:
 	match spec.get("hazard", "torch"):
 		"polisher":
 			return _polisher(spec)
+		"copier":
+			return _copier(spec)
+		"fallen_light":
+			return _fallen_light(spec)
 		"power_strip":
 			return _power_strip(spec)
 		_:
@@ -211,3 +215,163 @@ static func _standing_torch(spec: Dictionary) -> Image:
 	return img
 
 
+
+## DESIGN.md's hazard for the content studio: a ring light knocked over, still
+## at full output, still hot enough that you do not put a hand near it. The
+## third hazard that is not fire and the third that has to read as harmful
+## anyway, and the one that does it with brightness rather than with sparks.
+##
+## Hand-placed pixel by pixel, like the spark scatters above and for the same
+## reason: at 16 px wide, whether a shape reads as a ring lying on the floor
+## with a stand collapsed beside it is entirely a question of which pixels you
+## pick. The ring sits at the BOTTOM of the canvas because that is where the
+## hazard's collision box is - a fixture blocks and burns at its foot.
+##
+##   .  nothing        o  the room's own metal, lit    x  its outline
+##   s  its shadow     W  the lamp at full output      H  warm falloff
+##   E  the rim, hot enough to be the point
+const FALLEN := [
+	"................",
+	"...x............",
+	"..xo.x..........",
+	"..oxxo..........",
+	"...oo...........",
+	"...xo...........",
+	"....o...........",
+	"....xo..........",
+	".....o..........",
+	".....xo.........",
+	"......s.........",
+	".....EHHHHE.....",
+	"...EHWWWWWWHE...",
+	".EHWWWWWWWWWHE..",
+	".EHWW......WWHE.",
+	"EHWW........WWHE",
+	"EHW..........WHE",
+	"EHW..........WHE",
+	"EHWW........WWHE",
+	".EHWW......WWHE.",
+	".EHWWWWWWWWWHE..",
+	"...EHWWWWWWHE...",
+	".....EHHHHE.....",
+	"................",
+]
+## The bloom escaping past the rim, in the corners the ring leaves empty.
+## Generous on purpose, the same argument as the sparks: a hazard the player
+## reads as scenery is a hazard that feels like the game cheating.
+const BLOOM := [
+	Vector2i(0, 11), Vector2i(15, 12), Vector2i(0, 21), Vector2i(15, 20),
+	Vector2i(4, 23), Vector2i(11, 23), Vector2i(8, 23), Vector2i(1, 10),
+]
+
+const LAMP_CORE := Color("fffdf4")
+const LAMP_BODY := Color("ffedc4")
+const LAMP_RIM := Color("ffab3d")
+
+
+static func _fallen_light(spec: Dictionary) -> Image:
+	var img := Image.create(16, 24, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for y in FALLEN.size():
+		var row: String = FALLEN[y]
+		for x in row.length():
+			match row[x]:
+				"o":
+					Brush.pixel(img, Vector2i(x, y), Brush.shade(spec, 0.66))
+				"x":
+					Brush.pixel(img, Vector2i(x, y), Brush.shade(spec, 0.10))
+				"s":
+					Brush.pixel(img, Vector2i(x, y), Brush.shade(spec, 0.24))
+				"W":
+					Brush.pixel(img, Vector2i(x, y), LAMP_CORE)
+				"H":
+					Brush.pixel(img, Vector2i(x, y), LAMP_BODY)
+				"E":
+					Brush.pixel(img, Vector2i(x, y), LAMP_RIM)
+	for at in BLOOM:
+		var bloom := LAMP_RIM
+		bloom.a = 0.55
+		Brush.pixel(img, at, bloom)
+	return img
+
+## DESIGN.md's hazard for the call floor: the photocopier, jammed, with the lid
+## up and the fuser still going. The furniture catalogue already has a broken
+## copier (`printer`) and this is deliberately not it - that one is a machine
+## nobody can use, and this one is a machine nobody should touch.
+##
+## Same hand-placed map as the fallen light, and the danger cue is the same
+## generous scatter of fixed-colour sparks every other hazard uses. What is
+## specific to this one is the paper: a white crumple coming out of the slot is
+## the detail that says JAMMED rather than simply broken.
+##
+##   .  nothing   x  outline   l  lit face   o  body   d  shaded face
+##   p  paper     r  the light that has been on for weeks
+##   g  the accent light beside it   s/S  spark body / core
+const COPIER := [
+	"................",
+	"....s.S..s......",
+	"...S.s.S...s....",
+	"..s...S...s.....",
+	".xllllllllllx...",
+	".xddddddddddx...",
+	".xllllllllllx...",
+	".xoooooooooox...",
+	".xrgoooooooox...",
+	".xoooooooooox...",
+	".xddddddddddx...",
+	".xppppppxooox...",
+	".xopppxooooox...",
+	".xoooooooooox...",
+	".xllllllllllx...",
+	".xoooooooooox...",
+	".xoooooooooox...",
+	".xddddddddddx...",
+	".xoooooooooox...",
+	".xoooooooooox...",
+	".xddddddddddx...",
+	".xxxxxxxxxxxx...",
+	"..dd......dd....",
+	"................",
+]
+
+
+static func _copier(spec: Dictionary) -> Image:
+	var img := Image.create(16, 24, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var accent := Color(spec["accent"])
+	for y in COPIER.size():
+		var row: String = COPIER[y]
+		for x in row.length():
+			match row[x]:
+				"l":
+					Brush.pixel(img, Vector2i(x, y), Brush.shade(spec, 0.88))
+				"o":
+					Brush.pixel(img, Vector2i(x, y), Brush.shade(spec, 0.52))
+				"d":
+					Brush.pixel(img, Vector2i(x, y), Brush.shade(spec, 0.24))
+				"x":
+					Brush.pixel(img, Vector2i(x, y), Brush.shade(spec, Brush.OUTLINE))
+				"p":
+					Brush.pixel(img, Vector2i(x, y), Brush.PAPER)
+				"r":
+					Brush.pixel(img, Vector2i(x, y), Brush.LED_BAD)
+				"g":
+					Brush.pixel(img, Vector2i(x, y), accent)
+				"s":
+					Brush.pixel(img, Vector2i(x, y), SPARK_BODY)
+				"S":
+					Brush.pixel(img, Vector2i(x, y), SPARK_CORE)
+	# Crosses on the spark cores, the same trick the polisher uses: at this size
+	# a single pixel is dust and a cross is a spark.
+	for y in COPIER.size():
+		var row: String = COPIER[y]
+		for x in row.length():
+			if row[x] != "S":
+				continue
+			for step in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1),
+					Vector2i(0, 1)]:
+				var at: Vector2i = Vector2i(x, y) + step
+				if at.x >= 0 and at.y >= 0 and at.x < 16 and at.y < 24 \
+						and img.get_pixel(at.x, at.y).a == 0.0:
+					Brush.pixel(img, at, SPARK_EDGE)
+	return img

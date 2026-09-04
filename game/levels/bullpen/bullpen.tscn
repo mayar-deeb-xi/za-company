@@ -1,253 +1,246 @@
 [gd_scene format=4]
 
-[ext_resource type="Script" path="res://game/levels/level.gd" id="1_y5xgf"]
-[ext_resource type="TileSet" path="res://game/levels/bullpen/tileset.tres" id="2_gwpd6"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/fixtures/column.tscn" id="3_yiwt1"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/fixtures/torch.tscn" id="4_peyvg"]
-[ext_resource type="Script" path="res://game/levels/hazard_base.gd" id="5_cho1w"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/fixtures/health_item.tscn" id="6_nkft3"]
-[ext_resource type="Script" path="res://game/levels/pickup_base.gd" id="7_3phxu"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/server_rack.tscn" id="8_loy8s"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/scrap_pile.tscn" id="9_pfheb"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/printer.tscn" id="10_em0sh"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/signs/notice.tscn" id="11_r4a3y"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/furniture/cooler.tscn" id="12_euyrs"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/furniture/dead_plant.tscn" id="13_or7qn"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/crt_stack.tscn" id="14_1tcne"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/pc_tower.tscn" id="15_4gtsi"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/cable_spool.tscn" id="16_l5bro"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/toolbox.tscn" id="17_o32ix"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/debris.tscn" id="18_kfrgd"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/furniture/desk.tscn" id="19_f76fq"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/furniture/chair.tscn" id="20_jrvwu"]
-[ext_resource type="PackedScene" path="res://game/enemies/office_boy/office_boy.tscn" id="21_axqti"]
-[ext_resource type="Script" path="res://game/enemies/enemy_base.gd" id="22_stxed"]
-[ext_resource type="PackedScene" path="res://game/levels/bullpen/door.tscn" id="23_ww4al"]
-[ext_resource type="Script" path="res://game/levels/door_base.gd" id="24_6xl1j"]
-[ext_resource type="Texture2D" path="res://game/levels/bullpen/doorway_out.tres" id="25_i6a5f"]
-[ext_resource type="Texture2D" path="res://game/levels/bullpen/doorway_back.tres" id="26_kqjtr"]
+[ext_resource type="Script" path="res://game/levels/level.gd" id="1_03l5r"]
+[ext_resource type="TileSet" path="res://game/levels/bullpen/tileset.tres" id="2_oq4ca"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/fixtures/column.tscn" id="3_y5xgf"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/fixtures/torch.tscn" id="4_gwpd6"]
+[ext_resource type="Script" path="res://game/levels/hazard_base.gd" id="5_yiwt1"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/server_rack.tscn" id="6_peyvg"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/scrap_pile.tscn" id="7_cho1w"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/printer.tscn" id="8_nkft3"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/signs/notice.tscn" id="9_3phxu"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/furniture/cooler.tscn" id="10_loy8s"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/furniture/dead_plant.tscn" id="11_pfheb"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/crt_stack.tscn" id="12_em0sh"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/pc_tower.tscn" id="13_r4a3y"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/cable_spool.tscn" id="14_euyrs"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/toolbox.tscn" id="15_or7qn"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/hardware/debris.tscn" id="16_1tcne"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/furniture/desk.tscn" id="17_4gtsi"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/props/furniture/chair.tscn" id="18_l5bro"]
+[ext_resource type="PackedScene" path="res://game/enemies/office_boy/office_boy.tscn" id="19_o32ix"]
+[ext_resource type="Script" path="res://game/enemies/enemy_base.gd" id="20_kfrgd"]
+[ext_resource type="PackedScene" path="res://game/levels/bullpen/door.tscn" id="21_f76fq"]
+[ext_resource type="Script" path="res://game/levels/door_base.gd" id="22_jrvwu"]
+[ext_resource type="Texture2D" path="res://game/levels/bullpen/doorway_out.tres" id="23_axqti"]
+[ext_resource type="Texture2D" path="res://game/levels/bullpen/doorway_back.tres" id="24_stxed"]
 
-[node name="Bullpen" type="Node2D" unique_id=1497197389]
+[node name="Bullpen" type="Node2D" unique_id=2110862150]
 y_sort_enabled = true
-script = ExtResource("1_y5xgf")
+script = ExtResource("1_03l5r")
 display_name = "THE BULLPEN"
 
-[node name="Floor" type="TileMapLayer" parent="." unique_id=413668925]
+[node name="Floor" type="TileMapLayer" parent="." unique_id=472000506]
 tile_map_data = PackedByteArray("AAABAAEAAAADAAAAAAACAAEAAAADAAAAAAADAAEAAAADAAAAAAAEAAEAAAADAAAAAAAFAAEAAAADAAAAAAAGAAEAAAADAAAAAAAHAAEAAAADAAAAAAAIAAEAAAADAAAAAAAJAAEAAAADAAAAAAAKAAEAAAADAAAAAAALAAEAAAADAAAAAAAMAAEAAAADAAAAAAANAAEAAAADAAAAAAAOAAEAAAADAAAAAAAPAAEAAAADAAAAAAAQAAEAAAADAAAAAAARAAEAAAADAAAAAAASAAEAAAADAAAAAAATAAEAAAADAAAAAAAUAAEAAAADAAAAAAAVAAEAAAADAAAAAAAWAAEAAAADAAAAAAAXAAEAAAADAAAAAAAYAAEAAAADAAAAAAAZAAEAAAADAAAAAAAaAAEAAAADAAAAAAAbAAEAAAADAAAAAAAcAAEAAAADAAAAAAAdAAEAAAADAAAAAAAeAAEAAAADAAAAAAAfAAEAAAADAAAAAAAgAAEAAAADAAAAAAABAAIAAAADAAAAAAACAAIAAAAAAAAAAAADAAIAAAAAAAAAAAAEAAIAAAAAAAAAAAAFAAIAAAAAAAAAAAAGAAIAAAAAAAAAAAAHAAIAAAAAAAAAAAAIAAIAAAAAAAAAAAAJAAIAAAAAAAAAAAAKAAIAAAAAAAAAAAALAAIAAAAAAAAAAAAMAAIAAAAAAAAAAAANAAIAAAAAAAAAAAAOAAIAAAAAAAAAAAAPAAIAAAAAAAAAAAAQAAIAAAAAAAAAAAARAAIAAAAAAAAAAAASAAIAAAAAAAAAAAATAAIAAAAAAAAAAAAUAAIAAAAAAAAAAAAVAAIAAAAAAAAAAAAWAAIAAAAAAAAAAAAXAAIAAAAAAAAAAAAYAAIAAAAAAAAAAAAZAAIAAAAAAAAAAAAaAAIAAAAAAAAAAAAbAAIAAAAAAAAAAAAcAAIAAAAAAAAAAAAdAAIAAAAAAAAAAAAeAAIAAAAAAAAAAAAfAAIAAAAAAAAAAAAgAAIAAAADAAAAAAABAAMAAAADAAAAAAACAAMAAAAAAAAAAAADAAMAAAAAAAAAAAAEAAMAAAAAAAAAAAAFAAMAAAAAAAAAAAAGAAMAAAAAAAAAAAAHAAMAAAAAAAAAAAAIAAMAAAAAAAAAAAAJAAMAAAAAAAAAAAAKAAMAAAAAAAAAAAALAAMAAAAAAAAAAAAMAAMAAAAAAAAAAAANAAMAAAAAAAAAAAAOAAMAAAAAAAAAAAAPAAMAAAAAAAAAAAAQAAMAAAAAAAAAAAARAAMAAAAAAAAAAAASAAMAAAAAAAAAAAATAAMAAAAAAAAAAAAUAAMAAAAAAAAAAAAVAAMAAAAAAAAAAAAWAAMAAAAAAAAAAAAXAAMAAAAAAAAAAAAYAAMAAAAAAAAAAAAZAAMAAAAAAAAAAAAaAAMAAAAAAAAAAAAbAAMAAAAAAAAAAAAcAAMAAAAAAAAAAAAdAAMAAAAAAAAAAAAeAAMAAAAAAAAAAAAfAAMAAAAAAAAAAAAgAAMAAAADAAAAAAABAAQAAAADAAAAAAACAAQAAAAAAAAAAAADAAQAAAAAAAAAAAAEAAQAAAAAAAAAAAAFAAQAAAAAAAAAAAAGAAQAAAAAAAAAAAAHAAQAAAAAAAAAAAAIAAQAAAAAAAAAAAAJAAQAAAAAAAAAAAAKAAQAAAAAAAAAAAALAAQAAAAAAAAAAAAMAAQAAAAAAAAAAAANAAQAAAAAAAAAAAAOAAQAAAAAAAAAAAAPAAQAAAAAAAAAAAAQAAQAAAAAAAAAAAARAAQAAAAAAAAAAAASAAQAAAAAAAAAAAATAAQAAAAAAAAAAAAUAAQAAAAAAAAAAAAVAAQAAAAAAAAAAAAWAAQAAAAAAAAAAAAXAAQAAAAAAAAAAAAYAAQAAAAAAAAAAAAZAAQAAAAAAAAAAAAaAAQAAAAAAAAAAAAbAAQAAAAAAAAAAAAcAAQAAAAAAAAAAAAdAAQAAAAAAAAAAAAeAAQAAAAAAAAAAAAfAAQAAAAAAAAAAAAgAAQAAAADAAAAAAABAAUAAAADAAAAAAACAAUAAAAAAAAAAAADAAUAAAAAAAAAAAAEAAUAAAAAAAAAAAAFAAUAAAAAAAAAAAAGAAUAAAAAAAAAAAAHAAUAAAAAAAAAAAAIAAUAAAAAAAAAAAAJAAUAAAAAAAAAAAAKAAUAAAAAAAAAAAALAAUAAAAAAAAAAAAMAAUAAAAAAAAAAAANAAUAAAAAAAAAAAAOAAUAAAAAAAAAAAAPAAUAAAAAAAAAAAAQAAUAAAAAAAAAAAARAAUAAAAAAAAAAAASAAUAAAAAAAAAAAATAAUAAAAAAAAAAAAUAAUAAAAAAAAAAAAVAAUAAAAAAAAAAAAWAAUAAAAAAAAAAAAXAAUAAAAAAAAAAAAYAAUAAAAAAAAAAAAZAAUAAAAAAAAAAAAaAAUAAAAAAAAAAAAbAAUAAAAAAAAAAAAcAAUAAAAAAAAAAAAdAAUAAAAAAAAAAAAeAAUAAAAAAAAAAAAfAAUAAAAAAAAAAAAgAAUAAAADAAAAAAABAAYAAAADAAAAAAACAAYAAAAAAAAAAAADAAYAAAAAAAAAAAAEAAYAAAAAAAAAAAAFAAYAAAAAAAAAAAAGAAYAAAAAAAAAAAAHAAYAAAAAAAAAAAAIAAYAAAAAAAAAAAAJAAYAAAAAAAAAAAAKAAYAAAAAAAAAAAALAAYAAAAAAAAAAAAMAAYAAAAAAAAAAAANAAYAAAAAAAAAAAAOAAYAAAAAAAAAAAAPAAYAAAAAAAAAAAAQAAYAAAAAAAAAAAARAAYAAAAAAAAAAAASAAYAAAAAAAAAAAATAAYAAAAAAAAAAAAUAAYAAAAAAAAAAAAVAAYAAAAAAAAAAAAWAAYAAAAAAAAAAAAXAAYAAAAAAAAAAAAYAAYAAAAAAAAAAAAZAAYAAAAAAAAAAAAaAAYAAAAAAAAAAAAbAAYAAAAAAAAAAAAcAAYAAAAAAAAAAAAdAAYAAAAAAAAAAAAeAAYAAAAAAAAAAAAfAAYAAAAAAAAAAAAgAAYAAAADAAAAAAABAAcAAAADAAAAAAACAAcAAAAAAAAAAAADAAcAAAAAAAAAAAAEAAcAAAAAAAAAAAAFAAcAAAAAAAAAAAAGAAcAAAAAAAAAAAAHAAcAAAAAAAAAAAAIAAcAAAAAAAAAAAAJAAcAAAAAAAAAAAAKAAcAAAAAAAAAAAALAAcAAAAAAAAAAAAMAAcAAAAAAAAAAAANAAcAAAAAAAAAAAAOAAcAAAAAAAAAAAAPAAcAAAAAAAAAAAAQAAcAAAAAAAAAAAARAAcAAAAAAAAAAAASAAcAAAAAAAAAAAATAAcAAAAAAAAAAAAUAAcAAAAAAAAAAAAVAAcAAAAAAAAAAAAWAAcAAAAAAAAAAAAXAAcAAAAAAAAAAAAYAAcAAAAAAAAAAAAZAAcAAAAAAAAAAAAaAAcAAAAAAAAAAAAbAAcAAAAAAAAAAAAcAAcAAAAAAAAAAAAdAAcAAAAAAAAAAAAeAAcAAAAAAAAAAAAfAAcAAAAAAAAAAAAgAAcAAAADAAAAAAABAAgAAAADAAAAAAACAAgAAAABAAAAAAADAAgAAAABAAAAAAAEAAgAAAABAAAAAAAFAAgAAAABAAAAAAAGAAgAAAABAAAAAAAHAAgAAAABAAAAAAAIAAgAAAABAAAAAAAJAAgAAAABAAAAAAAKAAgAAAABAAAAAAALAAgAAAABAAAAAAAMAAgAAAABAAAAAAANAAgAAAABAAAAAAAOAAgAAAABAAAAAAAPAAgAAAABAAAAAAAQAAgAAAABAAAAAAARAAgAAAABAAAAAAASAAgAAAABAAAAAAATAAgAAAABAAAAAAAUAAgAAAABAAAAAAAVAAgAAAABAAAAAAAWAAgAAAABAAAAAAAXAAgAAAABAAAAAAAYAAgAAAABAAAAAAAZAAgAAAABAAAAAAAaAAgAAAABAAAAAAAbAAgAAAABAAAAAAAcAAgAAAABAAAAAAAdAAgAAAABAAAAAAAeAAgAAAABAAAAAAAfAAgAAAABAAAAAAAgAAgAAAADAAAAAAABAAkAAAADAAAAAAACAAkAAAABAAAAAAADAAkAAAABAAAAAAAEAAkAAAABAAAAAAAFAAkAAAABAAAAAAAGAAkAAAABAAAAAAAHAAkAAAABAAAAAAAIAAkAAAABAAAAAAAJAAkAAAABAAAAAAAKAAkAAAABAAAAAAALAAkAAAABAAAAAAAMAAkAAAABAAAAAAANAAkAAAABAAAAAAAOAAkAAAABAAAAAAAPAAkAAAABAAAAAAAQAAkAAAABAAAAAAARAAkAAAABAAAAAAASAAkAAAABAAAAAAATAAkAAAABAAAAAAAUAAkAAAABAAAAAAAVAAkAAAABAAAAAAAWAAkAAAABAAAAAAAXAAkAAAABAAAAAAAYAAkAAAABAAAAAAAZAAkAAAABAAAAAAAaAAkAAAABAAAAAAAbAAkAAAABAAAAAAAcAAkAAAABAAAAAAAdAAkAAAABAAAAAAAeAAkAAAABAAAAAAAfAAkAAAABAAAAAAAgAAkAAAADAAAAAAABAAoAAAADAAAAAAACAAoAAAABAAAAAAADAAoAAAABAAAAAAAEAAoAAAABAAAAAAAFAAoAAAABAAAAAAAGAAoAAAABAAAAAAAHAAoAAAABAAAAAAAIAAoAAAABAAAAAAAJAAoAAAABAAAAAAAKAAoAAAABAAAAAAALAAoAAAABAAAAAAAMAAoAAAABAAAAAAANAAoAAAABAAAAAAAOAAoAAAABAAAAAAAPAAoAAAABAAAAAAAQAAoAAAABAAAAAAARAAoAAAABAAAAAAASAAoAAAABAAAAAAATAAoAAAABAAAAAAAUAAoAAAABAAAAAAAVAAoAAAABAAAAAAAWAAoAAAABAAAAAAAXAAoAAAABAAAAAAAYAAoAAAABAAAAAAAZAAoAAAABAAAAAAAaAAoAAAABAAAAAAAbAAoAAAABAAAAAAAcAAoAAAABAAAAAAAdAAoAAAABAAAAAAAeAAoAAAABAAAAAAAfAAoAAAABAAAAAAAgAAoAAAADAAAAAAABAAsAAAADAAAAAAACAAsAAAAAAAAAAAADAAsAAAAAAAAAAAAEAAsAAAAAAAAAAAAFAAsAAAAAAAAAAAAGAAsAAAAAAAAAAAAHAAsAAAAAAAAAAAAIAAsAAAAAAAAAAAAJAAsAAAAAAAAAAAAKAAsAAAAAAAAAAAALAAsAAAAAAAAAAAAMAAsAAAAAAAAAAAANAAsAAAAAAAAAAAAOAAsAAAAAAAAAAAAPAAsAAAAAAAAAAAAQAAsAAAAAAAAAAAARAAsAAAAAAAAAAAASAAsAAAAAAAAAAAATAAsAAAAAAAAAAAAUAAsAAAAAAAAAAAAVAAsAAAAAAAAAAAAWAAsAAAAAAAAAAAAXAAsAAAAAAAAAAAAYAAsAAAAAAAAAAAAZAAsAAAAAAAAAAAAaAAsAAAAAAAAAAAAbAAsAAAAAAAAAAAAcAAsAAAAAAAAAAAAdAAsAAAAAAAAAAAAeAAsAAAAAAAAAAAAfAAsAAAAAAAAAAAAgAAsAAAADAAAAAAABAAwAAAADAAAAAAACAAwAAAAAAAAAAAADAAwAAAAAAAAAAAAEAAwAAAAAAAAAAAAFAAwAAAAAAAAAAAAGAAwAAAAAAAAAAAAHAAwAAAAAAAAAAAAIAAwAAAAAAAAAAAAJAAwAAAAAAAAAAAAKAAwAAAAAAAAAAAALAAwAAAAAAAAAAAAMAAwAAAAAAAAAAAANAAwAAAAAAAAAAAAOAAwAAAAAAAAAAAAPAAwAAAAAAAAAAAAQAAwAAAAAAAAAAAARAAwAAAAAAAAAAAASAAwAAAAAAAAAAAATAAwAAAAAAAAAAAAUAAwAAAAAAAAAAAAVAAwAAAAAAAAAAAAWAAwAAAAAAAAAAAAXAAwAAAAAAAAAAAAYAAwAAAAAAAAAAAAZAAwAAAAAAAAAAAAaAAwAAAAAAAAAAAAbAAwAAAAAAAAAAAAcAAwAAAAAAAAAAAAdAAwAAAAAAAAAAAAeAAwAAAAAAAAAAAAfAAwAAAAAAAAAAAAgAAwAAAADAAAAAAABAA0AAAADAAAAAAACAA0AAAAAAAAAAAADAA0AAAAAAAAAAAAEAA0AAAAAAAAAAAAFAA0AAAAAAAAAAAAGAA0AAAAAAAAAAAAHAA0AAAAAAAAAAAAIAA0AAAAAAAAAAAAJAA0AAAAAAAAAAAAKAA0AAAAAAAAAAAALAA0AAAAAAAAAAAAMAA0AAAAAAAAAAAANAA0AAAAAAAAAAAAOAA0AAAAAAAAAAAAPAA0AAAAAAAAAAAAQAA0AAAAAAAAAAAARAA0AAAAAAAAAAAASAA0AAAAAAAAAAAATAA0AAAAAAAAAAAAUAA0AAAAAAAAAAAAVAA0AAAAAAAAAAAAWAA0AAAAAAAAAAAAXAA0AAAAAAAAAAAAYAA0AAAAAAAAAAAAZAA0AAAAAAAAAAAAaAA0AAAAAAAAAAAAbAA0AAAAAAAAAAAAcAA0AAAAAAAAAAAAdAA0AAAAAAAAAAAAeAA0AAAAAAAAAAAAfAA0AAAAAAAAAAAAgAA0AAAADAAAAAAABAA4AAAADAAAAAAACAA4AAAAAAAAAAAADAA4AAAAAAAAAAAAEAA4AAAAAAAAAAAAFAA4AAAAAAAAAAAAGAA4AAAAAAAAAAAAHAA4AAAAAAAAAAAAIAA4AAAAAAAAAAAAJAA4AAAAAAAAAAAAKAA4AAAAAAAAAAAALAA4AAAAAAAAAAAAMAA4AAAAAAAAAAAANAA4AAAAAAAAAAAAOAA4AAAAAAAAAAAAPAA4AAAAAAAAAAAAQAA4AAAAAAAAAAAARAA4AAAAAAAAAAAASAA4AAAAAAAAAAAATAA4AAAAAAAAAAAAUAA4AAAAAAAAAAAAVAA4AAAAAAAAAAAAWAA4AAAAAAAAAAAAXAA4AAAAAAAAAAAAYAA4AAAAAAAAAAAAZAA4AAAAAAAAAAAAaAA4AAAAAAAAAAAAbAA4AAAAAAAAAAAAcAA4AAAAAAAAAAAAdAA4AAAAAAAAAAAAeAA4AAAAAAAAAAAAfAA4AAAAAAAAAAAAgAA4AAAADAAAAAAABAA8AAAADAAAAAAACAA8AAAAAAAAAAAADAA8AAAAAAAAAAAAEAA8AAAAAAAAAAAAFAA8AAAAAAAAAAAAGAA8AAAAAAAAAAAAHAA8AAAAAAAAAAAAIAA8AAAAAAAAAAAAJAA8AAAAAAAAAAAAKAA8AAAAAAAAAAAALAA8AAAAAAAAAAAAMAA8AAAAAAAAAAAANAA8AAAAAAAAAAAAOAA8AAAAAAAAAAAAPAA8AAAAAAAAAAAAQAA8AAAAAAAAAAAARAA8AAAAAAAAAAAASAA8AAAAAAAAAAAATAA8AAAAAAAAAAAAUAA8AAAAAAAAAAAAVAA8AAAAAAAAAAAAWAA8AAAAAAAAAAAAXAA8AAAAAAAAAAAAYAA8AAAAAAAAAAAAZAA8AAAAAAAAAAAAaAA8AAAAAAAAAAAAbAA8AAAAAAAAAAAAcAA8AAAAAAAAAAAAdAA8AAAAAAAAAAAAeAA8AAAAAAAAAAAAfAA8AAAAAAAAAAAAgAA8AAAADAAAAAAABABAAAAADAAAAAAACABAAAAAAAAAAAAADABAAAAAAAAAAAAAEABAAAAAAAAAAAAAFABAAAAAAAAAAAAAGABAAAAAAAAAAAAAHABAAAAAAAAAAAAAIABAAAAAAAAAAAAAJABAAAAAAAAAAAAAKABAAAAAAAAAAAAALABAAAAAAAAAAAAAMABAAAAAAAAAAAAANABAAAAAAAAAAAAAOABAAAAAAAAAAAAAPABAAAAAAAAAAAAAQABAAAAAAAAAAAAARABAAAAAAAAAAAAASABAAAAAAAAAAAAATABAAAAAAAAAAAAAUABAAAAAAAAAAAAAVABAAAAAAAAAAAAAWABAAAAAAAAAAAAAXABAAAAAAAAAAAAAYABAAAAAAAAAAAAAZABAAAAAAAAAAAAAaABAAAAAAAAAAAAAbABAAAAAAAAAAAAAcABAAAAAAAAAAAAAdABAAAAAAAAAAAAAeABAAAAAAAAAAAAAfABAAAAAAAAAAAAAgABAAAAADAAAAAAABABEAAAADAAAAAAACABEAAAADAAAAAAADABEAAAADAAAAAAAEABEAAAADAAAAAAAFABEAAAADAAAAAAAGABEAAAADAAAAAAAHABEAAAADAAAAAAAIABEAAAADAAAAAAAJABEAAAADAAAAAAAKABEAAAADAAAAAAALABEAAAADAAAAAAAMABEAAAADAAAAAAANABEAAAADAAAAAAAOABEAAAADAAAAAAAPABEAAAADAAAAAAAQABEAAAADAAAAAAARABEAAAADAAAAAAASABEAAAADAAAAAAATABEAAAADAAAAAAAUABEAAAADAAAAAAAVABEAAAADAAAAAAAWABEAAAADAAAAAAAXABEAAAADAAAAAAAYABEAAAADAAAAAAAZABEAAAADAAAAAAAaABEAAAADAAAAAAAbABEAAAADAAAAAAAcABEAAAADAAAAAAAdABEAAAADAAAAAAAeABEAAAADAAAAAAAfABEAAAADAAAAAAAgABEAAAADAAAAAAA=")
-tile_set = ExtResource("2_gwpd6")
+tile_set = ExtResource("2_oq4ca")
 
-[node name="Walls" type="TileMapLayer" parent="." unique_id=915467387]
+[node name="Walls" type="TileMapLayer" parent="." unique_id=1788984962]
 y_sort_enabled = true
 tile_map_data = PackedByteArray("AAAAAAAAAAADAAEAAAABAAAAAAACAAEAAAACAAAAAAACAAEAAAADAAAAAAACAAEAAAAEAAAAAAACAAEAAAAFAAAAAAACAAEAAAAGAAAAAAACAAEAAAAHAAAAAAACAAEAAAAIAAAAAAACAAEAAAAJAAAAAAACAAEAAAAKAAAAAAACAAEAAAALAAAAAAACAAEAAAAMAAAAAAACAAEAAAANAAAAAAACAAEAAAAOAAAAAAACAAEAAAAPAAAAAAACAAEAAAAQAAAA//////////8RAAAA//////////8SAAAAAAACAAEAAAATAAAAAAACAAEAAAAUAAAAAAACAAEAAAAVAAAAAAACAAEAAAAWAAAAAAACAAEAAAAXAAAAAAACAAEAAAAYAAAAAAACAAEAAAAZAAAAAAACAAEAAAAaAAAAAAACAAEAAAAbAAAAAAACAAEAAAAcAAAAAAACAAEAAAAdAAAAAAACAAEAAAAeAAAAAAACAAEAAAAfAAAAAAACAAEAAAAgAAAAAAACAAEAAAAhAAAAAAADAAEAAAAAAAEAAAAAAAEAAAAhAAEAAAAAAAEAAAAAAAIAAAAAAAEAAAAhAAIAAAAAAAEAAAAAAAMAAAAAAAEAAAAhAAMAAAAAAAEAAAAAAAQAAAAAAAEAAAAhAAQAAAAAAAEAAAAAAAUAAAAAAAEAAAAhAAUAAAAAAAEAAAAAAAYAAAAAAAEAAAAhAAYAAAAAAAEAAAAAAAcAAAAAAAEAAAAhAAcAAAAAAAEAAAAAAAgAAAAAAAEAAAAhAAgAAAAAAAEAAAAAAAkAAAAAAAEAAAAhAAkAAAAAAAEAAAAAAAoAAAAAAAEAAAAhAAoAAAAAAAEAAAAAAAsAAAAAAAEAAAAhAAsAAAAAAAEAAAAAAAwAAAAAAAEAAAAhAAwAAAAAAAEAAAAAAA0AAAAAAAEAAAAhAA0AAAAAAAEAAAAAAA4AAAAAAAEAAAAhAA4AAAAAAAEAAAAAAA8AAAAAAAEAAAAhAA8AAAAAAAEAAAAAABAAAAAAAAEAAAAhABAAAAAAAAEAAAAAABEAAAAAAAEAAAAhABEAAAAAAAEAAAAAABIAAAADAAEAAAABABIAAAAAAAEAAAACABIAAAAAAAEAAAADABIAAAAAAAEAAAAEABIAAAAAAAEAAAAFABIAAAAAAAEAAAAGABIAAAAAAAEAAAAHABIAAAAAAAEAAAAIABIAAAAAAAEAAAAJABIAAAAAAAEAAAAKABIAAAAAAAEAAAALABIAAAAAAAEAAAAMABIAAAAAAAEAAAANABIAAAAAAAEAAAAOABIAAAAAAAEAAAAPABIAAAAAAAEAAAAQABIA//////////8RABIA//////////8SABIAAAAAAAEAAAATABIAAAAAAAEAAAAUABIAAAAAAAEAAAAVABIAAAAAAAEAAAAWABIAAAAAAAEAAAAXABIAAAAAAAEAAAAYABIAAAAAAAEAAAAZABIAAAAAAAEAAAAaABIAAAAAAAEAAAAbABIAAAAAAAEAAAAcABIAAAAAAAEAAAAdABIAAAAAAAEAAAAeABIAAAAAAAEAAAAfABIAAAAAAAEAAAAgABIAAAAAAAEAAAAhABIAAAADAAEAAAA=")
-tile_set = ExtResource("2_gwpd6")
+tile_set = ExtResource("2_oq4ca")
 
-[node name="Props" type="Node2D" parent="." unique_id=163783984]
+[node name="Props" type="Node2D" parent="." unique_id=141567738]
 y_sort_enabled = true
 
-[node name="Column_4_5" type="StaticBody2D" parent="Props" unique_id=368168805 instance=ExtResource("3_yiwt1")]
+[node name="Column_4_5" type="StaticBody2D" parent="Props" unique_id=1607755603 instance=ExtResource("3_y5xgf")]
 position = Vector2(72, 96)
 
-[node name="Column_9_5" type="StaticBody2D" parent="Props" unique_id=2003763384 instance=ExtResource("3_yiwt1")]
+[node name="Column_9_5" type="StaticBody2D" parent="Props" unique_id=1255956951 instance=ExtResource("3_y5xgf")]
 position = Vector2(152, 96)
 
-[node name="Column_14_5" type="StaticBody2D" parent="Props" unique_id=19858887 instance=ExtResource("3_yiwt1")]
+[node name="Column_14_5" type="StaticBody2D" parent="Props" unique_id=1660952791 instance=ExtResource("3_y5xgf")]
 position = Vector2(232, 96)
 
-[node name="Column_19_5" type="StaticBody2D" parent="Props" unique_id=671373037 instance=ExtResource("3_yiwt1")]
+[node name="Column_19_5" type="StaticBody2D" parent="Props" unique_id=1110664969 instance=ExtResource("3_y5xgf")]
 position = Vector2(312, 96)
 
-[node name="Column_24_5" type="StaticBody2D" parent="Props" unique_id=391328803 instance=ExtResource("3_yiwt1")]
+[node name="Column_24_5" type="StaticBody2D" parent="Props" unique_id=1131920429 instance=ExtResource("3_y5xgf")]
 position = Vector2(392, 96)
 
-[node name="Column_29_5" type="StaticBody2D" parent="Props" unique_id=1604226421 instance=ExtResource("3_yiwt1")]
+[node name="Column_29_5" type="StaticBody2D" parent="Props" unique_id=943637941 instance=ExtResource("3_y5xgf")]
 position = Vector2(472, 96)
 
-[node name="Column_4_13" type="StaticBody2D" parent="Props" unique_id=87936273 instance=ExtResource("3_yiwt1")]
+[node name="Column_4_13" type="StaticBody2D" parent="Props" unique_id=1762044926 instance=ExtResource("3_y5xgf")]
 position = Vector2(72, 224)
 
-[node name="Column_9_13" type="StaticBody2D" parent="Props" unique_id=1026761129 instance=ExtResource("3_yiwt1")]
+[node name="Column_9_13" type="StaticBody2D" parent="Props" unique_id=711838110 instance=ExtResource("3_y5xgf")]
 position = Vector2(152, 224)
 
-[node name="Column_14_13" type="StaticBody2D" parent="Props" unique_id=809568222 instance=ExtResource("3_yiwt1")]
+[node name="Column_14_13" type="StaticBody2D" parent="Props" unique_id=2130822815 instance=ExtResource("3_y5xgf")]
 position = Vector2(232, 224)
 
-[node name="Column_19_13" type="StaticBody2D" parent="Props" unique_id=1470504799 instance=ExtResource("3_yiwt1")]
+[node name="Column_19_13" type="StaticBody2D" parent="Props" unique_id=317529347 instance=ExtResource("3_y5xgf")]
 position = Vector2(312, 224)
 
-[node name="Column_24_13" type="StaticBody2D" parent="Props" unique_id=215470470 instance=ExtResource("3_yiwt1")]
+[node name="Column_24_13" type="StaticBody2D" parent="Props" unique_id=1234558873 instance=ExtResource("3_y5xgf")]
 position = Vector2(392, 224)
 
-[node name="Column_29_13" type="StaticBody2D" parent="Props" unique_id=442438158 instance=ExtResource("3_yiwt1")]
+[node name="Column_29_13" type="StaticBody2D" parent="Props" unique_id=1018576837 instance=ExtResource("3_y5xgf")]
 position = Vector2(472, 224)
 
-[node name="Torch" type="Area2D" parent="Props" unique_id=337975210 instance=ExtResource("4_peyvg")]
+[node name="Torch" type="Area2D" parent="Props" unique_id=1196900432 instance=ExtResource("4_gwpd6")]
 position = Vector2(120, 152)
 monitorable = false
-script = ExtResource("5_cho1w")
+script = ExtResource("5_yiwt1")
 
-[node name="Health" type="Area2D" parent="Props" unique_id=1908838082 instance=ExtResource("6_nkft3")]
-position = Vector2(424, 152)
-monitorable = false
-script = ExtResource("7_3phxu")
-
-[node name="ServerRack1" type="StaticBody2D" parent="Props" unique_id=975229459 instance=ExtResource("8_loy8s")]
+[node name="ServerRack1" type="StaticBody2D" parent="Props" unique_id=2031815354 instance=ExtResource("6_peyvg")]
 position = Vector2(150, 56)
 
-[node name="ServerRack2" type="StaticBody2D" parent="Props" unique_id=1564469127 instance=ExtResource("8_loy8s")]
+[node name="ServerRack2" type="StaticBody2D" parent="Props" unique_id=586111054 instance=ExtResource("6_peyvg")]
 position = Vector2(176, 56)
 
-[node name="ServerRack3" type="StaticBody2D" parent="Props" unique_id=400046337 instance=ExtResource("8_loy8s")]
+[node name="ServerRack3" type="StaticBody2D" parent="Props" unique_id=1435615916 instance=ExtResource("6_peyvg")]
 position = Vector2(202, 56)
 
-[node name="ScrapPile1" type="StaticBody2D" parent="Props" unique_id=381165607 instance=ExtResource("9_pfheb")]
+[node name="ScrapPile1" type="StaticBody2D" parent="Props" unique_id=2120604114 instance=ExtResource("7_cho1w")]
 position = Vector2(228, 64)
 
-[node name="Printer1" type="StaticBody2D" parent="Props" unique_id=1110836005 instance=ExtResource("10_em0sh")]
+[node name="Printer1" type="StaticBody2D" parent="Props" unique_id=1009032075 instance=ExtResource("8_nkft3")]
 position = Vector2(340, 56)
 
-[node name="Notice1" type="Node2D" parent="Props" unique_id=1551318287 instance=ExtResource("11_r4a3y")]
+[node name="Notice1" type="Node2D" parent="Props" unique_id=2018720817 instance=ExtResource("9_3phxu")]
 position = Vector2(372, 22)
 rotation = -0.09
 
-[node name="Cooler1" type="StaticBody2D" parent="Props" unique_id=2034584401 instance=ExtResource("12_euyrs")]
+[node name="Cooler1" type="StaticBody2D" parent="Props" unique_id=387285859 instance=ExtResource("10_loy8s")]
 position = Vector2(452, 48)
 
-[node name="DeadPlant1" type="StaticBody2D" parent="Props" unique_id=114653038 instance=ExtResource("13_or7qn")]
+[node name="DeadPlant1" type="StaticBody2D" parent="Props" unique_id=829327092 instance=ExtResource("11_pfheb")]
 position = Vector2(492, 96)
 
-[node name="CrtStack1" type="StaticBody2D" parent="Props" unique_id=1890930901 instance=ExtResource("14_1tcne")]
+[node name="CrtStack1" type="StaticBody2D" parent="Props" unique_id=1538086666 instance=ExtResource("12_em0sh")]
 position = Vector2(44, 128)
 
-[node name="ScrapPile2" type="StaticBody2D" parent="Props" unique_id=1986423938 instance=ExtResource("9_pfheb")]
+[node name="ScrapPile2" type="StaticBody2D" parent="Props" unique_id=651990546 instance=ExtResource("7_cho1w")]
 position = Vector2(44, 176)
 
-[node name="PcTower1" type="StaticBody2D" parent="Props" unique_id=1925402548 instance=ExtResource("15_4gtsi")]
+[node name="PcTower1" type="StaticBody2D" parent="Props" unique_id=850347390 instance=ExtResource("13_r4a3y")]
 position = Vector2(44, 208)
 
-[node name="CableSpool1" type="StaticBody2D" parent="Props" unique_id=925435363 instance=ExtResource("16_l5bro")]
+[node name="CableSpool1" type="StaticBody2D" parent="Props" unique_id=1816623109 instance=ExtResource("14_euyrs")]
 position = Vector2(492, 130)
 
-[node name="ScrapPile3" type="StaticBody2D" parent="Props" unique_id=1764430604 instance=ExtResource("9_pfheb")]
+[node name="ScrapPile3" type="StaticBody2D" parent="Props" unique_id=54588665 instance=ExtResource("7_cho1w")]
 position = Vector2(492, 178)
 
-[node name="Toolbox1" type="StaticBody2D" parent="Props" unique_id=508739835 instance=ExtResource("17_o32ix")]
+[node name="Toolbox1" type="StaticBody2D" parent="Props" unique_id=1967990969 instance=ExtResource("15_or7qn")]
 position = Vector2(490, 212)
 
-[node name="Toolbox2" type="StaticBody2D" parent="Props" unique_id=1414178425 instance=ExtResource("17_o32ix")]
+[node name="Toolbox2" type="StaticBody2D" parent="Props" unique_id=1353259748 instance=ExtResource("15_or7qn")]
 position = Vector2(196, 96)
 
-[node name="PcTower2" type="StaticBody2D" parent="Props" unique_id=1592970854 instance=ExtResource("15_4gtsi")]
+[node name="PcTower2" type="StaticBody2D" parent="Props" unique_id=1425735429 instance=ExtResource("13_r4a3y")]
 position = Vector2(330, 96)
 
-[node name="Toolbox3" type="StaticBody2D" parent="Props" unique_id=774904516 instance=ExtResource("17_o32ix")]
+[node name="Toolbox3" type="StaticBody2D" parent="Props" unique_id=1658998695 instance=ExtResource("15_or7qn")]
 position = Vector2(452, 108)
 
-[node name="ScrapPile4" type="StaticBody2D" parent="Props" unique_id=355390958 instance=ExtResource("9_pfheb")]
+[node name="ScrapPile4" type="StaticBody2D" parent="Props" unique_id=456735771 instance=ExtResource("7_cho1w")]
 position = Vector2(76, 108)
 
-[node name="ScrapPile5" type="StaticBody2D" parent="Props" unique_id=475978966 instance=ExtResource("9_pfheb")]
+[node name="ScrapPile5" type="StaticBody2D" parent="Props" unique_id=1393160959 instance=ExtResource("7_cho1w")]
 position = Vector2(168, 128)
 
-[node name="CrtStack2" type="StaticBody2D" parent="Props" unique_id=11259493 instance=ExtResource("14_1tcne")]
+[node name="CrtStack2" type="StaticBody2D" parent="Props" unique_id=1274679120 instance=ExtResource("12_em0sh")]
 position = Vector2(392, 128)
 
-[node name="PcTower3" type="StaticBody2D" parent="Props" unique_id=1989388246 instance=ExtResource("15_4gtsi")]
+[node name="PcTower3" type="StaticBody2D" parent="Props" unique_id=2125916173 instance=ExtResource("13_r4a3y")]
 position = Vector2(176, 188)
 
-[node name="CableSpool2" type="StaticBody2D" parent="Props" unique_id=1227832304 instance=ExtResource("16_l5bro")]
+[node name="CableSpool2" type="StaticBody2D" parent="Props" unique_id=37957706 instance=ExtResource("14_euyrs")]
 position = Vector2(400, 190)
 
-[node name="Debris1" type="Node2D" parent="Props" unique_id=1097073360 instance=ExtResource("18_kfrgd")]
+[node name="Debris1" type="Node2D" parent="Props" unique_id=677598172 instance=ExtResource("16_1tcne")]
 position = Vector2(250, 140)
 
-[node name="Debris2" type="Node2D" parent="Props" unique_id=1549733404 instance=ExtResource("18_kfrgd")]
+[node name="Debris2" type="Node2D" parent="Props" unique_id=1689952337 instance=ExtResource("16_1tcne")]
 position = Vector2(322, 124)
 
-[node name="Debris3" type="Node2D" parent="Props" unique_id=497183565 instance=ExtResource("18_kfrgd")]
+[node name="Debris3" type="Node2D" parent="Props" unique_id=329569058 instance=ExtResource("16_1tcne")]
 position = Vector2(296, 178)
 
-[node name="Debris4" type="Node2D" parent="Props" unique_id=321310101 instance=ExtResource("18_kfrgd")]
+[node name="Debris4" type="Node2D" parent="Props" unique_id=355865231 instance=ExtResource("16_1tcne")]
 position = Vector2(218, 192)
 
-[node name="Debris5" type="Node2D" parent="Props" unique_id=350174284 instance=ExtResource("18_kfrgd")]
+[node name="Debris5" type="Node2D" parent="Props" unique_id=442564769 instance=ExtResource("16_1tcne")]
 position = Vector2(272, 210)
 
-[node name="Debris6" type="Node2D" parent="Props" unique_id=2103042359 instance=ExtResource("18_kfrgd")]
+[node name="Debris6" type="Node2D" parent="Props" unique_id=187742453 instance=ExtResource("16_1tcne")]
 position = Vector2(92, 200)
 
-[node name="Debris7" type="Node2D" parent="Props" unique_id=581370225 instance=ExtResource("18_kfrgd")]
+[node name="Debris7" type="Node2D" parent="Props" unique_id=1855115413 instance=ExtResource("16_1tcne")]
 position = Vector2(462, 166)
 
-[node name="Desk1" type="StaticBody2D" parent="Props" unique_id=705199624 instance=ExtResource("19_f76fq")]
+[node name="Desk1" type="StaticBody2D" parent="Props" unique_id=1130761730 instance=ExtResource("17_4gtsi")]
 position = Vector2(72, 268)
 
-[node name="Chair1" type="StaticBody2D" parent="Props" unique_id=733525844 instance=ExtResource("20_jrvwu")]
+[node name="Chair1" type="StaticBody2D" parent="Props" unique_id=42118156 instance=ExtResource("18_l5bro")]
 position = Vector2(72, 282)
 
-[node name="Desk2" type="StaticBody2D" parent="Props" unique_id=907153109 instance=ExtResource("19_f76fq")]
+[node name="Desk2" type="StaticBody2D" parent="Props" unique_id=214787722 instance=ExtResource("17_4gtsi")]
 position = Vector2(196, 268)
 
-[node name="Chair2" type="StaticBody2D" parent="Props" unique_id=150337434 instance=ExtResource("20_jrvwu")]
+[node name="Chair2" type="StaticBody2D" parent="Props" unique_id=1784993535 instance=ExtResource("18_l5bro")]
 position = Vector2(196, 282)
 
-[node name="Desk3" type="StaticBody2D" parent="Props" unique_id=1539875081 instance=ExtResource("19_f76fq")]
+[node name="Desk3" type="StaticBody2D" parent="Props" unique_id=694989855 instance=ExtResource("17_4gtsi")]
 position = Vector2(348, 268)
 
-[node name="Chair3" type="StaticBody2D" parent="Props" unique_id=313587585 instance=ExtResource("20_jrvwu")]
+[node name="Chair3" type="StaticBody2D" parent="Props" unique_id=901370117 instance=ExtResource("18_l5bro")]
 position = Vector2(348, 282)
 
-[node name="Toolbox4" type="StaticBody2D" parent="Props" unique_id=956735116 instance=ExtResource("17_o32ix")]
+[node name="Toolbox4" type="StaticBody2D" parent="Props" unique_id=1832538601 instance=ExtResource("15_or7qn")]
 position = Vector2(160, 236)
 
-[node name="CrtStack3" type="StaticBody2D" parent="Props" unique_id=905231079 instance=ExtResource("14_1tcne")]
+[node name="CrtStack3" type="StaticBody2D" parent="Props" unique_id=296186021 instance=ExtResource("12_em0sh")]
 position = Vector2(232, 240)
 
-[node name="CableSpool3" type="StaticBody2D" parent="Props" unique_id=30211613 instance=ExtResource("16_l5bro")]
+[node name="CableSpool3" type="StaticBody2D" parent="Props" unique_id=903206250 instance=ExtResource("14_euyrs")]
 position = Vector2(352, 236)
 
-[node name="Printer2" type="StaticBody2D" parent="Props" unique_id=952984088 instance=ExtResource("10_em0sh")]
+[node name="Printer2" type="StaticBody2D" parent="Props" unique_id=171455763 instance=ExtResource("8_nkft3")]
 position = Vector2(470, 272)
 
-[node name="Enemy1" type="CharacterBody2D" parent="Props" unique_id=1856040618 groups=["enemies"] instance=ExtResource("21_axqti")]
+[node name="Enemy1" type="CharacterBody2D" parent="Props" unique_id=369804710 groups=["enemies"] instance=ExtResource("19_o32ix")]
 position = Vector2(104, 60)
 motion_mode = 1
-script = ExtResource("22_stxed")
+script = ExtResource("20_kfrgd")
 
-[node name="Enemy2" type="CharacterBody2D" parent="Props" unique_id=604699300 groups=["enemies"] instance=ExtResource("21_axqti")]
+[node name="Enemy2" type="CharacterBody2D" parent="Props" unique_id=377828916 groups=["enemies"] instance=ExtResource("19_o32ix")]
 position = Vector2(436, 64)
 motion_mode = 1
-script = ExtResource("22_stxed")
+script = ExtResource("20_kfrgd")
 
-[node name="Enemy3" type="CharacterBody2D" parent="Props" unique_id=825058436 groups=["enemies"] instance=ExtResource("21_axqti")]
+[node name="Enemy3" type="CharacterBody2D" parent="Props" unique_id=82176306 groups=["enemies"] instance=ExtResource("19_o32ix")]
 position = Vector2(120, 248)
 motion_mode = 1
-script = ExtResource("22_stxed")
+script = ExtResource("20_kfrgd")
 
-[node name="Enemy4" type="CharacterBody2D" parent="Props" unique_id=82982419 groups=["enemies"] instance=ExtResource("21_axqti")]
+[node name="Enemy4" type="CharacterBody2D" parent="Props" unique_id=530296990 groups=["enemies"] instance=ExtResource("19_o32ix")]
 position = Vector2(424, 248)
 motion_mode = 1
-script = ExtResource("22_stxed")
+script = ExtResource("20_kfrgd")
 
-[node name="Exit" type="Area2D" parent="Props" unique_id=1854612537 groups=["door"] instance=ExtResource("23_ww4al")]
+[node name="Exit" type="Area2D" parent="Props" unique_id=992645792 groups=["door"] instance=ExtResource("21_f76fq")]
 position = Vector2(272, 8)
 monitorable = false
-script = ExtResource("24_6xl1j")
-target_level = "res://game/levels/shared_floor/shared_floor.tscn"
-art = ExtResource("25_i6a5f")
+script = ExtResource("22_jrvwu")
+target_level = "res://game/levels/marble_hall/marble_hall.tscn"
+art = ExtResource("23_axqti")
 
-[node name="Return" type="Area2D" parent="Props" unique_id=200409714 groups=["door"] instance=ExtResource("23_ww4al")]
+[node name="Return" type="Area2D" parent="Props" unique_id=698864993 groups=["door"] instance=ExtResource("21_f76fq")]
 position = Vector2(272, 296)
 rotation = 3.1415927
 monitorable = false
-script = ExtResource("24_6xl1j")
-target_level = "res://game/levels/lobby/lobby.tscn"
+script = ExtResource("22_jrvwu")
+target_level = "res://game/levels/shared_floor/shared_floor.tscn"
 target_spawn = &"returned"
-art = ExtResource("26_kqjtr")
+art = ExtResource("24_stxed")
 
-[node name="Spawns" type="Node2D" parent="." unique_id=1115173491]
+[node name="Spawns" type="Node2D" parent="." unique_id=2098384998]
 
-[node name="start" type="Marker2D" parent="Spawns" unique_id=121465293]
+[node name="start" type="Marker2D" parent="Spawns" unique_id=1609492970]
 position = Vector2(272, 240)
 
-[node name="returned" type="Marker2D" parent="Spawns" unique_id=1785018700]
+[node name="returned" type="Marker2D" parent="Spawns" unique_id=1135410617]
 position = Vector2(272, 80)

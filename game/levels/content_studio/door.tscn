@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/levels/door_base.gd" id="1_n0l4g"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5d1fy"]
+size = Vector2(32, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_84vb0"]
+size = Vector2(26, 10)
+
+[node name="Door" type="Area2D" unique_id=1700547425 groups=["door"]]
+monitorable = false
+script = ExtResource("1_n0l4g")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=471643847]
+position = Vector2(-16, -8)
+centered = false
+
+[node name="Seal" type="StaticBody2D" parent="." unique_id=1683025115]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Seal" unique_id=640963547]
+shape = SubResource("RectangleShape2D_5d1fy")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=403656210]
+position = Vector2(0, 13)
+shape = SubResource("RectangleShape2D_84vb0")

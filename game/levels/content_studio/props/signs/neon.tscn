@@ -1,0 +1,12 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_upoex"]
+_data = PackedByteArray("AAADAAUAAAABAAAALgAAACgAAAA0AQAAUklGRiwBAABXRUJQVlA4TB8BAAAvLcAJEEegOJKkNHhuOD/CQ3EkGdCum59MpCd7pY2kQPfhUKDovwFKJBCE6BYfbRYAqJ6LFo82Zt097z8A9B8GuJEk13Xw9AFslRJQKZaXgDKAtQeT1vEi2Nu4RQLU14/ov8K2bRsZyOzuF+XfymtxwKs7UFdkKylly5TaCtbiBCt5YViPOkEqyhLACY+4NFJKlsaLsgMOVK+naX9L3U5t63aeN7FF6ak9tkhFbDGbUbbAGH0EMDBWdOlg5JBWnA53ZD4WZq6mLGWjL7BplTpN+0tywKvDAEM3zJ+XUlru0q5wKaV2QIBBGmhMAydDBUm6KJ3mRZmNi0iCRK6MiHQFK11Bqa2nzfMO8/N6+dSX+LjfX3+a94evmreHHxpSAAA=")
+size_override = Vector2(46, 40)
+keep_compressed_buffer = true
+
+[node name="Neon" type="Node2D" unique_id=1677686045]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1478766459]
+texture = SubResource("PortableCompressedTexture2D_upoex")
+centered = false
