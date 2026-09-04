@@ -2,7 +2,7 @@ extends RefCounted
 ## The front desk: a bright slab overhanging a panel with the sign on it. Reads
 ## as a counter from the front, which is the only side the player ever sees.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(96, 22)
 const BLOCKS := Vector2(90, 9)

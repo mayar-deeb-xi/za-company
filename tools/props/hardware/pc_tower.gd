@@ -2,7 +2,7 @@ extends RefCounted
 ## A tower with its side panel off and its insides showing - mid-repair, or
 ## mid-abandonment, which on this floor is the same thing.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(18, 20)
 const BLOCKS := Vector2(14, 6)

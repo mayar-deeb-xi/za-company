@@ -2,7 +2,7 @@ extends RefCounted
 ## A rack of servers: perforated units, status lights, and cabling spilling out
 ## of the bottom because nobody dressed it.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(22, 32)
 const BLOCKS := Vector2(18, 7)

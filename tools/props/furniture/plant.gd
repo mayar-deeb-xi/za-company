@@ -2,7 +2,7 @@ extends RefCounted
 ## The pot plant, alive or not. DESIGN.md gives floor 1 a dead one; the droop is
 ## the whole difference, so both come out of one painter rather than two.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 ## Foliage has no biome either: alive is green and dead is brown on any floor.
 const LEAF := Color("3f9151")

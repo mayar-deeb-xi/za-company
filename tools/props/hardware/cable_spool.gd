@@ -2,7 +2,7 @@ extends RefCounted
 ## A drum of cable stood on its rim, with the end trailing off. Round, which is
 ## most of why it is here: everything else on this floor is a box.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(20, 18)
 const BLOCKS := Vector2(16, 6)

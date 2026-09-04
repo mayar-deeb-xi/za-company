@@ -3,7 +3,7 @@ extends RefCounted
 ## something is broken. Deliberately not cloth: it is the cheap, temporary,
 ## nobody-is-coming version of the lobby's banner.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const TEXT := ["OUT OF", "ORDER"]
 const SIZE := Vector2i(46, 24)

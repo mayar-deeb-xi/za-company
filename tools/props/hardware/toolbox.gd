@@ -2,7 +2,7 @@ extends RefCounted
 ## An open toolbox: the prop that says the junk around it is being worked on
 ## rather than simply dumped.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(20, 14)
 const BLOCKS := Vector2(16, 6)

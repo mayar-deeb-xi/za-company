@@ -6,7 +6,7 @@ extends RefCounted
 ## not change is that it reads as harmful at a glance, which is why the sparks
 ## are as generous as the flame is.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 ## Flame colours shared by every biome's torch: fire has to read as fire
 ## everywhere, while the stand under it is the biome's own stone.

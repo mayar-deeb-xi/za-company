@@ -1,7 +1,7 @@
 extends RefCounted
 ## A workstation: monitor, desktop, drawer front, and a cup nobody has washed.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(40, 21)
 const BLOCKS := Vector2(38, 7)

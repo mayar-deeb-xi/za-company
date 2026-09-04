@@ -122,11 +122,12 @@ script for a lock, or restructure that level's scenes freely. A column has no
 shared behaviour at all and carries no script.
 
 **A room is furnished from data, not by hand.** `tools/props/` holds one file
-per prop type - office furniture (reception counter, desk, chair, water cooler,
-sofa, coffee table, pot plant alive and dead), the maintenance floor's hardware
-(server rack, printer, stacked dead monitors, opened tower, toolbox, cable
-spool, scrap pile, loose debris) and signs (the welcome banner, a taped-up
-notice) - and a biome says which ones it puts where in its own `props` list,
+per prop type, shelved by what a prop IS - `furniture/` (reception counter,
+desk, chair, water cooler, sofa, coffee table, pot plant alive and dead),
+`hardware/` (server rack, printer, stacked dead monitors, opened tower,
+toolbox, cable spool, scrap pile, loose debris) and `signs/` (the welcome
+banner, a taped-up notice) - and a biome says which ones it puts where in its
+own `props` list,
 exactly the way it already says which enemies it gets. That list drives
 everything: build_levels.gd writes a scene per type into the level's `props/`,
 paints its picture in the biome's palette and bakes it in, then instances them.
@@ -134,16 +135,20 @@ paints its picture in the biome's palette and bakes it in, then instances them.
 resetting it to a bare box - which is what makes the generator's "re-running
 overwrites hand-dressing" warning survivable for eight floors.
 
-**The folder is the catalogue.** `tools/props.gd` is only the facade the
-generators call; it resolves `{"type": "desk"}` to `tools/props/desk.gd` by
-filename, with no registry in between. Each prop file declares its `SIZE`, its
-`BLOCKS`, optionally its `PIN`, and a `paint(spec)` - so adding a prop to the
-game is one new 30-90 line file plus a position in a floor's data, and a typo'd
+**The folder is the catalogue, and the shelves are only organisation.**
+`tools/props.gd` is the facade the generators call; it scans the shelves once
+and resolves `{"type": "desk"}` to whichever shelf holds `desk.gd`, with no
+registry in between and no shelf name in the data - so re-shelving a prop
+touches no floor's file, and two shelves claiming one name fail loudly at
+first lookup. Each prop file declares its `SIZE`, its `BLOCKS`, optionally its
+`PIN`, and a `paint(spec)` - so adding a prop to the game is one new 30-90
+line file on the right shelf plus a position in a floor's data, and a typo'd
 type fails at generation time with "nothing in tools/props/ draws 'tabel'".
 `_brush.gd` is the shared painting kit (the primitives, the multi-user fixed
-colours, the pixel font); its underscore is what keeps it out of the catalogue.
-column.gd, hazard.gd and heart.gd are the FIXTURES - levels place those
-themselves, so they carry no SIZE and cannot be placed as furniture.
+colours, the pixel font), kept out of the catalogue by sitting at the root -
+only the shelves are scanned. `fixtures/` is the shelf `known()` refuses:
+levels place column, hazard and heart themselves, so those can be painted but
+never listed as furniture.
 
 The division of labour between the two generators is by **subject**, not by
 file type: build_biomes.gd paints the ROOM (its tileset and doorways, the only
@@ -607,10 +612,13 @@ reason that room has none.
   each; enemy and prop instances placed in the level scene)
                                     <- tools/build_levels.gd, see below
 - every picture of a thing standing in a room
-                                    <- tools/props/<type>.gd, one file per
-                                       prop; tools/props.gd is the facade that
-                                       finds them BY FILENAME, and _brush.gd is
-                                       the shared painting kit + pixel font
+                                    <- tools/props/<shelf>/<type>.gd, one file
+                                       per prop shelved by kind (furniture/,
+                                       hardware/, signs/, fixtures/);
+                                       tools/props.gd is the facade that finds
+                                       them BY FILENAME across the shelves,
+                                       and _brush.gd is the shared painting
+                                       kit + pixel font
 - chain order + per-floor helpers   <- tools/biomes.gd
 - each floor's palette, furniture and enemies
                                     <- tools/biomes/<level>.gd, one data file

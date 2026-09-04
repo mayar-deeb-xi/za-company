@@ -2,7 +2,7 @@ extends RefCounted
 ## Waiting-area couch, upholstered in the biome's accent so the furniture reads
 ## as belonging to the room rather than dropped into it.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(52, 17)
 const BLOCKS := Vector2(50, 8)

@@ -2,7 +2,7 @@ extends RefCounted
 ## A photocopier with the lid propped open and paper jammed in the front. The
 ## one machine every office recognises as broken on sight.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(30, 20)
 const BLOCKS := Vector2(28, 7)

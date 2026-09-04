@@ -1,7 +1,7 @@
 extends RefCounted
 ## A swivel chair seen from behind the desk it belongs to.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(14, 15)
 const BLOCKS := Vector2(11, 5)

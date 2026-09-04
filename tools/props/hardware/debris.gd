@@ -8,7 +8,7 @@ extends RefCounted
 ## are gold, and litter that borrows either colour is litter the player walks
 ## across the room to try to pick up.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(24, 9)
 const BLOCKS := Vector2.ZERO

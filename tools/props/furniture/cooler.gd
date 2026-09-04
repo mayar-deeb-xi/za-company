@@ -2,7 +2,7 @@ extends RefCounted
 ## The water cooler, and the one prop whose colour is not the room's: water has
 ## to read as water on every floor, the same rule as fire and hearts.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 ## Water has no biome: it is the same blue on every floor.
 const WATER := Color("6cc0e8")

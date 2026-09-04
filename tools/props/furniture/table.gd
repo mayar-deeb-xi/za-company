@@ -1,7 +1,7 @@
 extends RefCounted
 ## The low table in front of the sofa, with something to read on it.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(26, 11)
 const BLOCKS := Vector2(24, 6)

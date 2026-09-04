@@ -4,7 +4,7 @@ extends RefCounted
 ## about that corner. The bottom edge sags on its own so a tilted banner still
 ## looks like cloth rather than a rotated rectangle.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 ## A sign has no ground to be in scale with, so it stays as big as it needs to
 ## be to be read across a room. TEXT is data so a floor can put up its own

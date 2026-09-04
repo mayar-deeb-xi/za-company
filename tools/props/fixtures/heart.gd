@@ -2,7 +2,7 @@ extends RefCounted
 ## FIXTURE, not a catalogue prop - see column.gd.
 ## The HEART mask coloured: lighter lobes, darker point, one pink glint.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 ## Row-major mask, X = filled - the same convention as _brush.gd's font.
 const HEART := [

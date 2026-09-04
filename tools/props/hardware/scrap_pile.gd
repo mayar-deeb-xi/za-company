@@ -3,7 +3,7 @@ extends RefCounted
 ## filler prop, and the one a room gets several of - which is why it is a low
 ## irregular mound rather than another box.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(28, 15)
 const BLOCKS := Vector2(24, 6)

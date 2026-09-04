@@ -19,7 +19,7 @@ extends RefCounted
 ## the marble hall read as a hall, and it is also most of what made the office
 ## lobby read as a temple. The office floors get a glazed pillar instead.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 
 static func paint(spec: Dictionary) -> Image:

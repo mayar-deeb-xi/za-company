@@ -1,0 +1,14 @@
+{
+	// Godot writes a .uid sidecar next to every .gd and an .import next to
+	// every asset; its own FileSystem dock hides them, so the explorer should
+	// too. Nested, not excluded - they still exist and must move with their
+	// owner (git mv both), this just stops them doubling every folder.
+	"explorer.fileNesting.enabled": true,
+	"explorer.fileNesting.expand": false,
+	"explorer.fileNesting.patterns": {
+		"*.gd": "${capture}.gd.uid",
+		"*.png": "${capture}.png.import",
+		"*.svg": "${capture}.svg.import",
+		"*.ttf": "${capture}.ttf.import"
+	}
+}

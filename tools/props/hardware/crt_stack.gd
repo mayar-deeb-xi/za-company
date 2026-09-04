@@ -2,7 +2,7 @@ extends RefCounted
 ## Two dead monitors stacked, the top one not squared up with the bottom. Their
 ## screens are the darkest thing in the room, which is what says they are off.
 
-const Brush := preload("_brush.gd")
+const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(26, 26)
 const BLOCKS := Vector2(22, 7)
