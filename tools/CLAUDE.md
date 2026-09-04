@@ -5,6 +5,13 @@ hand-edit rules live in the root CLAUDE.md's "Generated resources" table; the
 anatomy of the rooms these scripts produce is `game/levels/CLAUDE.md`. This
 file is how furniture works and how floors are added.
 
+Nothing here is ever run by the game, and nothing here is run BY the editor
+either: `addons/za_build/` puts these scripts on the Project > Tools menu, but
+each item spawns a headless child Godot to run them, exactly as the command
+line does. So every script in this folder can go on assuming it owns the
+process it is in - a fresh resource cache, `print` going somewhere, `quit()`
+meaning quit - which is what makes the two entry points the same entry point.
+
 ## A room is furnished from data, not by hand
 
 `tools/props/` holds one file per prop type, shelved by what a prop IS -

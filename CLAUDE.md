@@ -15,6 +15,8 @@ checklist. This file says HOW things work; DESIGN.md says WHAT to build.
   source art no feature owns yet; it moves into the feature that claims it
 - `autoload/` - global singletons registered in project.godot
 - `tools/` - editor-side generator scripts run headless; never game code
+- `addons/` - editor plugins, and there is one: `za_build`, which puts the
+  `tools/` generators on the Project > Tools menu (see Workflow)
 
 Placement rules:
 1. A file lives with the feature that owns it. Scripts sit next to their
@@ -142,7 +144,9 @@ game/enemies/CLAUDE.md.
                                        byte-identical file; run it alone to
                                        normalize scenes without regenerating)
 
-Run: `<godot> --headless --path . --script res://tools/<script>.gd`
+Run: `<godot> --headless --path . --script res://tools/<script>.gd` - or, from
+inside the editor, **Project > Tools > za-build**, which is the same commands
+behind menu items (`addons/za_build/`, see Workflow).
 
 Biome art is palette-swapped from `assets/tiles/dungeon.png`. Only a handful of
 tiles in that sheet are modular - the rest are pre-composed room motifs that do
@@ -278,6 +282,19 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 - The Godot editor is usually open while Claude edits files as text.
   After renames/moves: Project > Reload Current Project. For migrations:
   close the editor first.
+- **Project > Tools > za-build** runs the generators without a terminal.
+  `addons/za_build/` is the project's one plugin, and every item in it spawns
+  a headless child Godot running the same `tools/` script the command line
+  would - it does NOT call the generator in the editor's process. That is the
+  whole design: build_levels.gd rewrites `.tscn` files the editor may have
+  open, and an editor holding a stale copy writes it back over the fresh one,
+  which is how a deleted `health_item.tscn` keeps coming back. A child has its
+  own resource cache and cannot do it; `scan()` afterwards is what makes the
+  editor see the new files. **Close any level scene you have open before
+  rebuilding it** - the plugin warns, but it cannot close a tab for you, and
+  saving that tab is the failure it is warning about. "Rebuild levels..."
+  opens a picker over `CHAIN` with **include neighbours** on by default,
+  because a door's `target_level` is baked into the level scene.
 - All third-party assets are CC0; sources and licenses live in CREDITS.md -
   update it whenever an asset is added.
 
@@ -327,5 +344,6 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 - Adopt gdUnit4 only once there is real unit-testable logic beyond what the
   suites cover in passing (inventory, save data) - not for scene wiring, which
   is the hard part here and which no framework drives.
-- `tests/` and `tools/` must be excluded from export presets when we set
-  up exports.
+- `tests/`, `tools/` and `addons/` must be excluded from export presets when
+  we set up exports. All three are editor-side only; the plugin in `addons/`
+  preloads `tools/`, so exporting one without the other breaks the build.
