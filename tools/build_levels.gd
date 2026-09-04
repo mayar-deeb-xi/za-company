@@ -10,7 +10,10 @@ extends SceneTree
 ##     tileset.tres          its floors and walls      <- build_biomes.gd
 ##     doorway_out/back.tres its passages              <- build_biomes.gd
 ##     door.tscn             how it connects
-##     props/                everything STANDING in the room, one scene each
+##     props/                everything STANDING in the room, one scene each,
+##                           on the same shelves as tools/props/ - fixtures/
+##                           (column, torch, health_item) plus whichever of
+##                           furniture/, hardware/, signs/ the biome places
 ##
 ## Every level gets its own door and its own copy of each prop it uses, free to
 ## diverge in art, collision and structure. Only the _base.gd scripts are
@@ -112,7 +115,8 @@ func _build(level: String) -> bool:
 	if tileset == null:
 		printerr("  missing %s/tileset.tres - run tools/build_biomes.gd first" % dir)
 		return true
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(props))
+	DirAccess.make_dir_recursive_absolute(
+			ProjectSettings.globalize_path("%s/fixtures" % props))
 
 	# The room's own files stay at the level's root - the level scene, its door,
 	# and the tileset and doorways build_biomes.gd wrote. Everything that STANDS
@@ -153,7 +157,7 @@ func _write_column_scene(dir: String, spec: Dictionary) -> bool:
 	root.add_child(body)
 	body.owner = root
 
-	return _pack(root, "%s/column.tscn" % dir)
+	return _pack(root, "%s/fixtures/column.tscn" % dir)
 
 
 ## One piece of furniture, art baked in, in the level's own folder like every
@@ -196,7 +200,12 @@ func _write_prop_scene(dir: String, type: String, spec: Dictionary) -> bool:
 		root.add_child(body)
 		body.owner = root
 
-	return _pack(root, "%s/%s.tscn" % [dir, type])
+	# The scene lands on the same shelf its painter sits on in tools/props/,
+	# so finding a prop in a level is the same walk as finding its brush.
+	var shelf := Props.shelf_of(type)
+	DirAccess.make_dir_recursive_absolute(
+			ProjectSettings.globalize_path("%s/%s" % [dir, shelf]))
+	return _pack(root, "%s/%s/%s.tscn" % [dir, shelf, type])
 
 
 ## The level's own door. Origin sits at the centre of the gap in the wall ring,
@@ -273,7 +282,7 @@ func _write_torch_scene(dir: String, spec: Dictionary) -> bool:
 	root.add_child(shape)
 	shape.owner = root
 
-	return _pack(root, "%s/torch.tscn" % dir)
+	return _pack(root, "%s/fixtures/torch.tscn" % dir)
 
 
 ## The level's own heal pickup, on the shared pickup_base.gd.
@@ -300,7 +309,7 @@ func _write_health_scene(dir: String, spec: Dictionary) -> bool:
 	root.add_child(shape)
 	shape.owner = root
 
-	return _pack(root, "%s/health_item.tscn" % dir)
+	return _pack(root, "%s/fixtures/health_item.tscn" % dir)
 
 
 func _write_level_scene(level: String, dir: String, props_dir: String, tileset: TileSet) -> bool:
@@ -324,7 +333,7 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	var layout: Dictionary = Biomes.BIOMES[level].get("columns", {})
 	var column_rows: Array = layout.get("rows", COLUMN_ROWS)
 	var column_xs: Array = layout.get("xs", COLUMN_XS)
-	var column_scene := _reload("%s/column.tscn" % props_dir)
+	var column_scene := _reload("%s/fixtures/column.tscn" % props_dir)
 	for row in column_rows:
 		for col in column_xs:
 			var column := column_scene.instantiate()
@@ -333,13 +342,13 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 			props.add_child(column)
 			column.owner = root
 
-	var torch := _reload("%s/torch.tscn" % props_dir).instantiate()
+	var torch := _reload("%s/fixtures/torch.tscn" % props_dir).instantiate()
 	torch.name = "Torch"
 	torch.position = TORCH_POS
 	props.add_child(torch)
 	torch.owner = root
 
-	var health := _reload("%s/health_item.tscn" % props_dir).instantiate()
+	var health := _reload("%s/fixtures/health_item.tscn" % props_dir).instantiate()
 	health.name = "Health"
 	health.position = HEALTH_POS
 	props.add_child(health)
@@ -354,7 +363,8 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 		if not Props.known(type):
 			continue   # _write_prop_scene already reported it; do not cascade
 		placed[type] = placed.get(type, 0) + 1
-		var prop := _reload("%s/%s.tscn" % [props_dir, type]).instantiate()
+		var prop := _reload("%s/%s/%s.tscn"
+				% [props_dir, Props.shelf_of(type), type]).instantiate()
 		prop.name = "%s%d" % [type.to_pascal_case(), placed[type]]
 		prop.position = spec["at"]
 		# Rotation is placement, not art: the banner is drawn square and hung

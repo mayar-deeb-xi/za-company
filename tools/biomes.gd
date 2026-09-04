@@ -79,7 +79,9 @@ static func dir(level: String) -> String:
 ## its tileset, its door and one doorway per neighbour), while this holds one
 ## scene per prop the biome uses and grows every time a floor wants a new piece
 ## of furniture. The bullpen wanted sixteen, which buried the five files that
-## actually say what the level IS.
+## actually say what the level IS. Inside it, build_levels.gd shelves each
+## scene the way its painter is shelved in tools/props/ (Props.shelf_of()),
+## plus fixtures/ for the level-placed column, torch and health item.
 static func props_dir(level: String) -> String:
 	return "%s/props" % dir(level)
 

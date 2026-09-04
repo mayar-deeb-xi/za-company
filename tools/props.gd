@@ -71,6 +71,13 @@ static func known(type: String) -> bool:
 	return path != "" and not path.begins_with(DIR + "/fixtures/")
 
 
+## Which shelf a catalogue type sits on - "furniture", "hardware", "signs".
+## build_levels.gd mirrors it into a level's own props/ folder, so finding a
+## prop's scene in a level is the same walk as finding its painter here.
+static func shelf_of(type: String) -> String:
+	return _path(type).get_base_dir().get_file()
+
+
 static func size_of(type: String) -> Vector2i:
 	return _const(type, "SIZE", Vector2i.ZERO)
 

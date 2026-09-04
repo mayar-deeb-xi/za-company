@@ -77,16 +77,24 @@ game/levels/
     doorway_out.tres    its passage up, lit by the room beyond
     doorway_back.tres   its passage down
     door.tscn           how it connects
-    props/            EVERYTHING STANDING IN IT - one scene each
-      column.tscn  torch.tscn  health_item.tscn   the fixtures
-      desk.tscn  chair.tscn  server_rack.tscn ... whatever it places
+    props/            EVERYTHING STANDING IN IT - one scene each, on the
+                      same shelves as tools/props/
+      fixtures/         column.tscn  torch.tscn  health_item.tscn
+      furniture/        desk.tscn  chair.tscn ...      whatever it
+      hardware/         server_rack.tscn  printer.tscn ...  places,
+      signs/            notice.tscn ...                    by kind
 ```
 
 **A level folder is split by what a file IS, not by its type,** and the split is
 between two groups that behave completely differently. The room is a handful of
 files that never grow. `props/` holds one scene per prop the biome uses and
 grows every time a floor wants new furniture - the bullpen wanted sixteen, which
-buried the five files that say what the level actually is.
+buried the five files that say what the level actually is. Inside `props/` the
+scenes sit on the same shelves as their painters in `tools/props/` (the
+generator asks `Props.shelf_of()` where to put each one), so finding a prop's
+scene in a level is the same walk as finding its brush - with one renaming to
+know: the fixtures shelf is named for the ROLE in the room, not the painter, so
+hazard.gd paints `torch.tscn` and heart.gd paints `health_item.tscn`.
 
 **Each prop scene carries its own picture, embedded** as a `[sub_resource]`
 right beside its collision shape. There used to be a matching `<prop>_art.tres`
@@ -608,8 +616,8 @@ reason that room has none.
 - `game/levels/*/tileset.tres`, `doorway_out.tres`, `doorway_back.tres`
                                     <- tools/build_biomes.gd (the ROOM's art,
                                        and the only art that is a file)
-- `game/levels/*/<biome>.tscn`, `door.tscn`, `props/*.tscn` (art embedded in
-  each; enemy and prop instances placed in the level scene)
+- `game/levels/*/<biome>.tscn`, `door.tscn`, `props/<shelf>/*.tscn` (art
+  embedded in each; enemy and prop instances placed in the level scene)
                                     <- tools/build_levels.gd, see below
 - every picture of a thing standing in a room
                                     <- tools/props/<shelf>/<type>.gd, one file
