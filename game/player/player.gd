@@ -17,6 +17,12 @@ const MAX_LIVES := 3
 ## hazard: hazards push damage every physics frame and this window is what
 ## meters that pressure into discrete hits.
 const HURT_GRACE_SECONDS := 0.8
+## Floor on how far a slow may go. Below roughly this the player is not really
+## playing any more, and no combination of sources should get there.
+const MIN_SLOW_FACTOR := 0.2
+## How a slowed character reads. Cold, and deliberately a tint rather than the
+## blink the grace window owns, so being hurt and being slowed never look alike.
+const SLOW_TINT := Color(0.6, 0.75, 1.0)
 
 signal health_changed(health: int, max_health: int)
 signal lives_changed(lives: int, max_lives: int)
@@ -32,6 +38,11 @@ enum Facing { DOWN, UP, SIDE }
 
 var health := MAX_HEALTH
 var lives := MAX_LIVES
+## The movement multiplier currently in force and how long is left of it. Public
+## because they are a readout: the sprite tint reads them now and a HUD status
+## icon would read the same pair.
+var slow_factor := 1.0
+var slow_seconds := 0.0
 
 var _facing: Facing = Facing.DOWN
 var _facing_left := false
@@ -64,6 +75,12 @@ func _physics_process(delta: float) -> void:
 		# and not only on the HUD bar.
 		_sprite.visible = _grace == 0.0 or fmod(_grace, 0.2) >= 0.1
 
+	if slow_seconds > 0.0:
+		slow_seconds = maxf(slow_seconds - delta, 0.0)
+		if slow_seconds == 0.0:
+			slow_factor = 1.0
+		_sprite.modulate = SLOW_TINT if slow_seconds > 0.0 else Color.WHITE
+
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 
 	if not _attacking and Input.is_action_just_pressed("attack"):
@@ -75,7 +92,8 @@ func _physics_process(delta: float) -> void:
 		_strike()
 	elif direction != Vector2.ZERO:
 		_face(direction)
-		velocity = velocity.move_toward(direction * SPEED, ACCELERATION * delta)
+		velocity = velocity.move_toward(direction * SPEED * slow_factor,
+			ACCELERATION * delta)
 		_apply_animation("walk")
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
@@ -105,6 +123,9 @@ func _facing_suffix() -> String:
 
 func _apply_animation(state: String, restart := false) -> void:
 	_sprite.flip_h = _facing == Facing.SIDE and _facing_left
+	# A slowed walk played at full rate reads as skating across the floor. The
+	# swing keeps its own timing - a slow takes your legs, not your sword.
+	_sprite.speed_scale = slow_factor if state == "walk" else 1.0
 	var anim := "%s_%s" % [state, _facing_suffix()]
 	if restart:
 		_sprite.animation = anim
@@ -173,6 +194,23 @@ func drain(amount: int) -> void:
 	_lose_health(amount)
 
 
+## A status the player CARRIES, which is a third thing again: take_damage() and
+## drain() both land and are over in the same frame, while this has a duration
+## of its own and expires on its own. Outside the grace window for the same
+## reason drain() is - it is not a blow, so a torch clip must not swallow it.
+##
+## Overlapping slows do not compound into a standstill: the strongest in force
+## wins and the timer refreshes. Two wardens keep you slow for longer, never
+## make you slower.
+func apply_slow(factor: float, seconds: float) -> void:
+	if health <= 0:
+		return
+	var strength := clampf(factor, MIN_SLOW_FACTOR, 1.0)
+	if slow_seconds <= 0.0 or strength < slow_factor:
+		slow_factor = strength
+	slow_seconds = maxf(slow_seconds, seconds)
+
+
 func _lose_health(amount: int) -> void:
 	health = maxi(health - amount, 0)
 	health_changed.emit(health, MAX_HEALTH)
@@ -202,5 +240,10 @@ func lose_life() -> int:
 func revive() -> void:
 	health = MAX_HEALTH
 	_grace = 0.0
+	# Statuses die with the life that collected them: respawning into a room
+	# still slowed by whatever killed you is a second punishment for one death.
+	slow_factor = 1.0
+	slow_seconds = 0.0
 	_sprite.visible = true
+	_sprite.modulate = Color.WHITE
 	health_changed.emit(health, MAX_HEALTH)

@@ -75,7 +75,7 @@ func _physics_process(delta: float) -> void:
 			# close: an enemy holding station should still turn to watch them.
 			var direction := to_player / maxf(distance, 0.001)
 			_face(direction)
-			advancing = distance > stop_distance
+			advancing = distance > stop_distance and _can_advance()
 			if advancing:
 				velocity = direction * speed
 	move_and_slide()
@@ -102,6 +102,13 @@ func _physics_process(delta: float) -> void:
 func _touch(player: Node2D, _delta: float) -> void:
 	if player.has_method("take_damage"):
 		player.call("take_damage", contact_damage)
+
+
+## Whether the enemy may close ground this frame. A type that roots itself -
+## winding up an ability, recovering from one - returns false and holds where it
+## stands, while still turning to face the player.
+func _can_advance() -> bool:
+	return true
 
 
 ## The animation state contact puts the enemy in. The base lunges; a type whose

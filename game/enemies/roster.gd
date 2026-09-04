@@ -36,4 +36,18 @@ const ENEMIES := [
 			"hair_style": "straight", "beard": false, "build": "normal",
 		},
 	},
+	{
+		"id": "warden",
+		"frames": "res://game/enemies/warden/warden_frames.tres",
+		"recipe": {
+			"hair": "4a3a6b", "hair_light": "6d59a0",   # deep violet
+			"skin": "8f86b8",
+			"eye": "d8e8ff",                            # pale, lit from inside
+			"shirt": "3a2f5c", "shirt_dark": "241d3a",
+			"pants": "2e2748", "pants_dark": "1b1730",
+			# Heavy and bearded: it plants itself and holds ground, so it wants
+			# the widest silhouette of the three.
+			"hair_style": "short_curly", "beard": true, "build": "wide",
+		},
+	},
 ]

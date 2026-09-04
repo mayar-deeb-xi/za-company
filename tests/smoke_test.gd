@@ -2,7 +2,8 @@ extends SceneTree
 ## End-to-end smoke test: menu -> character select -> game -> move -> pause ->
 ## settings -> attack -> torch -> heart -> death -> wall -> door -> menu ->
 ## settings -> new run -> three deaths -> game over -> third run -> enemy
-## chase -> contact damage -> two swings kill a guard -> wraith drain.
+## chase -> contact damage -> two swings kill a guard -> wraith drain ->
+## warden wind-up, interrupt and slow.
 ##
 ## Run headless (see CLAUDE.md for the binary path):
 ##   <godot> --headless --path . --fixed-fps 60 --script res://tests/smoke_test.gd
@@ -21,6 +22,7 @@ var _mark := Vector2.ZERO
 var _health_mark := 0
 var _enemy: Node2D
 var _wraith: Node2D
+var _warden: Node2D
 var _settings_backup := PackedByteArray()
 var _settings_existed := false
 
@@ -406,14 +408,15 @@ func _process(_delta: float) -> bool:
 			_check("door: camera reframed on the new level (%s)"
 				% _camera().global_position,
 				_camera().global_position == _level().bounds().get_center())
-			# Per-biome composition: hellfire is the room that escalates. The
-			# wraith is identified by its own export rather than by class, the
-			# same way everything else here avoids the class cache.
+			# Per-biome composition: hellfire is the room that escalates, and
+			# both of its extras are identified by their own exports rather
+			# than by class, the way everything here avoids the class cache.
 			var here := get_nodes_in_group("enemies")
 			var drainers := here.filter(func(e): return e.get("drain_per_second") != null)
-			_check("enemies: hellfire adds a wraith to its two guards (%d of %d)"
-				% [drainers.size(), here.size()],
-				here.size() == 3 and drainers.size() == 1)
+			var slowers := here.filter(func(e): return e.get("slow_seconds") != null)
+			_check("enemies: hellfire adds a wraith and a warden to its guards (%d: %dD %dS)"
+				% [here.size(), drainers.size(), slowers.size()],
+				here.size() == 4 and drainers.size() == 1 and slowers.size() == 1)
 			# Turn round and walk back out the way we came in. The wraith is on
 			# the far wall, outside its own 120 px sight of this whole path.
 			_key(KEY_S, true)
@@ -628,5 +631,64 @@ func _process(_delta: float) -> bool:
 				% get_nodes_in_group("enemies").size(),
 				not is_instance_valid(_wraith)
 					and get_nodes_in_group("enemies").size() == 1)
+			# The warden, 80 px off: far enough that it has to walk in, close
+			# enough that it arrives inside a second.
+			var warden_scene := load("res://game/enemies/warden/warden.tscn") as PackedScene
+			_warden = warden_scene.instantiate()
+			_level().get_node("Props").add_child(_warden)
+			_warden.global_position = Vector2(272, 220)
+			_health_mark = _player().get("health")
+		1240:
+			# It reached its own rim around frame 1196 and planted there. The
+			# other two stop at 12 px; this one has to stay out at ~53, or its
+			# area means nothing and it dies for free.
+			var reach: float = _warden.global_position.distance_to(_player().global_position)
+			_check("warden: plants at the rim of its area, not in your face (%.1f px)"
+				% reach, reach > 46.0 and reach < 58.0)
+			_check("warden: costs no health at all (%s)" % _player().get("health"),
+				_player().get("health") == _health_mark)
+			_check("warden: two seconds not yet up, so nothing has landed (x%.2f)"
+				% _player().get("slow_factor"),
+				_player().get("slow_factor") == 1.0)
+			# Step out of the area with the wind-up most of the way through. It
+			# had been charging since ~1196 and would fire at ~1316.
+			_player().global_position = Vector2(100, 140)
+		1250:
+			_player().global_position = Vector2(272, 140)
+		1320:
+			# The moment the interrupted wind-up would have fired.
+			_check("warden: leaving the area resets the wind-up, it does not pause (x%.2f)"
+				% _player().get("slow_factor"),
+				_player().get("slow_factor") == 1.0)
+		1390:
+			# Restarted on re-entry at 1250, so it lands around 1372.
+			_check("warden: the full two seconds lands a half-speed slow (x%.2f, %.1fs)"
+				% [_player().get("slow_factor"), _player().get("slow_seconds")],
+				_player().get("slow_factor") == 0.5
+					and _player().get("slow_seconds") > 3.0)
+			_mark = _player().global_position
+			_key(KEY_D, true)
+		1420:
+			# The number moving is not the point - the character has to actually
+			# walk slower. Half a second of held input, which is ~40 px at the
+			# player's 90 and ~21 at half that.
+			_key(KEY_D, false)
+			var moved: float = _player().global_position.distance_to(_mark)
+			_check("warden: the slow is real movement, not just a readout (%.1f px)"
+				% moved, moved > 14.0 and moved < 30.0)
+			# Out of the way, so it cannot re-slow the player mid-expiry.
+			_warden.queue_free()
+		1620:
+			_check("warden: the slow expires on its own after four seconds (x%.2f)"
+				% _player().get("slow_factor"),
+				_player().get("slow_factor") == 1.0
+					and _player().get("slow_seconds") == 0.0)
+			_mark = _player().global_position
+			_key(KEY_D, true)
+		1650:
+			_key(KEY_D, false)
+			var freed: float = _player().global_position.distance_to(_mark)
+			_check("warden: full speed is back once it expires (%.1f px)"
+				% freed, freed > 33.0)
 			_finish()
 	return false

@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://game/enemies/warden/warden.gd" id="1_warden"]
+[ext_resource type="SpriteFrames" path="res://game/enemies/warden/warden_frames.tres" id="2_frames"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 5.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_area"]
+radius = 48.0
+
+[node name="Warden" type="CharacterBody2D" groups=["enemies"]]
+motion_mode = 1
+script = ExtResource("1_warden")
+contact_damage = 0
+speed = 50.0
+sight_radius = 130.0
+stop_distance = 40.0
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("2_frames")
+animation = &"idle_down"
+autoplay = "idle_down"
+offset = Vector2(0, -8)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_body")
+
+[node name="Touch" type="Area2D" parent="."]
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Touch"]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_area")

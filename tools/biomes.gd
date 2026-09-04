@@ -41,13 +41,16 @@ const BIOMES := {
 		"accent": "ffd45e",
 		"gamma": 2.1,
 		"floor_band": Vector2(0.02, 0.42),
-		# The escalation: the same two guards, plus the wraith between them. Its
-		# sight is the widest in the game, so it sits on the far wall from the
-		# spawn you arrive on.
+		# The escalation: the same two guards, plus the two that do something
+		# other than damage. Both have wide sight, so they sit along the far
+		# wall from the spawn you arrive on - the warden especially, since its
+		# 130 px is the longest look in the game and every walkable line in the
+		# marble hall falls inside it, which is why that room has none.
 		"enemies": [
 			{"type": "regular", "at": Vector2(64, 48)},
 			{"type": "regular", "at": Vector2(480, 48)},
 			{"type": "wraith", "at": Vector2(272, 48)},
+			{"type": "warden", "at": Vector2(64, 152)},
 		],
 	},
 }

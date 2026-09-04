@@ -104,12 +104,13 @@ match on `_ready`; an unknown saved id keeps the default look.
 ## Health
 
 The player owns its health (player.gd): `MAX_HEALTH`, `take_damage()`,
-`drain()`, `heal()`, and a grace window after each hit during which the sprite
-blinks and further damage is ignored. Hazards, pickups and enemies reach the
-player by the `player` group + `has_method`, never by type.
+`drain()`, `heal()`, `apply_slow()`, and a grace window after each hit during
+which the sprite blinks and further damage is ignored. Hazards, pickups and
+enemies reach the player by the `player` group + `has_method`, never by type.
 
-**Two kinds of harm, and the split between them is the thing to get right.** A
-*blow* (`take_damage()`) is metered by the grace window and opens a fresh one.
+**Three ways the world reaches the player, and the splits between them are the
+thing to get right.** A *blow* (`take_damage()`) is metered by the grace window
+and opens a fresh one.
 That window is the only rate limiter for blows anywhere in the game, so hazards
 and melee enemies press it every physics frame they overlap the player, carry
 no timers of their own, and all retune together from `HURT_GRACE_SECONDS`. A
@@ -120,6 +121,20 @@ obvious first move and is wrong twice over: an unrelated torch clip would
 swallow a second of it, and the sprite would blink as though the player were
 being struck once a second. Both funnel into `_lose_health()`, so death fires
 identically whichever killed you.
+
+A *status* (`apply_slow()`) is the third thing: not harm that happens and is
+over in the same frame, but something the player **carries** and that expires on
+its own. Outside the grace window for the same reason a drain is. Statuses are
+read off two public vars (`slow_factor`, `slow_seconds`) so a HUD icon can
+render one later without new API; they refresh rather than compound - the
+strongest in force wins and the timer extends, so two wardens keep you slow for
+longer but never make you slower; `MIN_SLOW_FACTOR` floors how far any
+combination can reach; and `revive()` clears them, because respawning into a
+room still crippled by whatever killed you is a second punishment for one
+death. Freeze and push land here when they come - the shape is meant to take
+them. A slow scales the walk animation as well as the speed, since a slowed walk
+played at full rate reads as skating, but deliberately not the swing: it takes
+your legs, not your sword.
 
 The player also owns its lives (`MAX_LIVES`, 3): each death spends one via
 `lose_life()`, whose return value lets game.gd choose respawn or game over from
@@ -176,13 +191,16 @@ advancing, so a held enemy does not moonwalk on the spot.
 its own script extending the base, and inherits chase, health and death
 untouched. `delta` is that frame's worth of contact, which is what any effect
 with a rate of its own needs. Two smaller seams travel with it, because an
-effect is rarely only damage: `_contact_state()` is what contact looks like
-(the base lunges, the wraith keeps walking) and `_resting_tint()` is how the
-enemy reads while it works. The base resolves `modulate` in one place after
-`_touch()` has run, with the hurt flash outranking whatever a type wants, and
-sets `touching_player` first so an override can read it.
+effect is rarely only damage: `_contact_state()` is what contact looks like (the
+base lunges, the others stand), `_resting_tint()` is how the enemy reads while
+it works, and `_can_advance()` lets a type root itself while it winds up. The
+base resolves `modulate` in one place after `_touch()` has run, with the hurt
+flash outranking whatever a type wants, and sets `touching_player` first so an
+override can read it.
 
-Two types so far:
+Three types so far, and they deliberately threaten in three different ways -
+damage, drain, and denial - so a room is built by mixing them rather than by
+adding more of the same:
 
 - **`regular/`** - 10 HP, 5 contact damage, speed 55, sight 80. Carries no
   script of its own: its scene runs enemy_base.gd directly, the way torches run
@@ -199,6 +217,29 @@ Two types so far:
   feeding so the health ticking down has a visible cause. Being one of the cast
   drained of colour - straight hair, normal build, white on dark blue - is the
   point of the look: it reads as a person, not a monster.
+- **`warden/`** - 10 HP, no damage of any kind, speed 50, sight 130, a 48 px
+  area, and a 2-second wind-up that slows everyone still inside to half speed
+  for 4. It is pure area denial: harmless alone, and the reason the guards and
+  the wraith in hellfire are dangerous. Its `_touch()` is deliberately empty -
+  what its area costs you is settled by the wind-up, not by the frame-by-frame
+  contact the base meters.
+
+  Three things about it are load-bearing. It **plants at the rim** of its area
+  rather than in your face, and that falls out of `_can_advance()` returning
+  `not touching_player` rather than being a second rule: contact is what roots
+  it, so it stops the moment it has you. That keeps it clear of your sword and
+  makes killing it a decision to walk into the thing about to slow you.
+  Leaving **resets** the wind-up rather than pausing it, so the counterplay is
+  to move and a warden you step in and out of never lands an effect it did not
+  hold you for the full two seconds. And it **tints toward violet in proportion
+  to the charge**, because the counter is only a choice if you can see it
+  coming.
+
+  The wind-up is counted in its own `_physics_process` after `super()`, NOT in
+  `_touch()`: the base calls `_touch()` once per body in range, so a wind-up
+  counted there would fill twice as fast with two players in the area. After
+  `super()` the base has settled `touching_player` for the frame, and one read
+  covers however many are standing in it.
 
 The player's side of the fight is `ATTACK_POWER` (5, player.gd) pressed through
 a Hitbox Area2D that `_start_attack()` parks one step ahead of the body in the
@@ -218,12 +259,14 @@ Enemies are the one prop a level does NOT own a copy of - types are shared, and
 **which ones a room gets is per-biome data in `tools/biomes.gd`** (`enemies`:
 type + position), not one constant in the generator. Composition is most of
 what makes one room feel unlike the next: the marble hall is two guards you can
-walk past, and hellfire is the same two plus the wraith, which is where
-something starts following you. Positions are chosen so no enemy's sight
-reaches the door line, the spawns or the torch and heart stands - the straight
-walk between the two doors stays safe in every biome, and the smoke test's
-early sections depend on nothing aggroing until the combat run deliberately
-walks into a guard.
+walk past, and hellfire is the same two plus the wraith and the warden, which is
+where things start following you and taking your legs. Positions are chosen so
+no enemy's sight reaches the door line, the spawns or the torch and heart stands
+- the straight walk between the two doors stays safe in every biome, and the
+smoke test's early sections depend on nothing aggroing until the combat run
+deliberately walks into range. The warden's 130 px is the longest look in the
+game and every walkable line in the marble hall falls inside it, which is the
+reason that room has none.
 
 ## Generated resources - regenerate, don't hand-edit
 
