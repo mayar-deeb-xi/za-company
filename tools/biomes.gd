@@ -271,6 +271,17 @@ static func dir(level: String) -> String:
 	return "res://game/levels/%s" % level
 
 
+## Where a level keeps the scenes for the things standing in it. Split out from
+## the level's own folder because those two groups behave completely
+## differently: the room is a handful of files that never grow (the level scene,
+## its tileset, its door and one doorway per neighbour), while this holds one
+## scene per prop the biome uses and grows every time a floor wants a new piece
+## of furniture. The bullpen wanted sixteen, which buried the five files that
+## actually say what the level IS.
+static func props_dir(level: String) -> String:
+	return "%s/props" % dir(level)
+
+
 ## The distinct prop types a biome places, in the order it first places them.
 ## Derived rather than declared: build_biomes.gd paints exactly this list and
 ## build_levels.gd writes a scene for exactly this list, so a floor can neither

@@ -1,15 +1,37 @@
 extends SceneTree
-## Lays out each level scene, plus the door and column scenes that level owns.
+## Lays out each level scene and every scene that level owns.
 ## Run: godot --headless --path . --script res://tools/build_levels.gd
-## Requires tools/build_biomes.gd to have produced the art first.
+## Requires tools/build_biomes.gd to have produced the tileset first.
 ##
-## Every level gets its own door.tscn and column.tscn in its own folder, free to
-## diverge in art, collision and structure. Only door_base.gd is shared, because
-## game.gd has to talk to every door the same way.
+## A level's folder is split by what the files ARE, not by their type:
 ##
-## Unlike the other generators, what this writes is a STARTING POINT: once a
-## level is dressed by hand in the editor, re-running this overwrites that work.
-## Run it to reset a level or to add a new one to CHAIN.
+##   <biome>/                the room, and it never grows
+##     <biome>.tscn          the level
+##     tileset.tres          its floors and walls      <- build_biomes.gd
+##     doorway_out/back.tres its passages              <- build_biomes.gd
+##     door.tscn             how it connects
+##     props/                everything STANDING in the room, one scene each
+##
+## Every level gets its own door and its own copy of each prop it uses, free to
+## diverge in art, collision and structure. Only the _base.gd scripts are
+## shared, because game.gd and the player have to talk to every door, hazard and
+## pickup the same way.
+##
+## **Each prop scene carries its own picture, embedded.** The texture is painted
+## here (by tools/props.gd) and handed to the Sprite2D unsaved, so it has no
+## resource_path and PackedScene bakes it in as a sub-resource - exactly as the
+## collision box already was. There used to be a matching <prop>_art.tres beside
+## every prop scene, and each of those had precisely one consumer: its sibling.
+## Sixteen of them buried the five files that say what a level actually is.
+##
+## The consequence to know: re-palettizing a prop now means running THIS script,
+## not just build_biomes.gd. That is the trade, and it is a cheap one because
+## everything here is written from data in tools/biomes.gd.
+##
+## Unlike the other generators, what this writes is a STARTING POINT: anything
+## hand-tuned in the level scene afterwards - a nudged tile, a moved instance -
+## is lost on the next run. Run it to reset a level or to add a new one to
+## CHAIN, and prefer moving positions into biomes.gd over nudging them here.
 
 const Biomes := preload("res://tools/biomes.gd")
 const Props := preload("res://tools/props.gd")
@@ -83,26 +105,32 @@ func _initialize() -> void:
 
 
 func _build(level: String) -> bool:
+	var spec: Dictionary = Biomes.BIOMES[level]
 	var dir: String = Biomes.dir(level)
+	var props: String = Biomes.props_dir(level)
 	var tileset := load("%s/tileset.tres" % dir) as TileSet
 	if tileset == null:
 		printerr("  missing %s/tileset.tres - run tools/build_biomes.gd first" % dir)
 		return true
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(props))
 
+	# The room's own files stay at the level's root - the level scene, its door,
+	# and the tileset and doorways build_biomes.gd wrote. Everything that STANDS
+	# in the room goes in props/, one scene each with its picture baked in.
 	var bad := false
-	bad = _write_column_scene(dir) or bad
 	bad = _write_door_scene(dir) or bad
-	bad = _write_torch_scene(dir) or bad
-	bad = _write_health_scene(dir) or bad
+	bad = _write_column_scene(props, spec) or bad
+	bad = _write_torch_scene(props, spec) or bad
+	bad = _write_health_scene(props, spec) or bad
 	for type in Biomes.prop_types(level):
-		bad = _write_prop_scene(dir, type) or bad
-	bad = _write_level_scene(level, dir, tileset) or bad
+		bad = _write_prop_scene(props, type, spec) or bad
+	bad = _write_level_scene(level, dir, props, tileset) or bad
 	return bad
 
 
 ## The level's own pillar, art baked in. No script: a column has no behaviour to
 ## share, and a level that wants one adds it here without affecting any other.
-func _write_column_scene(dir: String) -> bool:
+func _write_column_scene(dir: String, spec: Dictionary) -> bool:
 	var root := StaticBody2D.new()
 	root.name = "Column"
 
@@ -112,7 +140,7 @@ func _write_column_scene(dir: String) -> bool:
 	# Origin at the foot of the column: that is what Y-sorting reads to decide
 	# whether the player draws in front of it or behind it.
 	sprite.position = Vector2(-8, -48)
-	sprite.texture = load("%s/column_art.tres" % dir) as Texture2D
+	sprite.texture = Props.texture(Props.column(spec))
 	root.add_child(sprite)
 	sprite.owner = root
 
@@ -137,7 +165,7 @@ func _write_column_scene(dir: String) -> bool:
 ## No script: furniture has no behaviour to share. The ones that grow some -
 ## DESIGN.md's arcing power strip and jammed photocopier - are hazards, and will
 ## carry hazard_base.gd exactly the way the torch does.
-func _write_prop_scene(dir: String, type: String) -> bool:
+func _write_prop_scene(dir: String, type: String, spec: Dictionary) -> bool:
 	var blocks := Props.blocks(type)
 	var solid := blocks != Vector2.ZERO
 	var root: Node2D = StaticBody2D.new() if solid else Node2D.new()
@@ -149,7 +177,7 @@ func _write_prop_scene(dir: String, type: String) -> bool:
 	# Props.offset() puts the art's foot on the origin, which is the pixel
 	# Y-sorting reads and the pixel the biome's position refers to.
 	sprite.position = Props.offset(type)
-	sprite.texture = load("%s/%s_art.tres" % [dir, type]) as Texture2D
+	sprite.texture = Props.texture(Props.paint(type, spec))
 	root.add_child(sprite)
 	sprite.owner = root
 
@@ -216,7 +244,7 @@ func _write_door_scene(dir: String) -> bool:
 ## The level's own standing torch: walking into the fire hurts. Behaviour is
 ## the shared hazard_base.gd; the art, shape and anything extra are this
 ## level's to change.
-func _write_torch_scene(dir: String) -> bool:
+func _write_torch_scene(dir: String, spec: Dictionary) -> bool:
 	var root := Area2D.new()
 	root.name = "Torch"
 	root.monitorable = false
@@ -227,7 +255,7 @@ func _write_torch_scene(dir: String) -> bool:
 	sprite.centered = false
 	# Foot origin, like the column: what Y-sorting reads.
 	sprite.position = Vector2(-8, -24)
-	sprite.texture = load("%s/torch_art.tres" % dir) as Texture2D
+	sprite.texture = Props.texture(Props.hazard(spec))
 	root.add_child(sprite)
 	sprite.owner = root
 
@@ -244,7 +272,7 @@ func _write_torch_scene(dir: String) -> bool:
 
 
 ## The level's own heal pickup, on the shared pickup_base.gd.
-func _write_health_scene(dir: String) -> bool:
+func _write_health_scene(dir: String, spec: Dictionary) -> bool:
 	var root := Area2D.new()
 	root.name = "Health"
 	root.monitorable = false
@@ -254,7 +282,7 @@ func _write_health_scene(dir: String) -> bool:
 	sprite.name = "Sprite2D"
 	sprite.centered = false
 	sprite.position = Vector2(-4, -8)
-	sprite.texture = load("%s/health_art.tres" % dir) as Texture2D
+	sprite.texture = Props.texture(Props.heart())
 	root.add_child(sprite)
 	sprite.owner = root
 
@@ -270,7 +298,7 @@ func _write_health_scene(dir: String) -> bool:
 	return _pack(root, "%s/health_item.tscn" % dir)
 
 
-func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
+func _write_level_scene(level: String, dir: String, props_dir: String, tileset: TileSet) -> bool:
 	var root := Node2D.new()
 	root.name = Biomes.BIOMES[level]["node"]
 	root.y_sort_enabled = true
@@ -291,7 +319,7 @@ func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
 	var layout: Dictionary = Biomes.BIOMES[level].get("columns", {})
 	var column_rows: Array = layout.get("rows", COLUMN_ROWS)
 	var column_xs: Array = layout.get("xs", COLUMN_XS)
-	var column_scene := _reload("%s/column.tscn" % dir)
+	var column_scene := _reload("%s/column.tscn" % props_dir)
 	for row in column_rows:
 		for col in column_xs:
 			var column := column_scene.instantiate()
@@ -300,13 +328,13 @@ func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
 			props.add_child(column)
 			column.owner = root
 
-	var torch := _reload("%s/torch.tscn" % dir).instantiate()
+	var torch := _reload("%s/torch.tscn" % props_dir).instantiate()
 	torch.name = "Torch"
 	torch.position = TORCH_POS
 	props.add_child(torch)
 	torch.owner = root
 
-	var health := _reload("%s/health_item.tscn" % dir).instantiate()
+	var health := _reload("%s/health_item.tscn" % props_dir).instantiate()
 	health.name = "Health"
 	health.position = HEALTH_POS
 	props.add_child(health)
@@ -319,7 +347,7 @@ func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
 	for spec in Biomes.BIOMES[level].get("props", []):
 		var type: String = spec["type"]
 		placed[type] = placed.get(type, 0) + 1
-		var prop := _reload("%s/%s.tscn" % [dir, type]).instantiate()
+		var prop := _reload("%s/%s.tscn" % [props_dir, type]).instantiate()
 		prop.name = "%s%d" % [type.to_pascal_case(), placed[type]]
 		prop.position = spec["at"]
 		# Rotation is placement, not art: the banner is drawn square and hung

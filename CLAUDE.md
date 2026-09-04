@@ -60,9 +60,10 @@ That void is deliberate - filling it with the level's own rock was tried and
 looked worse than black.
 
 **A level owns everything in it.** Its folder holds its own tileset, its own
-column and doorway art, and its own `column.tscn` and `door.tscn` - no level
-borrows another's. Levels are meant to diverge: different styles, different
-props, different enemies, doors that lock.
+doorway art, its own `door.tscn` and its own copy of every prop it places, each
+with that biome's palette baked in - no level borrows another's. Levels are
+meant to diverge: different styles, different props, different enemies, doors
+that lock.
 
 ```
 game/levels/
@@ -70,12 +71,34 @@ game/levels/
   door_base.gd        shared: how a door tells game.gd to swap levels
   hazard_base.gd      shared: presses take_damage() on the player it overlaps
   pickup_base.gd      shared: heal() on touch, consumed only if it healed
-  <biome>/
-    <biome>.tscn  door.tscn  column.tscn  torch.tscn  health_item.tscn
-    tileset.tres  column_art.tres  torch_art.tres  health_art.tres
-    doorway_out.tres  doorway_back.tres
-    <prop>.tscn  <prop>_art.tres      one pair per prop the biome places
+  <biome>/            THE ROOM - five files, and it never grows
+    <biome>.tscn        the level
+    tileset.tres        its floors and walls
+    doorway_out.tres    its passage up, lit by the room beyond
+    doorway_back.tres   its passage down
+    door.tscn           how it connects
+    props/            EVERYTHING STANDING IN IT - one scene each
+      column.tscn  torch.tscn  health_item.tscn   the fixtures
+      desk.tscn  chair.tscn  server_rack.tscn ... whatever it places
 ```
+
+**A level folder is split by what a file IS, not by its type,** and the split is
+between two groups that behave completely differently. The room is a handful of
+files that never grow. `props/` holds one scene per prop the biome uses and
+grows every time a floor wants new furniture - the bullpen wanted sixteen, which
+buried the five files that say what the level actually is.
+
+**Each prop scene carries its own picture, embedded** as a `[sub_resource]`
+right beside its collision shape. There used to be a matching `<prop>_art.tres`
+next to every prop scene, and every one of those had exactly one consumer: its
+own sibling. That is precisely what a sub-resource is for, and the collision box
+was already stored that way - the texture was the odd one out, for no reason.
+Removing them halved a level folder (bullpen 37 files to 21, lobby 28 to 16).
+
+The two doorway textures are the exception and stay as files, because they are
+the one texture assigned **per instance**: the level scene hands `doorway_out`
+to its north door and `doorway_back` to its south one, so their consumer is the
+level, not a prop scene.
 
 Architecture and the hazard are per-biome **styles**, not one look for the whole
 game: `column` picks the fluted classical stone, a glazed steel pillar or a
@@ -104,13 +127,20 @@ sofa, coffee table, pot plant alive and dead), the maintenance floor's hardware
 (server rack, printer, stacked dead monitors, opened tower, toolbox, cable
 spool, scrap pile, loose debris) and signs (the welcome banner, a taped-up
 notice) - and a biome says which ones it puts where in its own `props` list,
-exactly the way it already says which enemies it gets. That one list drives both halves: build_biomes.gd
-paints art for exactly the types the biome places, build_levels.gd writes a
-scene per type into the level's folder and instances them. So a floor can
-neither place furniture it has no art for nor carry art for furniture it never
-puts down, and `build_levels.gd -- lobby` reproduces the dressed room rather
-than resetting it to a bare box - which is what makes the generator's
-"re-running overwrites hand-dressing" warning survivable for eight floors.
+exactly the way it already says which enemies it gets. That one list drives everything: build_levels.gd
+writes a scene per type into the level's `props/`, paints its picture in the
+biome's palette and bakes it in, then instances them. So a floor cannot place
+furniture nothing draws, and `build_levels.gd -- lobby` reproduces the dressed
+room rather than resetting it to a bare box - which is what makes the
+generator's "re-running overwrites hand-dressing" warning survivable for eight
+floors.
+
+The division of labour between the two generators is by **subject**, not by
+file type: build_biomes.gd paints the ROOM (its tileset and doorways, the only
+art a level scene points at as files) and props.gd paints everything standing
+in the room. One consequence to know: re-palettizing a prop needs
+build_levels.gd, not just build_biomes.gd, because that is where its picture
+gets baked in.
 
 Props are drawn, not sampled, like the columns and torches and for the same
 reason: the shared dungeon sheet has no furniture in it. Bodies come out of the
@@ -560,15 +590,15 @@ reason that room has none.
 - bestiary, sheet paths & seed recipes
                                     <- game/enemies/roster.gd
                                        (data, edited by hand)
-- `game/levels/*/tileset.tres`, `column_art.tres`, `torch_art.tres`,
-  `health_art.tres`, `doorway_out.tres`, `doorway_back.tres`,
-  `<prop>_art.tres`                 <- tools/build_biomes.gd
-- `game/levels/*/*.tscn` (level, door, column, torch, health item, props;
-  enemy and prop instances placed in the level scene)
+- `game/levels/*/tileset.tres`, `doorway_out.tres`, `doorway_back.tres`
+                                    <- tools/build_biomes.gd (the ROOM's art,
+                                       and the only art that is a file)
+- `game/levels/*/<biome>.tscn`, `door.tscn`, `props/*.tscn` (art embedded in
+  each; enemy and prop instances placed in the level scene)
                                     <- tools/build_levels.gd, see below
-- office furniture catalogue + pixel font
-                                    <- tools/props.gd (shared by both, data
-                                       and painters edited by hand)
+- every picture of a thing standing in a room, plus the pixel font
+                                    <- tools/props.gd (catalogue data and
+                                       painters, edited by hand)
 - biome list, chain order, per-room enemies and furniture
                                     <- tools/biomes.gd (data, edited by hand)
 - project settings & input map      <- tools/setup_project.gd

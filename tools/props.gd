@@ -1,28 +1,87 @@
 extends RefCounted
-## The office furniture catalogue: what each prop looks like, how big it is, and
+## Every picture of a thing a level PUTS ON ITS FLOOR, plus how big it is and
 ## what shape it blocks. Editor-side only, like the rest of tools/.
 ##
-## It sits beside biomes.gd rather than inside either generator because two
-## generators need the same numbers and they have to agree: build_biomes.gd
-## paints a prop into the biome's own palette, build_levels.gd writes the scene
-## that wraps that art and places the instances a biome asks for. If the art and
-## the collision box disagreed about where the foot of the prop is, the player
-## would walk through the front of a desk - so the foot is stated once, here.
-## Same reason tools/character_art.gd is shared by the two sprite generators.
+## The division of labour with build_biomes.gd is by subject, not by file type:
+## that script paints the ROOM - its tiles and its doorways, the two things the
+## level scene points at as files - and this one paints everything standing in
+## the room. build_levels.gd then writes the scenes, embedding each picture in
+## the scene that is its only user.
 ##
-## Every prop is drawn rather than sampled, exactly like the columns and torches
-## already are: the shared dungeon sheet has no furniture in it. Bodies are
-## painted from the biome's own ramp, so a desk in hellfire is a hellfire desk
-## for free - which is what floors 2-8 need. Only the things that have to read
-## the same everywhere carry fixed colours: water is water and a plant is alive
-## or dead in any palette, the same argument that keeps fire and hearts fixed in
-## build_biomes.gd.
+## Two groups live here, and they differ in how a level gets hold of them:
+##
+## - The CATALOGUE: furniture, hardware and signs, placed from a biome's `props`
+##   list by type and position. Adding one is an entry plus a painter.
+## - The FIXTURES: column, hazard and heal pickup, which a level places itself
+##   at its own positions and which wrap differently (a hazard is an Area2D on
+##   hazard_base.gd, a pickup one on pickup_base.gd, a column a StaticBody2D).
+##   Only their painters are here - see the section at the bottom.
+##
+## Sizes and collision boxes are stated once, here, because the art and the
+## collision box have to agree about where the foot of a prop is or the player
+## walks through the front of a desk.
+##
+## Everything is drawn rather than sampled: the shared dungeon sheet has no
+## furniture in it. Bodies are painted from the biome's own ramp, so a desk in
+## hellfire is a hellfire desk for free - which is what floors 3-8 need. Only
+## what has to read the same everywhere carries fixed colours: fire is fire,
+## health is red, water is water, and a plant is alive or dead in any palette.
 
 const Biomes := preload("res://tools/biomes.gd")
+
+## One tile, which is what the column and hazard canvases are sized against.
+const TILE := 16
 
 ## Silhouette outline, dark enough to hold against a pale marble floor and a hot
 ## hellfire one alike.
 const OUTLINE := 0.05
+
+## Flame colours shared by every biome's torch: fire has to read as fire
+## everywhere, while the stand under it is the biome's own stone.
+const FLAME_EDGE := Color("b8300d")
+const FLAME_BODY := Color("f0761a")
+const FLAME_CORE := Color("ffd45e")
+
+## The office floors' hazards throw sparks instead of burning, and they are
+## fixed for the same reason the flame is: a hazard that took the room's palette
+## would camouflage itself in it. Placed by hand rather than by formula, because
+## at 16 px wide a scatter that reads as a shorting motor is a matter of which
+## six pixels you pick.
+const SPARK_CORE := Color("fff8e0")
+const SPARK_BODY := Color("ffd45e")
+const SPARK_EDGE := Color("ff8a3c")
+const SPARKS := [
+	Vector2i(1, 17), Vector2i(3, 14), Vector2i(14, 17), Vector2i(12, 13),
+	Vector2i(4, 21), Vector2i(12, 21), Vector2i(0, 20), Vector2i(15, 20),
+]
+## A shorting motor arcs as well as sprays. Two jagged bolts off the housing.
+const ARCS := [
+	[Vector2i(3, 15), Vector2i(2, 14), Vector2i(3, 13), Vector2i(1, 11)],
+	[Vector2i(12, 15), Vector2i(13, 14), Vector2i(12, 12), Vector2i(14, 11)],
+]
+## The power strip's own short: the arc jumps BETWEEN two sockets and throws up,
+## a different picture from a pad grinding the floor, so it gets its own places.
+const STRIP_ARCS := [
+	[Vector2i(5, 17), Vector2i(6, 15), Vector2i(7, 13), Vector2i(6, 11)],
+	[Vector2i(8, 17), Vector2i(9, 15), Vector2i(10, 14)],
+]
+const STRIP_SPARKS := [
+	Vector2i(4, 13), Vector2i(9, 11), Vector2i(12, 15), Vector2i(2, 16),
+	Vector2i(7, 9), Vector2i(13, 19), Vector2i(3, 20),
+]
+
+## The heal pickup, identical in every biome on purpose: red means health
+## everywhere. Row-major mask, X = filled.
+const HEART := [
+	".XX...XX.",
+	"XXXX.XXXX",
+	"XXXXXXXXX",
+	"XXXXXXXXX",
+	".XXXXXXX.",
+	"..XXXXX..",
+	"...XXX...",
+	"....X....",
+]
 
 ## Fixed colours: these mean something regardless of the room's palette.
 const WATER := Color("6cc0e8")
@@ -134,6 +193,22 @@ const FONT := {
 const GLYPH_W := 5
 const GLYPH_H := 5
 const GLYPH_ADVANCE := 6
+
+
+## Wraps a painted image as an embeddable texture. Every picture in this project
+## goes through here, and it is a PortableCompressedTexture2D rather than a PNG
+## for one reason: a PNG is useless until Godot imports it, which needs the
+## editor or a --import pass, while this is usable the instant it exists. That
+## matters because the editor is usually open while these run.
+##
+## Left unsaved by the caller, it has no resource_path, which is exactly what
+## makes PackedScene embed it as a sub-resource instead of writing a separate
+## file to point at - see build_levels.gd.
+static func texture(img: Image) -> PortableCompressedTexture2D:
+	var tex := PortableCompressedTexture2D.new()
+	tex.keep_compressed_buffer = true
+	tex.create_from_image(img, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS)
+	return tex
 
 
 static func known(type: String) -> bool:
@@ -699,8 +774,367 @@ static func _text(img: Image, text: String, at: Vector2i, c: Color,
 		x0 += GLYPH_ADVANCE
 
 
+## The fixture painters were written against an explicit ramp and gamma rather
+## than against a biome dictionary, so this keeps them reading as they did when
+## they lived in build_biomes.gd. `Biomes.shade(spec, t)` is the same thing with
+## the two pulled off the spec for you.
+static func _ramp(ramp: Array, t: float, gamma: float) -> Color:
+	return Biomes.ramp(ramp, t, gamma)
+
+
 ## Guarded so a painter can reach past the edge of its own art without the whole
 ## generator dying on an out-of-bounds pixel.
 static func _pixel(img: Image, at: Vector2i, c: Color) -> void:
 	if at.x >= 0 and at.y >= 0 and at.x < img.get_width() and at.y < img.get_height():
 		img.set_pixel(at.x, at.y, c)
+
+
+## ---- the level's own fixtures ------------------------------------------
+## Column, hazard and heal pickup. These are NOT catalogue props - a level
+## places them itself, at its own fixed positions, and their scenes differ (a
+## hazard is an Area2D on hazard_base.gd, a pickup one on pickup_base.gd, a
+## column a plain StaticBody2D). Only their PAINTERS live here, and they live
+## here for one reason: props.gd is now the single home for every picture of a
+## thing a level puts on its floor, so build_biomes.gd is left owning exactly
+## the room itself - its tiles and its doorways.
+##
+## Two of the three are per-biome STYLE choices rather than one look for the
+## whole game, keyed off the biome dictionary. Every style keeps the same canvas
+## size and the same foot, so the scene and collision box that wrap them never
+## change - only the picture does.
+## Architecture is per-biome style, chosen by the `column` key. There is exactly
+## one reason for the split: the fluted classical column is most of what makes
+## the marble hall read as a hall, and it is also most of what made the office
+## lobby read as a temple. The office floors get a glazed pillar instead.
+static func column(spec: Dictionary) -> Image:
+	match spec.get("column", "classical"):
+		"pillar":
+			return _pillar(spec)
+		"divider":
+			return _divider(spec)
+		_:
+			return _classical_column(spec)
+
+
+## A 16x48 cubicle divider: fabric panel in a metal frame, on feet. DESIGN.md's
+## "dividers as columns" for the open-plan floors - the same slot in the level
+## that holds a pillar downstairs, because what a room uses to break up its
+## floor is exactly what changes between a lobby and a bullpen.
+##
+## Shorter in the frame than the pillar and the column deliberately: a divider
+## is something you see over, and drawing it floor-to-ceiling would wall the
+## room off visually in a room that has to stay readable during a four-on-one
+## fight.
+static func _divider(spec: Dictionary) -> Image:
+	var height := 48
+	var img := Image.create(TILE, height, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var ramp: Array = spec["ramp"]
+	var gamma: float = spec["gamma"]
+	var accent := Color(spec["accent"])
+	# The panel starts a third of the way down, so the divider reads as waist
+	# height with the room carrying on above it.
+	for y in range(14, 44):
+		for x in range(1, 15):
+			var t := 0.40
+			if x == 1 or x == 14:
+				t = 0.08                           # frame upright
+			elif x == 2:
+				t = 0.66                           # lit edge
+			elif x >= 12:
+				t = 0.24
+			# The weave: a two-pixel check, which is what makes it read as
+			# fabric next to all the flat painted metal on this floor.
+			elif (x + y) % 2 == 0:
+				t = 0.46
+			if y == 14 or y == 15:
+				t = 0.72                           # capping rail
+			elif y == 43:
+				t = 0.10
+			var c := _ramp(ramp, t, gamma)
+			if y > 16 and y < 43 and x > 2 and x < 12:
+				c = c.lerp(accent, 0.10)           # the fabric takes a dye
+			img.set_pixel(x, y, c)
+	# Feet, splayed either side so it looks free-standing rather than sunk in.
+	for x in range(0, 5):
+		img.set_pixel(x, 44, _ramp(ramp, 0.50, gamma))
+		img.set_pixel(x, 45, _ramp(ramp, 0.12, gamma))
+	for x in range(11, 16):
+		img.set_pixel(x, 44, _ramp(ramp, 0.34, gamma))
+		img.set_pixel(x, 45, _ramp(ramp, 0.10, gamma))
+	return img
+
+
+## A 16x48 glass-and-steel pillar: steel stiles either side of a glazed face,
+## faintly tinted with the biome's accent the way a curtain wall is, capped top
+## and bottom. Straight-sided, because a corporate lobby has no entasis.
+static func _pillar(spec: Dictionary) -> Image:
+	var height := 48
+	var img := Image.create(TILE, height, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var ramp: Array = spec["ramp"]
+	var gamma: float = spec["gamma"]
+	var accent := Color(spec["accent"])
+	for y in range(3, 45):
+		for x in range(1, 15):
+			var t := 0.34                          # glazing
+			if x == 1 or x == 14:
+				t = 0.06                           # silhouette outline
+			elif x == 2:
+				t = 1.00                           # lit steel stile, light left
+			elif x == 3:
+				t = 0.78
+			elif x == 13:
+				t = 0.18                           # shaded stile
+			elif x == 12:
+				t = 0.30
+			elif x == 5:
+				t = 0.62                           # sheen down the glass
+			var mullion := (y - 3) % 14 == 0 or y == 44
+			if mullion:
+				t = minf(t, 0.16)
+			var c := _ramp(ramp, t, gamma)
+			if x >= 4 and x <= 11 and not mullion:
+				c = c.lerp(accent, 0.20)
+			img.set_pixel(x, y, c)
+	# Cap and base plate, both a tile wide so the pillar reads as fixed to the
+	# floor and the ceiling rather than floating in the room.
+	for x in TILE:
+		img.set_pixel(x, 0, _ramp(ramp, 0.30, gamma))
+		img.set_pixel(x, 1, _ramp(ramp, 0.98, gamma))
+		img.set_pixel(x, 2, _ramp(ramp, 0.72, gamma))
+		img.set_pixel(x, 45, _ramp(ramp, 0.90, gamma))
+		img.set_pixel(x, 46, _ramp(ramp, 0.52, gamma))
+		img.set_pixel(x, 47, _ramp(ramp, 0.08, gamma))
+	return img
+
+
+## A 16x48 column: abacus, flared echinus, fluted shaft, flared plinth.
+## Drawn rather than sampled - the source sheet has no pillar of any kind.
+static func _classical_column(spec: Dictionary) -> Image:
+	var height := 48
+	var img := Image.create(TILE, height, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var ramp: Array = spec["ramp"]
+	var gamma: float = spec["gamma"]
+	for y in height:
+		var hw := _column_half_width(y)
+		var left := 8 - hw
+		var w := hw * 2
+		for dx in w:
+			var t := 0.70
+			if dx == 0 or dx == w - 1:
+				t = 0.06                       # silhouette outline
+			elif dx == 1:
+				t = 1.00                       # lit edge, light comes from the left
+			elif dx == 2:
+				t = 0.88
+			elif dx >= w - 3:
+				t = 0.34                       # shaded edge
+			elif dx % 3 == 0:
+				t = 0.55                       # flute groove
+			# Horizontal breaks that read as the joints of stacked stone.
+			if y == 2 or y == 9 or y == 39 or y == height - 1:
+				t = minf(t, 0.22)
+			elif y == 0 or y == 10 or y == 40:
+				t = maxf(t, 0.92)
+			img.set_pixel(left + dx, y, _ramp(ramp, t, gamma))
+	return img
+
+
+## The hazard slot, per-biome style like the column. Both styles are 16x24 with
+## the same foot, so the hazard scene and the collision box the level places are
+## untouched by the choice - only what the danger looks like changes. What must
+## not change is that it reads as harmful at a glance, which is why the sparks
+## are as generous as the flame is.
+static func hazard(spec: Dictionary) -> Image:
+	match spec.get("hazard", "torch"):
+		"polisher":
+			return _polisher(spec)
+		"power_strip":
+			return _power_strip(spec)
+		_:
+			return _standing_torch(spec)
+
+
+## DESIGN.md's hazard for the bullpen: an overloaded power strip on the floor,
+## arcing, with far too much plugged into it. Lower and flatter than the other
+## two hazards - it is something you tread ON rather than walk INTO - so the
+## sparks do most of the work of being visible, and there are more of them than
+## the polisher has for exactly that reason.
+static func _power_strip(spec: Dictionary) -> Image:
+	var img := Image.create(16, 24, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var ramp: Array = spec["ramp"]
+	var gamma: float = spec["gamma"]
+
+	# The strip itself, lying on the floor at the bottom of the canvas.
+	for y in range(16, 22):
+		for x in range(1, 15):
+			var t := 0.46
+			if y == 16:
+				t = 0.70                           # top face, catching light
+			elif y == 21:
+				t = OUTLINE
+			elif x <= 2:
+				t = 0.62
+			elif x >= 12:
+				t = 0.26
+			img.set_pixel(x, y, _ramp(ramp, t, gamma))
+	# Sockets: four of them, all occupied.
+	for i in 4:
+		var x := 2 + i * 3
+		img.set_pixel(x, 18, _ramp(ramp, OUTLINE, gamma))
+		img.set_pixel(x + 1, 18, _ramp(ramp, OUTLINE, gamma))
+		img.set_pixel(x, 19, _ramp(ramp, 0.86, gamma))
+	# A daisy-chained second strip, because one was not enough for anybody.
+	for x in range(4, 14):
+		img.set_pixel(x, 14, _ramp(ramp, 0.34, gamma))
+		img.set_pixel(x, 15, _ramp(ramp, 0.14, gamma))
+	# The cables, going off in three directions and none of them tidy.
+	for step in 8:
+		img.set_pixel(mini(15, 14 + step / 4), 22 - step / 2,
+			_ramp(ramp, 0.08, gamma))
+		img.set_pixel(maxi(0, 1 - step / 6), mini(23, 17 + step / 3),
+			_ramp(ramp, 0.08, gamma))
+		img.set_pixel(3 + step / 3, mini(23, 22 + step / 7),
+			_ramp(ramp, 0.10, gamma))
+
+	# The short. Arcs between the sockets rather than off a spinning pad, and
+	# the fixed spark colours are the same ones the polisher uses: whatever the
+	# floor's palette, a hazard has to read as one.
+	for arc in STRIP_ARCS:
+		for at in arc:
+			_pixel(img, at, SPARK_BODY)
+	for at in STRIP_SPARKS:
+		for step in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			_pixel(img, at + step, SPARK_BODY if at.y < 18 else SPARK_EDGE)
+		_pixel(img, at, SPARK_CORE)
+	return img
+
+
+## A floor polisher someone left running with a shorted motor: DESIGN.md's
+## reskin of the torch for the office floors. Handle bar, post, motor housing
+## and a buffing pad, throwing sparks off the rim it is grinding into.
+static func _polisher(spec: Dictionary) -> Image:
+	var img := Image.create(16, 24, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var ramp: Array = spec["ramp"]
+	var gamma: float = spec["gamma"]
+
+	# T-grip and the post down to the motor, lit from the left like everything.
+	for x in range(4, 12):
+		img.set_pixel(x, 2, _ramp(ramp, 0.16, gamma))
+		img.set_pixel(x, 3, _ramp(ramp, 0.88 if x <= 7 else 0.55, gamma))
+	for y in range(4, 14):
+		img.set_pixel(7, y, _ramp(ramp, 0.70, gamma))
+		img.set_pixel(8, y, _ramp(ramp, 0.30, gamma))
+	# Motor housing.
+	for y in range(13, 18):
+		for x in range(3, 13):
+			var t := 0.52
+			if x <= 4:
+				t = 0.80
+			elif x >= 11:
+				t = 0.24
+			if y == 13 or y == 17:
+				t = 0.14
+			img.set_pixel(x, y, _ramp(ramp, t, gamma))
+	# Buffing pad, widest where it meets the floor.
+	var pad := {18: [2, 14], 19: [1, 15], 20: [1, 15], 21: [2, 14], 22: [4, 12]}
+	for y in pad:
+		var span: Array = pad[y]
+		for x in range(span[0], span[1]):
+			var t := 0.66 if y <= 19 else 0.34
+			if x <= span[0] + 1:
+				t += 0.20
+			elif x >= span[1] - 2:
+				t -= 0.16
+			if y == 22:
+				t = 0.08                        # the shadow it sits in
+			img.set_pixel(x, y, _ramp(ramp, t, gamma))
+
+	# The sparks, and they are as generous as the flame is on purpose: this is a
+	# hazard, and a hazard the player reads as scenery is a hazard that feels
+	# like the game cheating. Crosses rather than dots so a 16 px prop still
+	# says "live" at 1x, in fixed colours for the same reason the flame is - a
+	# hazard that took the room's palette would camouflage itself in it.
+	for arc in ARCS:
+		for at in arc:
+			_pixel(img, at, SPARK_BODY)
+	for at in SPARKS:
+		for step in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			_pixel(img, at + step, SPARK_BODY if at.y < 20 else SPARK_EDGE)
+		_pixel(img, at, SPARK_CORE)
+	return img
+
+
+
+## A 16x24 standing torch: biome-stone stem and plinth with fire on top.
+## Drawn, like the column - the source sheet has no torch to sample.
+static func _standing_torch(spec: Dictionary) -> Image:
+	var img := Image.create(16, 24, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var ramp: Array = spec["ramp"]
+	var gamma: float = spec["gamma"]
+
+	# Stem, lit from the left like everything else in the biome.
+	for y in range(10, 22):
+		img.set_pixel(7, y, _ramp(ramp, 0.62, gamma))
+		img.set_pixel(8, y, _ramp(ramp, 0.28, gamma))
+	# Bowl the flame sits in.
+	for x in range(5, 11):
+		img.set_pixel(x, 9, _ramp(ramp, 0.20, gamma))
+		img.set_pixel(x, 10, _ramp(ramp, 0.75 if x <= 7 else 0.40, gamma))
+	# Plinth.
+	for x in range(6, 10):
+		img.set_pixel(x, 21, _ramp(ramp, 0.85, gamma))
+	for x in range(5, 11):
+		img.set_pixel(x, 22, _ramp(ramp, 0.50 if x <= 7 else 0.30, gamma))
+		img.set_pixel(x, 23, _ramp(ramp, 0.10, gamma))
+
+	# Teardrop flame, hottest low and centred, dark-edged all round so it holds
+	# its shape against both a pale and a hot floor.
+	var half_widths := [1, 2, 3, 3, 3, 3, 2]
+	for i in half_widths.size():
+		var y: int = 2 + i
+		var hw: int = half_widths[i]
+		for x in range(8 - hw, 8 + hw):
+			var c := FLAME_BODY
+			if i == 0 or x == 8 - hw or x == 8 + hw - 1:
+				c = FLAME_EDGE
+			elif i >= 3 and x >= 7 and x <= 8:
+				c = FLAME_CORE
+			img.set_pixel(x, y, c)
+	return img
+
+
+## The HEART mask coloured: lighter lobes, darker point, one pink glint.
+static func heart() -> Image:
+	var w: int = HEART[0].length()
+	var img := Image.create(w, HEART.size(), false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for y in HEART.size():
+		for x in w:
+			if HEART[y][x] != "X":
+				continue
+			var c := Color("c8283c")
+			if y <= 1:
+				c = Color("e0465a")
+			elif y >= 5:
+				c = Color("8c1626")
+			img.set_pixel(x, y, c)
+	img.set_pixel(2, 1, Color("f2a0aa"))
+	return img
+
+
+static func _column_half_width(y: int) -> int:
+	if y <= 2:
+		return 7
+	elif y <= 4:
+		return 6
+	elif y <= 39:
+		return 5
+	elif y <= 43:
+		return 6
+	return 7

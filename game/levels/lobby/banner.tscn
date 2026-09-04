@@ -1,9 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Texture2D" path="res://game/levels/lobby/banner_art.tres" id="1_u7o4e"]
-
-[node name="Banner" type="Node2D" unique_id=911232051]
-
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1651603255]
-texture = ExtResource("1_u7o4e")
-centered = false
