@@ -154,7 +154,7 @@ level scene and that level's own door, plus - where its biome asks for them -
 its column, hazard and heart scenes - is a starting point meant to be dressed by
 hand in the editor, and re-running it overwrites that work. Run it to reset a
 level or to add a new one, and pass level names after `--` to build only those,
-because a chain of nine means adding a floor must not re-roll the eight already
+because a chain of ten means adding a floor must not re-roll the nine already
 dressed:
 dressed:
 

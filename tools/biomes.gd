@@ -61,8 +61,8 @@ extends RefCounted
 ## list, north door goes up it. The two demo biomes stay on the end until the
 ## office floors replace them.
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
-		"shared_floor", "conflict_resolution", "bullpen", "marble_hall",
-		"hellfire"]
+		"shared_floor", "dev_floor", "conflict_resolution", "bullpen",
+		"marble_hall", "hellfire"]
 
 ## Assembled from the per-floor files at load, keyed by CHAIN name, so every
 ## existing `Biomes.BIOMES[level]` read works exactly as it did when this was

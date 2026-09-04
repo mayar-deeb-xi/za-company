@@ -358,6 +358,38 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		761:
 			_key(KEY_W, false)
+			_check("door: the chain continues on into the dev floor (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "DevFloor")
+			_check("title: the dev floor announces itself (got '%s')"
+				% _title_text(), _title_text() == "THE DEV FLOOR")
+			# Seven workstations, and the count is the check because the pods
+			# ARE the room: two along the north wall, three across the south,
+			# and one either side of the east.
+			var pods: Array = _level().get_node("Props").get_children().filter(
+				func(n: Node) -> bool: return n.name.begins_with("DevDesk"))
+			_check("level: seven workstations on the dev floor (%d)"
+				% pods.size(), pods.size() == 7)
+			# The two things written on this floor's walls, and the two things
+			# that make it read as an engineering floor rather than an office
+			# with nice lighting: a diagram nobody may erase, and a build that
+			# has been failing for nine runs.
+			var fitted := ["Diagram1", "BuildBoard1", "Coffee1", "ServerRack1",
+				"Sofa1"]
+			var wanting: Array = fitted.filter(func(n: String) -> bool:
+				return _level().get_node_or_null("Props/" + n) == null)
+			_check("level: the dev floor is dressed as one (missing %s)"
+				% [wanting], wanting.is_empty())
+			_check("level: it has the power strip and no heart",
+				_level().get_node_or_null("Props/Torch") != null
+					and _level().get_node_or_null("Props/Health") == null)
+			_check("level: the dev floor is empty of enemies for now (%d)"
+				% get_nodes_in_group("enemies").size(),
+				get_nodes_in_group("enemies").is_empty())
+			_player().global_position = Vector2(272, 78)
+			_key(KEY_W, true)
+		841:
+			_key(KEY_W, false)
 			_check("door: the chain continues on into the gym (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "ConflictResolution")
@@ -395,7 +427,7 @@ func _tick(frame: int) -> void:
 				get_nodes_in_group("enemies").is_empty())
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		841:
+		921:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into the bullpen (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -433,7 +465,7 @@ func _tick(frame: int) -> void:
 				% [absent], absent.is_empty())
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		921:
+		1001:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -443,7 +475,7 @@ func _tick(frame: int) -> void:
 				guards.size() == 4)
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		1001:
+		1081:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into hellfire (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -466,7 +498,7 @@ func _tick(frame: int) -> void:
 			# Turn round and walk back out the way we came in. The wraith is on
 			# the far wall, outside its own 120 px sight of this whole path.
 			_key(KEY_S, true)
-		1081:
+		1161:
 			_key(KEY_S, false)
 			_check("return: hellfire's south door goes back to the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -476,34 +508,34 @@ func _tick(frame: int) -> void:
 				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		1087:
+		1167:
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		1099:
+		1179:
 			_check("pause: Main Menu returns to the menu, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
 					and not paused)
 			# Second run: spend every life and prove the run actually ends.
 			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
-		1111:
+		1191:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
-		1123:
+		1203:
 			_check("lives: a new run starts with all three again (%s)"
 				% _player().get("lives"),
 				current_scene.scene_file_path == "res://game/game.tscn"
 					and _player().get("lives") == 3)
 			_player().call("take_damage", 9999)
-		1176:
+		1256:
 			_check("lives: first death respawns with two left (%s, health %s)"
 				% [_player().get("lives"), _player().get("health")],
 				_player().get("lives") == 2 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		1226:
+		1306:
 			_check("lives: second death respawns with one left (%s)"
 				% _player().get("lives"),
 				_player().get("lives") == 1 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		1276:
+		1356:
 			_check("game over: the last death raises the death screen, paused",
 				paused and _pause_menu().get_node("Root").visible)
 			_check("game over: heading reads YOU DIED (got '%s')"
@@ -517,11 +549,11 @@ func _tick(frame: int) -> void:
 			# resume back into.
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		1282:
+		1362:
 			_check("game over: Escape cannot dismiss the death screen",
 				paused and _pause_menu().get_node("Root").visible)
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		1294:
+		1374:
 			_check("game over: MAIN MENU leaves the run, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"

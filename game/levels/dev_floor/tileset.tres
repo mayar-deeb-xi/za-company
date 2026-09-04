@@ -1,0 +1,25 @@
+[gd_resource type="TileSet" format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_d04l1"]
+_data = PackedByteArray("AAADAAUAAAABAAAAQAAAACAAAABWAQAAUklGRk4BAABXRUJQVlA4TEIBAAAvP8AHAI+gKJIUp/BvkC+FgMzlYENRI0nKc/3b471zwHwXNZGsOgbo8G8IFVRQwc85zPyHZKnJaTJrb+9/73+E2QfTercy8M36GGAhNMJRZan2ucZc4MhtI0faNNHTW93/f24Fbd5rRP8ZuG0bx+ruBTZ6PULIgZyRK6IF0LEBL9GtxDWXfIYW1PrO04KnNUkuVTpcx/sf/qJ+5C8Lan3bacHT+hnr9v37htkwJxvIJjnZ4IT0PnpkxDpEpiQFXZAHcgaGsoEhnKsFRssGA5kc05QNxtM88FpSXcC5+HXdJ5m6gHOVv4W6B/oBecWDWd03XMa58m/ZgDsKu9k4Vwv0lg2e7ydDOiLuKBwqzlX/4WiKygbYzca52h6VDSbZ5GQDnseca299d7KBITwNn379QBmvy+fL6j7VZA+8viO5Ihk0")
+size_override = Vector2(64, 32)
+keep_compressed_buffer = true
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ena5a"]
+texture = SubResource("PortableCompressedTexture2D_d04l1")
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+0:1/0 = 0
+0:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+1:1/0 = 0
+1:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+2:1/0 = 0
+2:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+3:1/0 = 0
+3:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+
+[resource]
+physics_layer_0/collision_layer = 1
+sources/0 = SubResource("TileSetAtlasSource_ena5a")

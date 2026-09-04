@@ -9,20 +9,21 @@ file is how furniture works and how floors are added.
 
 `tools/props/` holds one file per prop type, shelved by what a prop IS -
 `furniture/` (reception counter, desk, chair, water cooler, sofa, coffee table,
-pot plant alive and dead, call-centre station, media edit bay, glass
-partition), `hardware/` (server rack, printer, stacked dead monitors, opened
-tower, toolbox, cable spool, scrap pile, loose debris, a camera on its tripod,
-a ring light, a paper backdrop, a punch bag, a rack of weights), `signs/` (the
-welcome banner, a taped-up notice, a marker whiteboard, two printed posters, a
-lit wallboard with a number on it) and `markings/` (paint on the floor: the
-gym's boxing ring, and so far only that) - and a biome says which ones it puts
-where in its own `props` list, exactly the way it already says
-which enemies it gets. That list drives everything: build_levels.gd writes a
-scene per type into the level's `props/`, paints its picture in the biome's
-palette and bakes it in, then instances them. `build_levels.gd -- lobby`
-therefore reproduces the dressed room rather than resetting it to a bare box -
-which is what makes the generator's "re-running overwrites hand-dressing"
-warning survivable for eight floors.
+pot plant alive and dead, call-centre station, media edit bay, engineer's
+workstation, filter coffee machine, glass partition), `hardware/` (server rack,
+printer, stacked dead monitors, opened tower, toolbox, cable spool, scrap pile,
+loose debris, a camera on its tripod, a ring light, a paper backdrop, a punch
+bag, a rack of weights), `signs/` (the welcome banner, a taped-up notice, two
+whiteboards - one lettered, one an architecture diagram nobody may erase - two
+printed posters and two lit boards with a number on them) and `markings/`
+(paint on the floor: the gym's boxing ring, and so far only that) - and a biome
+says which ones it puts where in its own `props` list, exactly the way it
+already says which enemies it gets. That list drives everything:
+build_levels.gd writes a scene per type into the level's `props/`, paints its
+picture in the biome's palette and bakes it in, then instances them.
+`build_levels.gd -- lobby` therefore reproduces the dressed room rather than
+resetting it to a bare box - which is what makes the generator's "re-running
+overwrites hand-dressing" warning survivable for ten floors.
 
 **The folder is the catalogue, and the shelves are only organisation.**
 `tools/props.gd` is the facade the generators call; it scans the shelves once
@@ -102,7 +103,9 @@ its own words without new drawing code - the banner says WELCOME / NEW HIRES,
 the notice says OUT OF ORDER, the counter says RECEPTION, the shared floor's
 whiteboard says SMILE / THEY CAN / HEAR IT and its poster says FIX IT / IN
 POST, the call floor's wallboard says CALLS / WAITING / 142 with the figure in
-red, and DESIGN.md still has wall text waiting further up the building.
+red, the dev floor's whiteboard says DO NOT ERASE under a diagram it does not
+explain and its build board says BUILD / FAILED, and DESIGN.md still has wall
+text waiting further up the building.
 
 ## Adding and inserting a biome
 

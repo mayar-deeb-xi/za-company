@@ -37,11 +37,11 @@ HP stays on combo breakpoints (4 / 3 / 6 hits) — difficulty never scales HP.
 - **Dominic** (guide, front desk): a talking signpost. New `npc_base.gd` +
   one-line dialogue box (`ui/dialogue/`): proximity trigger, one line per
   visit, advance with the attack key. No branching, no quest log. Placed on
-  floors 1, 4, 6, 9 - the tutorial, and then one before each boss.
+  floors 1, 4, 7, 10 - the tutorial, and then one before each boss.
 - **Ivan** (healer, cafeteria): stands in a safe corner, lobs a heart in a
   short tween arc every ~10s. Spawns the existing `pickup_base.gd` heart;
   max ONE of his hearts on the floor at a time (lifeline, not fountain). Heart
-  is live when it lands. Only line: "Eat." Present on floors 3, 4, 6, 7, 8, 9.
+  is live when it lands. Only line: "Eat." Present on floors 3, 4, 7, 8, 9, 10.
   From floor 2 up he is the ONLY healing in the game: the floors themselves no
   longer carry a heart, so the lobby's is the last one handed out for free.
   Until he is built, floors 2-9 have no heal at all - which is deliberate, and
@@ -49,7 +49,7 @@ HP stays on combo breakpoints (4 / 3 / 6 hits) — difficulty never scales HP.
 
 Both are friendly: no `player`-group targeting of them, enemies ignore them.
 
-## Floors — 9 levels
+## Floors — 10 levels
 
 Elevator is out of order. South door = down, north door = up. Boss floors lock
 the north door until the boss falls (`can_travel()` override). Existing
@@ -59,9 +59,9 @@ straight door-to-door walk stays safe.
 
 **This list is in chain order.** `tools/biomes.gd`'s `CHAIN` is the floor plan
 the game actually walks, and the numbers below match it: lobby ->
-content_studio -> call_center -> ahmed_office -> shared_floor ->
+content_studio -> call_center -> ahmed_office -> shared_floor -> dev_floor ->
 conflict_resolution -> bullpen, with the two demo biomes (marble_hall,
-hellfire) still parked on the end until F8 and F9 replace them. They are
+hellfire) still parked on the end until F9 and F10 replace them. They are
 deliberately not in this list - they are placeholders, not floors of the
 building. Reordering is one edit to `CHAIN` plus a full build_levels.gd run,
 since every door target is baked into a level scene.
@@ -194,9 +194,45 @@ the room, and the fiction carries which floor it is.
   **Still to add**: its people. `call_center` and `social_media` are both
   build step 2, so the room is deliberately empty of enemies and test_flow
   asserts that it stays that way until they exist. When they land they should
-  stay light: this floor lands between Ahmed and the gym, two boss rooms, and
-  its job is to be a breather between them rather than a test of anything.
-- [x] **F6 Conflict Resolution** (BOSS): company gym, boxing ring painted on
+  stay light: this floor lands just past Ahmed and before the dev floor, and
+  its job is to be a breather rather than a test of anything.
+- [x] **F6 The Dev Floor** (light relief): where the software gets written, and
+  the brightest room in the building after the lobby. Warm off-white and pale
+  wood, the floor the company spent the refurbishment budget on - the exact
+  opposite of the content studio four floors down, and that contrast is doing
+  work rather than just being pretty: nothing else in the building is this
+  bright, so the screens on these desks are the DARKEST things in the room
+  instead of the lightest, which is how a floor full of monitors reads as a
+  floor full of monitors. Editor blue for an accent, the one colour no other
+  floor has.
+  **Built**: seven workstations - two along the north wall, three across the
+  south, one either side of the east - the whiteboard, the build screen, the
+  service wall (racks, tower, coffee, water) and a breakout of sofa, table and
+  plants. Four new props:
+  - `dev_desk`, the fourth desk in the catalogue and the only one with a
+    monitor turned on its SIDE. That is the whole silhouette - nobody else in
+    the building rotates a screen - and next to it a mechanical keyboard, a
+    mug, and a rubber duck to explain the bug to, in fixed yellow for the same
+    reason the cooler's water is fixed blue.
+  - `diagram`, the whiteboard, whose joke is DRAWN rather than written: four
+    boxes, arrows between them, one arrow that goes back where it came from,
+    and DO NOT ERASE along the bottom in red pen.
+  - `build_board`, the screen telling the whole floor the build is failing,
+    with the run history under it - green, green, green, then nine reds nobody
+    has fixed.
+  - `coffee`, the filter machine, stewed since the morning, and the second
+    prop in the catalogue whose colour is not the room's.
+  Hazard: the power strip again, and it needs no excuse on this floor - seven
+  workstations, each with two monitors and a machine under the desk, all fed
+  from whatever was already plugged in.
+  One placement note worth keeping: the pillars sit on rows 6 and 12 rather
+  than the usual 5 and 13. A pillar's art is 48 px above its foot, so the
+  default rows put one across y 48-96, which is exactly where north-wall
+  furniture stands; two tiles down, the whole north wall is free for the
+  whiteboard and the first pod.
+  **Still to add**: its people, and the lesson that comes with them - this
+  floor has no mechanic assigned to it yet.
+- [x] **F7 Conflict Resolution** (BOSS): company gym, boxing ring painted on
   the floor, poster: "TALK IT OUT" crossed out, "GLOVE IT OUT" under it.
   Tight arena, no columns. Mostafa. Ivan.
   **Built**: the room, and it is the only room in the game with no colour in
@@ -223,7 +259,7 @@ the room, and the fiction carries which floor it is.
   to read at a time, and a boss room that also burns you is a boss room where
   the death was the floor's fault.
   **Still to add**: Mostafa, and Ivan.
-- [x] **F7 The Bullpen** (crowd): the office boys' OWN floor - the back of house
+- [x] **F8 The Bullpen** (crowd): the office boys' OWN floor - the back of house
   where the company's broken hardware goes and mostly stays. Dim warm brown
   against every other floor in the building, amber accent, dividers as columns
   (the
@@ -243,10 +279,10 @@ the room, and the fiction carries which floor it is.
   have no pathfinding), and no enemy parked on a divider's x, or the divider's
   48px art hides it completely.
   **Still to add**: Ivan (west wall) - he needs the NPC system, build step 4.
-- [ ] **F8 The Executive Floor** (mix/exam): dark wood, glass walls, awards
+- [ ] **F9 The Executive Floor** (mix/exam): dark wood, glass walls, awards
   cabinet. 3 office boys + 2 social_media + 1 call_center (center chokepoint).
   Every prize requires stepping into a radius on purpose. Ivan.
-- [ ] **F9 Khaled's Office** (FINAL): penthouse, city window, one desk, one
+- [ ] **F10 Khaled's Office** (FINAL): penthouse, city window, one desk, one
   face-down sticky note. Wide open arena. South door seals behind you.
   Dominic waits outside ("Whatever happens up there… CC me."). Ivan.
 
@@ -261,14 +297,14 @@ unlocks.
   slightly faster recover, 14 damage. At 64 and 32 HP yells "SECURITY!" and
   summons 1 office boy through the door (cap 2 alive). Standard interrupt
   economy. Defeated: sits in his enormous chair — "I'm telling Mostafa."
-- [ ] **MOSTAFA — 144 HP, F6.** Boxing rhythm fight; his attack is the cycle
+- [ ] **MOSTAFA — 144 HP, F7.** Boxing rhythm fight; his attack is the cycle
   run 3x back-to-back:
   - Jab, jab: 0.25s wind-ups, 6 dmg each, commit_fraction ~1.0
     (effectively uninterruptible; they're swings — step out, they whiff).
   - Hook: 0.7s wind-up, 18 dmg, interruptible early. The one read.
   - Corner rush: dash gap-closer if the player kites to the ring edge.
   - Defeated: takes the gloves off, nods once, points at the ceiling.
-- [ ] **KHALED — 192 HP, F9.** Smooth = never hurries; each phase announced by
+- [ ] **KHALED — 192 HP, F10.** Smooth = never hurries; each phase announced by
   adjusting his cuffs:
   - P1 "The Handshake" (192→128): single strikes, 0.8s telegraph, 20 dmg,
     gliding movement. Standard interrupts. The fair phase.
@@ -295,16 +331,16 @@ Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
 
 ## Build order — each step ships playable
 
-- [ ] 1. Floors as biomes: 9 entries in `tools/biomes.gd` (office palettes),
+- [ ] 1. Floors as biomes: 10 entries in `tools/biomes.gd` (office palettes),
         run build_biomes + build_levels. Per-floor enemy placement AND
         furniture are per-biome data, so a floor is data plus whatever new
         props it needs in `tools/props.gd` - a regenerate rebuilds the dressed
-        room rather than resetting it. **Seven of the nine rooms exist**, in
+        room rather than resetting it. **Eight of the ten rooms exist**, in
         chain order: F1 the lobby, F2 the content studio, F3 the call center,
-        F5 the shared floor, F6 the gym and F7 the bullpen are dressed, and F4
-        Ahmed's office is a room waiting for its boss. F8 and F9 are the two
-        still to build, and the two demo biomes hold their places on the end
-        of the chain until they do.
+        F5 the shared floor, F6 the dev floor, F7 the gym and F8 the bullpen
+        are dressed, and F4 Ahmed's office is a room waiting for its boss. F9
+        and F10 are the two still to build, and the two demo biomes hold their
+        places on the end of the chain until they do.
         Regenerate one floor at a time: `build_levels.gd -- <level>`, and note
         that inserting a floor changes its NEIGHBOURS' door targets, so
         rebuild those too.

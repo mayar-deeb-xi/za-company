@@ -5,8 +5,8 @@ _data = PackedByteArray("AAADAAUAAAABAAAA6AAAAJQAAADGAAAAUklGRr4AAABXRUJQVlA4TLE
 size_override = Vector2(232, 148)
 keep_compressed_buffer = true
 
-[node name="BoxingRing" type="Node2D" unique_id=2087095467]
+[node name="BoxingRing" type="Node2D" unique_id=1538489426]
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1992663518]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=426169663]
 texture = SubResource("PortableCompressedTexture2D_43x2q")
 centered = false
