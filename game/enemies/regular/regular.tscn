@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://game/enemies/enemy_base.gd" id="1_enemy"]
+[ext_resource type="SpriteFrames" path="res://game/enemies/regular/regular_frames.tres" id="2_frames"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 5.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_touch"]
+radius = 7.0
+
+[node name="Regular" type="CharacterBody2D" groups=["enemies"]]
+motion_mode = 1
+script = ExtResource("1_enemy")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("2_frames")
+animation = &"idle_down"
+autoplay = "idle_down"
+offset = Vector2(0, -8)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_body")
+
+[node name="Touch" type="Area2D" parent="."]
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Touch"]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_touch")

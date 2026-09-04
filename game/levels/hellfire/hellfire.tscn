@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://game/levels/hellfire/door.tscn" id="8_h274o"]
 [ext_resource type="Script" path="res://game/levels/door_base.gd" id="9_du8d1"]
 [ext_resource type="Texture2D" path="res://game/levels/hellfire/doorway_back.tres" id="10_0aaib"]
+[ext_resource type="PackedScene" path="res://game/enemies/regular/regular.tscn" id="11_enemy"]
 
 [node name="Hellfire" type="Node2D" unique_id=539669200]
 y_sort_enabled = true
@@ -72,6 +73,12 @@ script = ExtResource("5_5apbe")
 position = Vector2(424, 152)
 monitorable = false
 script = ExtResource("7_tb2r2")
+
+[node name="Enemy1" parent="Props" instance=ExtResource("11_enemy")]
+position = Vector2(64, 48)
+
+[node name="Enemy2" parent="Props" instance=ExtResource("11_enemy")]
+position = Vector2(480, 48)
 
 [node name="Return" type="Area2D" parent="Props" unique_id=359557760 groups=["door"] instance=ExtResource("8_h274o")]
 position = Vector2(272, 296)

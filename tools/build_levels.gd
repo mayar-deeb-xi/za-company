@@ -54,6 +54,14 @@ const SPAWN_RETURN_Y := 80       # by the north door: you came back from the nex
 const TORCH_POS := Vector2(120, 152)
 const HEALTH_POS := Vector2(424, 152)
 
+## The starting-point dressing for combat: two guards, one per top corner.
+## Unlike torches and hearts, the enemy scene is shared from game/enemies/ -
+## a level that wants its own variant swaps the instance in the editor.
+## Positions sit outside a guard's sight of the door line, the spawns and the
+## torch/heart stands, so nothing chases a player who keeps to the safe walk.
+const ENEMY_SCENE := "res://game/enemies/regular/regular.tscn"
+const ENEMY_POSITIONS := [Vector2(64, 48), Vector2(480, 48)]
+
 
 func _initialize() -> void:
 	var failed := false
@@ -245,6 +253,14 @@ func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
 	health.position = HEALTH_POS
 	props.add_child(health)
 	health.owner = root
+
+	var enemy_scene := _reload(ENEMY_SCENE)
+	for i in ENEMY_POSITIONS.size():
+		var enemy := enemy_scene.instantiate()
+		enemy.name = "Enemy%d" % (i + 1)
+		enemy.position = ENEMY_POSITIONS[i]
+		props.add_child(enemy)
+		enemy.owner = root
 
 	var door_scene := _reload("%s/door.tscn" % dir)
 	var next: String = Biomes.next_of(level)

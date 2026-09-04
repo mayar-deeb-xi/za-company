@@ -1,6 +1,8 @@
 extends SceneTree
-## Generates SpriteFrames for every roster character, restyled from the pristine
-## CC0 sheet in game/player/src/ - one <id>_frames.tres per roster recipe.
+## Generates SpriteFrames for every roster character AND every bestiary enemy,
+## restyled from the pristine CC0 sheet in game/player/src/ - one
+## <id>_frames.tres per recipe. Enemies wear the same body and animation set as
+## the cast; a recipe is a recipe.
 ##
 ## Each character's sheet is embedded in its .tres as a lossless
 ## PortableCompressedTexture2D rather than written out as a PNG, so a
@@ -9,9 +11,9 @@ extends SceneTree
 ## Run: godot --headless --path . --script res://tools/build_characters.gd
 
 const Roster := preload("res://game/player/characters/roster.gd")
+const Bestiary := preload("res://game/enemies/roster.gd")
 
 const SRC := "res://game/player/src/character_cc0.png"
-const OUT_DIR := "res://game/player/characters"
 const FRAME := 32
 const COLS := 4
 const ROWS := 9
@@ -357,13 +359,14 @@ func _initialize() -> void:
 		quit(1)
 		return
 
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	var failed := false
-	for entry in Roster.CHARACTERS:
+	for entry in Roster.CHARACTERS + Bestiary.ENEMIES:
 		if not entry.has("recipe"):
 			continue
 		var sheet := _build_sheet(entry["recipe"])
 		var out: String = entry["frames"]
+		DirAccess.make_dir_recursive_absolute(
+			ProjectSettings.globalize_path(out.get_base_dir()))
 		var err := ResourceSaver.save(_build_frames(sheet), out)
 		print("saved ", out, " -> ", error_string(err))
 		if err != OK:

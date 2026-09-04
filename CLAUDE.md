@@ -106,9 +106,9 @@ match on `_ready`; an unknown saved id keeps the default look.
 The player owns its health (player.gd): `MAX_HEALTH`, `take_damage()`, `heal()`,
 and a grace window after each hit during which the sprite blinks and further
 damage is ignored. That window is deliberately the only rate limiter in the
-system - hazards press `take_damage()` every physics frame they overlap the
-player and carry no timers of their own, so tuning `HURT_GRACE_SECONDS` retunes
-every hazard (and later every enemy) at once. Hazards and pickups reach the
+system - hazards and enemies press `take_damage()` every physics frame they
+overlap the player and carry no timers of their own, so tuning
+`HURT_GRACE_SECONDS` retunes every hazard and enemy at once. Hazards and pickups reach the
 player by the `player` group + `has_method`, never by type.
 
 The player also owns its lives (`MAX_LIVES`, 3): each death spends one via
@@ -137,17 +137,56 @@ from build_biomes.gd like everything else: the stand and plinth in the biome's
 own ramp, the flame and the heart in fixed colours, because fire and health
 have to read the same in every biome.
 
+## Enemies
+
+`game/enemies/enemy_base.gd` is the base every type builds on: an enemy stands
+guard until the player comes within `sight_radius`, chases while they stay
+inside it, and presses its touch on the player every physics frame of contact -
+no timers of its own, the player's grace window meters the pressure, exactly
+like hazards. Stats (`max_health`, `contact_damage`, `speed`, `sight_radius`)
+are @exports, so a level can retune the instance it places. Enemies find the
+player by group + `has_method`, doors ignore them (door_base.gd filters on the
+`player` group), and each type lives in `game/enemies/<type>/`.
+
+**`_touch(player)` is the seam between enemy types.** The base deals
+`contact_damage`; a later type that freezes, shoves or poisons overrides
+`_touch()` in its own script extending the base, and inherits chase, health and
+death untouched. The first type, `regular/` (10 HP, 5 damage), carries no
+script of its own - its scene runs enemy_base.gd directly, the way torches run
+hazard_base.gd.
+
+The player's side of the fight is `ATTACK_POWER` (5, player.gd) pressed through
+a Hitbox Area2D that `_start_attack()` parks one step ahead of the body in the
+facing direction. The hitbox stays live for the whole swing animation but a
+ledger (`_swing_hits`) lands it once per enemy per swing - so a 10 HP regular
+dies to exactly two swings. Per-character health and attack stats are planned;
+they will join the roster recipe the way looks did.
+
+Enemy looks come from the same CC0 body sheet as the cast: `game/enemies/
+roster.gd` is the bestiary (id, frames path, recipe - looks only, stats live on
+scenes), and tools/build_characters.gd bakes it in the same run as the player
+characters. A dead enemy is `queue_free`d, and since levels are re-instantiated
+per entry, it is back on the next visit - the same no-room-state rule as
+pickups. Each generated level starts with two `regular` guards in its top
+corners (`ENEMY_POSITIONS` in build_levels.gd), placed so their sight never
+reaches the door line, the spawns or the torch/heart stands - the smoke test's
+early sections rely on nothing aggroing until the combat run deliberately walks
+into a guard's sight.
+
 ## Generated resources - regenerate, don't hand-edit
 
 - `ui/theme/menu_theme.tres`        <- tools/build_ui_theme.gd
-- `game/player/characters/*_frames.tres`
+- `game/player/characters/*_frames.tres`, `game/enemies/*/*_frames.tres`
                                     <- tools/build_characters.gd
 - playable cast & recipes           <- game/player/characters/roster.gd
+                                       (data, edited by hand)
+- bestiary & recipes                <- game/enemies/roster.gd
                                        (data, edited by hand)
 - `game/levels/*/tileset.tres`, `column_art.tres`, `torch_art.tres`,
   `health_art.tres`, `doorway_out.tres`, `doorway_back.tres`
                                     <- tools/build_biomes.gd
-- `game/levels/*/*.tscn` (level, door, column, torch, health item)
+- `game/levels/*/*.tscn` (level, door, column, torch, health item;
+  enemy instances placed in the level scene)
                                     <- tools/build_levels.gd, see below
 - biome list & chain order          <- tools/biomes.gd (data, edited by hand)
 - project settings & input map      <- tools/setup_project.gd

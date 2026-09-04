@@ -1,7 +1,8 @@
 extends SceneTree
 ## End-to-end smoke test: menu -> character select -> game -> move -> pause ->
 ## settings -> attack -> torch -> heart -> death -> wall -> door -> menu ->
-## settings -> new run -> three deaths -> game over.
+## settings -> new run -> three deaths -> game over -> third run -> enemy
+## chase -> contact damage -> two swings kill an enemy.
 ##
 ## Run headless (see CLAUDE.md for the binary path):
 ##   <godot> --headless --path . --fixed-fps 60 --script res://tests/smoke_test.gd
@@ -18,6 +19,7 @@ var _checks := 0
 var _fails: Array[String] = []
 var _mark := Vector2.ZERO
 var _health_mark := 0
+var _enemy: Node2D
 var _settings_backup := PackedByteArray()
 var _settings_existed := false
 
@@ -516,5 +518,47 @@ func _process(_delta: float) -> bool:
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
 					and not paused)
+			# Third run: combat. The guards stood clear of every path above -
+			# they sight 80 px and nothing so far came within it.
+			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
+		783:
+			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
+		798:
+			var enemies := get_nodes_in_group("enemies")
+			_check("enemies: marble hall places two guards (%d)" % enemies.size(),
+				enemies.size() == 2)
+			_check("enemies: a guard starts at full health",
+				enemies.size() > 0 and enemies[0].get("health") == 10)
+			# Park mid-room, clear of props, and bring one guard inside its sight.
+			# The player has not moved this run, so they still face down - the
+			# guard approaches straight into the swing.
+			_player().global_position = Vector2(272, 140)
+			_enemy = enemies[0] as Node2D
+			_enemy.global_position = Vector2(272, 190)
+		824:
+			_check("enemies: the guard chases the player (%.0f px away)"
+				% _enemy.global_position.distance_to(_player().global_position),
+				_enemy.global_position.distance_to(_player().global_position) < 45.0)
+		864:
+			# Contact happened well before this; the grace window keeps a second
+			# touch from landing until after the check, so the cost is exactly one
+			# hit of the guard's contact damage.
+			_check("enemies: touch costs contact damage, metered by grace (%s)"
+				% _player().get("health"), _player().get("health") == 95)
+			_key(KEY_SPACE, true)
+		868:
+			_key(KEY_SPACE, false)
+		894:
+			_check("attack: one swing costs the enemy ATTACK_POWER (health %s)"
+				% (str(_enemy.get("health")) if is_instance_valid(_enemy) else "<freed>"),
+				is_instance_valid(_enemy) and _enemy.get("health") == 5)
+			_key(KEY_SPACE, true)
+		898:
+			_key(KEY_SPACE, false)
+		928:
+			_check("attack: the second swing kills - the guard is gone (%d left)"
+				% get_nodes_in_group("enemies").size(),
+				not is_instance_valid(_enemy)
+					and get_nodes_in_group("enemies").size() == 1)
 			_finish()
 	return false

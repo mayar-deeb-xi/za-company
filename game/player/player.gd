@@ -6,6 +6,10 @@ const SPEED := 90.0
 const ACCELERATION := 900.0
 const FRICTION := 1100.0
 const MAX_HEALTH := 100
+## Damage one swing deals to each enemy it reaches. A constant for now; when
+## characters grow their own stats this moves into the roster recipe the same
+## way looks did.
+const ATTACK_POWER := 5
 ## How many times health can hit zero before the run ends. The player node is
 ## built fresh by each new game scene, so a new run starts full again.
 const MAX_LIVES := 3
@@ -24,6 +28,7 @@ const Roster := preload("res://game/player/characters/roster.gd")
 enum Facing { DOWN, UP, SIDE }
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var _hitbox: Area2D = $Hitbox
 
 var health := MAX_HEALTH
 var lives := MAX_LIVES
@@ -32,6 +37,9 @@ var _facing: Facing = Facing.DOWN
 var _facing_left := false
 var _attacking := false
 var _grace := 0.0
+## Enemies already struck by the current swing, so a swing lands once per enemy
+## rather than once per physics frame it overlaps them.
+var _swing_hits := {}
 
 
 func _ready() -> void:
@@ -64,6 +72,7 @@ func _physics_process(delta: float) -> void:
 	if _attacking:
 		# Attacks root the character in place.
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
+		_strike()
 	elif direction != Vector2.ZERO:
 		_face(direction)
 		velocity = velocity.move_toward(direction * SPEED, ACCELERATION * delta)
@@ -107,7 +116,32 @@ func _apply_animation(state: String, restart := false) -> void:
 
 func _start_attack() -> void:
 	_attacking = true
+	_swing_hits.clear()
+	_hitbox.position = _hitbox_offset()
 	_apply_animation("attack", true)
+
+
+## The hitbox sits one step ahead of the body in whatever direction the swing
+## faces, and stays live for the whole animation.
+func _hitbox_offset() -> Vector2:
+	match _facing:
+		Facing.UP:
+			return Vector2(0, -14)
+		Facing.SIDE:
+			return Vector2(-11 if _facing_left else 11, -4)
+		_:
+			return Vector2(0, 6)
+
+
+## Group + method rather than type, like every cross-feature touch in this
+## project: the player never names an enemy script.
+func _strike() -> void:
+	for body in _hitbox.get_overlapping_bodies():
+		if _swing_hits.has(body) or not body.is_in_group("enemies"):
+			continue
+		if body.has_method("take_damage"):
+			_swing_hits[body] = true
+			body.call("take_damage", ATTACK_POWER)
 
 
 func _on_animation_finished() -> void:
