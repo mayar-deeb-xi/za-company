@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/levels/hazard_base.gd" id="1_k4lqm"]
+[ext_resource type="Texture2D" path="res://game/levels/lobby/torch_art.tres" id="2_t6ja2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tuc6s"]
+size = Vector2(10, 6)
+
+[node name="Torch" type="Area2D" unique_id=207604322]
+monitorable = false
+script = ExtResource("1_k4lqm")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1273649272]
+position = Vector2(-8, -24)
+texture = ExtResource("2_t6ja2")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=782293722]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_tuc6s")

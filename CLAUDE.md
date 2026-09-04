@@ -3,6 +3,10 @@
 Godot 4.7 top-down 2D pixel-art game (GL Compatibility renderer, 640x360 base
 viewport, 1x camera zoom, pixel snapping on).
 
+The game being built is THE NEW HIRE — see `DESIGN.md` for the content plan
+(story, floors, enemy reskins, NPCs, bosses, ending) and its build-order
+checklist. This file says HOW things work; DESIGN.md says WHAT to build.
+
 ## Structure: feature folders + shared pools
 
 - `ui/<screen>/` - one folder per screen; scene + script together
@@ -24,9 +28,26 @@ Placement rules:
 
 `game/game.tscn` is a host, not a room: it owns the player, camera, HUD, fade
 and pause menu, and swaps one `Level` child underneath them. A level owns only
-its own tiles, props and spawn markers, and answers two questions - `bounds()`
-for how much world there is and `spawn_position(name)` for where to stand.
-Nothing in game.gd names a specific map beyond `START_LEVEL`.
+its own tiles, props and spawn markers, and answers three questions -
+`bounds()` for how much world there is, `spawn_position(name)` for where to
+stand, and `title()` for what to call itself. Nothing in game.gd names a
+specific map beyond `START_LEVEL`.
+
+**Arriving somewhere announces it.** `ui/level_title/` is a card game.tscn
+instances on its own CanvasLayer, fed one string by game.gd at the end of
+`_enter_level` and dumb about everything else, exactly like the HUD: three
+seconds at full opacity, then it fades itself out over 0.4s, and a second call
+cuts the first off rather than queueing behind it, so stepping straight back
+through a door reads the room you are now in. It sits at layer 6 - above the
+transition fade so the name is already legible on the black with the room
+appearing behind it, below the pause menu's 10 so a death screen still covers
+it. The name is authored per biome as `title` in tools/biomes.gd and written
+into the level scene as the `display_name` export, with `title()` falling back
+to the node name; it is authored rather than derived because "THE MARBLE HALL"
+is not a transformation of "MarbleHall" that any rule gets right everywhere
+("HELLFIRE" takes no article). Being called from `_enter_level` is what makes
+the start of a run announce the lobby too, and what keeps a respawn silent -
+dying and getting up in the same room is not arriving somewhere.
 
 The camera lives on game.tscn, not on the player, and game.gd decides per axis:
 it follows the player where the level is bigger than the screen, and centres on
@@ -77,6 +98,18 @@ mirrored.
 Spawns are named for how you arrived: `start` (in from the previous level, by
 the south door) and `returned` (back from the next one, by the north door).
 Both sit clear of a threshold so arriving never re-triggers the door.
+
+**A door re-arms when the player steps off it**, and the case that needs it is
+not the obvious one. `_used` is latched so a nudge back onto a threshold cannot
+queue a second travel mid-fade, and physics is frozen on the player for that
+whole fade, so nothing legitimately leaves a threshold while the latch matters.
+But a level is swapped in while the arriving player still carries the position
+they had when the LAST door fired - and since every level puts its doors in the
+same place, that position is right on top of the new room's matching door. It
+fires during the transition, where game.gd is still `_travelling` and drops it.
+Without re-arming on `body_exited`, the door ahead of you is spent before you
+ever walk to it and the chain dead-ends at the second room, which is invisible
+in a two-level chain where nobody ever arrives and then walks on.
 
 Adding a biome: one edit to `tools/biomes.gd`, then run build_biomes.gd and
 build_levels.gd. Appending to `CHAIN` gives the previous last level a north door
@@ -463,10 +496,16 @@ into.
 `tools/build_levels.gd` is the exception to "regenerate": what it writes - the
 level scene and that level's own door, column, torch and health item scenes -
 is a starting point meant to be dressed by hand in the editor, and re-running
-it overwrites that work. Run it to reset a level or to add a new one. The door
-scenes are already dressed: their trigger sits at y=13, snug against the seal,
-where the generator still writes 38 - regenerate a door and that tuning is
-gone.
+it overwrites that work. Run it to reset a level or to add a new one, and pass
+level names after `--` to build only those, because a chain of eight means
+adding a floor must not re-roll the seven already dressed:
+
+```
+<godot> --headless --path . --script res://tools/build_levels.gd -- lobby
+```
+
+The door trigger's hand-tuned y=13, snug against the seal, is now what the
+generator writes, so regenerating a door no longer silently undoes it.
 
 ## Difficulty
 

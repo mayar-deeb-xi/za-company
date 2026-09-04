@@ -6,15 +6,15 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j8c1u"]
 size = Vector2(10, 6)
 
-[node name="Torch" type="Area2D" unique_id=1027317731]
+[node name="Torch" type="Area2D" unique_id=1024967063]
 monitorable = false
 script = ExtResource("1_kbkut")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1099474910]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1709941940]
 position = Vector2(-8, -24)
 texture = ExtResource("2_tqys4")
 centered = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=144755187]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2050731360]
 position = Vector2(0, -3)
 shape = SubResource("RectangleShape2D_j8c1u")

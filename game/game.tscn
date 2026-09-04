@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://game/game.gd" id="1_game"]
 [ext_resource type="PackedScene" path="res://game/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://ui/pause_menu/pause_menu.tscn" id="3_pause"]
 [ext_resource type="PackedScene" path="res://ui/hud/hud.tscn" id="4_hud"]
+[ext_resource type="PackedScene" path="res://ui/level_title/level_title.tscn" id="5_title"]
 
 [node name="Game" type="Node2D"]
 y_sort_enabled = true
@@ -42,5 +43,10 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0)
+
+[node name="Title" type="CanvasLayer" parent="."]
+layer = 6
+
+[node name="LevelTitle" parent="Title" instance=ExtResource("5_title")]
 
 [node name="PauseMenu" parent="." instance=ExtResource("3_pause")]

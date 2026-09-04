@@ -22,13 +22,16 @@ signal travelled(level_path: String, spawn: StringName)
 @export var art: Texture2D
 
 ## Latched because the threshold sits right against a solid seal: without it, a
-## player nudged back onto it mid-fade would queue a second travel.
+## player nudged back onto it mid-fade would queue a second travel. Physics is
+## frozen on the player for that whole fade, so nothing can leave the threshold
+## while the latch matters.
 var _used := false
 
 
 func _ready() -> void:
 	$Sprite2D.texture = art
 	body_entered.connect(_on_body_entered)
+	body_exited.connect(_on_body_exited)
 
 
 func _on_body_entered(body: Node2D) -> void:
@@ -36,6 +39,18 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	_used = true
 	travelled.emit(target_level, target_spawn)
+
+
+## Stepping off the threshold re-arms the door, and the case that needs it is
+## not the obvious one: a level is swapped in while the arriving player still
+## carries the position they had when the LAST door fired, which for two doors
+## in the same place in both rooms is right on top of this one. That fires the
+## new level's door during the transition, where game.gd is still travelling and
+## drops it - so without re-arming, the door ahead of you is spent before you
+## ever walk to it, and the chain dead-ends at the second room.
+func _on_body_exited(body: Node2D) -> void:
+	if body.is_in_group("player"):
+		_used = false
 
 
 ## Override point for locked doors: return false and the player walks into the

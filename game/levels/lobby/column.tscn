@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://game/levels/lobby/column_art.tres" id="1_g0xc8"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_34gp2"]
+size = Vector2(11, 6)
+
+[node name="Column" type="StaticBody2D" unique_id=2116481422]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1303989604]
+position = Vector2(-8, -48)
+texture = ExtResource("1_g0xc8")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1979230733]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_34gp2")

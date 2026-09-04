@@ -1,9 +1,10 @@
 extends "res://tests/helpers.gd"
 ## Combat test: the guard's telegraphed strike and the interrupt rules, the
 ## combo kill, the wraith's drain, the warden's wind-up and slow, and the heavy
-## attack. Boots straight through the menu into the marble hall and fights
-## there; every enemy beyond the one under test sits outside sight range of
-## every position this file uses, so exactly one fight happens at a time.
+## attack. Boots straight through the menu into the lobby, which is floor 1 and
+## deliberately empty, and places each enemy under test by hand - so exactly one
+## fight happens at a time by construction rather than by keeping the room's own
+## enemies out of each other's sight radius. They are the real scenes either way.
 
 var _enemy: Node2D
 var _wraith: Node2D
@@ -17,17 +18,18 @@ func _tick(frame: int) -> void:
 		17:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
 		32:
-			var enemies := get_nodes_in_group("enemies")
-			_check("enemies: marble hall fields four guards (%d)" % enemies.size(),
-				enemies.size() == 4)
+			_check("enemies: the lobby starts empty, so every fight is placed (%d)"
+				% get_nodes_in_group("enemies").size(),
+				get_nodes_in_group("enemies").is_empty())
+			var guard_scene := load("res://game/enemies/regular/regular.tscn") as PackedScene
+			_enemy = guard_scene.instantiate() as Node2D
+			_level().get_node("Props").add_child(_enemy)
 			_check("enemies: a guard starts at full health (%s)"
-				% (enemies[0].get("health") if enemies.size() > 0 else "<none>"),
-				enemies.size() > 0 and enemies[0].get("health") == 24)
-			# Park mid-room, clear of props, and bring ONE guard inside its
+				% _enemy.get("health"), _enemy.get("health") == 24)
+			# Park mid-room, clear of props, and bring the guard inside its own
 			# sight. The player has not moved this run, so they still face down -
 			# the guard approaches straight into the swing.
 			_player().global_position = Vector2(272, 140)
-			_enemy = enemies[0] as Node2D
 			_enemy.global_position = Vector2(272, 190)
 		58:
 			_check("enemies: the guard chases the player (%.0f px away)"
@@ -97,7 +99,7 @@ func _tick(frame: int) -> void:
 			_check("attack: the guard dies to a chained combo (%d left)"
 				% get_nodes_in_group("enemies").size(),
 				not is_instance_valid(_enemy)
-					and get_nodes_in_group("enemies").size() == 3)
+					and get_nodes_in_group("enemies").is_empty())
 			# Back to a known spot before the next fight. The thrust lunges the
 			# player forward, so a combo leaves them a good few pixels down-range
 			# of where they started - which quietly moves every geometry the rest
@@ -158,7 +160,7 @@ func _tick(frame: int) -> void:
 			_check("wraith: dies in three hits, the softest of the three (%d left)"
 				% get_nodes_in_group("enemies").size(),
 				not is_instance_valid(_wraith)
-					and get_nodes_in_group("enemies").size() == 3)
+					and get_nodes_in_group("enemies").is_empty())
 			# Pinned again after the combo's lunges, so "80 px off" is true.
 			_player().global_position = Vector2(272, 140)
 			# The warden, 80 px off: far enough that it has to walk in, close

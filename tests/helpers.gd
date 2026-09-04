@@ -121,6 +121,16 @@ func _hearts() -> HBoxContainer:
 	return current_scene.get_node("HUD/Hud").get_node("%Hearts")
 
 
+## The level-name card. Its own alpha is what shows and hides it, so a check
+## reads `modulate.a` rather than `visible`.
+func _title() -> Control:
+	return current_scene.get_node("Title/LevelTitle")
+
+
+func _title_text() -> String:
+	return (_title().get_node("%Name") as Label).text
+
+
 func _heart_tex(i: int) -> Texture2D:
 	return (_hearts().get_child(i) as TextureRect).texture
 

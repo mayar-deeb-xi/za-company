@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://d1ugnqpfne23d"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://bqfvs0ge32e2x" path="res://game/levels/door_base.gd" id="1_fhcni"]
+[ext_resource type="Script" path="res://game/levels/door_base.gd" id="1_fhcni"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ncxlh"]
 size = Vector2(32, 16)
@@ -8,19 +8,19 @@ size = Vector2(32, 16)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hu3yh"]
 size = Vector2(26, 10)
 
-[node name="Door" type="Area2D" unique_id=502298324 groups=["door"]]
+[node name="Door" type="Area2D" unique_id=19747498 groups=["door"]]
 monitorable = false
 script = ExtResource("1_fhcni")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2083504606]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2008301411]
 position = Vector2(-16, -8)
 centered = false
 
-[node name="Seal" type="StaticBody2D" parent="." unique_id=1150650696]
+[node name="Seal" type="StaticBody2D" parent="." unique_id=1935599535]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Seal" unique_id=353737137]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Seal" unique_id=1884957380]
 shape = SubResource("RectangleShape2D_ncxlh")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1171942498]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=307329612]
 position = Vector2(0, 13)
 shape = SubResource("RectangleShape2D_hu3yh")

@@ -27,9 +27,20 @@ func _tick(frame: int) -> void:
 			_check("game: player sprite frames load (32x32)",
 				_sprite().sprite_frames.get_frame_texture("walk_down", 0).get_size()
 					== Vector2(32, 32))
-			_check("level: marble hall loads first (got %s)"
+			_check("level: the lobby loads first (got %s)"
 				% ("<none>" if _level() == null else _level().name),
-				_level() != null and _level().name == "MarbleHall")
+				_level() != null and _level().name == "Lobby")
+			# Floor 1 is deliberately the one room with nothing in it: the first
+			# thing a new player does is walk, and the lobby is where they learn
+			# that safely. Anything spawning here is a placement mistake.
+			_check("level: the lobby is empty of enemies (%d)"
+				% get_nodes_in_group("enemies").size(),
+				get_nodes_in_group("enemies").is_empty())
+			# The title card names the room on arrival, and arriving at the start
+			# of a run counts - the lobby gets announced like anywhere else.
+			_check("title: the room announces itself on arrival (got '%s' at %.2f)"
+				% [_title_text(), _title().modulate.a],
+				_title_text() == "THE LOBBY" and _title().modulate.a == 1.0)
 			_check("level: player spawned on the level's start marker (%s)"
 				% _player().global_position,
 				_player().global_position == Vector2(272, 240))
@@ -175,6 +186,12 @@ func _tick(frame: int) -> void:
 			_check("collision: tiled left wall blocks the player (x=%.1f)"
 				% _player().global_position.x,
 				_player().global_position.x > 16.0)
+			# Three seconds and a fade later the card is gone on its own. Checked
+			# this late rather than at the 204 frames it costs, because the tree
+			# was paused for the settings section and a paused tween does not
+			# count down.
+			_check("title: the card takes itself away (%.2f)" % _title().modulate.a,
+				_title().modulate.a == 0.0)
 			_key(KEY_A, false)
 			# Walk north into the doorway. Approaching on foot rather than
 			# teleporting onto the threshold is the point: this is the path a
@@ -183,10 +200,10 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		421:
 			_key(KEY_W, false)
-			_check("door: walking north into the doorway loads hellfire (got %s)"
+			_check("door: walking north out of the lobby loads the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
-				_level() != null and _level().name == "Hellfire")
-			_check("door: player arrives by hellfire's south door (%s)"
+				_level() != null and _level().name == "MarbleHall")
+			_check("door: player arrives by the marble hall's south door (%s)"
 				% _player().global_position,
 				_player().global_position.distance_to(Vector2(272, 240)) < 40.0)
 			_check("door: transition faded back in",
@@ -194,9 +211,33 @@ func _tick(frame: int) -> void:
 			_check("door: camera reframed on the new level (%s)"
 				% _camera().global_position,
 				_camera().global_position == _level().bounds().get_center())
-			# Per-biome composition: hellfire is the room that escalates, and
-			# both of its extras are identified by their own exports rather
-			# than by class, the way everything here avoids the class cache.
+			_check("title: walking through a door announces the new room (got '%s' at %.2f)"
+				% [_title_text(), _title().modulate.a],
+				_title_text() == "THE MARBLE HALL" and _title().modulate.a == 1.0)
+			# Per-biome composition, first half: the marble hall is four guards
+			# and nothing else, so stepping out of the lobby is where the game
+			# starts having enemies in it at all.
+			var guards := get_nodes_in_group("enemies")
+			_check("enemies: the marble hall fields four guards (%d)" % guards.size(),
+				guards.size() == 4)
+			# On along the chain, approaching the next door from the same distance
+			# the lobby's was taken from.
+			_player().global_position = Vector2(272, 78)
+			_key(KEY_W, true)
+		501:
+			_key(KEY_W, false)
+			_check("door: the chain continues on into hellfire (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "Hellfire")
+			# Still up, and reading the room we are in now: a second card cuts the
+			# first one off rather than queueing behind it.
+			_check("title: a new room replaces the last one's name (got '%s' at %.2f)"
+				% [_title_text(), _title().modulate.a],
+				_title_text() == "HELLFIRE" and _title().modulate.a == 1.0)
+			# Per-biome composition, second half: hellfire is the room that
+			# escalates, and both of its extras are identified by their own
+			# exports rather than by class, the way everything here avoids the
+			# class cache.
 			var here := get_nodes_in_group("enemies")
 			var drainers := here.filter(func(e): return e.get("drain_per_second") != null)
 			var slowers := here.filter(func(e): return e.get("slow_seconds") != null)
@@ -206,7 +247,7 @@ func _tick(frame: int) -> void:
 			# Turn round and walk back out the way we came in. The wraith is on
 			# the far wall, outside its own 120 px sight of this whole path.
 			_key(KEY_S, true)
-		501:
+		581:
 			_key(KEY_S, false)
 			_check("return: hellfire's south door goes back to the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -216,34 +257,34 @@ func _tick(frame: int) -> void:
 				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		507:
+		587:
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		519:
+		599:
 			_check("pause: Main Menu returns to the menu, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
 					and not paused)
 			# Second run: spend every life and prove the run actually ends.
 			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
-		531:
+		611:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
-		543:
+		623:
 			_check("lives: a new run starts with all three again (%s)"
 				% _player().get("lives"),
 				current_scene.scene_file_path == "res://game/game.tscn"
 					and _player().get("lives") == 3)
 			_player().call("take_damage", 9999)
-		596:
+		676:
 			_check("lives: first death respawns with two left (%s, health %s)"
 				% [_player().get("lives"), _player().get("health")],
 				_player().get("lives") == 2 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		646:
+		726:
 			_check("lives: second death respawns with one left (%s)"
 				% _player().get("lives"),
 				_player().get("lives") == 1 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		696:
+		776:
 			_check("game over: the last death raises the death screen, paused",
 				paused and _pause_menu().get_node("Root").visible)
 			_check("game over: heading reads YOU DIED (got '%s')"
@@ -257,11 +298,11 @@ func _tick(frame: int) -> void:
 			# resume back into.
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		702:
+		782:
 			_check("game over: Escape cannot dismiss the death screen",
 				paused and _pause_menu().get_node("Root").visible)
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		714:
+		794:
 			_check("game over: MAIN MENU leaves the run, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"

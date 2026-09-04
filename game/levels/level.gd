@@ -12,6 +12,18 @@ class_name Level
 ## not necessarily run by then.
 
 
+## The name this room announces itself by. Authored per biome in
+## tools/biomes.gd and written in by the generator.
+@export var display_name: String = ""
+
+
+## Third of the questions a level answers about itself, alongside bounds() and
+## spawn_position(). Falls back to the node name so a level hand-built in the
+## editor still announces something rather than a blank card.
+func title() -> String:
+	return display_name if not display_name.is_empty() else name
+
+
 ## World-space extent of the map, measured from the wall ring rather than stored
 ## as a constant, so resizing a level in the editor moves the camera limits with
 ## it automatically.

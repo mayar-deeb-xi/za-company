@@ -6,15 +6,15 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_1s12u"]
 radius = 6.0
 
-[node name="Health" type="Area2D" unique_id=1744287503]
+[node name="Health" type="Area2D" unique_id=260272131]
 monitorable = false
 script = ExtResource("1_60v0k")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1235764649]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1406493631]
 position = Vector2(-4, -8)
 texture = ExtResource("2_q24kr")
 centered = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1648291014]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=100686418]
 position = Vector2(0, -4)
 shape = SubResource("CircleShape2D_1s12u")

@@ -60,11 +60,22 @@ const HEALTH_POS := Vector2(424, 152)
 const ENEMY_SCENE := "res://game/enemies/%s/%s.tscn"
 
 
+## Names passed after `--` build only those levels. Since a re-run overwrites
+## hand-dressing, adding one floor to a chain of eight must not mean re-rolling
+## the seven that are already dressed:
+##   godot --headless --path . --script res://tools/build_levels.gd -- lobby
 func _initialize() -> void:
+	var only := OS.get_cmdline_user_args()
 	var failed := false
 	for level in Biomes.CHAIN:
+		if not only.is_empty() and not only.has(level):
+			continue
 		print(level, ":")
 		failed = _build(level) or failed
+	for name in only:
+		if not Biomes.CHAIN.has(name):
+			printerr("unknown level '%s' - not in Biomes.CHAIN" % name)
+			failed = true
 	quit(1 if failed else 0)
 
 
@@ -144,9 +155,12 @@ func _write_door_scene(dir: String) -> bool:
 	seal_shape.owner = root
 
 	# The threshold you actually walk onto, on the floor just inside the arch.
+	# Snug against the seal: further out and the player can scrape past the
+	# trigger along the wall. This was tuned by hand in the dressed doors and the
+	# generator used to write 38, so regenerating a door silently undid it.
 	var trigger := CollisionShape2D.new()
 	trigger.name = "CollisionShape2D"
-	trigger.position = Vector2(0, 38)
+	trigger.position = Vector2(0, 13)
 	var trigger_rect := RectangleShape2D.new()
 	trigger_rect.size = Vector2(26, 10)
 	trigger.shape = trigger_rect
@@ -218,6 +232,7 @@ func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
 	root.name = Biomes.BIOMES[level]["node"]
 	root.y_sort_enabled = true
 	root.set_script(load(LEVEL_SCRIPT))
+	root.set("display_name", Biomes.BIOMES[level].get("title", ""))
 
 	var floor_layer := _layer("Floor", tileset, root)
 	var walls := _layer("Walls", tileset, root)

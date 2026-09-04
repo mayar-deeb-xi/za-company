@@ -9,7 +9,7 @@ extends Node2D
 ## Escape is handled by the PauseMenu child, which pauses the tree instead of
 ## leaving the scene. Leaving for the main menu is one of its options.
 
-const START_LEVEL := "res://game/levels/marble_hall/marble_hall.tscn"
+const START_LEVEL := "res://game/levels/lobby/lobby.tscn"
 const FADE_SECONDS := 0.28
 
 ## Typed by preloaded script rather than by the `class_name` those scripts also
@@ -20,11 +20,13 @@ const DoorType := preload("res://game/levels/door_base.gd")
 const PlayerType := preload("res://game/player/player.gd")
 const HudType := preload("res://ui/hud/hud.gd")
 const PauseMenuType := preload("res://ui/pause_menu/pause_menu.gd")
+const LevelTitleType := preload("res://ui/level_title/level_title.gd")
 
 @onready var _player: PlayerType = $Player
 @onready var _camera: Camera2D = $Camera2D
 @onready var _fade: ColorRect = $Transition/Fade
 @onready var _hud: HudType = $HUD/Hud
+@onready var _title: LevelTitleType = $Title/LevelTitle
 @onready var _pause_menu: PauseMenuType = $PauseMenu
 
 var _level: LevelType
@@ -156,6 +158,13 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 	# level we just left had put it.
 	_bounds = _level.bounds()
 	_apply_zoom()
+
+	# Announce the room. Called here rather than after the fade finishes, so the
+	# name is already up on the black and the room appears behind it; and here
+	# rather than from the door, so arriving at the start of a run names the
+	# lobby too. A respawn deliberately does not come through here - dying and
+	# getting up in the same room is not arriving somewhere.
+	_title.show_title(_level.title())
 
 
 ## Where the camera wants to be, decided per axis:
