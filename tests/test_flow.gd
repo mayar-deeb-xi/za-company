@@ -467,6 +467,46 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		1001:
 			_key(KEY_W, false)
+			_check("door: the chain continues on into the executive floor (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "ExecutiveFloor")
+			_check("title: the executive floor announces itself (got '%s')"
+				% _title_text(), _title_text() == "THE EXECUTIVE FLOOR")
+			# The glass wall IS the room: fourteen bays across the whole floor
+			# with one gap in the middle, which is DESIGN.md's centre chokepoint
+			# drawn rather than described. Counting them is what catches a bay
+			# lost out of the data, since a wall with a second hole in it stops
+			# being a chokepoint at all.
+			var glass: Array = _level().get_node("Props").get_children().filter(
+				func(n: Node) -> bool: return n.name.begins_with("Partition"))
+			_check("level: fourteen bays of glass across the floor (%d)"
+				% glass.size(), glass.size() == 14)
+			# And the gap is where the doors are. Every level in the chain has
+			# to leave the door line walkable, and this is the only one that
+			# builds a wall across the line it has to leave open.
+			var across: Array = glass.filter(func(n: Node2D) -> bool:
+				return absf(n.position.x - 272.0) < 48.0)
+			_check("level: the chokepoint is open on the door line (%d in it)"
+				% across.size(), across.is_empty())
+			# The prizes are behind the glass, which is the whole point of
+			# putting them there: DESIGN.md wants every one of them to cost a
+			# step into somebody's radius.
+			var fitted := ["AwardsCabinet1", "AwardsCabinet4", "BoardroomTable1",
+				"Portrait1", "BarCart1", "Rug1"]
+			var wanting: Array = fitted.filter(func(n: String) -> bool:
+				return _level().get_node_or_null("Props/" + n) == null)
+			_check("level: the executive floor is dressed as one (missing %s)"
+				% [wanting], wanting.is_empty())
+			_check("level: it has the polisher and no heart",
+				_level().get_node_or_null("Props/Torch") != null
+					and _level().get_node_or_null("Props/Health") == null)
+			_check("level: the executive floor is empty of enemies for now (%d)"
+				% get_nodes_in_group("enemies").size(),
+				get_nodes_in_group("enemies").is_empty())
+			_player().global_position = Vector2(272, 78)
+			_key(KEY_W, true)
+		1081:
+			_key(KEY_W, false)
 			_check("door: the chain continues on into the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "MarbleHall")
@@ -475,7 +515,7 @@ func _tick(frame: int) -> void:
 				guards.size() == 4)
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		1081:
+		1161:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into hellfire (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -498,7 +538,7 @@ func _tick(frame: int) -> void:
 			# Turn round and walk back out the way we came in. The wraith is on
 			# the far wall, outside its own 120 px sight of this whole path.
 			_key(KEY_S, true)
-		1161:
+		1241:
 			_key(KEY_S, false)
 			_check("return: hellfire's south door goes back to the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -508,34 +548,34 @@ func _tick(frame: int) -> void:
 				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		1167:
+		1247:
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		1179:
+		1259:
 			_check("pause: Main Menu returns to the menu, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
 					and not paused)
 			# Second run: spend every life and prove the run actually ends.
 			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
-		1191:
+		1271:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
-		1203:
+		1283:
 			_check("lives: a new run starts with all three again (%s)"
 				% _player().get("lives"),
 				current_scene.scene_file_path == "res://game/game.tscn"
 					and _player().get("lives") == 3)
 			_player().call("take_damage", 9999)
-		1256:
+		1336:
 			_check("lives: first death respawns with two left (%s, health %s)"
 				% [_player().get("lives"), _player().get("health")],
 				_player().get("lives") == 2 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		1306:
+		1386:
 			_check("lives: second death respawns with one left (%s)"
 				% _player().get("lives"),
 				_player().get("lives") == 1 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		1356:
+		1436:
 			_check("game over: the last death raises the death screen, paused",
 				paused and _pause_menu().get_node("Root").visible)
 			_check("game over: heading reads YOU DIED (got '%s')"
@@ -549,11 +589,11 @@ func _tick(frame: int) -> void:
 			# resume back into.
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		1362:
+		1442:
 			_check("game over: Escape cannot dismiss the death screen",
 				paused and _pause_menu().get_node("Root").visible)
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		1374:
+		1454:
 			_check("game over: MAIN MENU leaves the run, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"

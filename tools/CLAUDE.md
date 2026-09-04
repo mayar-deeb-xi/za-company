@@ -10,20 +10,22 @@ file is how furniture works and how floors are added.
 `tools/props/` holds one file per prop type, shelved by what a prop IS -
 `furniture/` (reception counter, desk, chair, water cooler, sofa, coffee table,
 pot plant alive and dead, call-centre station, media edit bay, engineer's
-workstation, filter coffee machine, glass partition), `hardware/` (server rack,
-printer, stacked dead monitors, opened tower, toolbox, cable spool, scrap pile,
-loose debris, a camera on its tripod, a ring light, a paper backdrop, a punch
-bag, a rack of weights), `signs/` (the welcome banner, a taped-up notice, two
-whiteboards - one lettered, one an architecture diagram nobody may erase - two
-printed posters and two lit boards with a number on them) and `markings/`
-(paint on the floor: the gym's boxing ring, and so far only that) - and a biome
-says which ones it puts where in its own `props` list, exactly the way it
-already says which enemies it gets. That list drives everything:
+workstation, boardroom table, filter coffee machine, drinks trolley, glass
+partition, awards cabinet), `hardware/` (server rack, printer, stacked dead
+monitors, opened tower, toolbox, cable spool, scrap pile, loose debris, a
+camera on its tripod, a ring light, a paper backdrop, a punch bag, a rack of
+weights), `signs/` (the welcome banner, a taped-up notice, two whiteboards -
+one lettered, one an architecture diagram nobody may erase - two printed
+posters, two lit boards with a number on them and the founder's portrait) and
+`markings/` (what is spread on the floor rather than stood on it: the gym's
+boxing ring and the executive floor's rug) - and a biome says which ones it
+puts where in its own `props` list, exactly the way it already says which
+enemies it gets. That list drives everything:
 build_levels.gd writes a scene per type into the level's `props/`, paints its
 picture in the biome's palette and bakes it in, then instances them.
 `build_levels.gd -- lobby` therefore reproduces the dressed room rather than
 resetting it to a bare box - which is what makes the generator's "re-running
-overwrites hand-dressing" warning survivable for ten floors.
+overwrites hand-dressing" warning survivable for eleven floors.
 
 **The folder is the catalogue, and the shelves are only organisation.**
 `tools/props.gd` is the facade the generators call; it scans the shelves once
@@ -90,6 +92,18 @@ x, met head on. And a bay is a pocket, so an enemy placed on a floor like this
 one belongs deliberately inside a bay or deliberately outside it, never on the
 doorway.
 
+**And a wall with one gap in it is a chokepoint**, which the executive floor
+is built on: fourteen bays run the full width of the room at one y with a
+64 px opening left on the door line, so the whole northern half - boardroom
+and trophy wall - is reached through one place. That is the difference between
+partitioning a room and dividing it, and it is worth being deliberate about
+which one a floor is doing, because the second changes how it fights. The gap
+sits on the door line for the reason every floor keeps that line clear, and
+the enemies a floor like this gets belong on ONE side of the glass or standing
+in the mouth of the gap - an enemy on the far side of a full-width wall grinds
+along it rather than coming round, since enemies slide off what they hit and
+have no pathfinding.
+
 Solid props matter to the enemies too, not just the player: enemies walk
 straight at the player and slide off whatever they hit, with no pathfinding to
 recover from a pocket. So a furnished room must not be a maze, and nothing solid
@@ -104,8 +118,10 @@ the notice says OUT OF ORDER, the counter says RECEPTION, the shared floor's
 whiteboard says SMILE / THEY CAN / HEAR IT and its poster says FIX IT / IN
 POST, the call floor's wallboard says CALLS / WAITING / 142 with the figure in
 red, the dev floor's whiteboard says DO NOT ERASE under a diagram it does not
-explain and its build board says BUILD / FAILED, and DESIGN.md still has wall
-text waiting further up the building.
+explain, its build board says BUILD / FAILED, and the executive floor's
+portrait says only FOUNDER on a brass plaque - one word, because a portrait
+that has to explain who it is of is not a portrait of anybody important.
+DESIGN.md still has wall text waiting further up the building.
 
 ## Adding and inserting a biome
 

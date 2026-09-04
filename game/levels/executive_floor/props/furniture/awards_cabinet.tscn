@@ -1,0 +1,20 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_c4qqj"]
+_data = PackedByteArray("AAADAAUAAAABAAAALAAAACwAAACqAQAAUklGRqIBAABXRUJQVlA4TJUBAAAvK8AKEL+gOJKk5BSXl0PgZEsaaiRJSu5w90xDfs8DKQJFkSQ1tXfk8OOXgwpEYRgTWJj/SNUlCkQJEmDJjBa8V0QylQwJlOalYDBnRgntb+ckd3/an15Yk8d/WZXDu5ehESRGkiRJCvcF0Ax9ezFNsvqr2t8whgAR/Z+Al3v/vu/Pl5df9/3+cu/ny4+Pm769PDsuLOwvnac6qBVX7HfkPMWOeupMVNzyfAzU87ToQq7wUTvU8yzhH6Cm1g71UZja9UtoqHVESp1wDQFqBQXKo04IF6hArQChUOtI3dMkQK0kSYFaO02ydix/fh7HcZRjf0ZrrdnGf/6oxTa2jVkAVMZn1YL0KuMF5531HDnfYJAw4Oss/AUGCTuoCWNnqAlXsMCXC1yhQDLLSIFkCwiLX46AMF1KP9GU0KffOS4sx/6M1pp961VLm9uGLICoCEgnY5XhVhYycn4LBgk72A3tGKsJeyywwTWEeZgokFygTtQJEMZrmmSgySz9xnFhOfZntP3Stule7s37bb/9z279vPfrjZ8A")
+size_override = Vector2(44, 44)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_as82q"]
+size = Vector2(40, 6)
+
+[node name="AwardsCabinet" type="StaticBody2D" unique_id=296144025]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1491765616]
+position = Vector2(-22, -44)
+texture = SubResource("PortableCompressedTexture2D_c4qqj")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=297970433]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_as82q")

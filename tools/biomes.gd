@@ -62,7 +62,7 @@ extends RefCounted
 ## office floors replace them.
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
 		"shared_floor", "dev_floor", "conflict_resolution", "bullpen",
-		"marble_hall", "hellfire"]
+		"executive_floor", "marble_hall", "hellfire"]
 
 ## Assembled from the per-floor files at load, keyed by CHAIN name, so every
 ## existing `Biomes.BIOMES[level]` read works exactly as it did when this was

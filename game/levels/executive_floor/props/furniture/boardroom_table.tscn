@@ -1,0 +1,20 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_m1a6f"]
+_data = PackedByteArray("AAADAAUAAAABAAAAYAAAACIAAACyAQAAUklGRqoBAABXRUJQVlA4TJ0BAAAvX0AIEP+gKJKk5vId4YcG/P+RkAVgTFEkSU1dPnL4IRUVSMMAL5QoaiSFOXrxr4QXZjCBgvmPOjsSQQAiBgAsgoUBgKgQEwiASNSEudKgUg45h1RCzkFZuBkioixURA6OiLV1/n3jpPfW/KPvB1i2bTdBwpVQU+k+MTL/YUJob0XX8i+i/47cSBKatsSNVQHJJ7Y/H9L3mTYPzHNI2OyAYaCEDRboOuqSRZ0BvCcfaWPeB9V7n0LLcZ4GnCPnpl37fWinKfT9tHvf4kLfu5NTi4taLpBTgLVkI6dZu8/aFFqO8xrAGDKRNmbMPmNSaDnOqwCtSXORVzQT0iWgFKkXlmtyPZMLA7UjJYGmoYaLXL/W9Wddv1bZMKEmB6qKKi6Xl4oJVRlQllRykVdKJlQKQEoaL7WxcQyqf9QjZVC9vHTd86REAHlO+aXTPyjPQ9/z9zwoOZZllF06Lcv28ffclsQTgsSlNiZE6Hv+ntuSq7Gb2ZCIl654iUP6tg2mTpbEtv0Hlvjdl6CKCxk2FhzVv2s3b/Tl+Ks/krVvAwA=")
+size_override = Vector2(96, 34)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_dwk7h"]
+size = Vector2(92, 8)
+
+[node name="BoardroomTable" type="StaticBody2D" unique_id=1271354881]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1245092954]
+position = Vector2(-48, -34)
+texture = SubResource("PortableCompressedTexture2D_m1a6f")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1275704595]
+position = Vector2(0, -4)
+shape = SubResource("RectangleShape2D_dwk7h")

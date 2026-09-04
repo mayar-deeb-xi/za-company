@@ -65,7 +65,7 @@ game/levels/
                         where the biome asks for it, and the gym asks for none
       furniture/        desk.tscn  chair.tscn ...      whatever it
       hardware/         server_rack.tscn  printer.tscn ...  places,
-      markings/         boxing_ring.tscn                    by kind
+      markings/         boxing_ring.tscn  rug.tscn          by kind
       signs/            notice.tscn ...
 ```
 
@@ -116,7 +116,11 @@ the shared floor is the case: its media half is walled into two glass-fronted
 offices by a run of `partition` props, because a `columns` layout is rows
 times columns and so cannot leave a gap where a door goes. The glass is
 translucent on purpose - a wall is drawn upwards from its foot, so an opaque
-one would hide anybody standing in the office. See tools/CLAUDE.md.
+one would hide anybody standing in the office. The executive floor takes the
+same prop the other way: one run of it crosses the WHOLE room with a single
+gap left on the door line, so a partition wall stops being furniture that
+divides a half and becomes the chokepoint the room is fought at. See
+tools/CLAUDE.md.
 
 The `_base.gd` scripts are shared because each is one side of a handshake the
 other party owns: game.gd performs the swap doors report, and the player owns

@@ -279,9 +279,46 @@ the room, and the fiction carries which floor it is.
   have no pathfinding), and no enemy parked on a divider's x, or the divider's
   48px art hides it completely.
   **Still to add**: Ivan (west wall) - he needs the NPC system, build step 4.
-- [ ] **F9 The Executive Floor** (mix/exam): dark wood, glass walls, awards
+- [x] **F9 The Executive Floor** (mix/exam): dark wood, glass walls, awards
   cabinet. 3 office boys + 2 social_media + 1 call_center (center chokepoint).
   Every prize requires stepping into a radius on purpose. Ivan.
+  **Built**: mahogany walls and a brass accent - the darkest warm room in the
+  building, and deliberately the lobby's opposite number: floor 1 is over-lit
+  and cheap, floor 9 is under-lit and expensive. It is also the only OFFICE
+  floor with the fluted classical colonnade, which is the joke rather than an
+  oversight - the columns are what made the lobby read as a temple, and this is
+  the one floor entitled to the pretence.
+  The chokepoint is DRAWN. A run of fourteen glass bays crosses the whole
+  floor with a single 64 px gap on the door line, so the boardroom and the
+  trophy wall behind it are reached through one opening in the middle of the
+  room - which is what makes "every prize requires stepping into a radius"
+  mean anything. North of the glass: the boardroom (the table, six chairs, the
+  drinks trolley) west of the gap, four awards cabinets and a bench east of it.
+  South of it: the gallery you arrive into, a carpet corridor along the glass
+  and a rug under two couches. Five new props:
+  - `awards_cabinet`, the tallest piece of furniture in the catalogue, with
+    three lit shelves of cups and stars behind a glass door. The trophies are
+    a fixed gold for the same reason fire and hearts are fixed - take them off
+    the biome's ramp and hellfire hands out iron cups.
+  - `boardroom_table`, the widest prop in the catalogue at 96 px: a polished
+    top with a brass inlay, six places set with pads nobody has written on,
+    and one speakerphone.
+  - `bar_cart`, the drinks trolley, whose decanter is the catalogue's fourth
+    fixed colour after water, coffee and gold.
+  - `portrait`, the founder in oils under a brass FOUNDER plaque - the only
+    sign in the game that is a picture with a caption rather than a caption.
+    Painted in varnish rather than in skin, which is both what a hundred-year
+    -old commissioned portrait looks like and a way of making no claim about
+    whose face it is.
+  - `rug`, the second thing on the markings shelf after the boxing ring, and
+    the same two tricks: it blocks nothing and it pins its top-left corner so
+    everybody walks on top of it.
+  Hazard: the floor polisher, back from the lobby that dropped it, and this is
+  the floor it was always for - the only one in the building whose wood is
+  actually polished.
+  No debris anywhere on this floor, and the absence is deliberate: every floor
+  below it has litter because every floor below it is used.
+  **Still to add**: its six, and Ivan.
 - [ ] **F10 Khaled's Office** (FINAL): penthouse, city window, one desk, one
   face-down sticky note. Wide open arena. South door seals behind you.
   Dominic waits outside ("Whatever happens up there… CC me."). Ivan.
@@ -335,12 +372,12 @@ Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
         run build_biomes + build_levels. Per-floor enemy placement AND
         furniture are per-biome data, so a floor is data plus whatever new
         props it needs in `tools/props.gd` - a regenerate rebuilds the dressed
-        room rather than resetting it. **Eight of the ten rooms exist**, in
+        room rather than resetting it. **Nine of the ten rooms exist**, in
         chain order: F1 the lobby, F2 the content studio, F3 the call center,
-        F5 the shared floor, F6 the dev floor, F7 the gym and F8 the bullpen
-        are dressed, and F4 Ahmed's office is a room waiting for its boss. F9
-        and F10 are the two still to build, and the two demo biomes hold their
-        places on the end of the chain until they do.
+        F5 the shared floor, F6 the dev floor, F7 the gym, F8 the bullpen and
+        F9 the executive floor are dressed, and F4 Ahmed's office is a room
+        waiting for its boss. F10 is the one still to build, and the two demo
+        biomes hold its place on the end of the chain until it is.
         Regenerate one floor at a time: `build_levels.gd -- <level>`, and note
         that inserting a floor changes its NEIGHBOURS' door targets, so
         rebuild those too.
