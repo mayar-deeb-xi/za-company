@@ -36,6 +36,16 @@ func _tick(frame: int) -> void:
 			_check("level: the lobby is empty of enemies (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").is_empty())
+			# Empty of enemies is not the same as empty. The furniture is what
+			# says this is an office rather than a dungeon with the lights on,
+			# and it is the fragile half: re-running build_levels.gd overwrites a
+			# level's dressing, so a run with stale data would ship a bare box
+			# and every other check here would still pass.
+			var dressing := ["Reception1", "Cooler1", "Desk1", "Sofa1", "Banner1"]
+			var missing: Array = dressing.filter(func(n: String) -> bool:
+				return _level().get_node_or_null("Props/" + n) == null)
+			_check("level: the lobby is dressed as an office lobby (missing %s)"
+				% [missing], missing.is_empty())
 			# The title card names the room on arrival, and arriving at the start
 			# of a run counts - the lobby gets announced like anywhere else.
 			_check("title: the room announces itself on arrival (got '%s' at %.2f)"
@@ -200,10 +210,10 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		421:
 			_key(KEY_W, false)
-			_check("door: walking north out of the lobby loads the marble hall (got %s)"
+			_check("door: walking north out of the lobby loads the bullpen (got %s)"
 				% ("<none>" if _level() == null else _level().name),
-				_level() != null and _level().name == "MarbleHall")
-			_check("door: player arrives by the marble hall's south door (%s)"
+				_level() != null and _level().name == "Bullpen")
+			_check("door: player arrives by the bullpen's south door (%s)"
 				% _player().global_position,
 				_player().global_position.distance_to(Vector2(272, 240)) < 40.0)
 			_check("door: transition faded back in",
@@ -213,18 +223,51 @@ func _tick(frame: int) -> void:
 				_camera().global_position == _level().bounds().get_center())
 			_check("title: walking through a door announces the new room (got '%s' at %.2f)"
 				% [_title_text(), _title().modulate.a],
-				_title_text() == "THE MARBLE HALL" and _title().modulate.a == 1.0)
-			# Per-biome composition, first half: the marble hall is four guards
-			# and nothing else, so stepping out of the lobby is where the game
-			# starts having enemies in it at all.
-			var guards := get_nodes_in_group("enemies")
-			_check("enemies: the marble hall fields four guards (%d)" % guards.size(),
-				guards.size() == 4)
+				_title_text() == "THE BULLPEN" and _title().modulate.a == 1.0)
+			# Floor 2 is where the game starts having enemies in it at all, and
+			# they are the COMPANY's - the office boys, not dungeon guards. The
+			# scene path is what proves that, since build_levels.gd names every
+			# enemy instance Enemy<n> whatever type it is.
+			var boys := get_nodes_in_group("enemies")
+			var reskinned: Array = boys.filter(func(e: Node) -> bool:
+				return e.scene_file_path.contains("office_boy"))
+			_check("enemies: the bullpen fields four office boys (%d of %d)"
+				% [reskinned.size(), boys.size()],
+				boys.size() == 4 and reskinned.size() == 4)
+			_check("enemies: an office boy is a reskin, so it has a guard's health (%s)"
+				% (boys[0].get("max_health") if not boys.is_empty() else "<none>"),
+				not boys.is_empty() and boys[0].get("max_health") == 24)
+			# Nothing has noticed the player yet, which is the placement rule
+			# this room has to keep: the walk from the south door to the north
+			# one passes no office boy's 80 px sight.
+			var awake: Array = boys.filter(func(e: Node) -> bool:
+				return e.get("phase") != 0)
+			_check("enemies: the door-to-door walk wakes nobody (%d awake)"
+				% awake.size(), awake.is_empty())
+			# The junk is the room. Same guard as the lobby's dressing check, and
+			# it matters more here: a regeneration with stale data would leave an
+			# empty box that still passed every other check on this floor.
+			var junk := ["ServerRack1", "Printer1", "CrtStack1", "Toolbox1",
+				"CableSpool1", "ScrapPile1", "Debris1", "Notice1"]
+			var absent: Array = junk.filter(func(n: String) -> bool:
+				return _level().get_node_or_null("Props/" + n) == null)
+			_check("level: the bullpen is dressed as a repair floor (missing %s)"
+				% [absent], absent.is_empty())
 			# On along the chain, approaching the next door from the same distance
 			# the lobby's was taken from.
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		501:
+			_key(KEY_W, false)
+			_check("door: the chain continues on into the marble hall (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "MarbleHall")
+			var guards := get_nodes_in_group("enemies")
+			_check("enemies: the marble hall fields four guards (%d)" % guards.size(),
+				guards.size() == 4)
+			_player().global_position = Vector2(272, 78)
+			_key(KEY_W, true)
+		581:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into hellfire (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -247,7 +290,7 @@ func _tick(frame: int) -> void:
 			# Turn round and walk back out the way we came in. The wraith is on
 			# the far wall, outside its own 120 px sight of this whole path.
 			_key(KEY_S, true)
-		581:
+		661:
 			_key(KEY_S, false)
 			_check("return: hellfire's south door goes back to the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -257,34 +300,34 @@ func _tick(frame: int) -> void:
 				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		587:
+		667:
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		599:
+		679:
 			_check("pause: Main Menu returns to the menu, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
 					and not paused)
 			# Second run: spend every life and prove the run actually ends.
 			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
-		611:
+		691:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
-		623:
+		703:
 			_check("lives: a new run starts with all three again (%s)"
 				% _player().get("lives"),
 				current_scene.scene_file_path == "res://game/game.tscn"
 					and _player().get("lives") == 3)
 			_player().call("take_damage", 9999)
-		676:
+		756:
 			_check("lives: first death respawns with two left (%s, health %s)"
 				% [_player().get("lives"), _player().get("health")],
 				_player().get("lives") == 2 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		726:
+		806:
 			_check("lives: second death respawns with one left (%s)"
 				% _player().get("lives"),
 				_player().get("lives") == 1 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		776:
+		856:
 			_check("game over: the last death raises the death screen, paused",
 				paused and _pause_menu().get_node("Root").visible)
 			_check("game over: heading reads YOU DIED (got '%s')"
@@ -298,11 +341,11 @@ func _tick(frame: int) -> void:
 			# resume back into.
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		782:
+		862:
 			_check("game over: Escape cannot dismiss the death screen",
 				paused and _pause_menu().get_node("Root").visible)
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		794:
+		874:
 			_check("game over: MAIN MENU leaves the run, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"

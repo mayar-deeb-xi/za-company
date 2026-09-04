@@ -74,7 +74,22 @@ game/levels/
     <biome>.tscn  door.tscn  column.tscn  torch.tscn  health_item.tscn
     tileset.tres  column_art.tres  torch_art.tres  health_art.tres
     doorway_out.tres  doorway_back.tres
+    <prop>.tscn  <prop>_art.tres      one pair per prop the biome places
 ```
+
+Architecture and the hazard are per-biome **styles**, not one look for the whole
+game: `column` picks the fluted classical stone, a glazed steel pillar or a
+cubicle divider, and `hazard` picks the standing torch, a sparking floor
+polisher or an arcing power strip. Every style keeps the same canvas size and
+foot, so the scenes and collision boxes are untouched by the choice - only the
+art differs. The split exists because the classical column is most of what makes
+the marble hall read as a hall, and it was also most of what made the office
+lobby read as a temple. What a room uses to break up its floor is exactly what
+changes between a lobby and a bullpen. A biome can also
+override the colonnade's `columns` layout (a furnished room needs the floor a
+full colonnade takes up) and ask for a `runner`, which tints the central floor
+band toward the accent so it reads as carpet rather than as more of the same
+stone.
 
 The `_base.gd` scripts are shared because each is one side of a handshake the
 other party owns: game.gd performs the swap doors report, and the player owns
@@ -82,6 +97,56 @@ the take_damage()/heal() API hazards and pickups press. Everything else about a
 door, torch or heart is the level's: override `can_travel()` in a level's own
 script for a lock, or restructure that level's scenes freely. A column has no
 shared behaviour at all and carries no script.
+
+**A room is furnished from data, not by hand.** `tools/props.gd` is the prop
+catalogue - office furniture (reception counter, desk, chair, water cooler,
+sofa, coffee table, pot plant alive and dead), the maintenance floor's hardware
+(server rack, printer, stacked dead monitors, opened tower, toolbox, cable
+spool, scrap pile, loose debris) and signs (the welcome banner, a taped-up
+notice) - and a biome says which ones it puts where in its own `props` list,
+exactly the way it already says which enemies it gets. That one list drives both halves: build_biomes.gd
+paints art for exactly the types the biome places, build_levels.gd writes a
+scene per type into the level's folder and instances them. So a floor can
+neither place furniture it has no art for nor carry art for furniture it never
+puts down, and `build_levels.gd -- lobby` reproduces the dressed room rather
+than resetting it to a bare box - which is what makes the generator's
+"re-running overwrites hand-dressing" warning survivable for eight floors.
+
+Props are drawn, not sampled, like the columns and torches and for the same
+reason: the shared dungeon sheet has no furniture in it. Bodies come out of the
+biome's own ramp through `Biomes.shade()`, so a desk in hellfire is a hellfire
+desk for free. Only what has to read the same everywhere is fixed - water,
+foliage, a monitor's dark screen - the argument that already fixes fire and
+hearts. Two numbers are load-bearing in props.gd. `blocks` is the collision box,
+and a prop blocks only its base (the column's trick) so the player passes behind
+its upper half and Y-sorting draws the two in the right order; a `blocks` of
+zero is decor, and gets a bare Node2D rather than a body with no shape. And
+heights are measured against the 24 px standing torch, which is about as tall as
+a character: the first draft ignored that reference and drew a 30 px desk, which
+looks like nothing on its own and makes the whole cast read as children the
+moment one of them stands next to it.
+
+**A prop that blocks nothing is a tool, not an oversight.** `debris` - litter on
+the floor - has a `blocks` of zero and is the answer to a brief that pulls two
+ways: the bullpen has to look full of junk AND leave floor for a four-on-one
+fight and an AoE. Solid props cannot do both, so the junk is a thick perimeter
+and the middle gets litter. It is also the one prop drawn without an outline,
+since an outline is what gives a prop volume and this is meant to read as marks
+on the floor; and nothing in it is red or gold, because the heart pickup is red
+and the hazard's sparks are gold, and litter that borrows either colour is
+litter the player crosses the room to try to pick up.
+
+Solid props matter to the enemies too, not just the player: enemies walk
+straight at the player and slide off whatever they hit, with no pathfinding to
+recover from a pocket. So a furnished room must not be a maze, and nothing solid
+should sit on the line an enemy walks from its post to the middle of the room.
+
+props.gd also carries a 5x5 uppercase pixel font, because half of what makes a
+company office funny is what is written on the walls. Sign text is catalogue
+data (`text`), not baked into a painter, so a floor can put up its own words
+without new code - the banner says WELCOME / NEW HIRES, the notice says OUT OF
+ORDER, the counter says RECEPTION, and DESIGN.md has wall text waiting on four
+more floors.
 
 Doors are found through the `door` group and levels are typed via `preload`
 rather than by `class_name`: global class names live in an editor-written cache
@@ -114,6 +179,15 @@ in a two-level chain where nobody ever arrives and then walks on.
 Adding a biome: one edit to `tools/biomes.gd`, then run build_biomes.gd and
 build_levels.gd. Appending to `CHAIN` gives the previous last level a north door
 automatically.
+
+**Inserting** one in the middle - which is how the office floors are being built
+in front of the two demo biomes - changes its NEIGHBOURS as well, and this is
+the step to get wrong: a door's `target_level` is baked into the level scene by
+the generator, so the level before the new one still points past it and the
+level after it still points back past it until both are rebuilt. Pass all three
+names: `build_levels.gd -- lobby bullpen marble_hall`. build_biomes.gd always
+does every biome, so the doorway textures (each lit by the colour of the place
+on the other side) come out right on their own.
 
 ## Characters
 
@@ -283,17 +357,33 @@ and did not - it is four overrides on the same cycle, and taking them
 individually is what earns it the interrupt rules for free. `_attacks()` is for
 a type with no attack at all, not for a type whose attack is unusual.
 
-Three types so far, and they deliberately threaten in three different ways -
-damage, drain, and denial - so a room is built by mixing them rather than by
-adding more of the same:
+**A reskin is a roster entry and a scene, and nothing else.** `office_boy` is
+the company's maintenance staff and mechanically it IS the regular: its scene
+runs enemy_base.gd with no exported overrides, so the base's defaults are its
+numbers, exactly as `regular.tscn` does. That is the whole pattern for
+DESIGN.md's three reskins - new sheet, new name, new folder, same script and
+same numbers - and it is what keeps the interrupt rules meaningful: they were
+tuned against 24 HP and a 0.45s wind-up, and a reskin that quietly retuned
+either would need them re-tuned too. Two types share the base's defaults now,
+so a change to those defaults moves both.
+
+Types below, and they deliberately threaten in different ways - damage, drain,
+and denial - so a room is built by mixing them rather than by adding more of
+the same:
 
 - **`regular/`** - 24 HP, 10 damage on a completed strike, speed 55, sight 80,
   0.45s wind-up. Carries no script of its own: its scene runs enemy_base.gd
   directly, the way torches run hazard_base.gd, so the base's defaults ARE the
-  regular's numbers. It is the only type that uses the swing cycle, and the one
-  the interrupt rules exist for. `max_health` is the number most likely to want
+  regular's numbers. It uses the swing cycle, and it is the one the interrupt
+  rules exist for. `max_health` is the number most likely to want
   retuning - four guards in the marble hall is sixteen hits between them, and
   17 is the next stop down if that reads as a slog.
+- **`office_boy/`** - the regular, reskinned as the company's maintenance staff
+  for floor 2 (see above). Identical numbers, its own sheet, no script.
+  Placement in the bullpen has one extra rule that is easy to miss and produced
+  an invisible enemy first time: a divider's art is 48 px tall, so an enemy
+  parked at a divider's x with a smaller y than the divider's foot is drawn
+  BEHIND it and cannot be seen until it walks out.
 - **`wraith/`** - 17 HP, no attack at all, speed 45, sight 120, and standing
   near it costs three health per second (1 was flavour, not threat: 100 seconds
   to matter; at 3, two of them cost about half a guard's output from the one
@@ -446,8 +536,9 @@ it is back on the next visit - the same no-room-state rule as pickups.
 Enemies are the one prop a level does NOT own a copy of - types are shared, and
 **which ones a room gets is per-biome data in `tools/biomes.gd`** (`enemies`:
 type + position), not one constant in the generator. Composition is most of
-what makes one room feel unlike the next: the marble hall is four guards, one to
-a corner rather than a line across the top so they can be taken on one at a
+what makes one room feel unlike the next: the lobby is empty, the bullpen is
+four office boys one to a quadrant, the marble hall is four guards one to a
+corner rather than a line across the top so they can be taken on one at a
 time, and hellfire is four of those plus two wraiths and a warden - where things
 start following you and taking your legs. Positions are chosen so
 no enemy's sight reaches the door line, the spawns or the torch and heart stands
@@ -470,12 +561,15 @@ reason that room has none.
                                     <- game/enemies/roster.gd
                                        (data, edited by hand)
 - `game/levels/*/tileset.tres`, `column_art.tres`, `torch_art.tres`,
-  `health_art.tres`, `doorway_out.tres`, `doorway_back.tres`
-                                    <- tools/build_biomes.gd
-- `game/levels/*/*.tscn` (level, door, column, torch, health item;
-  enemy instances placed in the level scene)
+  `health_art.tres`, `doorway_out.tres`, `doorway_back.tres`,
+  `<prop>_art.tres`                 <- tools/build_biomes.gd
+- `game/levels/*/*.tscn` (level, door, column, torch, health item, props;
+  enemy and prop instances placed in the level scene)
                                     <- tools/build_levels.gd, see below
-- biome list, chain order, per-room enemies
+- office furniture catalogue + pixel font
+                                    <- tools/props.gd (shared by both, data
+                                       and painters edited by hand)
+- biome list, chain order, per-room enemies and furniture
                                     <- tools/biomes.gd (data, edited by hand)
 - project settings & input map      <- tools/setup_project.gd
 
@@ -506,6 +600,13 @@ adding a floor must not re-roll the seven already dressed:
 
 The door trigger's hand-tuned y=13, snug against the seal, is now what the
 generator writes, so regenerating a door no longer silently undoes it.
+
+Anything a level is dressed with that CAN be expressed as data should be, for
+the same reason: enemies and furniture both live in tools/biomes.gd, so
+re-running the generator rebuilds a dressed room instead of resetting it. The
+warning above is about what is left - tiles moved by hand, a prop nudged in the
+inspector - and every position that moves out of the editor and into biomes.gd
+is one less thing a regeneration can cost you.
 
 ## Difficulty
 
@@ -619,7 +720,10 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
     select, the settings panel from the main menu. Never enters the game.
   - `test_flow.gd` - select -> game -> movement -> pause -> zoom -> torch ->
-    heart -> death -> wall -> doors -> lives -> game over.
+    heart -> death -> wall -> doors -> lives -> game over. It walks the whole
+    chain on foot, so inserting a floor means renumbering the frames after the
+    new leg (~80 frames per door) and it asserts each room's own composition
+    and dressing as it passes through.
   - `test_combat.gd` - guard telegraph and interrupts, wraith, warden, heavy.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`

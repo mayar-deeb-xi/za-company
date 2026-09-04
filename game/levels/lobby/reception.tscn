@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://game/levels/lobby/reception_art.tres" id="1_y7u7d"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_l8lt1"]
+size = Vector2(90, 9)
+
+[node name="Reception" type="StaticBody2D" unique_id=1903800732]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2091563329]
+position = Vector2(-48, -22)
+texture = ExtResource("1_y7u7d")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1071046726]
+position = Vector2(0, -4.5)
+shape = SubResource("RectangleShape2D_l8lt1")

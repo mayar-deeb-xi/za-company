@@ -5,13 +5,13 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_oc1cw"]
 size = Vector2(11, 6)
 
-[node name="Column" type="StaticBody2D" unique_id=272915777]
+[node name="Column" type="StaticBody2D" unique_id=1638093985]
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1757080842]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=855189065]
 position = Vector2(-8, -48)
 texture = ExtResource("1_l364d")
 centered = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1923014008]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1049478306]
 position = Vector2(0, -3)
 shape = SubResource("RectangleShape2D_oc1cw")

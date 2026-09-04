@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://game/levels/lobby/cooler_art.tres" id="1_ut1nm"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_k5sss"]
+size = Vector2(12, 6)
+
+[node name="Cooler" type="StaticBody2D" unique_id=1381576371]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1269854596]
+position = Vector2(-8, -22)
+texture = ExtResource("1_ut1nm")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=333487748]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_k5sss")

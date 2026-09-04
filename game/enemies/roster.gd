@@ -40,6 +40,32 @@ const ENEMIES := [
 		},
 	},
 	{
+		# Floor 2's crowd, and the first enemy that is a COLLEAGUE rather than a
+		# monster: the company's maintenance staff, met on the floor they work
+		# on, surrounded by everything they have not got round to fixing. So the
+		# look is deliberately mundane - company-teal polo, dark work trousers,
+		# nothing drained or violet about it. The teal is the lobby's accent on
+		# purpose: this is the same company's uniform, one floor up.
+		#
+		# Mechanically it IS the regular - 24 HP, the swing cycle, the base's
+		# numbers - which is what DESIGN.md means by a reskin. Only the sheet
+		# and the name differ, so everything the interrupt rules were tuned
+		# against still holds.
+		"id": "office_boy",
+		"src": "res://game/enemies/office_boy/src/office_boy.png",
+		"frames": "res://game/enemies/office_boy/office_boy_frames.tres",
+		"recipe": {
+			"hair": "241c16", "hair_light": "3d2f24",   # dark, short
+			"skin": "c8a882",
+			"eye": "2a1f18",
+			"shirt": "3fae87", "shirt_dark": "24705a",  # the company polo
+			"pants": "2f3540", "pants_dark": "1c2028",  # dark work trousers
+			# Ordinary build and no beard: the threat is that there are four of
+			# them, not that any one of them looks frightening.
+			"hair_style": "straight", "beard": false, "build": "normal",
+		},
+	},
+	{
 		"id": "wraith",
 		"src": "res://game/enemies/wraith/src/wraith.png",
 		"frames": "res://game/enemies/wraith/wraith_frames.tres",

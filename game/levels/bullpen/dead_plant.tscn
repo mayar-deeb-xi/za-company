@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://game/levels/bullpen/dead_plant_art.tres" id="1_udu1n"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ug08p"]
+size = Vector2(12, 5)
+
+[node name="DeadPlant" type="StaticBody2D" unique_id=1790707428]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=697097184]
+position = Vector2(-10, -24)
+texture = ExtResource("1_udu1n")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=690771542]
+position = Vector2(0, -2.5)
+shape = SubResource("RectangleShape2D_ug08p")

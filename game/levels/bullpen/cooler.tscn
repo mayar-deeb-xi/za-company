@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://game/levels/bullpen/cooler_art.tres" id="1_s446d"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cv7wq"]
+size = Vector2(12, 6)
+
+[node name="Cooler" type="StaticBody2D" unique_id=1266721404]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1290280396]
+position = Vector2(-8, -22)
+texture = ExtResource("1_s446d")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1918529342]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_cv7wq")

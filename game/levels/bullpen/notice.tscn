@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://game/levels/bullpen/notice_art.tres" id="1_484wy"]
+
+[node name="Notice" type="Node2D" unique_id=1122816411]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=508925833]
+texture = ExtResource("1_484wy")
+centered = false

@@ -12,6 +12,7 @@ extends SceneTree
 ## Run it to reset a level or to add a new one to CHAIN.
 
 const Biomes := preload("res://tools/biomes.gd")
+const Props := preload("res://tools/props.gd")
 
 const LEVEL_SCRIPT := "res://game/levels/level.gd"
 const DOOR_SCRIPT := "res://game/levels/door_base.gd"
@@ -38,6 +39,8 @@ const DOOR_CENTRE_X := DOOR_COL * TILE + TILE
 
 ## The colonnade flanks a central runner. Offset so no pillar lands on the
 ## centre line - the straight walk between the two doors has to stay clear.
+## A biome overrides either list with a `columns` dictionary, because a room
+## that is furnished needs the floor a full colonnade would take up.
 const COLUMN_ROWS := [5, 13]
 const COLUMN_XS := [4, 9, 14, 19, 24, 29]
 const RUNNER_TOP := 8
@@ -91,6 +94,8 @@ func _build(level: String) -> bool:
 	bad = _write_door_scene(dir) or bad
 	bad = _write_torch_scene(dir) or bad
 	bad = _write_health_scene(dir) or bad
+	for type in Biomes.prop_types(level):
+		bad = _write_prop_scene(dir, type) or bad
 	bad = _write_level_scene(level, dir, tileset) or bad
 	return bad
 
@@ -121,6 +126,44 @@ func _write_column_scene(dir: String) -> bool:
 	body.owner = root
 
 	return _pack(root, "%s/column.tscn" % dir)
+
+
+## One piece of furniture, art baked in, in the level's own folder like every
+## other prop a level owns. A solid prop blocks only its base - the same trick
+## the column uses, so the player passes behind its upper half and Y-sorting
+## draws the two in the right order. Decor gets a bare Node2D: a banner nailed
+## to a wall has nothing to walk into, and a body with no shape is a lie.
+##
+## No script: furniture has no behaviour to share. The ones that grow some -
+## DESIGN.md's arcing power strip and jammed photocopier - are hazards, and will
+## carry hazard_base.gd exactly the way the torch does.
+func _write_prop_scene(dir: String, type: String) -> bool:
+	var blocks := Props.blocks(type)
+	var solid := blocks != Vector2.ZERO
+	var root: Node2D = StaticBody2D.new() if solid else Node2D.new()
+	root.name = type.to_pascal_case()
+
+	var sprite := Sprite2D.new()
+	sprite.name = "Sprite2D"
+	sprite.centered = false
+	# Props.offset() puts the art's foot on the origin, which is the pixel
+	# Y-sorting reads and the pixel the biome's position refers to.
+	sprite.position = Props.offset(type)
+	sprite.texture = load("%s/%s_art.tres" % [dir, type]) as Texture2D
+	root.add_child(sprite)
+	sprite.owner = root
+
+	if solid:
+		var body := CollisionShape2D.new()
+		body.name = "CollisionShape2D"
+		body.position = Vector2(0, -blocks.y / 2.0)
+		var shape := RectangleShape2D.new()
+		shape.size = blocks
+		body.shape = shape
+		root.add_child(body)
+		body.owner = root
+
+	return _pack(root, "%s/%s.tscn" % [dir, type])
 
 
 ## The level's own door. Origin sits at the centre of the gap in the wall ring,
@@ -245,9 +288,12 @@ func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
 	root.add_child(props)
 	props.owner = root
 
+	var layout: Dictionary = Biomes.BIOMES[level].get("columns", {})
+	var column_rows: Array = layout.get("rows", COLUMN_ROWS)
+	var column_xs: Array = layout.get("xs", COLUMN_XS)
 	var column_scene := _reload("%s/column.tscn" % dir)
-	for row in COLUMN_ROWS:
-		for col in COLUMN_XS:
+	for row in column_rows:
+		for col in column_xs:
 			var column := column_scene.instantiate()
 			column.name = "Column_%d_%d" % [col, row]
 			column.position = Vector2(col * TILE + TILE / 2, (row + 1) * TILE)
@@ -265,6 +311,22 @@ func _write_level_scene(level: String, dir: String, tileset: TileSet) -> bool:
 	health.position = HEALTH_POS
 	props.add_child(health)
 	health.owner = root
+
+	# The biome's furniture, from the same list that decided which art to paint.
+	# Suffixed by type the way enemies are numbered, so two desks are Desk1 and
+	# Desk2 rather than a name collision the packer would silently rename.
+	var placed := {}
+	for spec in Biomes.BIOMES[level].get("props", []):
+		var type: String = spec["type"]
+		placed[type] = placed.get(type, 0) + 1
+		var prop := _reload("%s/%s.tscn" % [dir, type]).instantiate()
+		prop.name = "%s%d" % [type.to_pascal_case(), placed[type]]
+		prop.position = spec["at"]
+		# Rotation is placement, not art: the banner is drawn square and hung
+		# crooked, so the same cloth can hang straight somewhere else.
+		prop.rotation = spec.get("turn", 0.0)
+		props.add_child(prop)
+		prop.owner = root
 
 	var roster: Array = Biomes.BIOMES[level].get("enemies", [])
 	for i in roster.size():

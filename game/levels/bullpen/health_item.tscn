@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/levels/pickup_base.gd" id="1_tq7nu"]
+[ext_resource type="Texture2D" path="res://game/levels/bullpen/health_art.tres" id="2_3mitc"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_tdi4l"]
+radius = 6.0
+
+[node name="Health" type="Area2D" unique_id=1645751504]
+monitorable = false
+script = ExtResource("1_tq7nu")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=41384032]
+position = Vector2(-4, -8)
+texture = ExtResource("2_3mitc")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=240637323]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_tdi4l")
