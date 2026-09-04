@@ -358,6 +358,45 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		761:
 			_key(KEY_W, false)
+			_check("door: the chain continues on into the gym (got %s)"
+				% ("<none>" if _level() == null else _level().name),
+				_level() != null and _level().name == "ConflictResolution")
+			_check("title: the gym announces itself (got '%s')"
+				% _title_text(), _title_text() == "CONFLICT RESOLUTION")
+			# DESIGN.md asks this floor for a tight arena with nothing in it to
+			# hide behind, and it is the first floor to have NO colonnade at
+			# all. Both halves of that are checked: nothing placed, and no
+			# scene left behind for the thing it does not place.
+			var pillars: Array = _level().get_node("Props").get_children().filter(
+				func(n: Node) -> bool: return n.name.begins_with("Column"))
+			_check("level: the gym has no colonnade (%d)" % pillars.size(),
+				pillars.is_empty())
+			_check("level: and carries no column scene either",
+				not ResourceLoader.exists(
+					"res://game/levels/conflict_resolution/props/fixtures/column.tscn"))
+			# The ring is paint, not a thing: a marking blocks nothing, so its
+			# scene root is a bare Node2D rather than a body. Getting this wrong
+			# would put an invisible wall across the middle of a boss arena.
+			var ring := _level().get_node_or_null("Props/BoxingRing1")
+			_check("level: the ring is painted on the floor and blocks nothing",
+				ring != null and not (ring is StaticBody2D))
+			var gear := ["Motto1", "HeavyBag1", "WeightRack1", "Sofa1"]
+			var unfit: Array = gear.filter(func(n: String) -> bool:
+				return _level().get_node_or_null("Props/" + n) == null)
+			_check("level: the gym is dressed as a gym (missing %s)"
+				% [unfit], unfit.is_empty())
+			# A boss room has one thing in it that hurts, and it is the boss:
+			# no hazard, no heart, and for now no Mostafa either.
+			_check("level: no hazard and no heart in the gym",
+				_level().get_node_or_null("Props/Torch") == null
+					and _level().get_node_or_null("Props/Health") == null)
+			_check("level: the gym is empty until Mostafa exists (%d)"
+				% get_nodes_in_group("enemies").size(),
+				get_nodes_in_group("enemies").is_empty())
+			_player().global_position = Vector2(272, 78)
+			_key(KEY_W, true)
+		841:
+			_key(KEY_W, false)
 			_check("door: the chain continues on into the bullpen (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "Bullpen")
@@ -394,7 +433,7 @@ func _tick(frame: int) -> void:
 				% [absent], absent.is_empty())
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		841:
+		921:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -404,7 +443,7 @@ func _tick(frame: int) -> void:
 				guards.size() == 4)
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
-		921:
+		1001:
 			_key(KEY_W, false)
 			_check("door: the chain continues on into hellfire (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -427,7 +466,7 @@ func _tick(frame: int) -> void:
 			# Turn round and walk back out the way we came in. The wraith is on
 			# the far wall, outside its own 120 px sight of this whole path.
 			_key(KEY_S, true)
-		1001:
+		1081:
 			_key(KEY_S, false)
 			_check("return: hellfire's south door goes back to the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
@@ -437,34 +476,34 @@ func _tick(frame: int) -> void:
 				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		1007:
+		1087:
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		1019:
+		1099:
 			_check("pause: Main Menu returns to the menu, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
 					and not paused)
 			# Second run: spend every life and prove the run actually ends.
 			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
-		1031:
+		1111:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
-		1043:
+		1123:
 			_check("lives: a new run starts with all three again (%s)"
 				% _player().get("lives"),
 				current_scene.scene_file_path == "res://game/game.tscn"
 					and _player().get("lives") == 3)
 			_player().call("take_damage", 9999)
-		1096:
+		1176:
 			_check("lives: first death respawns with two left (%s, health %s)"
 				% [_player().get("lives"), _player().get("health")],
 				_player().get("lives") == 2 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		1146:
+		1226:
 			_check("lives: second death respawns with one left (%s)"
 				% _player().get("lives"),
 				_player().get("lives") == 1 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
-		1196:
+		1276:
 			_check("game over: the last death raises the death screen, paused",
 				paused and _pause_menu().get_node("Root").visible)
 			_check("game over: heading reads YOU DIED (got '%s')"
@@ -478,11 +517,11 @@ func _tick(frame: int) -> void:
 			# resume back into.
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
-		1202:
+		1282:
 			_check("game over: Escape cannot dismiss the death screen",
 				paused and _pause_menu().get_node("Root").visible)
 			(_pause_menu().get_node("%MainMenuButton") as Button).pressed.emit()
-		1214:
+		1294:
 			_check("game over: MAIN MENU leaves the run, unpaused (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"

@@ -29,7 +29,8 @@
   copier (`tools/props/fixtures/`) - plus the office furniture, the
   maintenance floor's hardware and junk, the call floor's phones and its lit
   wallboard, the media team's glass partitioning, edit bays, ring lights and
-  paper backdrop, the signs and the neon, and the 5x5 pixel font
+  paper backdrop, the gym's punch bags, weight racks and the boxing ring
+  painted on its floor, the signs and the neon, and the 5x5 pixel font
   (`tools/props/`) - all drawn in code, since the dungeon sheet has no
   furniture or hardware in it to derive from.
 - `game/enemies/office_boy/src/office_boy.png` was seeded as a restyle of the

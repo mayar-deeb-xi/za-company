@@ -42,7 +42,10 @@ extends RefCounted
 ##            fluted stone default), "pillar" (glazed steel) or "divider"
 ##            (cubicle partition).
 ##   columns  {rows, xs} overriding the generator's colonnade, because a
-##            furnished room needs the floor a full colonnade takes up.
+##            furnished room needs the floor a full colonnade takes up. Both
+##            lists EMPTY means no colonnade at all, and then the level has no
+##            column scene either - DESIGN.md's gym is a tight arena with
+##            nothing in it to hide behind.
 ##   hazard   which hazard art the level gets - "torch", "polisher",
 ##            "power_strip", "fallen_light" or "copier", or "none" for a floor
 ##            with nothing on it to hurt you. Omitted means "torch": a floor
@@ -58,7 +61,8 @@ extends RefCounted
 ## list, north door goes up it. The two demo biomes stay on the end until the
 ## office floors replace them.
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
-		"shared_floor", "bullpen", "marble_hall", "hellfire"]
+		"shared_floor", "conflict_resolution", "bullpen", "marble_hall",
+		"hellfire"]
 
 ## Assembled from the per-floor files at load, keyed by CHAIN name, so every
 ## existing `Biomes.BIOMES[level]` read works exactly as it did when this was
@@ -122,6 +126,17 @@ static func has_hazard(level: String) -> bool:
 ## you (DESIGN.md, build step 4). A floor that wants one says `"heart": true`.
 static func has_heart(level: String) -> bool:
 	return BIOMES[level].get("heart", false)
+
+
+## Whether this floor stands a colonnade at all. A biome hands in an empty
+## `columns` layout to get none - DESIGN.md's gym is a tight arena with nothing
+## in it to hide behind - and a floor that places no pillar does not carry the
+## scene for one either. An absent `columns` key still means the generator's
+## own six-by-two, which is what every floor built before this one relies on.
+static func has_columns(level: String) -> bool:
+	var layout: Dictionary = BIOMES[level].get("columns", {})
+	return not layout.get("rows", [0]).is_empty() \
+		and not layout.get("xs", [0]).is_empty()
 
 
 ## The level one step further along the chain, or "" at the end of it.

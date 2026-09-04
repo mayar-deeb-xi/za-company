@@ -1,0 +1,12 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_43x2q"]
+_data = PackedByteArray("AAADAAUAAAABAAAA6AAAAJQAAADGAAAAUklGRr4AAABXRUJQVlA4TLEAAAAv58AkEB8gpiFTUriMkIBMGeaDRCyY4hC6JhBI4tjf83jrCii4jSTJbdb+ZBDNF0ymggyYAkxqhsQctLxaE2KhXhgR/WfgtpEiL/MevGLXOqDa9RccNn3fyQGgIACoQ4YXBKV5XfblipLw4Dm7tQ4U5/l0DRTf+OWlY9LGRcXGOaX0tNFlxjEuo43y3yVToHeg+I5RESjO+RAHQAFAPcW8IKiploWMXWNA1XgLXehy/R0A")
+size_override = Vector2(232, 148)
+keep_compressed_buffer = true
+
+[node name="BoxingRing" type="Node2D" unique_id=2087095467]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1992663518]
+texture = SubResource("PortableCompressedTexture2D_43x2q")
+centered = false

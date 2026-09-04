@@ -124,7 +124,10 @@ func _build(level: String) -> bool:
 	# in the room goes in props/, one scene each with its picture baked in.
 	var bad := false
 	bad = _write_door_scene(dir) or bad
-	bad = _write_column_scene(props, spec) or bad
+	if Biomes.has_columns(level):
+		bad = _write_column_scene(props, spec) or bad
+	else:
+		_drop("%s/fixtures/column.tscn" % props)
 	if Biomes.has_hazard(level):
 		bad = _write_torch_scene(props, spec) or bad
 	else:
@@ -340,17 +343,21 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	root.add_child(props)
 	props.owner = root
 
-	var layout: Dictionary = Biomes.BIOMES[level].get("columns", {})
-	var column_rows: Array = layout.get("rows", COLUMN_ROWS)
-	var column_xs: Array = layout.get("xs", COLUMN_XS)
-	var column_scene := _reload("%s/fixtures/column.tscn" % props_dir)
-	for row in column_rows:
-		for col in column_xs:
-			var column := column_scene.instantiate()
-			column.name = "Column_%d_%d" % [col, row]
-			column.position = Vector2(col * TILE + TILE / 2, (row + 1) * TILE)
-			props.add_child(column)
-			column.owner = root
+	# The colonnade, unless this floor asked for none: DESIGN.md's gym is a
+	# tight arena with nothing in it to hide behind, and a biome says so by
+	# handing in an empty `columns` layout.
+	if Biomes.has_columns(level):
+		var layout: Dictionary = Biomes.BIOMES[level].get("columns", {})
+		var column_rows: Array = layout.get("rows", COLUMN_ROWS)
+		var column_xs: Array = layout.get("xs", COLUMN_XS)
+		var column_scene := _reload("%s/fixtures/column.tscn" % props_dir)
+		for row in column_rows:
+			for col in column_xs:
+				var column := column_scene.instantiate()
+				column.name = "Column_%d_%d" % [col, row]
+				column.position = Vector2(col * TILE + TILE / 2, (row + 1) * TILE)
+				props.add_child(column)
+				column.owner = root
 
 	# The hazard is per-biome, and a room is allowed to have nothing in it that
 	# hurts: see Biomes.has_hazard().

@@ -61,11 +61,12 @@ game/levels/
     door.tscn           how it connects
     props/            EVERYTHING STANDING IN IT - one scene each, on the
                       same shelves as tools/props/
-      fixtures/         column.tscn, plus torch.tscn and health_item.tscn
-                        only where the biome asks for them
+      fixtures/         column.tscn, torch.tscn, health_item.tscn - each only
+                        where the biome asks for it, and the gym asks for none
       furniture/        desk.tscn  chair.tscn ...      whatever it
       hardware/         server_rack.tscn  printer.tscn ...  places,
-      signs/            notice.tscn ...                    by kind
+      markings/         boxing_ring.tscn                    by kind
+      signs/            notice.tscn ...
 ```
 
 **A level folder is split by what a file IS, not by its type,** and the split is
@@ -104,9 +105,11 @@ exists because the classical column is most of what makes the marble hall read
 as a hall, and it was also most of what made the office lobby read as a temple.
 What a room uses to break up its floor is exactly what changes between a lobby
 and a bullpen. A biome can also override the colonnade's `columns` layout (a
-furnished room needs the floor a full colonnade takes up) and ask for a
-`runner`, which tints the central floor band toward the accent so it reads as
-carpet rather than as more of the same stone.
+furnished room needs the floor a full colonnade takes up), hand in an EMPTY one
+for no colonnade at all (the gym: a tight arena with nothing in it to hide
+behind, and no column scene in its folder either), and ask for a `runner`,
+which tints the central floor band toward the accent so it reads as carpet
+rather than as more of the same stone.
 
 A room can also be divided by FURNITURE rather than by its column style, and
 the shared floor is the case: its media half is walled into two glass-fronted

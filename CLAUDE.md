@@ -45,8 +45,8 @@ specific map beyond `START_LEVEL`.
 and its own copy of every prop it places, palette baked in - no level borrows
 another's. Everything standing in a room lives in its `props/`, on the same
 shelves as the painters in `tools/props/` (`fixtures/`, `furniture/`,
-`hardware/`, `signs/`); the fixtures shelf is named by ROLE, so hazard.gd
-paints `torch.tscn` and heart.gd paints `health_item.tscn`.
+`hardware/`, `markings/`, `signs/`); the fixtures shelf is named by ROLE, so
+hazard.gd paints `torch.tscn` and heart.gd paints `health_item.tscn`.
 
 **A room is furnished from data, not by hand**: a floor's palette, furniture
 and enemies are one hand-edited file, `tools/biomes/<level>.gd`, so
@@ -150,11 +150,12 @@ only ever creates when missing. It will not overwrite a sheet you have drawn
 into.
 
 `tools/build_levels.gd` is the exception to "regenerate": what it writes - the
-level scene and that level's own door, column and - where its biome asks for
-them - hazard and heart scenes - is a starting point meant to be dressed by hand
-in the editor, and re-running it overwrites that work. Run it to reset a level
-or to add a new one, and pass level names after `--` to build only those,
+level scene and that level's own door, plus - where its biome asks for them -
+its column, hazard and heart scenes - is a starting point meant to be dressed by
+hand in the editor, and re-running it overwrites that work. Run it to reset a
+level or to add a new one, and pass level names after `--` to build only those,
 because a chain of nine means adding a floor must not re-roll the eight already
+dressed:
 dressed:
 
 ```

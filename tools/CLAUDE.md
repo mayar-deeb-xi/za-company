@@ -8,14 +8,15 @@ file is how furniture works and how floors are added.
 ## A room is furnished from data, not by hand
 
 `tools/props/` holds one file per prop type, shelved by what a prop IS -
-`furniture/` (reception counter, desk, chair, water cooler, sofa, coffee
-table, pot plant alive and dead, call-centre station, media edit bay, glass
+`furniture/` (reception counter, desk, chair, water cooler, sofa, coffee table,
+pot plant alive and dead, call-centre station, media edit bay, glass
 partition), `hardware/` (server rack, printer, stacked dead monitors, opened
-tower, toolbox, cable spool, scrap pile, loose debris, a camera on its
-tripod) and `signs/` (the welcome banner, a taped-up notice, a marker
-wallboard, a printed poster, a lit wallboard with a number on it) - and a biome
-says which
-ones it puts where in its own `props` list, exactly the way it already says
+tower, toolbox, cable spool, scrap pile, loose debris, a camera on its tripod,
+a ring light, a paper backdrop, a punch bag, a rack of weights), `signs/` (the
+welcome banner, a taped-up notice, a marker whiteboard, two printed posters, a
+lit wallboard with a number on it) and `markings/` (paint on the floor: the
+gym's boxing ring, and so far only that) - and a biome says which ones it puts
+where in its own `props` list, exactly the way it already says
 which enemies it gets. That list drives everything: build_levels.gd writes a
 scene per type into the level's `props/`, paints its picture in the biome's
 palette and bakes it in, then instances them. `build_levels.gd -- lobby`
@@ -36,10 +37,11 @@ type fails at generation time with "nothing in tools/props/ draws 'tabel'".
 colours, the pixel font), kept out of the catalogue by sitting at the root -
 only the shelves are scanned. `fixtures/` is the shelf `known()` refuses:
 levels place column, hazard and heart themselves, so those can be painted but
-never listed as furniture. Two of the three are a floor's to decline -
-`"hazard": "none"` and the absent `"heart": true` - and the generator then
-deletes that level's torch.tscn or health_item.tscn rather than leave a scene
-nothing points at.
+never listed as furniture. All three are a floor's to decline - an empty
+`columns` layout, `"hazard": "none"`, and `"heart": true` left unsaid - and the
+generator then deletes that level's column.tscn, torch.tscn or
+health_item.tscn rather than leave a scene nothing points at. The gym declines
+all three and its `fixtures/` folder is empty.
 
 The division of labour between the two generators is by **subject**, not by
 file type: build_biomes.gd paints the ROOM (its tileset and doorways, the only

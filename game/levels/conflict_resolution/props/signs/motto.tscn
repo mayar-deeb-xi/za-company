@@ -1,0 +1,12 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_u3618"]
+_data = PackedByteArray("AAADAAUAAAABAAAAUAAAACgAAAD8AAAAUklGRvQAAABXRUJQVlA4TOcAAAAvT8AJADegJpIUxsCXgSQB/8LoEaIgkg0qy3v+EgggnrgCKGkjCcKLPiGL1r+c03Bw/uP+bs/bA4BDuTFXgFzbduvkXAMa67Zgd2A3QJDnJM0f6fXfg/Q/mDyM6P8EbD/t/vBJd3s+6d8sMskSEAQQmZE5ZAkiMhcIgpgUgIAACCIIglWZQzLe9vXvIQbKbe/92Nb33i9mt33tsbX2mgRjFrK01s5nl23tOR89fM5/oWoJqhGyBdiyBVQjZGsQCISExFQgACEhxKRqhX0SFmpFnKIaW9UgbAG2ZtVUs/BJ/4MOn3S3/bQA")
+size_override = Vector2(80, 40)
+keep_compressed_buffer = true
+
+[node name="Motto" type="Node2D" unique_id=1848006495]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=31302253]
+texture = SubResource("PortableCompressedTexture2D_u3618")
+centered = false

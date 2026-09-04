@@ -1,0 +1,20 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_6qb22"]
+_data = PackedByteArray("AAADAAUAAAABAAAANAAAABEAAACaAAAAUklGRpIAAABXRUJQVlA4TIUAAAAvMwAEEEegEJIk53JmOIB7f7g3UdRIkhpd3rsXSWBQcoraSIF2uZHBl+BfFhrmPwDg3s7Y/n+ajFc3rb19VgcYtLbV5gEGwEFTBSQPFIADgoUamBbqe7IERPR/AiyLK7sU74RkGZIp+zIhukoseruKu5T9+XE930PshBUBTLPET20EHocCAA==")
+size_override = Vector2(52, 17)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cj1t4"]
+size = Vector2(50, 8)
+
+[node name="Sofa" type="StaticBody2D" unique_id=236180175]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=456037368]
+position = Vector2(-26, -17)
+texture = SubResource("PortableCompressedTexture2D_6qb22")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=167638238]
+position = Vector2(0, -4)
+shape = SubResource("RectangleShape2D_cj1t4")
