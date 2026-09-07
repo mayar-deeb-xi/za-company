@@ -43,14 +43,17 @@ const SRC_VOLT_CORE := "ffffff"
 const SRC_VOLT := "7ff0ff"
 const SRC_VOLT_EDGE := "2f6cff"
 const SRC_VOLT_DARK := "1a2f78"
-## The thrust's afterimage dash (attack2 rows 9-11): blue ghosts, speed lines
-## and blade halo that stay this blue for EVERY character - deliberately not the
-## spark colour, so the swing reads as the character's and the thrust as speed.
-## One step off SRC_VOLT's values so the two can be told apart by hex, which is
-## all the recolour goes by. The ghosts are translucent; see the alpha note in
-## restyle().
-const SRC_DASH_EDGE := "3070ff"
-const SRC_DASH_DARK := "1c3080"
+## The thrust's lightning (attack2 rows 9-11, the Rising Dragon): the same white
+## core, but its arc, tail and fade stay THIS blue for every character -
+## deliberately not the spark colour, so the swing reads as the character's and
+## the launcher as the weapon's. One step off SRC_VOLT's values so the two can
+## be told apart by hex, which is all the recolour goes by.
+const SRC_THRUST_MID := "80f0ff"
+const SRC_THRUST_EDGE := "3070ff"
+const SRC_THRUST_DARK := "1c3080"
+## The shadow under an airborne body (thrust rows): translucent black pixels on
+## the floor. Kept as-is; see the alpha note in restyle().
+const SRC_SHADOW := "000000"
 
 # Only these colours count as "the body" when picking a seam for a build tweak:
 # attack frames also contain the slash arc, whose bounds would drag the seam off
@@ -364,8 +367,10 @@ static func restyle(src_path: String, recipe: Dictionary) -> Image:
 		SRC_VOLT: _spark_hex(recipe),
 		SRC_VOLT_EDGE: _c(_spark_hex(recipe)).darkened(0.38).to_html(false),
 		SRC_VOLT_DARK: _c(_spark_hex(recipe)).darkened(0.62).to_html(false),
-		SRC_DASH_EDGE: SRC_DASH_EDGE,
-		SRC_DASH_DARK: SRC_DASH_DARK,
+		SRC_THRUST_MID: SRC_THRUST_MID,
+		SRC_THRUST_EDGE: SRC_THRUST_EDGE,
+		SRC_THRUST_DARK: SRC_THRUST_DARK,
+		SRC_SHADOW: SRC_SHADOW,
 		SRC_SPARK: _spark_hex(recipe),
 		SRC_FIRE: _c(_spark_hex(recipe)).darkened(0.35).to_html(false),
 	}
@@ -378,7 +383,7 @@ static func restyle(src_path: String, recipe: Dictionary) -> Image:
 			var hex := p.to_html(false)
 			if map.has(hex):
 				# Recolour by hex but keep the pixel's own alpha: the thrust rows'
-				# afterimages are translucent so they blend over any floor.
+				# floor shadow is translucent so it blends over any floor.
 				var c := _c(map[hex])
 				c.a = p.a
 				img.set_pixel(x, y, c)

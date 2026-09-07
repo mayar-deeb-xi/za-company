@@ -97,22 +97,22 @@ pickup is back on the next visit - rooms keep no state yet.
 
 The player's side of the fight is three attacks on the one attack button. A
 press starts the swing (`ATTACK_POWER` 5); pressing again during it, or within
-`COMBO_GRACE_SECONDS` after, chains the thrust (`attack2` rows 9-11 of the cast
-sheet, `THRUST_POWER` 7), which lunges a step forward (`LUNGE_SPEED`, decayed by
-the same friction that roots attacks) and parks the Hitbox further out to match
-its visibly longer blade. **A press mid-attack is buffered, never dropped** -
+`COMBO_GRACE_SECONDS` after, chains the second hit (`attack2` rows 9-11 of the
+cast sheet, `THRUST_POWER` 7 - the name is historical, the move is now a rising
+slash). It is rooted like the swing and shares the swing's hitbox: its arc
+covers the same reach, and the jump in its art is the movement. **A press mid-attack is buffered, never dropped** -
 mashing alternates swing-thrust cleanly, and a dropped press reads as the game
 eating the button. Getting hit deliberately does NOT break the combo: the game
 has no hitstun, so a silently swallowed buffer would read as dropped input, and
-melee happens inside enemy contact where hits are constant - the thrust's cost
-is commitment (rooted through two animations, lunging toward danger), not a
-hidden reset. Damage goes through a Hitbox Area2D that `_start_attack()` parks
+melee happens inside enemy contact where hits are constant - the second hit's
+cost is commitment (rooted through two animations), not a hidden reset. Damage goes through a Hitbox Area2D that `_start_attack()` parks
 one step ahead of the body in the facing direction; it stays live for the whole
 animation but a ledger (`_swing_hits`) lands each attack once per enemy - so a
-24 HP guard dies to one full mash cycle (5+7+5+7). The thrust's sparks are
-tinted per character by `_spark_hex` in character_art.gd: the hair colour
+24 HP guard dies to one full mash cycle (5+7+5+7). The spark colour every
+character carries comes from `_spark_hex` in character_art.gd: the hair colour
 raised to flash intensity (near-black hair would vanish on dark floors),
-`SRC_SPARK` gold where a bald head has none. Per-character health and attack
+`SRC_SPARK` gold where a bald head has none; it tints the swing, the charge
+sparks and the wildfire. Per-character health and attack
 stats are planned; they will join the roster recipe the way looks did.
 
 The swing's art is **Lightning Edge** (rows 6-8 of the sheet): the old outlined
@@ -125,14 +125,17 @@ spark darkened - so Mayar swings violet, Anas gold. Everything stays inside the
 32px frame; on the down row the bloom sits 3px above the hitbox centre because
 the centre itself is on the frame's last row.
 
-The thrust's art is **Afterimage Dash** (rows 9-11): a bare white blade with a
-blue halo, translucent blue afterimages of the previous poses trailing behind
-the lunge, speed lines, and two pixels of dust on the recover frame. Its blues
-(`SRC_DASH_*`) are deliberately fixed for every character - the swing reads as
-the character's own colour, the thrust as speed - and sit one step off the
-volt values so the recolour, which goes by exact hex, can tell them apart. The
-ghosts are the first translucent pixels in the sheet: restyle() now keeps each
-pixel's alpha when it recolours, where it used to rebuild the pixel opaque.
+The second hit's art is **Rising Dragon** (rows 9-11): a launcher. Crouch in a
+wide stance with the blade low, an uppercut slash that lifts the body three then
+five pixels with a shadow painted on the floor beneath, blade straight overhead
+at the apex, then a landing squat with dust. The bodies are NEW poses, not
+reused frames: a pose kit takes the idle body's head, torso and legs, draws the
+arms fresh for each frame and regenerates the outline. Its blues (`SRC_THRUST_*`)
+are deliberately fixed for every character - the swing reads as the character's
+own colour, the launcher as the weapon's - and sit one step off the volt values
+so the recolour, which goes by exact hex, can tell them apart. The floor shadow
+(`SRC_SHADOW`) is translucent: restyle() keeps each pixel's alpha when it
+recolours, where it used to rebuild the pixel opaque.
 
 Both were baked by a script from the pristine CC0 rows rather than drawn by
 hand, so `character.aseprite` no longer matches the PNG; the PNG is the truth.
