@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://game/enemies/wraith/wraith.gd" id="1_wraith"]
 [ext_resource type="SpriteFrames" path="res://game/enemies/wraith/wraith_frames.tres" id="2_frames"]
+[ext_resource type="Script" path="res://game/enemies/wraith/drain_aura.gd" id="3_aura"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 5.0
@@ -16,6 +17,11 @@ max_health = 17
 contact_damage = 0
 speed = 45.0
 sight_radius = 120.0
+
+[node name="DrainAura" type="Node2D" parent="."]
+script = ExtResource("3_aura")
+
+[node name="Rim" type="Node2D" parent="DrainAura"]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = ExtResource("2_frames")

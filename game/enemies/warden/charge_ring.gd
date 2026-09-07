@@ -7,82 +7,99 @@ extends Node2D
 ## it is a shape with a value in it, not art, and it has to stay in step with a
 ## number.
 ##
-## Two questions, one element. The faint outline is always there, so the zone
-## can be routed around BEFORE stepping into it - which is the whole point of an
-## area-denial enemy. The arc sweeping round that outline is the wind-up
-## filling, so the two seconds can be seen running out and walked out of.
+## Two questions, one shape. A dashed rim is always there, so the zone can be
+## routed around BEFORE stepping into it - the whole point of an area-denial
+## enemy. Inside it, a frosted disc grows out from the warden's feet as the
+## wind-up fills and reaches the rim exactly as the slow lands, so how far the
+## area reaches and how long is left are read off one thing: standing inside
+## the frost means you are already too slow to leave. Past the commit point the
+## disc's edge blinks white, and when the effect lands the whole area ices over
+## and thaws in step with the four seconds the player is slowed.
 ##
-## It never carries the radius itself: warden.gd copies in the Touch shape's own
-## radius and offset on _ready, so retuning the area in the editor moves the
-## ring with it and the drawing can never lie about the reach.
+## The pixels themselves are `charge_ring.gdshader`, so every edge is a hard
+## pixel edge at 1x; this script owns the numbers and hands them over as
+## uniforms. It never carries the radius itself: warden.gd copies in the Touch
+## shape's own radius and offset on _ready, so retuning the area in the editor
+## moves the field with it and the drawing can never lie about the reach.
+##
+## Draw order is the thing to get right, and it was got wrong once: the level's
+## Floor tilemap sits at z 0, so a child of the warden with a negative z_index
+## draws UNDER the floor and is never seen. This node stays at z 0 and is the
+## warden's first child, above the tiles and beneath the body.
 
-## Matches warden.gd's CHARGE_TINT - the body tinting violet and the ring
-## filling violet are one telegraph, not two.
-const RING := Color(0.55, 0.45, 1.0)
-## The outline dormant, and at the moment the effect lands. Faint at rest so a
-## warden across the room marks its ground without shouting.
-const IDLE_ALPHA := 0.20
-const CHARGED_ALPHA := 0.60
-## The wash inside the circle. Deliberately weak even when full - it has to read
-## as ground that is claimed, not as a wall.
-const FILL_IDLE_ALPHA := 0.05
-const FILL_CHARGED_ALPHA := 0.18
-## The sweep hand itself, which is the part actually being read.
-const SWEEP_ALPHA := 0.95
-const SWEEP_WIDTH := 2.0
+const SHADER := preload("res://game/enemies/warden/charge_ring.gdshader")
 
-const FLASH_COLOR := Color(0.85, 0.80, 1.0)
-const FLASH_SECONDS := 0.28
+## How long the landing flash and shards take; the field keeps animating for at
+## least this long after `land()` even when the slow itself is short.
+const LAND_SECONDS := 0.45
+## The frost is full until this much of the slow is left, then thaws out.
+const THAW_SECONDS := 1.5
 
-const SEGMENTS := 72
+## Declared before `radius` so its setter can reach it.
+var _material := ShaderMaterial.new()
 
-@export var radius := 48.0
+## Set by warden.gd from the Touch shape after this node's _ready, so it has to
+## reach the shader whenever it changes, not only once at start.
+@export var radius := 48.0:
+	set(value):
+		radius = value
+		_material.set_shader_parameter("radius", radius)
+		queue_redraw()
 
 var progress := 0.0
-var _flash := 0.0
+var _since_land := -1.0
+var _slow_left := 0.0
+var _time := 0.0
 
 
 func _ready() -> void:
+	_material.shader = SHADER
+	material = _material
+	_material.set_shader_parameter("radius", radius)
 	set_process(false)
 
 
 func _process(delta: float) -> void:
-	_flash = maxf(_flash - delta, 0.0)
-	if _flash <= 0.0:
+	_time += delta
+	if _since_land >= 0.0:
+		_since_land += delta
+		_slow_left = maxf(_slow_left - delta, 0.0)
+		if _slow_left <= 0.0 and _since_land >= LAND_SECONDS:
+			_since_land = -1.0
+	_push()
+	if progress <= 0.0 and _since_land < 0.0:
 		set_process(false)
-	queue_redraw()
 
 
-## Where the wind-up is, 0..1. Redraws only when it actually moved, so a dormant
-## warden costs nothing.
-func set_progress(value: float) -> void:
+## Where the wind-up is, 0..1. Whether the field is past the commit point is
+## the warden's to say - it knows its own `commit_fraction`.
+func set_progress(value: float, committed := false) -> void:
 	value = clampf(value, 0.0, 1.0)
-	if is_equal_approx(value, progress):
-		return
+	var was := progress
 	progress = value
-	queue_redraw()
+	_material.set_shader_parameter("progress", progress)
+	_material.set_shader_parameter("committed", committed and progress > 0.0)
+	if progress > 0.0 and was <= 0.0:
+		set_process(true)
 
 
-## The effect landing. Everything in the circle was just slowed, so the circle
-## says so - and it is the one moment the ring is allowed to be loud.
-func flash() -> void:
-	_flash = FLASH_SECONDS
+## The effect landing on everyone in the circle. The area says so - flash,
+## shards - then stays iced for as long as the slow it just dealt.
+func land(slow_seconds: float) -> void:
+	_since_land = 0.0
+	_slow_left = maxf(slow_seconds, 0.0)
 	set_process(true)
-	queue_redraw()
+	_push()
+
+
+func _push() -> void:
+	_material.set_shader_parameter("since_land", _since_land)
+	_material.set_shader_parameter("fade", clampf(_slow_left / THAW_SECONDS, 0.0, 1.0))
+	_material.set_shader_parameter("time", _time)
 
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, radius,
-		Color(RING, lerpf(FILL_IDLE_ALPHA, FILL_CHARGED_ALPHA, progress)))
-	draw_arc(Vector2.ZERO, radius, 0.0, TAU, SEGMENTS,
-		Color(RING, lerpf(IDLE_ALPHA, CHARGED_ALPHA, progress)), 1.0)
-	if progress > 0.0:
-		# From the top and clockwise, the way a clock is read.
-		var start := -PI / 2.0
-		draw_arc(Vector2.ZERO, radius, start, start + progress * TAU, SEGMENTS,
-			Color(RING, SWEEP_ALPHA), SWEEP_WIDTH)
-	if _flash > 0.0:
-		var t := _flash / FLASH_SECONDS
-		draw_circle(Vector2.ZERO, radius, Color(FLASH_COLOR, 0.30 * t))
-		draw_arc(Vector2.ZERO, radius, 0.0, TAU, SEGMENTS,
-			Color(FLASH_COLOR, t), SWEEP_WIDTH)
+	# One quad; the shader decides every pixel in it. Two pixels of slack so the
+	# rim's outer edge is never clipped by the quad it is drawn on.
+	var half := radius + 2.0
+	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), Color.WHITE)

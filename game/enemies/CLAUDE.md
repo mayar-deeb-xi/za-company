@@ -121,7 +121,16 @@ room is built by mixing them rather than by adding more of the same:
   same question and the base already answers it; the
   fractional remainder (`_owed`) is deliberately kept when contact breaks, so
   dancing on the edge of the aura cannot reset the tick. It glows cold while
-  feeding so the health ticking down has a visible cause. Being one of the cast
+  feeding so the health ticking down has a visible cause, and the aura itself
+  is drawn (`drain_aura.gd` + `drain_aura.gdshader`, the wraith's first child
+  at z 0 like the warden's field): a dashed rim at the Touch shape's exact
+  reach, brighter and turning while it feeds, and one mote streaming from the
+  player's chest to the wraith's for every point taken. The mote is spawned in
+  `_touch()` on the same line that calls `drain()`, so the drawing beats at
+  the real 3/s and can never show health that was not lost. The motes are
+  drawn with draw_rect on the aura node, which has NO material - the shader
+  lives on its `Rim` child, because a material on the parent would run every
+  mote through the rim shader and paint it transparent. Being one of the cast
   drained of colour - straight hair, normal build, white on dark blue - is the
   point of the look: it reads as a person, not a monster.
 
@@ -146,15 +155,27 @@ room is built by mixing them rather than by adding more of the same:
   can just win with enough left to cover closing the distance. Leave it too late
   and none of them work.
 
-  Its telegraph is three readings of `_windup_progress()`: the drawn ring
-  (`charge_ring.gd`), the violet `_windup_tint()`, and the sprite's four attack
-  frames held to the charge's pace rather than looping six times through it.
-  The ring exists because 48 px of floor is six times the width of the body and
-  no animation on a 32 px sprite can say where an area ends; it copies its
-  radius off the Touch shape on `_ready`, so the drawing cannot lie about the
-  reach. Because all three read the one number, an interrupt wipes the sweep,
-  drops the tint and resets the sprite in the frame it lands - legible without a
-  line of code of its own.
+  Its telegraph is two readings of `_windup_progress()`: the drawn field
+  (`charge_ring.gd` and its `charge_ring.gdshader`) and the violet
+  `_windup_tint()`. The field exists because 48 px of floor is six times the
+  width of the body and no animation on a 32 px sprite can say where an area
+  ends. A dashed rim marks the reach at all times; as the charge fills, frost
+  creeps out from the warden's feet and reaches the rim exactly as the slow
+  lands, so how far and how soon are one shape - and past `commit_fraction`
+  the frost's edge blinks white and the body shivers a pixel, the same "too
+  late" said twice. On landing the whole area ices over and thaws in step with
+  the four seconds of slow. It copies its radius off the Touch shape on
+  `_ready`, so the drawing cannot lie about the reach, and because both
+  readings take the one number, an interrupt wipes the frost and drops the
+  tint in the frame it lands - legible without a line of code of its own.
+
+  Two gotchas, both paid for once. **The warden does not play `attack`**:
+  `_windup_state()` is overridden to `idle`, because on this sheet `attack`
+  is a sword swing and a harmless enemy raising a sword for two seconds read
+  as the one thing it is not. And **the field must sit above the floor**: it
+  is the warden's first child at z 0, over the tiles and under the body. The
+  level's Floor tilemap is itself at z 0, so the `z_index = -1` it used to
+  carry drew it under the floor, and the ring was never once on screen.
 
   Three things about it are load-bearing. It **plants at the rim** of its area
   rather than in your face, and that falls out of `_can_advance()` returning

@@ -31,30 +31,40 @@ extends "res://game/enemies/enemy_base.gd"
 ##
 ## - *Where is the area?* - 48 px of floor, six times the width of the body. No
 ##   animation on a sprite that size can say where it ends, so it is the drawn
-##   ring (charge_ring.gd), on show before the player is anywhere near it.
-## - *How far into the wind-up is it?* - the ring's sweep, the body tinting
-##   violet, and the sprite itself, whose four-frame attack is stretched across
-##   the whole two seconds so it finishes rising exactly as the effect lands.
-##   Three readings of one number, because this is the only enemy whose entire
-##   threat is invisible without them.
+##   field (charge_ring.gd), whose rim is on show before the player is anywhere
+##   near it.
+## - *How far into the wind-up is it?* - the frost creeping out from its feet
+##   toward that rim, and the body tinting violet. Both read one number, so an
+##   interrupt wipes the frost and drops the tint in the frame it lands.
+##
+## **It does not mime a strike.** The base animates every wind-up as `attack`,
+## which on this sheet is a sword swing - and a harmless enemy raising a sword
+## for two seconds read as an attack, which is the one thing the warden is not.
+## So it holds its idle pose through the charge and lets the floor and the tint
+## do the telling; past the commit point the body shivers one pixel, the same
+## "too late" the field's edge is blinking.
 
 ## Winds visibly tighter as the wind-up fills - two seconds have to read as a
 ## warning rather than a surprise, since the counter is to walk away or swing,
 ## and neither is a choice the player can make blind.
 const CHARGE_TINT := Color(0.55, 0.45, 1.0)
+## The committed shiver: one pixel either side, this many flips per second.
+const SHIVER_HZ := 15.0
 
 @export var slow_factor := 0.5
 @export var slow_seconds := 4.0
 
 @onready var _ring: Node2D = $ChargeRing
+## The sheet's own offset, so the shiver is added to it rather than replacing it.
+@onready var _sprite_offset: Vector2 = _sprite.offset
 
 
 func _ready() -> void:
 	super()
-	# The ring never carries the radius itself. Copying in the Touch shape's own
-	# circle means the drawing IS the area - retune the shape and the ring moves
-	# with it, and it can never be caught claiming a reach the enemy does not
-	# have. (_touch_area is only live once the base's _ready has run.)
+	# The field never carries the radius itself. Copying in the Touch shape's
+	# own circle means the drawing IS the area - retune the shape and the field
+	# moves with it, and it can never be caught claiming a reach the enemy does
+	# not have. (_touch_area is only live once the base's _ready has run.)
 	var shape := _touch_area.get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if shape != null and shape.shape is CircleShape2D:
 		_ring.radius = (shape.shape as CircleShape2D).radius
@@ -65,34 +75,14 @@ func _physics_process(delta: float) -> void:
 	super(delta)
 	# Read once, after the base has settled the phase for the frame. 0 outside
 	# the wind-up, so leaving, being staggered and landing the effect all clear
-	# the ring without any of them being handled here.
+	# the field without any of them being handled here.
 	var progress := _windup_progress()
-	_ring.set_progress(progress)
-	if progress > 0.0:
-		_hold_windup_frame(progress)
-
-
-## Holds the sheet's own attack animation to the pace of the wind-up.
-##
-## The frame is set from the progress rather than left to play at its own speed,
-## and that is what makes it survive the two things that would otherwise break
-## it: turning to face the player swaps to another direction's animation and
-## restarts it from the top, and four frames at 14 fps are over in a third of a
-## second - six loops per wind-up, which reads as flailing rather than winding
-## up. Driven from the number, the sprite is as far through its rise as the ring
-## is round its sweep, always.
-##
-## No new art: these rows have been in every enemy sheet since seeding, and the
-## warden was the one type that never played them. Run after super(), so it is
-## the last word on the frame before it is drawn.
-func _hold_windup_frame(progress: float) -> void:
-	var frames := _sprite.sprite_frames
-	if frames == null or not frames.has_animation(_sprite.animation):
-		return
-	var count := frames.get_frame_count(_sprite.animation)
-	if count <= 0:
-		return
-	_sprite.frame = mini(int(progress * count), count - 1)
+	var committed := progress >= commit_fraction
+	_ring.set_progress(progress, committed)
+	var shiver := 0.0
+	if progress > 0.0 and committed:
+		shiver = 1.0 if int(progress * windup_seconds * SHIVER_HZ * 2.0) % 2 == 0 else -1.0
+	_sprite.offset = _sprite_offset + Vector2(shiver, 0.0)
 
 
 ## An effect that has to hold you, not a blow thrown at where you were. Stepping
@@ -106,6 +96,12 @@ func _windup_tint() -> Color:
 	return CHARGE_TINT
 
 
+## Standing, not swinging: the warden never draws a weapon, so it must not mime
+## one. The charge is told by the field and the tint.
+func _windup_state() -> String:
+	return "idle"
+
+
 ## Rooted for every frame you are in its area. The cycle already roots anything
 ## that is not CHASE, so this is specifically about the frames before the
 ## wind-up starts and the cooldown after an interrupt - it must not use those to
@@ -114,8 +110,8 @@ func _can_advance() -> bool:
 	return not touching_player
 
 
-## Planted, waiting to begin. The rise itself is `_windup_state()`, which the
-## base plays for the whole telegraph; between them the warden just stands.
+## Planted, waiting to begin. The charge is `_windup_state()`, also idle; the
+## warden stands for the whole of it.
 func _contact_state() -> String:
 	return "idle"
 
@@ -129,9 +125,9 @@ func _touch_strike(player: Node2D) -> void:
 
 func _strike() -> void:
 	super()
-	# The circle says what just happened to everything inside it. The one moment
-	# the ring is allowed to be loud.
-	_ring.flash()
+	# The floor says what just happened to everything standing on it, and stays
+	# iced for exactly as long as they are slow.
+	_ring.land(slow_seconds)
 
 
 ## No blow of any kind, and no per-frame cost either: what its area takes from

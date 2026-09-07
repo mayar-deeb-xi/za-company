@@ -34,6 +34,23 @@ const SRC_SPARK := "ffd04d"
 ## the recipe's spark colour darkened, so each character's fire matches their
 ## sparks - one flame reads white core, spark middle, ember tip.
 const SRC_FIRE := "e07820"
+## The light swing's lightning trail (attack rows 6-8): white blade and nodes,
+## cyan arc, blue tail, near-black fade. Drawn blue in the sheet and recoloured
+## per character like the thrust sparks: the white core stays, the arc becomes
+## the spark colour, the tail and fade the spark darkened - so each character
+## swings their own colour and a bald head swings gold.
+const SRC_VOLT_CORE := "ffffff"
+const SRC_VOLT := "7ff0ff"
+const SRC_VOLT_EDGE := "2f6cff"
+const SRC_VOLT_DARK := "1a2f78"
+## The thrust's afterimage dash (attack2 rows 9-11): blue ghosts, speed lines
+## and blade halo that stay this blue for EVERY character - deliberately not the
+## spark colour, so the swing reads as the character's and the thrust as speed.
+## One step off SRC_VOLT's values so the two can be told apart by hex, which is
+## all the recolour goes by. The ghosts are translucent; see the alpha note in
+## restyle().
+const SRC_DASH_EDGE := "3070ff"
+const SRC_DASH_DARK := "1c3080"
 
 # Only these colours count as "the body" when picking a seam for a build tweak:
 # attack frames also contain the slash arc, whose bounds would drag the seam off
@@ -343,6 +360,12 @@ static func restyle(src_path: String, recipe: Dictionary) -> Image:
 		SRC_PANTS: recipe["pants"],
 		SRC_PANTS_DARK: recipe["pants_dark"],
 		SRC_SLASH: SRC_SLASH,
+		SRC_VOLT_CORE: SRC_VOLT_CORE,
+		SRC_VOLT: _spark_hex(recipe),
+		SRC_VOLT_EDGE: _c(_spark_hex(recipe)).darkened(0.38).to_html(false),
+		SRC_VOLT_DARK: _c(_spark_hex(recipe)).darkened(0.62).to_html(false),
+		SRC_DASH_EDGE: SRC_DASH_EDGE,
+		SRC_DASH_DARK: SRC_DASH_DARK,
 		SRC_SPARK: _spark_hex(recipe),
 		SRC_FIRE: _c(_spark_hex(recipe)).darkened(0.35).to_html(false),
 	}
@@ -354,7 +377,11 @@ static func restyle(src_path: String, recipe: Dictionary) -> Image:
 				continue
 			var hex := p.to_html(false)
 			if map.has(hex):
-				img.set_pixel(x, y, _c(map[hex]))
+				# Recolour by hex but keep the pixel's own alpha: the thrust rows'
+				# afterimages are translucent so they blend over any floor.
+				var c := _c(map[hex])
+				c.a = p.a
+				img.set_pixel(x, y, c)
 			else:
 				unknown[hex] = unknown.get(hex, 0) + 1
 	if not unknown.is_empty():

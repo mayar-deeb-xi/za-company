@@ -9,7 +9,11 @@ extends "res://game/enemies/enemy_base.gd"
 ## drain() instead: no grace, no blink, no competing with whatever last hit them.
 ##
 ## The aura is just the Touch area, tuned wide: "near you" and "touching you"
-## are the same question, so the base's overlap machinery answers both.
+## are the same question, so the base's overlap machinery answers both. It is
+## drawn by drain_aura.gd - a dashed rim at the shape's exact reach, and one
+## mote streaming from the player to the wraith for every point taken, spawned
+## right where drain() is called so the picture can only show health that really
+## went.
 ##
 ## **It has no swing, so there is nothing to interrupt - and that is its
 ## identity, not an omission.** Every other enemy can be staggered out of its
@@ -26,13 +30,27 @@ extends "res://game/enemies/enemy_base.gd"
 ## a wraith is for.
 @export var drain_per_second := 3.0
 
+@onready var _aura: Node2D = $DrainAura
+
 
 func _ready() -> void:
 	super()
+	# The aura never carries the radius itself: copying in the Touch shape's own
+	# circle means the ring IS the reach, and retuning the shape moves it too.
+	var shape := _touch_area.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if shape != null and shape.shape is CircleShape2D:
+		_aura.radius = (shape.shape as CircleShape2D).radius
+		_aura.position = shape.position
 	# The drain is a blow-rate in disguise, so it rides the same dial as every
 	# other harm the world deals; the base has already scaled contact_damage,
 	# which a wraith does not use.
 	drain_per_second *= Difficulty.damage_scale()
+
+
+func _physics_process(delta: float) -> void:
+	super(delta)
+	# Read once, after the base has settled touching_player for the frame.
+	_aura.set_feeding(touching_player, _feed_time)
 
 
 ## No wind-up, no strike, nothing to stagger. Its harm is _touch(), every frame.
@@ -62,6 +80,9 @@ func _touch(player: Node2D, delta: float) -> void:
 	if points > 0:
 		_owed -= points
 		player.call("drain", points)
+		# One mote per point, from where the player is standing right now.
+		for _i in points:
+			_aura.tick(player.global_position)
 
 
 ## It has no attack to play and, having arrived, nowhere left to walk. It just

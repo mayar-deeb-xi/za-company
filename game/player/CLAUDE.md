@@ -115,6 +115,28 @@ raised to flash intensity (near-black hair would vanish on dark floors),
 `SRC_SPARK` gold where a bald head has none. Per-character health and attack
 stats are planned; they will join the roster recipe the way looks did.
 
+The swing's art is **Lightning Edge** (rows 6-8 of the sheet): the old outlined
+crescent is gone, and the blade is a one-pixel white line trailing a jagged
+arc that cools and breaks into dashes, with a bloom at the hitbox centre on the
+third frame. It is drawn blue in the sheet (the `SRC_VOLT_*` constants in
+character_art.gd) and **recoloured per character the way the old sparks were**:
+the white core stays, the arc becomes the spark colour, the tail and fade the
+spark darkened - so Mayar swings violet, Anas gold. Everything stays inside the
+32px frame; on the down row the bloom sits 3px above the hitbox centre because
+the centre itself is on the frame's last row.
+
+The thrust's art is **Afterimage Dash** (rows 9-11): a bare white blade with a
+blue halo, translucent blue afterimages of the previous poses trailing behind
+the lunge, speed lines, and two pixels of dust on the recover frame. Its blues
+(`SRC_DASH_*`) are deliberately fixed for every character - the swing reads as
+the character's own colour, the thrust as speed - and sit one step off the
+volt values so the recolour, which goes by exact hex, can tell them apart. The
+ghosts are the first translucent pixels in the sheet: restyle() now keeps each
+pixel's alpha when it recolours, where it used to rebuild the pixel opaque.
+
+Both were baked by a script from the pristine CC0 rows rather than drawn by
+hand, so `character.aseprite` no longer matches the PNG; the PNG is the truth.
+
 **The heavy is the hold.** A press always swings first - waiting to see whether
 the press is a hold would lag every basic attack - and a button still held when
 an attack ends (with nothing buffered) flows into the `charge` stance: rooted,
