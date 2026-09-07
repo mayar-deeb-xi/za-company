@@ -4,6 +4,13 @@ extends CharacterBody2D
 
 const SPEED := 90.0
 const ACCELERATION := 900.0
+## How much of walking speed the two light attacks keep. They used to root the
+## body; a third lets a swing step in or drift back without letting the player
+## dance out of a guard's finish, which the grace window and the interrupt
+## tuning both assume. The stick also steers: facing follows it mid-attack and
+## the hitbox re-parks (see _turn_attack). The charge stance and the heavy stay
+## rooted - the heavy's ~1.9 rooted seconds are part of its damage maths.
+const ATTACK_SLIDE := 0.35
 const FRICTION := 1100.0
 const MAX_HEALTH := 100
 ## Damage one swing deals to each enemy it reaches. A constant for now; when
@@ -143,9 +150,15 @@ func _physics_process(delta: float) -> void:
 			else:
 				_apply_animation("idle")
 	elif _attack != "":
-		# Attacks root the character in place; the thrust's opening lunge
-		# decays under the same friction.
-		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
+		if (_attack == "attack" or _attack == "attack2") and direction != Vector2.ZERO:
+			# Light attacks steer and slide at a fraction of walking speed.
+			_turn_attack(direction)
+			velocity = velocity.move_toward(
+				direction * SPEED * slow_factor * ATTACK_SLIDE, ACCELERATION * delta)
+		else:
+			# The heavy, its wildfire, and a light attack with no stick held
+			# brake to a stop.
+			velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
 		_strike()
 	elif direction != Vector2.ZERO:
 		_face(direction)
@@ -176,6 +189,23 @@ func _facing_suffix() -> String:
 			return "side"
 		_:
 			return "down"
+
+
+## Mid-attack the stick steers: facing follows it, the hitbox re-parks, and the
+## sprite switches to the new facing's row of the SAME attack at the SAME frame
+## and progress, so a swing that turns keeps its timing and its telegraph. The
+## hit ledger is untouched - turning cannot land one swing twice on one enemy.
+func _turn_attack(direction: Vector2) -> void:
+	var before := _facing
+	var before_left := _facing_left
+	_face(direction)
+	if _facing == before and _facing_left == before_left:
+		return
+	_hitbox.position = _hitbox_offset()
+	var frame := _sprite.frame
+	var progress := _sprite.frame_progress
+	_apply_animation(_attack)
+	_sprite.set_frame_and_progress(frame, progress)
 
 
 func _apply_animation(state: String, restart := false) -> void:

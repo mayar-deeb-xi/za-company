@@ -99,13 +99,25 @@ The player's side of the fight is three attacks on the one attack button. A
 press starts the swing (`ATTACK_POWER` 5); pressing again during it, or within
 `COMBO_GRACE_SECONDS` after, chains the second hit (`attack2` rows 9-11 of the
 cast sheet, `THRUST_POWER` 7 - the name is historical, the move is now a rising
-slash). It is rooted like the swing and shares the swing's hitbox: its arc
-covers the same reach, and the jump in its art is the movement. **A press mid-attack is buffered, never dropped** -
+slash). It shares the swing's hitbox: its arc covers the same reach, and the jump in
+its art is its own movement. **A press mid-attack is buffered, never dropped** -
 mashing alternates swing-thrust cleanly, and a dropped press reads as the game
 eating the button. Getting hit deliberately does NOT break the combo: the game
 has no hitstun, so a silently swallowed buffer would read as dropped input, and
 melee happens inside enemy contact where hits are constant - the second hit's
-cost is commitment (rooted through two animations), not a hidden reset. Damage goes through a Hitbox Area2D that `_start_attack()` parks
+cost is commitment (two animations facing one way), not a hidden reset.
+
+**Light attacks steer and slide, the heavy roots.** While the swing or the
+second hit plays, a held direction moves the body at `ATTACK_SLIDE` (0.35) of
+walking speed AND turns it: `_turn_attack()` re-faces, re-parks the hitbox and
+swaps the sprite to the new facing's row of the same attack at the same frame
+and progress, so the swing keeps its timing while it follows the stick. The hit
+ledger is untouched, so one swing still lands once per enemy however far it
+turns. The
+fraction is a step-in, not an escape: a guard's finish still lands on a player
+who tries to walk out of it, which is what the grace window and the interrupt
+tuning assume. The charge stance, the heavy and the wildfire brake to a stop as
+before - the heavy's rooted seconds are part of its damage maths. Damage goes through a Hitbox Area2D that `_start_attack()` parks
 one step ahead of the body in the facing direction; it stays live for the whole
 animation but a ledger (`_swing_hits`) lands each attack once per enemy - so a
 24 HP guard dies to one full mash cycle (5+7+5+7). The spark colour every
