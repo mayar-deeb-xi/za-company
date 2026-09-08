@@ -19,9 +19,10 @@ extends SceneTree
 ## one animation set, while each enemy is heading somewhere different, and a
 ## shared sheet would mean every enemy's moves piling up in one file.
 ##
-## An enemy that grows animations the CC0 grid does not have adds a `layout`
-## (and if needed `specs`) to its roster entry; without one it uses the CC0
-## layout that seeding produced.
+## An enemy whose sheet does not hold the CC0 grid's rows - grown past them, or
+## trimmed of ones it can never play - adds a `layout` (and if needed `specs`)
+## to its roster entry; without one it uses the CC0 layout that seeding
+## produced.
 ##
 ## Run: godot --headless --path . --script res://tools/build_enemies.gd
 

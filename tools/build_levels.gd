@@ -88,6 +88,12 @@ const HEALTH_POS := Vector2(424, 152)
 ## from game/enemies/<type>/, and which ones a room gets is per-biome data in
 ## tools/biomes.gd. A level that wants a variant swaps the instance by hand.
 const ENEMY_SCENE := "res://game/enemies/%s/%s.tscn"
+## A boss floor names its boss the same way - a type under game/bosses/ and a
+## position - under `boss`. The instance is called "Boss", which is the name
+## the floor's north door looks for: having a boss swaps that door's script for
+## the lock, shut until he concedes.
+const BOSS_SCENE := "res://game/bosses/%s/%s.tscn"
+const BOSS_DOOR := "res://game/levels/boss_door.gd"
 
 
 ## Names passed after `--` build only those levels. Since a re-run overwrites
@@ -406,11 +412,21 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 		props.add_child(enemy)
 		enemy.owner = root
 
+	var boss: Dictionary = Biomes.BIOMES[level].get("boss", {})
+	if not boss.is_empty():
+		var boss_type: String = boss["type"]
+		var boss_node := _reload(BOSS_SCENE % [boss_type, boss_type]).instantiate()
+		boss_node.name = "Boss"
+		boss_node.position = boss["at"]
+		props.add_child(boss_node)
+		boss_node.owner = root
+
 	var door_scene := _reload("%s/door.tscn" % dir)
 	var next: String = Biomes.next_of(level)
 	if next != "":
+		# A boss floor's way up is shut until the boss concedes.
 		_add_door(props, root, door_scene, dir, "Exit", "out", 0, 0.0,
-			next, &"start")
+			next, &"start", BOSS_DOOR if not boss.is_empty() else "")
 	var previous: String = Biomes.previous_of(level)
 	if previous != "":
 		# Half a turn puts the same scene's art, seal and threshold in the
@@ -431,8 +447,12 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 
 func _add_door(props: Node2D, root: Node2D, scene: PackedScene, dir: String,
 		node_name: String, art: String, wall_row: int, turn: float,
-		target: String, spawn: StringName) -> void:
+		target: String, spawn: StringName, script_path := "") -> void:
 	var door := scene.instantiate()
+	# Swapped before any property is set: a new script starts from its own
+	# defaults, so setting them first would only lose them.
+	if script_path != "":
+		door.set_script(load(script_path))
 	door.name = node_name
 	door.position = Vector2(DOOR_CENTRE_X, wall_row * TILE + TILE / 2)
 	door.rotation = turn

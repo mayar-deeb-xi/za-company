@@ -31,6 +31,11 @@ extends RefCounted
 ## enemy's sight reaches the door line, the spawns or the hazard and heart
 ## stands: the straight walk between the two doors stays safe in every biome.
 ##
+## `boss` is the same shape for one boss - {type, at}, the type a folder under
+## game/bosses/ - and having one also shuts the floor's north door until the
+## boss concedes (game/levels/boss_door.gd). A boss is an arena's whole
+## population: the enemies list on such a floor stays empty.
+##
 ## `props` is the same idea for furniture - a type from tools/props/ and a
 ## position - and it is what dresses a room as somewhere rather than as a
 ## rectangle. Keys that go with it, all optional and all defaulted so the two

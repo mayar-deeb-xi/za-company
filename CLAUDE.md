@@ -11,6 +11,8 @@ checklist. This file says HOW things work; DESIGN.md says WHAT to build.
 
 - `ui/<screen>/` - one folder per screen; scene + script together
 - `game/` - gameplay; `game/<entity>/` owns its scene, script, art, frames
+- `game/bosses/` - the bosses; each owns its scene, script, poses, sheet and
+  effects and shares NOTHING with the others but the rules (`boss_base.gd`)
 - `assets/` - ONLY files shared across features (fonts, tilesets, audio), plus
   source art no feature owns yet; it moves into the feature that claims it
 - `autoload/` - global singletons registered in project.godot
@@ -29,7 +31,9 @@ Placement rules:
 **Deep documentation lives with its subject**, in nested CLAUDE.md files that
 load when files there are touched: `game/levels/CLAUDE.md` (the host, the
 camera, room anatomy, doors and spawns), `game/enemies/CLAUDE.md` (the attack
-cycle, the types, the enemy art pipeline), `game/player/CLAUDE.md` (characters,
+cycle, the types, the enemy art pipeline), `game/bosses/CLAUDE.md` (multiple
+attacks on that cycle, conceding, the poses-painter-fire contract, boss
+floors), `game/player/CLAUDE.md` (characters,
 health, the combo and the heavy) and `tools/CLAUDE.md` (furnishing rooms from
 data, the prop catalogue, adding a floor). This file keeps what must be known
 BEFORE touching anything: the maps, the invariants and the gotchas.
@@ -100,6 +104,12 @@ Never retune one side without the other, and difficulty must never scale any of
 them. A reskin (`office_boy`) is a new sheet, name and folder with the base's
 numbers and no script - nothing else, or the interrupt tuning breaks.
 
+Bosses (`game/bosses/`) run the same cycle with several attacks and concede
+instead of dying; a floor names its boss in `tools/biomes/<level>.gd` under
+`boss`, which also shuts that floor's north door until he concedes
+(game/levels/boss_door.gd). A boss floor is an arena: his sight reaching the
+spawn is the one deliberate exception to the rule below.
+
 Which enemies a room gets is per-biome data (type + position), and positions
 keep every sight radius clear of the door line, spawns and both stands - the
 straight walk between the doors stays safe in every biome, and the flow and
@@ -112,6 +122,11 @@ game/enemies/CLAUDE.md.
 - `game/player/characters/*_frames.tres`
                                     <- tools/build_characters.gd
 - `game/enemies/*/*_frames.tres`    <- tools/build_enemies.gd, see below
+- `game/bosses/*/*_frames.tres`     <- tools/build_bosses.gd: seeds
+                                       game/bosses/<id>/src/<id>.png ONCE from
+                                       the painter tools/bosses/<id>.gd (which
+                                       draws game/bosses/<id>/poses.gd), then
+                                       slices whatever is on disk, 64px cells
 - sheet shaping & slicing engine    <- tools/character_art.gd (shared by both)
 - playable cast & recipes           <- game/player/characters/roster.gd
                                        (data, edited by hand)

@@ -80,8 +80,9 @@ const HIGHLIGHT_PERIOD := 3
 ## own 9-row sheet does not have, and the frames would come back empty with
 ## nothing to say why.
 ##
-## An enemy sheet that grows rows of its own declares a `layout` in its roster
-## entry, which is the whole point of each enemy owning its sheet.
+## An enemy sheet that does not hold exactly these rows declares a `layout` in
+## its roster entry, which is the whole point of each enemy owning its sheet -
+## the wraith's and the warden's are 6 rows, having no swing to draw.
 const CC0_LAYOUT := {
 	"down": {"idle": 0, "walk": 1, "attack": 6},
 	"up": {"idle": 2, "walk": 3, "attack": 7},
@@ -406,7 +407,13 @@ static func restyle(src_path: String, recipe: Dictionary) -> Image:
 ## lossless PortableCompressedTexture2D rather than referenced as a PNG, so the
 ## result works headless immediately with no --import pass - and the source PNG
 ## stays a pure art file that the game never loads.
-static func slice(img: Image, layout: Dictionary, specs: Dictionary) -> SpriteFrames:
+##
+## `frame` is the cell size, 32 for everything drawn on the CC0 grid; the
+## bosses cut 64. A spec may carry `durations`, one multiplier per frame, so a
+## sheet can hold an attack's own timing rather than playing every frame for
+## the same beat.
+static func slice(img: Image, layout: Dictionary, specs: Dictionary,
+		frame := FRAME) -> SpriteFrames:
 	var tex := PortableCompressedTexture2D.new()
 	tex.keep_compressed_buffer = true
 	tex.create_from_image(img, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS)
@@ -420,10 +427,11 @@ static func slice(img: Image, layout: Dictionary, specs: Dictionary) -> SpriteFr
 			sf.add_animation(anim)
 			sf.set_animation_speed(anim, spec["fps"])
 			sf.set_animation_loop(anim, spec["loop"])
+			var durations: Array = spec.get("durations", [])
 			for col in spec["frames"]:
 				var at := AtlasTexture.new()
 				at.atlas = tex
-				at.region = Rect2(col * FRAME, layout[dir_name][state] * FRAME,
-					FRAME, FRAME)
-				sf.add_frame(anim, at)
+				at.region = Rect2(col * frame, layout[dir_name][state] * frame,
+					frame, frame)
+				sf.add_frame(anim, at, durations[col] if col < durations.size() else 1.0)
 	return sf

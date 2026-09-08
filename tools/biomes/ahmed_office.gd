@@ -25,8 +25,11 @@ const BIOME := {
 	# the player a second thing to read during the one fight the floor is for,
 	# and the fight is the whole point of the room.
 	"hazard": "none",
-	# Empty for now. Ahmed is build order step 6 and does not exist yet, and
-	# the design gives this floor no adds at rest - so there is nothing to put
-	# in it that would not be a dungeon guard standing in a corner office.
+	# No adds at rest: the design gives this floor nobody but Ahmed, and he is
+	# the fight. He stands north of centre between the two colonnade rows, and
+	# his sight (110 px) reaches the south spawn where the player arrives -
+	# deliberately. This is an arena, not a corridor: the walk to the north
+	# door goes through him, and the door is shut until he concedes.
 	"enemies": [],
+	"boss": {"type": "ahmed", "at": Vector2(272, 140)},
 }

@@ -164,7 +164,9 @@ names the room, and the fiction carries which floor it is.
   (`"hazard": "none"` - the only thing in here meant to hurt is Ahmed, and one
   fight is enough to read at a time) and any enemies, since Ahmed is step 6
   and the design gives this floor no adds at rest.
-  **Still to add**: Ahmed, and the dressing named above - the oversized desk,
+  **Built since**: Ahmed, standing north of centre with the north door shut
+  behind him until he concedes (see Bosses).
+  **Still to add**: the dressing named above - the oversized desk,
   the putter and the framed photo are props nobody has drawn yet.
 - [x] **F5 The Hub** (breather): one room, two teams, neither of whom
   asked to share it - and the floor where the two teams whose own floors you
@@ -368,10 +370,20 @@ heavy's 24. Difficulty scales their damage only, never HP. All three concede
 instead of dying (no queue_free): defeat -> concede animation -> north door
 unlocks.
 
-- [ ] **AHMED — 96 HP, F4.** The relative; teaching boss. Guard swing cycle,
-  slightly faster recover, 14 damage. At 64 and 32 HP yells "SECURITY!" and
-  summons 1 office boy through the door (cap 2 alive). Standard interrupt
-  economy. Defeated: sits in his enormous chair — "I'm telling Mostafa."
+- [x] **AHMED — 96 HP, F4.** The relative; teaching boss, and the one who
+  brought an axe to a performance review. 2.5x the player and thin as a coat
+  rack: black curls going grey, black beard, white shirt with the sleeves
+  shoved up, black trousers. The axe burns. Four attacks on the guard's cycle,
+  chosen by range and by how the player is behaving (game/bosses/ahmed/):
+  CHOP 16 and SWEEP 12 alternate in reach; every third swing - or sooner, if
+  he is hit twice inside 2 s - is the SLAM, 20 to EVERYONE in a 40 px ring,
+  office boys included; a player who kites gets the FIRE WAVE, 14 down a
+  64 px lane, dodged by a sidestep. Standard interrupt economy. Every attack
+  has fire on it, drawn live over a clean sheet.
+  **Built**: the boss, his fire, the locked north door, tests/test_bosses.gd.
+  **Still to add**: the "SECURITY!" summon at 64 and 32 HP (1 office boy
+  through the door, cap 2 alive - the slam already knows what to do with
+  them), the enormous chair and the line "I'm telling Mostafa." He kneels.
 - [ ] **MOSTAFA — 144 HP, F7.** Boxing rhythm fight; his attack is the cycle
   run 3x back-to-back:
   - Jab, jab: 0.25s wind-ups, 6 dmg each, commit_fraction ~1.0
@@ -439,10 +451,11 @@ Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
         social_media and call_center still to do.
 - [ ] 3. Dialogue + Dominic: npc_base.gd, ui/dialogue/, lines as instance data.
 - [ ] 4. Ivan: heart-throwing NPC on cooldown.
-- [ ] 5. Boss plumbing: locked north door, boss HP bar on HUD,
-        defeat -> concede -> unlock sequence.
+- [ ] 5. Boss plumbing: locked north door (done: game/levels/boss_door.gd),
+        defeat -> concede -> unlock (done: boss_base.gd), boss HP bar on HUD
+        (to do).
 - [ ] 6. Bosses in order Ahmed -> Mostafa -> Khaled (each adds one idea:
-        summons; multi-hit rhythm; phases).
+        summons; multi-hit rhythm; phases). Ahmed is built, less his summon.
 - [ ] 7. Ending: sticky-note screen, discount code constant, credits.
-- [ ] 8. Tests: new `tests/test_bosses.gd` suite (one suite = one world);
-        extend test_flow with the locked-door case.
+- [x] 8. Tests: new `tests/test_bosses.gd` suite (one suite = one world);
+        test_flow checks the locked door and concedes Ahmed to walk on.

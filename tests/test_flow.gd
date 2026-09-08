@@ -309,9 +309,24 @@ func _tick(frame: int) -> void:
 				_level().get_node_or_null("Props/Torch") == null)
 			_check("level: no heart on the boss floor",
 				_level().get_node_or_null("Props/Health") == null)
-			_check("level: no adds at rest on the boss floor (%d)"
+			# Ahmed is the only thing in here, and he is in the way: a boss
+			# floor's north door is shut until he concedes. The fight itself is
+			# test_bosses.gd's; this walk checks the lock, then concedes him the
+			# short way so the chain can go on.
+			var boss := _level().get_node_or_null("Props/Boss")
+			_check("boss: Ahmed stands in his office", boss != null)
+			_check("level: no adds at rest on the boss floor - Ahmed alone (%d)"
 				% get_nodes_in_group("enemies").size(),
-				get_nodes_in_group("enemies").is_empty())
+				get_nodes_in_group("enemies").size() == 1)
+			var way_up := _level().get_node("Props/Exit")
+			_check("door: the way up is shut while Ahmed stands",
+				not way_up.call("can_travel"))
+			if boss != null:
+				boss.call("take_damage", 96)
+			_check("boss: at zero he concedes rather than dying (%s)"
+				% ("gone" if boss == null else str(boss.get("has_conceded"))),
+				boss != null and boss.get("has_conceded") == true)
+			_check("door: the way up opens once he has", way_up.call("can_travel"))
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		661:

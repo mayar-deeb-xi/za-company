@@ -4,7 +4,9 @@ Deep dive for `game/enemies/`. The cross-cutting invariants (HP numbers are
 combo breakpoints, difficulty never scales them, reskins keep the base's
 numbers, composition is per-biome data) are restated in the root CLAUDE.md;
 the player's side of the fight - the combo and the heavy these numbers are
-tuned against - is `game/player/CLAUDE.md`.
+tuned against - is `game/player/CLAUDE.md`. Bosses extend this base with
+several attacks and a concede; they live in `game/bosses/`, with their own
+CLAUDE.md.
 
 ## The base
 
@@ -230,10 +232,19 @@ say why.
 From the moment the PNG exists it is hand-owned art. Draw a new animation into
 one enemy's sheet, re-run the tool, and only that enemy's frames change - the
 recipe never touches it again. Deleting an enemy's PNG and rebuilding is how you
-start its art over from the plain body. An enemy whose sheet grows rows the CC0
-grid does not have adds a `layout` (and `specs`) to its roster entry; the
-default lives in tools/character_art.gd, which is the shaping and slicing engine
-both generators share.
+start its art over from the plain body. An enemy whose sheet does not hold the
+CC0 grid's rows adds a `layout` (and `specs`) to its roster entry; the default
+lives in tools/character_art.gd, which is the shaping and slicing engine both
+generators share.
+
+**That goes for rows dropped as much as rows grown.** The wraith and the warden
+never play `attack` - the wraith has none at all and the warden's charge is
+animated as `idle` on purpose - so the swing the seed gave them was three rows
+nothing could ever reach. Both sheets are cut to 6 rows and both entries name
+`NO_ATTACK_LAYOUT` in roster.gd. It matters because these are hand-owned art:
+what is in the PNG is what someone draws into next, and rows that cannot play
+are three rows of a lie about what the enemy does. Give one of them a swing
+later and it takes its own `layout` back, at whatever rows its sheet then has.
 
 ## Placement
 

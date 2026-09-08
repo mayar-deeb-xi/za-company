@@ -29,6 +29,7 @@ const PLAIN := [
 	["Rebuild biome art (tilesets + doorways)", "res://tools/build_biomes.gd"],
 	["Rebuild character frames", "res://tools/build_characters.gd"],
 	["Rebuild enemy frames", "res://tools/build_enemies.gd"],
+	["Rebuild boss frames", "res://tools/build_bosses.gd"],
 	["Rebuild the UI theme", "res://tools/build_ui_theme.gd"],
 	["Re-apply project settings", "res://tools/setup_project.gd"],
 ]

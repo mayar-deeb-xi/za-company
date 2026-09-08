@@ -192,3 +192,12 @@ room keeps: every sight radius clear of the lane the two doors line up on.
 
 build_biomes.gd always does every biome, so the doorway textures (each lit by
 the colour of the place on the other side) come out right on their own.
+
+## Bosses
+
+`build_bosses.gd` is build_enemies.gd with a different seed: a boss is not
+recoloured from the CC0 body but painted by its own `tools/bosses/<id>.gd`
+from `game/bosses/<id>/poses.gd`, into a 64 px sheet, once - then sliced
+from disk every run. A boss floor places him through the biome's `boss` key,
+which build_levels.gd instances as `Props/Boss` and answers by giving the
+north door the lock script. The rest is game/bosses/CLAUDE.md.

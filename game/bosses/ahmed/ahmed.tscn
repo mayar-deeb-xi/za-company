@@ -1,0 +1,70 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://game/bosses/ahmed/ahmed.gd" id="1_ahmed"]
+[ext_resource type="SpriteFrames" path="res://game/bosses/ahmed/ahmed_frames.tres" id="2_frames"]
+[ext_resource type="Script" path="res://game/bosses/ahmed/axe_fire.gd" id="3_fire"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 6.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_touch"]
+radius = 24.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ring"]
+radius = 40.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lane"]
+size = Vector2(64, 16)
+
+[node name="Ahmed" type="CharacterBody2D" groups=["bosses", "enemies"]]
+motion_mode = 1
+script = ExtResource("1_ahmed")
+max_health = 96
+contact_damage = 16
+speed = 40.0
+sight_radius = 110.0
+stop_distance = 20.0
+windup_seconds = 0.67
+commit_fraction = 0.6
+recover_seconds = 0.48
+stagger_seconds = 0.3
+interrupt_cooldown = 1.2
+
+[node name="FloorFire" type="Node2D" parent="."]
+script = ExtResource("3_fire")
+part = "floor"
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("2_frames")
+animation = &"idle_side"
+autoplay = "idle_side"
+offset = Vector2(0, -24)
+
+[node name="AirFire" type="Node2D" parent="."]
+script = ExtResource("3_fire")
+part = "air"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_body")
+
+[node name="Touch" type="Area2D" parent="."]
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Touch"]
+position = Vector2(0, -6)
+shape = SubResource("CircleShape2D_touch")
+
+[node name="Ring" type="Area2D" parent="."]
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ring"]
+position = Vector2(0, -2)
+shape = SubResource("CircleShape2D_ring")
+
+[node name="Lane" type="Area2D" parent="."]
+position = Vector2(40, -4)
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Lane"]
+shape = SubResource("RectangleShape2D_lane")

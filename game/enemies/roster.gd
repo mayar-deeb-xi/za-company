@@ -14,8 +14,9 @@ extends RefCounted
 ## `recipe` stays as provenance and as the way back: delete an enemy's PNG, run
 ## build_enemies.gd, and its art starts over from the plain CC0 body.
 ##
-## An enemy whose sheet grows rows the CC0 grid does not have adds a `layout`
-## (and `specs` if the timing differs) here; without one it uses `CC0_LAYOUT` in
+## An enemy whose sheet does not match the CC0 grid adds a `layout` (and `specs`
+## if the timing differs) here - rows grown as well as rows dropped, which is
+## what `NO_ATTACK_LAYOUT` below is. Without one it uses `CC0_LAYOUT` in
 ## tools/character_art.gd - the layout seeding produced, frozen. The cast's
 ## layout is a separate constant in tools/build_characters.gd on purpose, so a
 ## new PLAYER animation can never tell an enemy to slice a row its own sheet
@@ -24,6 +25,21 @@ extends RefCounted
 ## Only looks live here. Stats (health, damage, speed, sight, and each type's
 ## own ability numbers) are @exports on the enemy scripts, set per scene, so a
 ## level can retune the copy it places without touching any other.
+
+## Six rows, no attack: idle and walk in the three directions and nothing else.
+##
+## The CC0 grid's bottom three rows are a sword swing, and two of the enemies
+## deliberately never draw a weapon - the wraith has no attack at all
+## (`_attacks()` is false; its harm is proximity) and the warden animates its
+## charge as `idle` on purpose, since a harmless enemy raising a sword for two
+## seconds reads as the one thing it is not. Rows nothing can ever play are dead
+## weight in a hand-owned sheet, so those two PNGs are 6 rows tall and say so
+## here. Draw a swing into one of them later and it wants its own `layout` back.
+const NO_ATTACK_LAYOUT := {
+	"down": {"idle": 0, "walk": 1},
+	"up": {"idle": 2, "walk": 3},
+	"side": {"idle": 4, "walk": 5},
+}
 
 const ENEMIES := [
 	{
@@ -69,6 +85,7 @@ const ENEMIES := [
 		"id": "wraith",
 		"src": "res://game/enemies/wraith/src/wraith.png",
 		"frames": "res://game/enemies/wraith/wraith_frames.tres",
+		"layout": NO_ATTACK_LAYOUT,
 		"recipe": {
 			"hair": "eef1f7", "hair_light": "ffffff",   # white
 			"skin": "d7dde9",                           # bloodless, cooler than
@@ -85,6 +102,7 @@ const ENEMIES := [
 		"id": "warden",
 		"src": "res://game/enemies/warden/src/warden.png",
 		"frames": "res://game/enemies/warden/warden_frames.tres",
+		"layout": NO_ATTACK_LAYOUT,
 		"recipe": {
 			"hair": "4a3a6b", "hair_light": "6d59a0",   # deep violet
 			"skin": "8f86b8",
