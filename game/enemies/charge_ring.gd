@@ -27,7 +27,7 @@ extends Node2D
 ## draws UNDER the floor and is never seen. This node stays at z 0 and is the
 ## warden's first child, above the tiles and beneath the body.
 
-const SHADER := preload("res://game/enemies/warden/charge_ring.gdshader")
+const SHADER := preload("res://game/enemies/charge_ring.gdshader")
 
 ## How long the landing flash and shards take; the field keeps animating for at
 ## least this long after `land()` even when the slow itself is short.

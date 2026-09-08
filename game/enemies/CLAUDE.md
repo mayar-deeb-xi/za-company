@@ -93,6 +93,23 @@ tuned against 24 HP and a 0.45s wind-up, and a reskin that quietly retuned
 either would need them re-tuned too. Two types share the base's defaults now,
 so a change to those defaults moves both.
 
+**Reskinning the wraith and the warden moved their scripts up here**, and that
+is the placement rule in CLAUDE.md doing its job rather than a special case: the
+moment a second feature needs a file it bubbles up one level above the features
+that share it. So `wraith_base.gd`, `warden_base.gd` and the two effects they
+draw with (`drain_aura.gd`, `charge_ring.gd`, each with its shader) sit at
+`game/enemies/`, beside `enemy_base.gd`, and four folders now hold nothing but a
+sheet, a `_frames.tres` and a scene. Read it the way the regular and the office
+boy already read: the archetype's behaviour is shared, the look is not.
+
+What is NOT shared is the tuning. Each scene repeats the archetype's exports -
+17 HP and 45 speed on both drainers, 36 and the 2-second charge on both chargers
+- so a floor can retune the copy it places, which is the same bargain
+`office_boy.tscn` makes. The cost is real and worth naming: retune the wraith's
+scene and its reskin keeps the old numbers. `tests/test_combat.gd` spawns both
+reskins and asserts their health against the archetype's, which is what catches
+that drift.
+
 ## The types
 
 They deliberately threaten in different ways - damage, drain, and denial - so a
@@ -141,6 +158,14 @@ room is built by mixing them rather than by adding more of the same:
   attack to stagger, only proximity. That leaves exactly two answers to it,
   leave or kill it, and being the softest of the three at three hits is the
   other half of that bargain.
+- **`social_media/`** - the wraith, reskinned as the Content Studio's people.
+  Identical numbers, its own sheet, no script: its scene runs `wraith_base.gd`.
+  The look wears the floor's own neon - `a64dff` is the Content Studio's accent,
+  and she carries it in dyed violet hair over a black tee, so on the darkest
+  floor in the game the hair is the silhouette. **The known cost of that pick**:
+  violet moves less than a warm colour would under the cold feed tint, so the
+  drain is told by the aura and the motes more than by the body. If it ever
+  reads as ambiguous in the room, the fix is on `drain_aura.gd`, not the sheet.
 - **`warden/`** - 36 HP, no damage of any kind, speed 50, sight 130, a 48 px
   area, and a 2-second wind-up that slows everyone still inside to half speed
   for 4. It is pure area denial: harmless alone, and the reason the guards and
@@ -195,6 +220,15 @@ room is built by mixing them rather than by adding more of the same:
   counted there would fill twice as fast with two players in the area. After
   `super()` the base has settled `touching_player` for the frame, and one read
   covers however many are standing in it.
+- **`call_center/`** - the warden, reskinned as the phone team's supervisors.
+  Identical numbers, its own sheet, no script: its scene runs `warden_base.gd`.
+  Deliberately the most ORDINARY-looking person in the building - grey
+  button-up, navy slacks, no beard - because everything frightening about him is
+  the field on the floor, not him. The pale shirt is the working part rather
+  than a neutral choice: `_windup_tint()` pushes the body toward violet in
+  proportion to the charge, and a light neutral takes that tint harder than any
+  other colour tried, so the two-second warning reads on the body as clearly as
+  it does on the ring.
 
 ## Sheets: every enemy owns its own
 

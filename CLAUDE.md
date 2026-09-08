@@ -101,8 +101,13 @@ interruptible in return.
 **Enemy HP (24 / 17 / 36) are exact breakpoints on the player's combo** -
 "dies in exactly N hits" - and `HEAVY_POWER` equals a guard's health by design.
 Never retune one side without the other, and difficulty must never scale any of
-them. A reskin (`office_boy`) is a new sheet, name and folder with the base's
-numbers and no script - nothing else, or the interrupt tuning breaks.
+them. A reskin (`office_boy`, `social_media`, `call_center`) is a new sheet,
+name and folder with the archetype's numbers and no script - nothing else, or
+the interrupt tuning breaks. All six enemies are now three archetypes twice
+over, so each archetype's script lives at `game/enemies/` beside
+`enemy_base.gd` - `wraith_base.gd` and `warden_base.gd`, plus the two effects
+they draw with - and a type's own folder holds only its sheet, frames and
+scene.
 
 Bosses (`game/bosses/`) run the same cycle with several attacks and concede
 instead of dying; a floor names its boss in `tools/biomes/<level>.gd` under

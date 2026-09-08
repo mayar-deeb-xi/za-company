@@ -1,6 +1,6 @@
 extends Node2D
 ## The wraith's aura, drawn rather than animated - the same idea as the
-## warden's field (game/enemies/warden/charge_ring.gd), for a different harm.
+## warden's field (game/enemies/charge_ring.gd), for a different harm.
 ##
 ## Two things the drawing has to say. *Where the edge is*: a dashed rim at the
 ## exact reach of the Touch shape, faint at rest and brighter while feeding, on
@@ -24,7 +24,7 @@ extends Node2D
 ## z_index here would draw under it and never be seen (the warden's ring did
 ## exactly that once).
 
-const SHADER := preload("res://game/enemies/wraith/drain_aura.gdshader")
+const SHADER := preload("res://game/enemies/drain_aura.gdshader")
 
 ## Matches wraith.gd's FEED_TINT: the body glowing cold and the health leaving
 ## you are one reading, not two.

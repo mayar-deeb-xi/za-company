@@ -99,6 +99,61 @@ const ENEMIES := [
 		},
 	},
 	{
+		# Floor 2's crowd, and a wraith in everything but colour: 17 HP, no
+		# attack, harm by proximity. The wraith is a person with the colour
+		# taken out of them; this one is the same silhouette arriving from the
+		# opposite direction - she wears the Content Studio's own neon violet
+		# (`a64dff` is that floor's accent) in dyed hair over a black tee, so
+		# on the darkest floor in the game the HAIR is the silhouette and the
+		# body is barely there.
+		#
+		# The cost of that, and it was chosen with eyes open: violet under the
+		# wraith's cold feed tint (0.55, 0.85, 1.0) moves less than a warm
+		# character would, so the drain reads off the aura and the motes more
+		# than off the body. drain_aura.gd is carrying the telling here.
+		"id": "social_media",
+		"src": "res://game/enemies/social_media/src/social_media.png",
+		"frames": "res://game/enemies/social_media/social_media_frames.tres",
+		"layout": NO_ATTACK_LAYOUT,
+		"recipe": {
+			"hair": "b45cf0", "hair_light": "d89bff",   # dyed, the floor's neon
+			"skin": "e0c4b0",
+			"eye": "2a1f33",
+			"shirt": "1b1524", "shirt_dark": "0d0913",  # black tee
+			"pants": "2a2038", "pants_dark": "160f20",
+			# Skinny and unbearded: the squishiest thing in the game at 17 HP,
+			# and it should look it.
+			"hair_style": "straight", "beard": false, "build": "skinny",
+		},
+	},
+	{
+		# Floor 3's denial, and a warden in everything but colour: 36 HP, the
+		# two-second charge, the hold that slows. Deliberately the most ORDINARY
+		# person in the building - a light grey button-up and navy slacks, no
+		# beard - because everything frightening about him is on the floor
+		# around him rather than on him.
+		#
+		# The pale shirt is the working part. The charge tints the body toward
+		# violet (0.55, 0.45, 1.0) in proportion to the wind-up, and a light
+		# neutral takes that tint harder than any other colour here - so the two
+		# seconds of warning read on him as clearly as they do on the ring, which
+		# is the counterplay being visible at all.
+		"id": "call_center",
+		"src": "res://game/enemies/call_center/src/call_center.png",
+		"frames": "res://game/enemies/call_center/call_center_frames.tres",
+		"layout": NO_ATTACK_LAYOUT,
+		"recipe": {
+			"hair": "4a4038", "hair_light": "6b5c4e",
+			"skin": "d6b191",
+			"eye": "2a2119",
+			"shirt": "c8ccd4", "shirt_dark": "8b919c",  # office grey
+			"pants": "2c3242", "pants_dark": "171c28",  # navy slacks
+			# Wide like the warden: it plants itself and holds ground, so it
+			# wants the same widest-in-the-room silhouette.
+			"hair_style": "straight", "beard": false, "build": "wide",
+		},
+	},
+	{
 		"id": "warden",
 		"src": "res://game/enemies/warden/src/warden.png",
 		"frames": "res://game/enemies/warden/warden_frames.tres",

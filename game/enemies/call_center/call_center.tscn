@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://game/enemies/warden_base.gd" id="1_warden"]
-[ext_resource type="SpriteFrames" path="res://game/enemies/warden/warden_frames.tres" id="2_frames"]
+[ext_resource type="Script" path="res://game/enemies/warden_base.gd" id="1_charge"]
+[ext_resource type="SpriteFrames" path="res://game/enemies/call_center/call_center_frames.tres" id="2_frames"]
 [ext_resource type="Script" path="res://game/enemies/charge_ring.gd" id="3_ring"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
@@ -10,9 +10,9 @@ radius = 5.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_area"]
 radius = 48.0
 
-[node name="Warden" type="CharacterBody2D" groups=["enemies"]]
+[node name="CallCenter" type="CharacterBody2D" groups=["enemies"]]
 motion_mode = 1
-script = ExtResource("1_warden")
+script = ExtResource("1_charge")
 max_health = 36
 contact_damage = 0
 speed = 50.0

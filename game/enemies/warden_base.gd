@@ -1,7 +1,12 @@
 extends "res://game/enemies/enemy_base.gd"
-## The warden. It never strikes and never touches you for anything: it follows
-## until you are inside its area, plants itself, and winds up. If it finishes,
-## everyone still in the area is slowed to half speed for four seconds.
+## The warden archetype. It never strikes and never touches you for anything: it
+## follows until you are inside its area, plants itself, and winds up. If it
+## finishes, everyone still in the area is slowed to half speed for four seconds.
+##
+## **Two enemies run this, so it sits at enemies/ rather than in one of their
+## folders** - the warden itself and `call_center`, its reskin, the same way
+## enemy_base.gd sits above the regular and the office boy. Each keeps its own
+## folder, sheet and scene; the behaviour and the tuning they repeat are shared.
 ##
 ## Its area IS the Touch shape, tuned wide - the same trick as the wraith's
 ## aura - so the base already answers "is anyone in range", and reaching the

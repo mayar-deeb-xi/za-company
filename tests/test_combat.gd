@@ -304,4 +304,53 @@ func _tick(frame: int) -> void:
 			_check("warden: so the slow it was building never lands (x%.2f)"
 				% _player().get("slow_factor"),
 				_player().get("slow_factor") == 1.0)
+			# The two reskins. What a reskin can break is not the mechanics -
+			# those are the archetype's and are checked above - it is the WIRING:
+			# a scene that lost the effect child, frames cut to rows the script
+			# never asks for, numbers that drifted off the original when the
+			# scene was copied. So this leg spawns each one for real and asks
+			# whether it does the archetype's job.
+			_warden.queue_free()
+			_player().global_position = Vector2(272, 140)
+			var sm := load("res://game/enemies/social_media/social_media.tscn") as PackedScene
+			_wraith = sm.instantiate()
+			_level().get_node("Props").add_child(_wraith)
+			_wraith.global_position = Vector2(272, 152)
+			_wraith.set("drain_per_second", 4.0)
+			_check("social_media: the wraith's health exactly (%s of 17)"
+				% _wraith.get("health"), _wraith.get("health") == 17)
+			_check("social_media: it brought its aura with it",
+				_wraith.get_node_or_null("DrainAura") != null)
+			var sm_frames: SpriteFrames = (_wraith.get_node("AnimatedSprite2D") as AnimatedSprite2D).sprite_frames
+			_check("social_media: six animations, no swing to play (%d)"
+				% sm_frames.get_animation_names().size(),
+				sm_frames.has_animation("walk_side")
+					and not sm_frames.has_animation("attack_down"))
+			_health_mark = _player().get("health")
+		1400:
+			_check("social_media: standing near it costs health, no blow thrown (%d -> %s)"
+				% [_health_mark, _player().get("health")],
+				int(_player().get("health")) < _health_mark
+					and not String((_wraith.get_node("AnimatedSprite2D") as AnimatedSprite2D).animation).begins_with("attack"))
+			_wraith.queue_free()
+			var cc := load("res://game/enemies/call_center/call_center.tscn") as PackedScene
+			_warden = cc.instantiate()
+			_level().get_node("Props").add_child(_warden)
+			_warden.global_position = Vector2(300, 140)
+			_check("call_center: the warden's health exactly (%s of 36)"
+				% _warden.get("health"), _warden.get("health") == 36)
+			_check("call_center: it brought its field with it",
+				_warden.get_node_or_null("ChargeRing") != null)
+			_health_mark = _player().get("health")
+		1440:
+			# Inside its 48 px area from the frame it spawned, so it planted and
+			# started the two-second charge - and, being the warden, it holds its
+			# idle through the whole of it rather than miming a swing.
+			_check("call_center: it plants and charges instead of striking (phase %s, '%s')"
+				% [_warden.get("phase"), (_warden.get_node("AnimatedSprite2D") as AnimatedSprite2D).animation],
+				_warden.get("phase") == 1
+					and String((_warden.get_node("AnimatedSprite2D") as AnimatedSprite2D).animation).begins_with("idle"))
+			_check("call_center: nothing has landed while it charges (%d -> %s)"
+				% [_health_mark, _player().get("health")],
+				int(_player().get("health")) == _health_mark)
 			_finish()

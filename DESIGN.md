@@ -444,11 +444,18 @@ Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
         Regenerate one floor at a time: `build_levels.gd -- <level>`, and note
         that inserting a floor changes its NEIGHBOURS' door targets, so
         rebuild those too.
-- [ ] 2. Reskin enemies: office_boy / social_media / call_center roster
+- [x] 2. Reskin enemies: office_boy / social_media / call_center roster
         entries seeded from the frozen body; run build_enemies.
-        **office_boy done**: roster entry + `office_boy.tscn` running
-        enemy_base.gd with no overrides, so it is the guard's numbers exactly.
-        social_media and call_center still to do.
+        All three exist, each a roster entry, a seeded sheet and a scene with
+        no script of its own: `office_boy` on enemy_base.gd, `social_media` on
+        wraith_base.gd (violet-haired, wearing the studio's own neon),
+        `call_center` on warden_base.gd (grey shirt, because a pale neutral
+        takes the violet charge tint hardest). Reskinning the wraith and the
+        warden bubbled their scripts and effects up to `game/enemies/`, per the
+        placement rule; the six sheets are 9 rows for the three that swing and
+        6 for the three that never do.
+        **Still to place**: nobody stands in a room yet - the floors' `enemies`
+        lists are the next step.
 - [ ] 3. Dialogue + Dominic: npc_base.gd, ui/dialogue/, lines as instance data.
 - [ ] 4. Ivan: heart-throwing NPC on cooldown.
 - [ ] 5. Boss plumbing: locked north door (done: game/levels/boss_door.gd),

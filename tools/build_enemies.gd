@@ -65,6 +65,12 @@ func _build(entry: Dictionary) -> bool:
 			return false
 		DirAccess.make_dir_recursive_absolute(
 			ProjectSettings.globalize_path(src.get_base_dir()))
+		# A seed is cut to the rows its layout actually names. The body has all
+		# nine, but an enemy declaring a shorter layout is saying it has no use
+		# for the rest - and this is hand-owned art from the next line onward,
+		# so shipping it rows nothing can play is handing someone three rows of
+		# a lie about what the enemy does.
+		seeded = _to_layout(seeded, entry.get("layout", Art.CC0_LAYOUT))
 		var wrote := seeded.save_png(ProjectSettings.globalize_path(src))
 		if wrote != OK:
 			printerr("  could not write ", src, " -> ", error_string(wrote))
@@ -88,3 +94,18 @@ func _build(entry: Dictionary) -> bool:
 	var err := ResourceSaver.save(frames, out)
 	print("  ", out, " -> ", error_string(err))
 	return err == OK
+
+
+## A freshly seeded sheet cut to the rows `layout` names - the frozen body is
+## nine rows, and a six-row enemy should be born six rows tall rather than be
+## trimmed by hand later. Only ever applied to a seed: a sheet already on disk
+## is hand-owned and is never resized under its author.
+func _to_layout(img: Image, layout: Dictionary) -> Image:
+	var rows := 0
+	for dir_name in layout:
+		for state in layout[dir_name]:
+			rows = maxi(rows, int(layout[dir_name][state]) + 1)
+	var height := rows * Art.FRAME
+	if rows == 0 or height >= img.get_height():
+		return img
+	return img.get_region(Rect2i(0, 0, img.get_width(), height))

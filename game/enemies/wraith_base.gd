@@ -1,6 +1,14 @@
 extends "res://game/enemies/enemy_base.gd"
-## The wraith. It never strikes: it simply follows, and being near it costs the
-## player a point of health every second.
+## The wraith archetype. It never strikes: it simply follows, and being near it
+## costs the player a point of health every second.
+##
+## **Two enemies run this, so it sits at enemies/ rather than in one of their
+## folders** - the wraith itself and `social_media`, its reskin, exactly as
+## enemy_base.gd sits above the regular and the office boy. Each keeps its own
+## folder, sheet and scene; what they share is this behaviour and the numbers
+## their scenes repeat. Retuning the drain here reaches both, which is the
+## point; retuning `drain_per_second` on ONE scene reaches only that one, which
+## is also the point.
 ##
 ## This is the first enemy whose harm has a clock of its own, and it is where
 ## the kinds of harm in the game separate. A regular's blow is a discrete event

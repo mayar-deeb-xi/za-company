@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://game/enemies/wraith_base.gd" id="1_wraith"]
-[ext_resource type="SpriteFrames" path="res://game/enemies/wraith/wraith_frames.tres" id="2_frames"]
+[ext_resource type="Script" path="res://game/enemies/wraith_base.gd" id="1_drain"]
+[ext_resource type="SpriteFrames" path="res://game/enemies/social_media/social_media_frames.tres" id="2_frames"]
 [ext_resource type="Script" path="res://game/enemies/drain_aura.gd" id="3_aura"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
@@ -10,9 +10,9 @@ radius = 5.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_aura"]
 radius = 16.0
 
-[node name="Wraith" type="CharacterBody2D" groups=["enemies"]]
+[node name="SocialMedia" type="CharacterBody2D" groups=["enemies"]]
 motion_mode = 1
-script = ExtResource("1_wraith")
+script = ExtResource("1_drain")
 max_health = 17
 contact_damage = 0
 speed = 45.0
