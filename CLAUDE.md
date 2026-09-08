@@ -121,6 +121,17 @@ straight walk between the doors stays safe in every biome, and the flow and
 combat tests depend on it. Types, seams, tuning and the art pipeline:
 game/enemies/CLAUDE.md.
 
+A floor may also have a **second beat** - `reinforcements` in its biome, a
+finite authored group that walks in through a named door once enough of the
+opening arrangement is dead (asset recovery, and only it, today). It is
+deliberately not waves: **a room is an ARRANGEMENT, not a population**, and
+respawns flatten every floor's fight into the same one because a room's shape
+only matters while its enemies are placed. Reinforcements are the only enemies
+in the game with no authored position - they name a spawn marker instead -
+which is also what makes them the one place a future multiplayer head count can
+scale, under the rule Difficulty already follows: more bodies, never tougher
+ones. game/levels/CLAUDE.md has the rest.
+
 ## Generated resources - regenerate, don't hand-edit
 
 - `ui/theme/menu_theme.tres`        <- tools/build_ui_theme.gd
@@ -321,7 +332,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Three suites,
+  They drive the real game with synthesized input and exit 0/1. Five suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -332,6 +343,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     the frames after the new leg (~80 frames per door) and it asserts each
     room's own composition and dressing as it passes through.
   - `test_combat.gd` - guard telegraph and interrupts, wraith, warden, heavy.
+  - `test_bosses.gd` - Ahmed's attacks, the order he picks them in, the
+    interrupt and the concede.
+  - `test_reinforcements.gd` - a second beat's trigger, its single-file
+    arrival, the door it uses, the hold while the player stands in that door,
+    that a beat fires once, and the head count. Builds the beat by hand in the
+    empty lobby rather than walking nine floors to the one biome that has one.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

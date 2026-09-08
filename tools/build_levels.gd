@@ -94,6 +94,11 @@ const ENEMY_SCENE := "res://game/enemies/%s/%s.tscn"
 ## the lock, shut until he concedes.
 const BOSS_SCENE := "res://game/bosses/%s/%s.tscn"
 const BOSS_DOOR := "res://game/levels/boss_door.gd"
+## A floor's second beat, under `reinforcements`: unlike `enemies` these carry
+## no position - they name a spawn marker and walk in through it - so the whole
+## list travels into the scene as one export on one node, and a floor without
+## the key gets no node at all.
+const REINFORCEMENTS_SCRIPT := "res://game/levels/reinforcements.gd"
 
 
 ## Names passed after `--` build only those levels. Since a re-run overwrites
@@ -441,6 +446,19 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	spawns.owner = root
 	_marker(spawns, root, "start", Vector2(DOOR_CENTRE_X, SPAWN_START_Y))
 	_marker(spawns, root, "returned", Vector2(DOOR_CENTRE_X, SPAWN_RETURN_Y))
+
+	# The floor's second beat, where its biome asks for one. Written AFTER the
+	# spawns because that is what it walks in through: a reinforcement names a
+	# marker instead of carrying a position, which is the whole reason the list
+	# fits on one node instead of needing an instance placed per enemy.
+	var beats: Array = Biomes.BIOMES[level].get("reinforcements", [])
+	if not beats.is_empty():
+		var reinforcements := Node2D.new()
+		reinforcements.name = "Reinforcements"
+		reinforcements.set_script(load(REINFORCEMENTS_SCRIPT))
+		reinforcements.set("waves", beats)
+		root.add_child(reinforcements)
+		reinforcements.owner = root
 
 	return _pack(root, "%s/%s.tscn" % [dir, level])
 

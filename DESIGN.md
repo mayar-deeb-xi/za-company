@@ -26,11 +26,71 @@ only. Each gets its own folder + sheet seeded from the frozen body via
 
 | id            | built on         | HP | flavor |
 |---------------|------------------|----|--------|
-| `office_boy`  | regular (guard)  | 24 | the people who FIX things here: company-teal polo, dark work trousers; wind-up = raising a tool |
+| `office_boy`  | regular (guard)  | 24 | the people who FIX things here: company-teal polo under a dark apron, dark work trousers; wind-up = a wrench thrust along the facing, carried in hand while idle and walking |
 | `social_media`| wraith           | 17 | phone glow, ring-light white while draining; faint floating "+1" tick |
 | `call_center` | warden           | 36 | headset; charge ring reads as a spreading "on hold" circle |
 
 HP stays on combo breakpoints (4 / 3 / 6 hits) — difficulty never scales HP.
+
+### Who stands on which floor
+
+Two rules decide it, and together they tell the building's story: **the reskins
+are the company's staff and hold floors 2–9; the originals appear only from
+hellfire up**, where the building stops pretending to be an office and the
+people in it stop looking like colleagues. A floor's `enemies` list is its
+opening ARRANGEMENT, in chain order (`CHAIN` positions, so the two demo biomes
+are counted in):
+
+| # | level | count | composition |
+|---|-------|-------|-------------|
+| 1 | lobby | 0 | the tutorial, and it stays empty |
+| 2 | content_studio | 4 | 3 `social_media` + 1 `office_boy` |
+| 3 | call_center | 5 | 2 `call_center` + 3 `office_boy` |
+| 4 | ahmed_office | 0 | boss arena |
+| 5 | the_hub | 3 | 1 `call_center` west + 2 `social_media` east |
+| 6 | marble_hall | 4 | 4 `office_boy` |
+| 7 | innovation_lab | 4 | 2 `office_boy` + 1 `social_media` + 1 `call_center` |
+| 8 | conflict_resolution | 0 | boss arena |
+| 9 | asset_recovery | 4 | 4 `office_boy` |
+| 10 | hellfire | 7 | 4 `regular` + 2 `wraith` + 1 `warden` (placed) |
+| 11 | executive_floor | 6 | 3 `regular` + 2 `wraith` + 1 `warden` |
+| 12 | khaled_office | 0 | final boss arena |
+
+Two of those are decisions rather than transcriptions of the floor list above.
+**The innovation lab, which had no mechanic assigned, becomes the first
+one-of-each mix** — which earns the executive floor for free: the exam is the
+same fight one rank bigger with the masks off. And **the executive floor's six
+are the originals**, not the reskins its entry names, by the rule above.
+
+Two known wrinkles, both ordering rather than composition: floor 3 at 24 hits
+out-weighs every floor until hellfire (trim one office boy if it bites, never a
+`call_center` — the pair IS the lesson), and hellfire at 28 hits out-weighs the
+exam it precedes, which is a `CHAIN` question rather than a reason to thin a
+dressed room.
+
+### Reinforcements — the second beat
+
+Not waves. A room here is an ARRANGEMENT, not a population: the studio is three
+overlapping drain fields, asset recovery is four boys behind a colonnade, the
+executive floor is one 64px gap — fights made of WHERE the enemies are, and a
+stream of respawns flattens all three into the same fight. So a floor may have
+one finite authored beat: a named group walking in through a named door at a
+known number of kills, once, after which the room clears and stays clear.
+
+- [x] **F8 asset recovery** — 2 `office_boy` at 3 kills, in by the south door.
+      Built: `reinforcements` in the biome, `game/levels/reinforcements.gd`,
+      `tests/test_reinforcements.gd`. This floor first because it is the crowd
+      floor and the one that teaches the heavy: a floor whose whole job is to
+      say "two of them are following you and the sword is the wrong answer" can
+      afford to say it twice.
+- [ ] **F11 executive floor** — 1 `warden` at 4 kills, through the glass gap.
+      Needs a spawn marker of its own at the chokepoint; the beat is the floor's
+      own idea arriving late.
+- [ ] Nowhere else without a reason. Floor 3 only if its lesson reads static in
+      play, and never on a boss floor — a boss is the arena's whole population.
+
+**Still missing, and it is the next thing this wants: a beat has no telegraph.**
+The staggered single-file walk-in through a known door carries it for now.
 
 ## NPCs — two new small systems
 
@@ -416,6 +476,35 @@ Khaled's concession speech, then:
 Smash cut: desk, laptop connected, notification "Welcome to the team 🎉 —
 Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
 
+## Multiplayer — a known future, not a current one
+
+The game may grow a second player. Writing it down so it is a recorded decision
+rather than something rediscovered later, along with what was and was NOT built
+for it.
+
+**Already safe, by accident of a good rule.** Everything the world does to the
+player goes through the `player` group plus `has_method` — `take_damage()`,
+`drain()`, `apply_slow()`. None of it knows a type or a singleton, so a torch, a
+drain field and a guard's strike would already hit two players correctly with no
+line changed. That was the expensive seam and it is already open.
+
+**Genuinely single-player, and both are honest to fix later.** `game.gd` owns
+`$Player` as one child — camera follow, HUD, lives, death and respawn all hang
+off that node — and `enemy_base.gd` targets `get_first_node_in_group("player")`.
+Neither gets cheaper by preparing now, and both need decisions that cannot be
+guessed well yet: does the camera frame both or split, are lives shared or per
+player, what happens at a door with one player standing in it, does an enemy
+take the nearest or hold aggro.
+
+**The one thing built for it now is `reinforcements.gd`'s `_head_count()`**, and
+it is there because reinforcements are the ONLY enemies in the game with no
+authored position. An `at` in a biome is a spot picked against sight radii and
+clear lanes; you cannot multiply a spot. So two players do not get a second copy
+of a room's arrangement — they get more of its second beat, which is the only
+part of a fight that can scale without being re-authored. It returns 1 today,
+costs one line, and obeys the rule `Difficulty` already obeys: **more bodies,
+never tougher ones**, because 24/17/36 are exact combo breakpoints.
+
 ## Build order — each step ships playable
 
 - [ ] 1. Floors as biomes: 10 entries in `tools/biomes.gd` (office palettes),
@@ -455,7 +544,14 @@ Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
         placement rule; the six sheets are 9 rows for the three that swing and
         6 for the three that never do.
         **Still to place**: nobody stands in a room yet - the floors' `enemies`
-        lists are the next step.
+        lists are the next step, and "Who stands on which floor" above is the
+        agreed roster to place from, floor by floor.
+- [ ] 2b. Reinforcements: a floor's second beat, `reinforcements` in its biome.
+        `game/levels/reinforcements.gd` and asset recovery's pair are built and
+        covered by `tests/test_reinforcements.gd`; the executive floor's late
+        warden and every beat's telegraph are still to come. See "Reinforcements
+        - the second beat" above for why this is not waves, and why almost no
+        floor gets one.
 - [ ] 3. Dialogue + Dominic: npc_base.gd, ui/dialogue/, lines as instance data.
 - [ ] 4. Ivan: heart-throwing NPC on cooldown.
 - [ ] 5. Boss plumbing: locked north door (done: game/levels/boss_door.gd),

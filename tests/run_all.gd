@@ -8,7 +8,8 @@ extends SceneTree
 ## passed here so the individual commands stay copy-pasteable without it only
 ## when run through this.
 
-const SUITES := ["test_menu", "test_flow", "test_combat", "test_bosses"]
+const SUITES := ["test_menu", "test_flow", "test_combat", "test_bosses",
+	"test_reinforcements"]
 
 
 func _initialize() -> void:

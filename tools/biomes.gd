@@ -36,6 +36,16 @@ extends RefCounted
 ## boss concedes (game/levels/boss_door.gd). A boss is an arena's whole
 ## population: the enemies list on such a floor stays empty.
 ##
+## `reinforcements` is the ONE thing here that is not a placement, and the
+## difference is the point: `[{after_kills, from, enemies}]`, where `enemies` is
+## bare type names and `from` is a spawn marker ("start" is the south door).
+## They have no `at` because they walk in rather than stand somewhere, which is
+## also why they are the only enemies in the game that can be scaled by how many
+## players are in the room. Finite, authored, and once each - a room is an
+## ARRANGEMENT, not a population, and a floor gets a beat only where its lesson
+## is worth restating (F8 asset recovery today). The rationale in full, and the
+## reason this is not waves, is in game/levels/reinforcements.gd.
+##
 ## `props` is the same idea for furniture - a type from tools/props/ and a
 ## position - and it is what dresses a room as somewhere rather than as a
 ## rectangle. Keys that go with it, all optional and all defaulted so the two

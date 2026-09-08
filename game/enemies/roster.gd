@@ -63,7 +63,18 @@ const ENEMIES := [
 		# nothing drained or violet about it. The teal is the lobby's accent on
 		# purpose: this is the same company's uniform, one floor up.
 		#
-		# Mechanically it IS the regular - 24 HP, the swing cycle, the base's
+		# **His sheet is hand-drawn past this recipe and the recipe below is now
+		# only provenance.** What is on disk is the polo with a dark apron over
+		# it, and a WRENCH rather than the seed's sword - a short thrust along
+		# the facing, and DESIGN.md's "wind-up = raising a tool" made literal.
+		# Two things about it are load-bearing and easy to undo by accident:
+		# the thrust reads by the LENGTH of the silhouette (ready, coiled,
+		# driving, extended) with the impact on frame 3, which is the frame the
+		# 0.45s wind-up holds on while the blow lands; and the wrench is drawn
+		# into the idle and walk rows too, so it does not appear out of thin air
+		# the moment he attacks. Redraw from the recipe only to start over.
+		#
+		# Mechanically it IS the regular - 24 HP, the same cycle, the base's
 		# numbers - which is what DESIGN.md means by a reskin. Only the sheet
 		# and the name differ, so everything the interrupt rules were tuned
 		# against still holds.

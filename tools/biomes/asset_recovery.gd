@@ -124,4 +124,24 @@ const BIOME := {
 		{"type": "office_boy", "at": Vector2(120, 248)},
 		{"type": "office_boy", "at": Vector2(424, 248)},
 	],
+	# The second beat, and the first floor in the game to have one. Four boys
+	# in four corners is the arrangement; this is what happens once it has been
+	# three-quarters answered - two more walk in through the door you came in
+	# by, which on this floor is the only place anybody could come from.
+	#
+	# It is here rather than anywhere else because this is the CROWD floor and
+	# the one that teaches the heavy: the lesson is "two of them are following
+	# you and the sword is the wrong answer", and a floor whose whole job is to
+	# say that once can afford to say it twice. Nothing above F8 gets one for
+	# free - see game/levels/reinforcements.gd for why a room is an arrangement
+	# rather than a population, and why this is finite and once.
+	#
+	# Arriving through `start` needs no new marker and no vetted position: the
+	# two come in single file at the south threshold, which is the one spot in
+	# the room already guaranteed clear of furniture. They hold if the player is
+	# standing in it.
+	"reinforcements": [
+		{"after_kills": 3, "from": "start",
+			"enemies": ["office_boy", "office_boy"]},
+	],
 }

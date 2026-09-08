@@ -124,6 +124,36 @@ room is built by mixing them rather than by adding more of the same:
   17 is the next stop down if that reads as a slog.
 - **`office_boy/`** - the regular, reskinned as the company's maintenance staff
   for floor 2 (see above). Identical numbers, its own sheet, no script.
+
+  **His sheet is drawn past the seed and is the one place the reskin is more
+  than a recolour.** The seed's sword is gone: he carries a wrench, and his
+  `attack` rows are a THRUST along the facing rather than a swing across it.
+  Three things about those twelve frames are deliberate, and all three are easy
+  to undo by redrawing carelessly:
+
+  - **The impact is on frame 3.** All four frames play inside the 0.45s wind-up
+    at 14fps, so the animation ends 164ms before the blow does and the last
+    frame is what is on screen when `_touch_strike()` fires. Frame 3 carries the
+    spark and the smear for that reason; the seed's sword peaked on frame 2 and
+    was trailing away by the time it cost anything.
+  - **The read is silhouette LENGTH, not direction** - ready, coiled, driving,
+    extended. The coil pulls the wrench back along the axis it strikes on; an
+    earlier pass flipped it to point the other way and at 14fps that read as a
+    bug rather than as loading a thrust.
+  - **The wrench is in the idle and walk rows too**, so it does not appear out
+    of thin air the moment he attacks. Nothing else in the bestiary does this
+    yet - the wraith and the warden carry nothing - and it is the reason his
+    sheet still fits the plain 9-row `CC0_LAYOUT` with no `layout` entry.
+
+  **The apron is a dark bib INSIDE the polo, and the teal border round it is the
+  whole look**: every shirt pixel below the collar row, inset two columns off
+  the shirt mass's bounding box, plus a belt line on the first row of trousers.
+  It shipped wrong once, and the failure is worth knowing because it looks like
+  a reasonable simplification: darkening the bottom shirt row full-width instead
+  puts the dark straight against the trousers, which are also dark, so there is
+  no bib left to see and he reads as a teal shirt that stops early. The apron
+  has to have polo on BOTH sides of it.
+
   Placement in asset recovery has one extra rule that is easy to miss and produced
   an invisible enemy first time: a divider's art is 48 px tall, so an enemy
   parked at a divider's x with a smaller y than the divider's foot is drawn

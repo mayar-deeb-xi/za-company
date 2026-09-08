@@ -172,3 +172,54 @@ folder holding a fixture nothing points at. Their art comes from
 build_biomes.gd like everything else: the stand and plinth in the biome's own
 ramp, the flame and the heart in fixed colours, because fire and health have
 to read the same in every biome.
+
+## Reinforcements - a room's second beat
+
+A floor with `reinforcements` in its biome gets one extra node,
+`Reinforcements`, holding the list as an export; a floor without the key gets
+no node at all. Only asset recovery has one today: two more office boys at
+three kills, in through the south door.
+
+**This is deliberately not waves, and the reason is the whole design.** A room
+here is an ARRANGEMENT, not a population - the content studio is three
+overlapping drain fields you route around, asset recovery is four boys behind a
+colonnade you pull one at a time, the executive floor is one 64px gap you
+choose to step through. Every one of those fights is made of WHERE the enemies
+are, and a stream of respawns flattens all three into the same fight, because a
+room's shape only matters while its enemies are placed. So a beat is finite,
+authored and fires once; the room clears and stays clear, and no floor gets one
+unless its lesson is worth restating.
+
+Three things follow from that and are worth knowing before touching it:
+
+- **A reinforcement has no position, and that is the point.** Everything in
+  `enemies` is an authored `at`, picked against sight radii, the door line and
+  the clear lanes - and you cannot multiply a spot. A beat names a spawn marker
+  instead (`from`, default `start`) and asks the level for it through
+  `has_method`, so the whole list fits on one node.
+- **Which makes it the one place head count can live.** `_head_count()` returns
+  1 today and multiplies the group when a second player exists. It obeys the
+  rule `Difficulty` already obeys - scale what the world sends, never what it is
+  made of - so more players means more BODIES, never a tougher one, for the same
+  reason no difficulty mode touches the 24/17/36 breakpoints.
+- **Nothing signals it.** Enemies die by `queue_free()` in enemy_base.gd and
+  there is no death signal; the node counts the `enemies` group instead, exactly
+  as boss_door.gd asks its boss whether it has conceded. Ask-don't-listen is the
+  shape the whole level layer uses, and this is not a workaround for a missing
+  signal.
+
+Two rules keep an arrival from being unfair, and both are load-bearing.
+Arrivals are single file, `RELEASE_INTERVAL` apart, because a doorway is single
+file and two bodies in the same 16px of threshold is a stack rather than an
+entrance. And an arrival HOLDS while a player is within `SAFE_RADIUS` of the
+threshold - dropping an enemy on somebody is the one thing a spawn must never
+do, and standing in the doorway is exactly where a player who has just cleared
+three quarters of a room tends to be. The hold is indefinite and costs nothing.
+
+The interval spaces arrivals within a beat and must never delay the start of
+one: `_cooldown` is zeroed when a beat is queued, or a beat would silently
+inherit the previous beat's wait before its own first body.
+
+Still to come, and it is the next thing this wants: a beat has no TELEGRAPH.
+The staggered walk-in through a known door carries it for now, and the door
+that opens is the honest place to put one.
