@@ -101,6 +101,14 @@ instances it as `Props/Boss` and swaps the north door's script for
 attempt to walk through. No signal wiring; a room built without a boss simply
 opens. The door's `Seal` body is what makes "shut" solid.
 
+**The lock is currently OFF for development**: `boss_door.gd`'s `LOCKED` const
+is false, so a boss floor can be walked straight through while the floors above
+it are being built. Everything else is untouched - the door still asks the boss,
+the fight is still placed - and the boss-floor check in tests/test_flow.gd reads
+that same const, so flipping it back to true is the only edit. It has to go back
+before shipping: a boss floor that is not a gate is just a room with a big man
+standing in it.
+
 The script is swapped BEFORE any door property is set: a node's exports reset
 to the new script's defaults, so setting them first only loses them.
 

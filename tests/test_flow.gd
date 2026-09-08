@@ -7,6 +7,10 @@ extends "res://tests/helpers.gd"
 ## Zoom lives here rather than in test_menu because it needs what only a run
 ## has: a camera framing a level behind a paused tree.
 
+## Preloaded by PATH, like everything else here reaches a level - the boss
+## floor's leg asks it whether the lock is currently on.
+const BossDoor := preload("res://game/levels/boss_door.gd")
+
 
 func _tick(frame: int) -> void:
 	match frame:
@@ -310,17 +314,20 @@ func _tick(frame: int) -> void:
 			_check("level: no heart on the boss floor",
 				_level().get_node_or_null("Props/Health") == null)
 			# Ahmed is the only thing in here, and he is in the way: a boss
-			# floor's north door is shut until he concedes. The fight itself is
-			# test_bosses.gd's; this walk checks the lock, then concedes him the
-			# short way so the chain can go on.
+			# floor's north door is shut until he concedes - unless the lock is
+			# switched off for development, which it currently is. The checks
+			# read BossDoor.LOCKED rather than assuming, so flipping that switch
+			# back needs no edit here. The fight itself is test_bosses.gd's;
+			# this walk concedes him the short way so the chain can go on.
 			var boss := _level().get_node_or_null("Props/Boss")
 			_check("boss: Ahmed stands in his office", boss != null)
 			_check("level: no adds at rest on the boss floor - Ahmed alone (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").size() == 1)
 			var way_up := _level().get_node("Props/Exit")
-			_check("door: the way up is shut while Ahmed stands",
-				not way_up.call("can_travel"))
+			_check("door: the way up while Ahmed stands is %s"
+				% ("shut" if BossDoor.LOCKED else "open - the lock is off for dev"),
+				way_up.call("can_travel") != BossDoor.LOCKED)
 			if boss != null:
 				boss.call("take_damage", 96)
 			_check("boss: at zero he concedes rather than dying (%s)"
