@@ -446,6 +446,15 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	spawns.owner = root
 	_marker(spawns, root, "start", Vector2(DOOR_CENTRE_X, SPAWN_START_Y))
 	_marker(spawns, root, "returned", Vector2(DOOR_CENTRE_X, SPAWN_RETURN_Y))
+	# A floor may name markers of its own, and there is exactly one thing they
+	# are for: a reinforcement names a marker instead of carrying a position, so
+	# a beat that arrives anywhere but the two doors needs a name to arrive at.
+	# The executive floor's chokepoint is the first, and it is also the case
+	# that could not be an authored `at`: the gap is on the door line, where
+	# nothing may be placed.
+	var extra: Dictionary = Biomes.BIOMES[level].get("spawns", {})
+	for spawn_name in extra:
+		_marker(spawns, root, String(spawn_name), extra[spawn_name])
 
 	# The floor's second beat, where its biome asks for one. Written AFTER the
 	# spawns because that is what it walks in through: a reinforcement names a

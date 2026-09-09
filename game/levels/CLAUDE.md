@@ -177,8 +177,14 @@ to read the same in every biome.
 
 A floor with `reinforcements` in its biome gets one extra node,
 `Reinforcements`, holding the list as an export; a floor without the key gets
-no node at all. Only asset recovery has one today: two more office boys at
-three kills, in through the south door.
+no node at all. Four floors have one:
+
+| floor | beat | cue |
+|-------|------|-----|
+| F4 ahmed_office | 1 `office_boy`, twice | `at_boss_health` 64, then 32 |
+| F8 conflict_resolution | 1 `office_boy`, twice | `at_boss_health` 96, then 48 |
+| F9 asset_recovery | 2 `office_boy` | `after_kills` 3 |
+| F11 executive_floor | 1 `warden` | `after_kills` 4 |
 
 **This is deliberately not waves, and the reason is the whole design.** A room
 here is an ARRANGEMENT, not a population - the content studio is three
@@ -196,7 +202,13 @@ Three things follow from that and are worth knowing before touching it:
   `enemies` is an authored `at`, picked against sight radii, the door line and
   the clear lanes - and you cannot multiply a spot. A beat names a spawn marker
   instead (`from`, default `start`) and asks the level for it through
-  `has_method`, so the whole list fits on one node.
+  `has_method`, so the whole list fits on one node. A floor can name markers of
+  its own under `spawns`, and the executive floor is why that key exists: its
+  chokepoint is ON the door line, where nothing may be *placed*, so a beat is
+  the only legal way to put a body at the floor's own idea. That marker sits
+  SOUTH of the glass deliberately - enemies slide off what they hit and have no
+  pathfinding, so a warden arriving on the far side of the partitioning would
+  grind along it instead of coming through the gap.
 - **Which makes it the one place head count can live.** `_head_count()` returns
   1 today and multiplies the group when a second player exists. It obeys the
   rule `Difficulty` already obeys - scale what the world sends, never what it is
@@ -206,7 +218,29 @@ Three things follow from that and are worth knowing before touching it:
   there is no death signal; the node counts the `enemies` group instead, exactly
   as boss_door.gd asks its boss whether it has conceded. Ask-don't-listen is the
   shape the whole level layer uses, and this is not a workaround for a missing
-  signal.
+  signal. The health cue is the same shape one step on - it ASKS `Props/Boss`
+  what he has left - which is why it is ten lines in `_due()` rather than a
+  summon hook on boss_base.gd: a summon would need its own release interval,
+  doorway hold and head count, all of which already live here.
+
+**A boss floor's beat is cued by `at_boss_health`, not `after_kills`,** and the
+reason is not preference. A boss is in the `enemies` group and is never freed -
+he is still standing in the room when you leave - so he inflates the population
+by one and never subtracts, and `_killed()` reports only the adds. On a floor
+whose whole population is him the only number it can reach is **0**, and a beat
+cued at 0 is a placement that walks in through a door.
+
+Which is also why a boss floor's adds belong in its beat rather than its
+`enemies` list. An add *placed* in an arena stands in it from the first frame,
+which is exactly what "one fight is enough to read at a time" was protecting; an
+add arriving at a threshold is a PHASE of the one fight. The concede guard in
+`_due()` is load-bearing to that: he concedes AT zero, which satisfies every
+threshold at once, so without it the last beat of a fight lands on the frame the
+fight ends.
+
+One consequence worth seeing in play before trusting it: all of a boss floor's
+add budget sits in its beat, so those floors are the most head-count-scalable in
+the game. Two players fighting Ahmed get two boys per threshold; four get four.
 
 Two rules keep an arrival from being unfair, and both are load-bearing.
 Arrivals are single file, `RELEASE_INTERVAL` apart, because a doorway is single

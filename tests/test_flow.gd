@@ -562,9 +562,61 @@ func _tick(frame: int) -> void:
 			_check("level: it has the polisher and no heart",
 				_level().get_node_or_null("Props/Torch") != null
 					and _level().get_node_or_null("Props/Health") == null)
-			_check("level: the executive floor is empty of enemies for now (%d)"
-				% get_nodes_in_group("enemies").size(),
-				get_nodes_in_group("enemies").is_empty())
+			# The exam, and the reskins are gone: from hellfire up the building
+			# stops pretending to be an office, so this floor and the one below
+			# it are the only two that field the originals. A reskin appearing
+			# here is the rule quietly broken.
+			var cast: Array = get_nodes_in_group("enemies").map(
+				func(n: Node) -> String:
+					return n.scene_file_path.get_file().get_basename())
+			cast.sort()
+			_check("enemies: the exam fields six originals, masks off (%s)"
+				% [cast], cast == ["regular", "regular", "regular", "warden",
+					"wraith", "wraith"])
+			# THE INVARIANT THE WHOLE CHAIN RESTS ON, checked on the floor with
+			# the most people standing on it: no placed enemy's sight reaches
+			# the door lane, so the straight walk between the two doors stays
+			# safe in every biome - which is what the door legs of this suite
+			# walk. The lane is x 246-300 at every y, and the radius is read off
+			# each instance rather than hardcoded, so a retuned sight_radius
+			# fails here instead of silently owning the walk.
+			var seeing: Array = get_nodes_in_group("enemies").filter(
+				func(n: Node2D) -> bool:
+					return maxf(246.0 - n.position.x, n.position.x - 300.0) \
+						<= float(n.get("sight_radius")))
+			_check("enemies: none of the six sees the door lane (%s)"
+				% [seeing.map(func(n: Node) -> String: return n.name)],
+				seeing.is_empty())
+			# Both drains belong IN the north half, and this is a placement
+			# mistake that would look fine in the editor: an enemy on the far
+			# side of the partitioning grinds along it instead of coming round
+			# through the gap, so a wraith placed south of the glass to guard
+			# the trophy wall guards nothing.
+			var drains: Array = get_nodes_in_group("enemies").filter(
+				func(n: Node2D) -> bool:
+					return n.scene_file_path.contains("wraith"))
+			var behind: Array = drains.filter(func(n: Node2D) -> bool:
+				return n.position.y < 128.0)
+			_check("enemies: both drains are behind the glass (%d of %d)"
+				% [behind.size(), drains.size()],
+				drains.size() == 2 and behind.size() == 2)
+			# This floor's own idea, and the only legal way to put a body at
+			# the chokepoint: the gap is ON the door line, where the check
+			# above forbids a placement, so the late warden has to arrive
+			# rather than stand. The marker is the half that can silently go
+			# missing - spawn_position falls back to the middle of the room on
+			# an unknown name, which here is only 16 px away and would pass a
+			# looser check.
+			var beat := _level().get_node_or_null("Reinforcements")
+			var waves: Array = [] if beat == null else beat.get("waves")
+			_check("beat: a late warden is authored, in by the chokepoint (%s)"
+				% [waves],
+				waves.size() == 1 and waves[0].get("from", "") == "chokepoint"
+					and waves[0].get("enemies", []) == ["warden"])
+			_check("beat: and the chokepoint marker exists to arrive at (%s)"
+				% _level().call("spawn_position", &"chokepoint"),
+				_level().call("spawn_position", &"chokepoint")
+					== Vector2(272, 168))
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		1241:

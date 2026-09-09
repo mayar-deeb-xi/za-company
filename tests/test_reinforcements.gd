@@ -20,10 +20,15 @@ extends "res://tests/helpers.gd"
 
 const REINFORCEMENTS := preload("res://game/levels/reinforcements.gd")
 const OFFICE_BOY := "res://game/enemies/office_boy/office_boy.tscn"
+const AHMED := "res://game/bosses/ahmed/ahmed.tscn"
 
 var _beats: Node2D
 var _placed: Array[Node2D] = []
 var _door := Vector2.ZERO
+
+# The boss cue, fought last in the same room once the counting is done.
+var _ahmed: Node2D
+var _boss_beats: Node2D
 
 
 func _tick(frame: int) -> void:
@@ -143,6 +148,70 @@ func _tick(frame: int) -> void:
 			_check("reinforcements: both beats spent, nothing else arrives (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").size() == 2)
+			# ---- The boss cue -------------------------------------------
+			# A boss floor's beat is cued by his HEALTH, because kills cannot
+			# serve it: a boss is in the `enemies` group and is never freed, so
+			# he never counts as a kill and `_killed()` can only ever reach 0
+			# on a floor whose whole population is him.
+			#
+			# The room is cleared back to one head first. The head count is
+			# asserted above and doubling it here would only make the arrivals
+			# harder to count; what is under test now is the CUE.
+			var second := _level().get_node_or_null("SecondPlayer")
+			if second != null:
+				second.queue_free()
+			for enemy in get_nodes_in_group("enemies"):
+				enemy.free()
+			# Named "Boss" and under Props because that is where build_levels.gd
+			# puts him and therefore where _due() looks - a wrong path here is
+			# a beat that never fires and never complains, which is the failure
+			# this section exists to catch. Sight zeroed like the placed boys:
+			# the room stays a counting problem, and his own fight is
+			# test_bosses.gd's.
+			_ahmed = (load(AHMED) as PackedScene).instantiate() as Node2D
+			_ahmed.name = "Boss"
+			_level().get_node("Props").add_child(_ahmed)
+			_ahmed.global_position = Vector2(120, 60)
+			_ahmed.set("sight_radius", 0.0)
+			_boss_beats = Node2D.new()
+			_boss_beats.name = "BossBeats"
+			_boss_beats.set_script(REINFORCEMENTS)
+			# Ahmed's own floor: one boy at each third of his 96.
+			_boss_beats.set("waves", [
+				{"at_boss_health": 64, "from": "start",
+					"enemies": ["office_boy"]},
+				{"at_boss_health": 32, "from": "start",
+					"enemies": ["office_boy"]},
+			])
+			_level().add_child(_boss_beats)
+		246:
+			_check("boss cue: a boss at full health owes nothing (%d)"
+				% _arrivals().size(), _arrivals().is_empty())
+			_check("boss cue: and he does not count as a kill against it (%s)"
+				% _ahmed.get("health"), _ahmed.get("health") == 96)
+		248:
+			_ahmed.call("take_damage", 40)
+		258:
+			_check("boss cue: down to a third and security arrives (%s HP, %d in)"
+				% [_ahmed.get("health"), _arrivals().size()],
+				_ahmed.get("health") == 56 and _arrivals().size() == 1)
+		300:
+			_check("boss cue: one threshold is one beat, not a stream (%d)"
+				% _arrivals().size(), _arrivals().size() == 1)
+		302:
+			# Straight to zero, crossing the second threshold and conceding on
+			# the same blow.
+			_ahmed.call("take_damage", 999)
+		306:
+			_check("boss cue: he conceded (%s)" % _ahmed.get("has_conceded"),
+				_ahmed.get("has_conceded") == true)
+		340:
+			# THE GUARD. He concedes AT zero, which satisfies every threshold at
+			# once, so without the concede check in _due() the last beat of a
+			# fight lands on the frame the fight ends - reinforcements walking
+			# in to a room whose boss is already kneeling.
+			_check("boss cue: conceding does not cash in the beats he outlived (%d)"
+				% _arrivals().size(), _arrivals().size() == 1)
 			_baked()
 			_finish()
 
@@ -170,6 +239,37 @@ func _baked() -> void:
 					and String(beat.get("from", "")) == "start"
 					and beat.get("enemies", []) == ["office_boy", "office_boy"])
 	room.free()
+	# The health cue makes the same round trip, and a boss floor is where an
+	# empty array would be invisible: the room looks right, the boss fights,
+	# and the adds his biome asked for simply never come.
+	for floor_name in ["ahmed_office", "conflict_resolution"]:
+		var arena := (load("res://game/levels/%s/%s.tscn"
+			% [floor_name, floor_name]) as PackedScene).instantiate()
+		var beats := arena.get_node_or_null("Reinforcements")
+		var waves: Array = [] if beats == null else beats.get("waves")
+		var cued: Array = waves.filter(func(w: Dictionary) -> bool:
+			return w.has("at_boss_health") and not w.has("after_kills"))
+		_check("reinforcements: %s carries two health-cued beats (%d of %d)"
+			% [floor_name, cued.size(), waves.size()],
+			waves.size() == 2 and cued.size() == 2)
+		# A boss floor's adds must not ALSO be placed: an add standing in the
+		# arena from the first frame is the thing the cue exists to avoid.
+		var standing: Array = arena.get_node("Props").get_children().filter(
+			func(n: Node) -> bool:
+				return n.is_in_group("enemies") and n.name != "Boss")
+		_check("reinforcements: and nobody stands in %s but the boss (%d)"
+			% [floor_name, standing.size()], standing.is_empty())
+		arena.free()
+	# The executive floor's marker, which is the half of its beat that can go
+	# missing quietly: spawn_position falls back to the middle of the room on an
+	# unknown name, and here that is 16 px from the real thing.
+	var exam := (load("res://game/levels/executive_floor/executive_floor.tscn")
+		as PackedScene).instantiate()
+	var marker := exam.get_node_or_null("Spawns/chokepoint")
+	_check("reinforcements: the executive floor has a chokepoint to arrive at (%s)"
+		% ("<missing>" if marker == null else marker.position),
+		marker != null and marker.position == Vector2(272, 168))
+	exam.free()
 
 
 ## An office boy standing where it is put: sight zeroed so it never chases and

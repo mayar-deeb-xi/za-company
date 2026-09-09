@@ -46,14 +46,14 @@ are counted in):
 | 1 | lobby | 0 | the tutorial, and it stays empty |
 | 2 | content_studio | 4 | 3 `social_media` + 1 `office_boy` |
 | 3 | call_center | 5 | 2 `call_center` + 3 `office_boy` |
-| 4 | ahmed_office | 0 | boss arena |
+| 4 | ahmed_office | 0 | boss arena - his adds are a beat, see below |
 | 5 | the_hub | 3 | 1 `call_center` west + 2 `social_media` east |
 | 6 | marble_hall | 4 | 4 `office_boy` |
 | 7 | innovation_lab | 4 | 2 `office_boy` + 1 `social_media` + 1 `call_center` |
-| 8 | conflict_resolution | 0 | boss arena |
+| 8 | conflict_resolution | 0 | boss arena - his adds are a beat, see below |
 | 9 | asset_recovery | 4 | 4 `office_boy` |
 | 10 | hellfire | 7 | 4 `regular` + 2 `wraith` + 1 `warden` (placed) |
-| 11 | executive_floor | 6 | 3 `regular` + 2 `wraith` + 1 `warden` |
+| 11 | executive_floor | 6 | 3 `regular` + 2 `wraith` + 1 `warden` (placed) |
 | 12 | khaled_office | 0 | final boss arena |
 
 Two of those are decisions rather than transcriptions of the floor list above.
@@ -75,7 +75,8 @@ overlapping drain fields, asset recovery is four boys behind a colonnade, the
 executive floor is one 64px gap — fights made of WHERE the enemies are, and a
 stream of respawns flattens all three into the same fight. So a floor may have
 one finite authored beat: a named group walking in through a named door at a
-known number of kills, once, after which the room clears and stays clear.
+known cue — kills, or a boss's remaining health — once, after which the room
+clears and stays clear.
 
 - [x] **F8 asset recovery** — 2 `office_boy` at 3 kills, in by the south door.
       Built: `reinforcements` in the biome, `game/levels/reinforcements.gd`,
@@ -83,11 +84,34 @@ known number of kills, once, after which the room clears and stays clear.
       floor and the one that teaches the heavy: a floor whose whole job is to
       say "two of them are following you and the sword is the wrong answer" can
       afford to say it twice.
-- [ ] **F11 executive floor** — 1 `warden` at 4 kills, through the glass gap.
-      Needs a spawn marker of its own at the chokepoint; the beat is the floor's
-      own idea arriving late.
+- [x] **F11 executive floor** — 1 `warden` at 4 kills, through the glass gap.
+      Built: a `spawns` key in biome data and a `chokepoint` marker south of
+      the glass, because an arrival on the far side of the partitioning would
+      grind along it rather than come through the gap. This is the beat that
+      shows why the mechanism earns its keep — **the gap is on the door line,
+      where nothing may be placed, so a beat is the only legal way to put a
+      body at the floor's own idea at all.**
+- [x] **Boss floors get adds, and they get them as beats.** Reversed from "never
+      on a boss floor": the arena rule that mattered was *one fight is enough to
+      read at a time*, and a body arriving at a health threshold is a PHASE of
+      the one fight, where the same body placed in the arena is furniture
+      standing in it from the first frame. So a boss floor's `enemies` list
+      stays empty and its adds are cued by `at_boss_health` — which needed a
+      second cue in `reinforcements.gd`, because `after_kills` cannot reach any
+      number but zero on a floor whose whole population is a boss who never
+      dies.
+      - **F4 Ahmed** — 1 `office_boy` at 64 HP and again at 32, in by the south
+        door. This is DESIGN.md's own "SECURITY!" summon, arrived at without a
+        summon hook.
+      - **F8 Mostafa** — 1 `office_boy` at 96 HP and again at 48. It lands on
+        the floor's own idea: the corner rush already makes the edges dangerous,
+        and a body arriving mid-rhythm is a body you have to fit into a rhythm.
+      - **F12 Khaled** — held until he exists. His three phases already fold in
+        a `call_center` slow pulse and `social_media` drain, so whether real
+        bodies would say the same thing twice is a question for the built fight.
 - [ ] Nowhere else without a reason. Floor 3 only if its lesson reads static in
-      play, and never on a boss floor — a boss is the arena's whole population.
+      play — it is already the heaviest floor before hellfire at 24 hits, so a
+      beat there deepens the ordering wrinkle above rather than fixing it.
 
 **Still missing, and it is the next thing this wants: a beat has no telegraph.**
 The staggered single-file walk-in through a known door carries it for now.
@@ -324,7 +348,9 @@ names the room, and the fiction carries which floor it is.
   the death was the floor's fault.
   **Still to add**: Ivan. Mostafa stands in the middle of the ring at
   (272, 138), and naming him in the biome is also what swapped the north
-  door for boss_door.gd.
+  door for boss_door.gd. His adds are a beat rather than placements - one
+  office boy at 96 HP and again at 48 - which is also what keeps the ring
+  clear: an arrival carries no `at`, so it cannot be parked inside it.
 - [x] **F8 Asset Recovery** (crowd): the office boys' OWN floor - the back of
   house where the company's broken hardware goes and mostly stays, under a
   sign about recovering value from it. Dim warm brown against every other
@@ -384,7 +410,15 @@ names the room, and the fiction carries which floor it is.
   actually polished.
   No debris anywhere on this floor, and the absence is deliberate: every floor
   below it has litter because every floor below it is used.
-  **Still to add**: its six, and Ivan.
+  **Built since**: its six, and they are the ORIGINALS - two `wraith` behind
+  the glass, one per north half, so every awards cabinet sits inside a drain
+  field and "every prize requires stepping into a radius" is drawn rather than
+  described; a `warden` and three `regular` in the gallery you arrive into.
+  Both drains are IN the north half because an enemy on the far side of the
+  partitioning grinds along it instead of coming round through the gap. Plus
+  the floor's late beat - one more `warden` at 4 kills, arriving at the
+  chokepoint, which is the only legal way to put a body there.
+  **Still to add**: Ivan.
 - [x] **F10 Khaled's Office** (FINAL): penthouse, city window, one desk, one
   face-down sticky note. Wide open arena. South door seals behind you.
   Dominic waits outside ("Whatever happens up there… CC me."). Ivan.
@@ -443,9 +477,13 @@ unlocks.
   64 px lane, dodged by a sidestep. Standard interrupt economy. Every attack
   has fire on it, drawn live over a clean sheet.
   **Built**: the boss, his fire, the locked north door, tests/test_bosses.gd.
-  **Still to add**: the "SECURITY!" summon at 64 and 32 HP (1 office boy
-  through the door, cap 2 alive - the slam already knows what to do with
-  them), the enormous chair and the line "I'm telling Mostafa." He kneels.
+  **Built since**: the "SECURITY!" summon, and it needed no summon hook on him
+  at all - it is a `reinforcements` beat cued by `at_boss_health`, one office
+  boy at 64 and again at 32, in by the south door. One at a time rather than a
+  cap of two alive: a duel with a crowd in it is neither, and the slam still
+  knows what to do with whoever is standing in the ring.
+  **Still to add**: the enormous chair and the line "I'm telling Mostafa."
+  He kneels.
 - [x] **MOSTAFA — 144 HP, F7.** Boxing rhythm fight; his attack is the cycle
   run 3x back-to-back:
   - Jab, jab: 0.25s wind-ups, 6 dmg each, commit_fraction ~1.0
@@ -564,11 +602,14 @@ never tougher ones**, because 24/17/36 are exact combo breakpoints.
         lists are the next step, and "Who stands on which floor" above is the
         agreed roster to place from, floor by floor.
 - [ ] 2b. Reinforcements: a floor's second beat, `reinforcements` in its biome.
-        `game/levels/reinforcements.gd` and asset recovery's pair are built and
-        covered by `tests/test_reinforcements.gd`; the executive floor's late
-        warden and every beat's telegraph are still to come. See "Reinforcements
-        - the second beat" above for why this is not waves, and why almost no
-        floor gets one.
+        Built and covered by `tests/test_reinforcements.gd`: the machinery in
+        `game/levels/reinforcements.gd`, asset recovery's pair, the executive
+        floor's late warden (with the `spawns` key its chokepoint needed) and
+        both boss floors' health-cued adds. **Every beat's telegraph is still to
+        come, and it is the only thing this is missing** - the staggered
+        single-file walk-in through a known door carries it for now. See
+        "Reinforcements - the second beat" above for why this is not waves, and
+        why almost no floor gets one.
 - [ ] 3. Dialogue + Dominic: npc_base.gd, ui/dialogue/, lines as instance data.
 - [ ] 4. Ivan: heart-throwing NPC on cooldown.
 - [ ] 5. Boss plumbing: locked north door (done: game/levels/boss_door.gd),

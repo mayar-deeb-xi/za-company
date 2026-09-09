@@ -25,11 +25,28 @@ const BIOME := {
 	# the player a second thing to read during the one fight the floor is for,
 	# and the fight is the whole point of the room.
 	"hazard": "none",
-	# No adds at rest: the design gives this floor nobody but Ahmed, and he is
-	# the fight. He stands north of centre between the two colonnade rows, and
-	# his sight (110 px) reaches the south spawn where the player arrives -
+	# NO ADDS AT REST, and the empty list is the load-bearing half of this
+	# floor's population - the beat below is the other half. Ahmed is the
+	# fight: he stands north of centre between the two colonnade rows, and his
+	# sight (110 px) reaches the south spawn where the player arrives -
 	# deliberately. This is an arena, not a corridor: the walk to the north
 	# door goes through him, and the door is shut until he concedes.
+	#
+	# Anything placed here would be standing in that arena from the first
+	# frame, which is the one thing a boss floor cannot afford - one fight is
+	# enough to read at a time. So this floor's bodies arrive at thresholds
+	# instead, where they are a phase of his fight rather than furniture in it.
 	"enemies": [],
 	"boss": {"type": "ahmed", "at": Vector2(272, 140)},
+	# DESIGN.md's "SECURITY!" - one office boy at each third of his 96 HP, in
+	# by the south door, which on this floor is the only door that opens. Cued
+	# by his health rather than by kills because `after_kills` cannot reach any
+	# number but zero on a boss floor (see reinforcements.gd's `_due`).
+	#
+	# One at a time and never two: the pair would be a crowd fight happening
+	# during a duel, and the floor after next is where crowds are taught.
+	"reinforcements": [
+		{"at_boss_health": 64, "from": "start", "enemies": ["office_boy"]},
+		{"at_boss_health": 32, "from": "start", "enemies": ["office_boy"]},
+	],
 }

@@ -70,8 +70,10 @@ const BIOME := {
 		{"type": "debris", "at": Vector2(120, 208)},
 		{"type": "debris", "at": Vector2(470, 244)},
 	],
-	# Empty: the design gives this floor nothing but the boss - a rhythm fight
-	# is one fight, and the ring has to stay clear for it.
+	# Empty, and it has to stay empty: a rhythm fight is one fight, and nothing
+	# solid may stand inside the ring. The beat below is how this floor gets
+	# bodies without breaking either - an arrival carries no `at`, so it cannot
+	# be parked in the ring by accident the way a placement can.
 	"enemies": [],
 	# Mostafa, in the middle of the painted ring. The ring runs 232x148 from
 	# (156, 78), so its centre is (272, 152); he stands a little north of that
@@ -79,4 +81,17 @@ const BIOME := {
 	# him. Naming a boss here is also what swaps the north door's script for
 	# boss_door.gd - it stays shut until he concedes.
 	"boss": {"type": "mostafa", "at": Vector2(272, 138)},
+	# One office boy at each half of his 144 HP, in by the south door. Cued by
+	# his health rather than by kills, for the reason in reinforcements.gd's
+	# `_due`, and one at a time for the reason Ahmed's floor keeps: a duel with
+	# a crowd in it is neither.
+	#
+	# It lands on this floor's own idea rather than beside it. The corner rush
+	# already makes the edges the dangerous place; a body arriving mid-rhythm
+	# is a body you have to fit into a rhythm, which is the fight the room is
+	# for, asked once more with a hand occupied.
+	"reinforcements": [
+		{"at_boss_health": 96, "from": "start", "enemies": ["office_boy"]},
+		{"at_boss_health": 48, "from": "start", "enemies": ["office_boy"]},
+	],
 }

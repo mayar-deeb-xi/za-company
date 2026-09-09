@@ -43,8 +43,23 @@ extends RefCounted
 ## also why they are the only enemies in the game that can be scaled by how many
 ## players are in the room. Finite, authored, and once each - a room is an
 ## ARRANGEMENT, not a population, and a floor gets a beat only where its lesson
-## is worth restating (F8 asset recovery today). The rationale in full, and the
-## reason this is not waves, is in game/levels/reinforcements.gd.
+## is worth restating. The rationale in full, and the reason this is not waves,
+## is in game/levels/reinforcements.gd.
+##
+## A BOSS floor's beat is cued by `at_boss_health` instead of `after_kills` -
+## the health he has to be down to - because `after_kills` cannot reach any
+## number but zero there: a boss is in the `enemies` group and is never freed,
+## so he never counts as a kill. An add arriving at a threshold is a PHASE of
+## the fight; the same add placed under `enemies` is furniture standing in the
+## arena from the first frame, which is what "one fight is enough to read at a
+## time" was protecting. So a boss floor's adds go here, not there.
+##
+## `spawns` is `{name: position}` and exists only to serve the above: a beat
+## names a marker rather than carrying a position, so a beat arriving anywhere
+## but the two doors needs a name to arrive at. The executive floor's
+## `chokepoint` is the first and shows why it earns a key - the gap it arrives
+## at is ON the door line, where nothing may be placed, so a beat is the only
+## legal way to put a body there at all.
 ##
 ## `props` is the same idea for furniture - a type from tools/props/ and a
 ## position - and it is what dresses a room as somewhere rather than as a

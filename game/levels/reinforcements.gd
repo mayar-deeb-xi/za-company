@@ -1,6 +1,8 @@
 extends Node2D
 ## A room's SECOND BEAT: a small authored group that walks in through a door
-## once enough of the opening arrangement is dead.
+## once enough of the opening arrangement is dead - or, on a boss floor, once
+## the boss is down to a named share of his health. See `_due()` for why those
+## are two cues rather than one with an option.
 ##
 ## ## Why this is not waves
 ##
@@ -13,10 +15,16 @@ extends Node2D
 ## are placed.
 ##
 ## So this is deliberately finite and deliberately authored: one or two beats
-## per floor, each a named group arriving from a named door at a known number of
-## kills. The room clears, and once clear it stays clear. Nothing here loops,
-## nothing here escalates, and no floor gets a beat unless its lesson wants
-## restating - see tools/biomes.gd for which do.
+## per floor, each a named group arriving from a named door at a known cue. The
+## room clears, and once clear it stays clear. Nothing here loops, nothing here
+## escalates, and no floor gets a beat unless its lesson wants restating - see
+## tools/biomes.gd for which do.
+##
+## A BOSS floor is the exception to "not waves" being about arrangements, and it
+## is the one place a beat is not a second thought about a room's shape: an
+## arena has no arrangement to flatten, and an add arriving at a health
+## threshold is a PHASE of the one fight rather than noise standing in it from
+## the first frame. `_due()` is what makes that cue reachable.
 ##
 ## ## The one thing a reinforcement has that a placement does not
 ##
@@ -37,6 +45,12 @@ extends Node2D
 ## node. Deaths are a `queue_free()` in enemy_base.gd and there is no death
 ## signal to hang off; counting is not a workaround for that, it is the same
 ## ask-don't-listen shape the rest of the level layer already uses.
+##
+## The health cue is the same shape one step further: it ASKS the boss what he
+## has left, rather than the boss learning that a floor has a beat on it. That
+## is the whole reason this is ten lines here instead of a summon hook on
+## boss_base.gd - a summon would need its own release interval, its own doorway
+## hold and its own head count, all of which are already in this file.
 
 ## Arrivals are single file, this far apart. A doorway is single file, so a pair
 ## walking in one after the other is both what the fiction says and what keeps
@@ -55,9 +69,12 @@ const ENEMY_SCENE := "res://game/enemies/%s/%s.tscn"
 ## Authored per floor as `reinforcements` in tools/biomes/<level>.gd and written
 ## in by build_levels.gd. One dictionary per beat, in the order they fire:
 ##
-##   after_kills  how many of this room's dead it waits for
-##   from         the spawn marker they walk in through ("start" = south door)
-##   enemies      types, in release order - no positions, see above
+##   after_kills     how many of this room's dead it waits for
+##   at_boss_health  INSTEAD of after_kills, on a boss floor: the health he has
+##                   to be down to. See `_due()`
+##   from            the spawn marker they walk in through ("start" = south
+##                   door); a floor can name markers of its own under `spawns`
+##   enemies         types, in release order - no positions, see above
 @export var waves: Array = []
 
 ## The room as built, counted on the first frame rather than in _ready: callers
@@ -82,7 +99,7 @@ func _process(delta: float) -> void:
 	if _next >= waves.size() or not _queue.is_empty():
 		return
 	var wave: Dictionary = waves[_next]
-	if _killed() < int(wave.get("after_kills", 0)):
+	if not _due(wave):
 		return
 	_next += 1
 	_from = StringName(wave.get("from", "start"))
@@ -161,6 +178,34 @@ func _crowded(at: Vector2) -> bool:
 		if body != null and body.global_position.distance_to(at) < SAFE_RADIUS:
 			return true
 	return false
+
+
+## Whether this beat's cue has come. A beat is cued by KILLS by default and a
+## boss floor's by the boss's HEALTH instead, and the two are alternatives
+## rather than an option because they are the same question asked of the only
+## two things a room can be counting down.
+##
+## `after_kills` cannot serve a boss floor, which is why the second cue exists.
+## A boss is in the `enemies` group and is never freed - he is still standing in
+## the room when you leave - so he inflates the population by one and never
+## subtracts, and `_killed()` therefore reports only the adds. On a floor whose
+## whole population is one boss the only number it can reach is 0, and a beat
+## cued at 0 is a placement that walks in through a door, which is worse than a
+## placement: it lands while the player is still reading the room.
+##
+## Asked of the boss rather than heard from him, the same way boss_door.gd finds
+## out whether he has conceded, and for the same reason - nobody has to find
+## anybody at the right moment, and a floor with no boss simply never fires.
+## The concede guard is load-bearing: he concedes AT zero, which satisfies every
+## threshold at once, so without it the last beat of a fight lands on the frame
+## the fight ends.
+func _due(wave: Dictionary) -> bool:
+	if not wave.has("at_boss_health"):
+		return _killed() >= int(wave.get("after_kills", 0))
+	var boss := get_parent().get_node_or_null("Props/Boss")
+	if boss == null or boss.get("has_conceded") == true:
+		return false
+	return int(boss.get("health")) <= int(wave["at_boss_health"])
 
 
 ## Everything this room has buried. The count includes what this node has

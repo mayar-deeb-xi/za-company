@@ -127,10 +127,56 @@ const BIOME := {
 		# joke every floor in the building tells - it just costs more here.
 		{"type": "dead_plant", "at": Vector2(504, 216)},
 	],
-	# Empty, like every floor since the reskins were deferred. DESIGN.md wants
-	# three office boys, two social_media and one call_center at the chokepoint;
-	# they are placed by hand.
-	"enemies": [],
+	# The exam, and the ORIGINALS rather than the reskins DESIGN.md's floor
+	# entry names: from hellfire up the building stops pretending to be an
+	# office and the people in it stop looking like colleagues, so this floor
+	# and the one below it are the only two that field regular / wraith /
+	# warden. Same fight as the innovation lab, one rank bigger, masks off.
+	#
+	# The room is two rooms and the composition is that split, not a spread:
+	#
+	# BEHIND THE GLASS, one drain per half, and this is what makes the trophy
+	# wall a decision - every awards cabinet is inside a radius, so DESIGN.md's
+	# "every prize requires stepping into a radius on purpose" is drawn rather
+	# than described. Both belong IN the north half: an enemy on the far side
+	# of the partitioning from the player grinds along it instead of coming
+	# round through the gap, so whoever guards a half has to start in it.
+	#
+	# IN THE GALLERY, the three guards and the warden you arrive into. The
+	# warden is south-west rather than at the chokepoint because the chokepoint
+	# is on the door line and nothing may be placed there - see the beat below,
+	# which is the only legal way to put a body at this floor's own idea.
+	#
+	# Every x here clears the door lane's edges (246 / 300) by its own sight
+	# radius: 80 for a guard, 120 for a wraith, 130 for the warden. That is the
+	# constraint that decides these positions, and it is why none of them is
+	# where the room would otherwise want them.
+	"enemies": [
+		{"type": "wraith", "at": Vector2(60, 96)},    # the boardroom
+		{"type": "wraith", "at": Vector2(486, 98)},   # the trophy wall
+		{"type": "warden", "at": Vector2(64, 232)},
+		{"type": "regular", "at": Vector2(136, 180)},
+		{"type": "regular", "at": Vector2(144, 268)},
+		{"type": "regular", "at": Vector2(408, 252)},
+	],
+	# The mouth of the gap, and SOUTH of the glass on purpose. Enemies slide off
+	# what they hit and have no pathfinding, so a warden arriving on the far
+	# side of the partitioning would grind along it rather than come through;
+	# spawned here he is already on the player's side of it.
+	#
+	# It is also what makes the arrival hold read right rather than limp:
+	# reinforcements.gd holds while a player is within 64 px, so threading the
+	# gap cannot drop him on your head, and he lands the instant you are
+	# through - from behind, cutting the way back. The gap becomes a decision
+	# twice, which is this floor's lesson restated, which is the only reason a
+	# floor gets a beat at all.
+	"spawns": {"chokepoint": Vector2(272, 168)},
+	# The floor's own idea arriving late. Four kills is two thirds of the
+	# gallery, so it fires once the half you arrive into is broken - never
+	# during the first fight, and never after the room is already clear.
+	"reinforcements": [
+		{"after_kills": 4, "from": "chokepoint", "enemies": ["warden"]},
+	],
 	# No debris anywhere, and that is a choice rather than an omission. Every
 	# floor below this has litter on it because every floor below this is used;
 	# the executive floor is cleaned nightly, and the absence is the loudest
