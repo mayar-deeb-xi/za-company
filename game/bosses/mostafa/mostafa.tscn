@@ -1,0 +1,52 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://game/bosses/mostafa/mostafa.gd" id="1_mostafa"]
+[ext_resource type="SpriteFrames" path="res://game/bosses/mostafa/mostafa_frames.tres" id="2_frames"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 6.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_touch"]
+radius = 22.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lane"]
+size = Vector2(72, 16)
+
+[node name="Mostafa" type="CharacterBody2D" groups=["bosses", "enemies"]]
+motion_mode = 1
+script = ExtResource("1_mostafa")
+max_health = 144
+contact_damage = 6
+speed = 46.0
+sight_radius = 120.0
+stop_distance = 18.0
+windup_seconds = 0.25
+commit_fraction = 1.0
+recover_seconds = 0.21
+stagger_seconds = 0.3
+interrupt_cooldown = 1.2
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+sprite_frames = ExtResource("2_frames")
+animation = &"idle_side"
+autoplay = "idle_side"
+offset = Vector2(0, -48)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_body")
+
+[node name="Touch" type="Area2D" parent="."]
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Touch"]
+position = Vector2(0, -6)
+shape = SubResource("CircleShape2D_touch")
+
+[node name="Lane" type="Area2D" parent="."]
+position = Vector2(44, -6)
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Lane"]
+shape = SubResource("RectangleShape2D_lane")

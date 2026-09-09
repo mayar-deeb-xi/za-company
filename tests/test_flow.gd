@@ -454,9 +454,14 @@ func _tick(frame: int) -> void:
 			_check("level: no hazard and no heart in the gym",
 				_level().get_node_or_null("Props/Torch") == null
 					and _level().get_node_or_null("Props/Health") == null)
-			_check("level: the gym is empty until Mostafa exists (%d)"
+			# Mostafa and nothing else: a rhythm fight is one fight, so the ring
+			# has to stay clear. Same shape as the check on Ahmed's floor.
+			_check("boss: Mostafa stands in the ring",
+				_level().get_node_or_null("Props/Boss") != null
+					and _level().get_node("Props/Boss").is_in_group("bosses"))
+			_check("level: no adds in the gym - Mostafa alone (%d)"
 				% get_nodes_in_group("enemies").size(),
-				get_nodes_in_group("enemies").is_empty())
+				get_nodes_in_group("enemies").size() == 1)
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		1001:

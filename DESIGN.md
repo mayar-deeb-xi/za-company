@@ -322,7 +322,9 @@ names the room, and the fiction carries which floor it is.
   No hazard, for the same reason Ahmed's office has none: one fight is enough
   to read at a time, and a boss room that also burns you is a boss room where
   the death was the floor's fault.
-  **Still to add**: Mostafa, and Ivan.
+  **Still to add**: Ivan. Mostafa stands in the middle of the ring at
+  (272, 138), and naming him in the biome is also what swapped the north
+  door for boss_door.gd.
 - [x] **F8 Asset Recovery** (crowd): the office boys' OWN floor - the back of
   house where the company's broken hardware goes and mostly stays, under a
   sign about recovering value from it. Dim warm brown against every other
@@ -444,13 +446,28 @@ unlocks.
   **Still to add**: the "SECURITY!" summon at 64 and 32 HP (1 office boy
   through the door, cap 2 alive - the slam already knows what to do with
   them), the enormous chair and the line "I'm telling Mostafa." He kneels.
-- [ ] **MOSTAFA — 144 HP, F7.** Boxing rhythm fight; his attack is the cycle
+- [x] **MOSTAFA — 144 HP, F7.** Boxing rhythm fight; his attack is the cycle
   run 3x back-to-back:
   - Jab, jab: 0.25s wind-ups, 6 dmg each, commit_fraction ~1.0
     (effectively uninterruptible; they're swings — step out, they whiff).
   - Hook: 0.7s wind-up, 18 dmg, interruptible early. The one read.
   - Corner rush: dash gap-closer if the player kites to the ring edge.
   - Defeated: takes the gloves off, nods once, points at the ceiling.
+  **Built**: all of the above except the concede, plus two things that are
+  his alone and are documented in game/bosses/CLAUDE.md. He is the one boss
+  drawn FRONT ON — a boxer squares up to you — which costs nothing against
+  boss_base's side-only facing because the figure is symmetric enough that
+  `flip_h` is invisible on it. And he is drawn at 2x DENSITY: 70 source rows
+  across the same 35 world px Ahmed spends 35 on, cell 128, halved back by
+  `scale 0.5` in the scene. The style pass that shaped him needed the range.
+  Commit is per attack (`COMMIT` in mostafa.gd), which is what makes the jabs
+  uninterruptible and the hook not — the base has one dial, so he sets it as
+  each attack begins.
+  **Still to add**: the concede. The animation described above was drawn and
+  rejected in review, so the row is a single placeholder frame — he stops and
+  his hands come down. boss_base plays `concede_side` at zero health and the
+  row has to exist; replacing it is adding frames to poses.gd and nothing
+  else. Also no boss bar on the HUD, same as Ahmed.
 - [ ] **KHALED — 192 HP, F10.** Smooth = never hurries; each phase announced by
   adjusting his cuffs:
   - P1 "The Handshake" (192→128): single strikes, 0.8s telegraph, 20 dmg,

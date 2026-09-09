@@ -28,6 +28,19 @@ const BOSSES := [
 		"poses": preload("res://game/bosses/ahmed/poses.gd"),
 		"cell": 64,
 	},
+	{
+		"id": "mostafa",
+		"src": "res://game/bosses/mostafa/src/mostafa.png",
+		"frames": "res://game/bosses/mostafa/mostafa_frames.tres",
+		"painter": "res://tools/bosses/mostafa.gd",
+		"poses": preload("res://game/bosses/mostafa/poses.gd"),
+		# Twice Ahmed's, because Mostafa is drawn at 2x DENSITY - 70 source rows
+		# across the same 35 world px, where Ahmed spends 35. His scene halves
+		# it back with scale 0.5, so the two bosses stand the same height in the
+		# room and only Mostafa's pixels are finer. The entry is per boss for
+		# exactly this reason: nothing about the art is shared.
+		"cell": 128,
+	},
 ]
 
 

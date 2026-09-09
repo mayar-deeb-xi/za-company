@@ -120,6 +120,52 @@ walk goes through him. test_flow.gd concedes him the short way
 test_combat.gd does and records the order he attacks in rather than betting
 on frames.
 
+## Mostafa
+
+`mostafa/` is the second boss, and he breaks two of Ahmed's assumptions on
+purpose. Both are load-bearing, so read them before touching his art.
+
+- **He is drawn FRONT ON.** Every other boss is a profile. A boxer squares up
+  to you, and that is the pose. It costs nothing against the side-only rule
+  above: the figure is symmetric enough that the `flip_h` the base uses to turn
+  him is invisible - only the lit forearm swaps sides, which is what Ahmed's
+  does too. No override was needed anywhere; `_face()` and `_apply_animation`
+  are untouched and his rows are still named `*_side`.
+- **He is drawn at 2x DENSITY.** 70 source rows across 35 world px, where Ahmed
+  spends 35 rows on the same 35 px. His cell is therefore `128` in roster.gd
+  and his scene halves it back with `scale 0.5` and `offset -48`, so the two
+  bosses stand the same height in the room and only Mostafa's pixels are finer.
+  The cost is real: his pixels do not line up with the room's at odd window
+  scales. It was chosen deliberately, because the style pass that shaped him
+  had no range to work in at 1x - a 35px-tall body gives a head-width slider
+  four usable steps.
+
+His pieces:
+
+- **`poses.gd` is measurements, not a picture.** Where Ahmed's is body ASCII
+  with an arm drawn over it, Mostafa's is thirteen numbers (head, shoulders,
+  taper, torso, glove, shorts, legs, boots) plus a per-frame pose: body and
+  head offsets, leg offsets, stance, and two arms each given as an elbow and a
+  glove. That is what let him be shaped with sliders, and it is why a new frame
+  here is six numbers rather than seventy rows.
+- **`tools/bosses/mostafa.gd` paints from those measurements.** Same seed-once
+  contract as Ahmed's. The canvas lands at a FIXED offset in the cell, never
+  centred per frame, or the body jitters between frames of a row.
+- **Four attacks, but a RHYTHM rather than a menu** (`mostafa.gd`): jab, jab,
+  hook, three times through, then `breath_seconds`. The corner rush breaks the
+  pattern for a player who kites - and the dash IS its wind-up, with the blow
+  on the last running frame, so he connects on arrival rather than swinging
+  halfway there. There is no STRIKE phase to hang travel on: enemy_base fires
+  the blow at the end of WINDUP and goes straight to RECOVER.
+- **Commit is per attack.** `COMMIT` sets `commit_fraction` as each attack
+  begins, which is the only way to have uninterruptible jabs and an
+  interruptible hook off a base that has one dial.
+
+One consequence worth knowing: the player's grace window is 0.65 s on MEDIUM
+and his two jabs are closer together than that, so the second one is often
+eaten. That is the crowd dial doing its job, not a bug - but it is why his
+test asserts the ORDER he throws in rather than the health that comes off.
+
 ## Adding a boss
 
 1. `game/bosses/<id>/poses.gd` - body ASCII, legs, `ORDER`, `ANIMS`, `LOOPS`.
@@ -135,6 +181,11 @@ on frames.
    lobby and fight there).
 
 ## Still to build
+
+Mostafa's concede is a single placeholder frame - the animation DESIGN.md
+describes (gloves off, a nod, a point at the ceiling) was drawn and rejected in
+review. `boss_base.gd` plays `concede_side` at zero health so the row has to
+exist; replacing it is adding frames to his poses.gd and nothing else.
 
 DESIGN.md's Ahmed also yells "SECURITY!" at 64 and 32 HP and summons an office
 boy through the door (cap 2). The slam already knows what to do with them. The

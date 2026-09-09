@@ -70,7 +70,13 @@ const BIOME := {
 		{"type": "debris", "at": Vector2(120, 208)},
 		{"type": "debris", "at": Vector2(470, 244)},
 	],
-	# Empty: Mostafa is build step 6 and does not exist yet, and the design
-	# gives this floor nothing else - a rhythm fight is one fight.
+	# Empty: the design gives this floor nothing but the boss - a rhythm fight
+	# is one fight, and the ring has to stay clear for it.
 	"enemies": [],
+	# Mostafa, in the middle of the painted ring. The ring runs 232x148 from
+	# (156, 78), so its centre is (272, 152); he stands a little north of that
+	# so the walk in from the south door is a walk toward him rather than into
+	# him. Naming a boss here is also what swaps the north door's script for
+	# boss_door.gd - it stays shut until he concedes.
+	"boss": {"type": "mostafa", "at": Vector2(272, 138)},
 }
