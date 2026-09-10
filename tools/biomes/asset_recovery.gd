@@ -142,6 +142,12 @@ const BIOME := {
 	# standing in it.
 	"reinforcements": [
 		{"after_kills": 3, "from": "start",
-			"enemies": ["office_boy", "office_boy"]},
+			"enemies": ["office_boy", "office_boy", "office_boy"],
+			# The heaviest `per_head` in the game, and this is the floor
+			# entitled to it: the crowd floor is the one whose lesson IS the
+			# head count, so a party gets two more boys per head rather than
+			# one. Boys only, because this room's answer is the heavy and the
+			# heavy does not care how many there are.
+			"per_head": ["office_boy", "office_boy"]},
 	],
 }

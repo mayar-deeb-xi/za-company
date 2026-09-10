@@ -68,6 +68,13 @@ out-weighs every floor until hellfire (trim one office boy if it bites, never a
 exam it precedes, which is a `CHAIN` question rather than a reason to thin a
 dressed room.
 
+**Floor 1 stays crossable without a fight.** Two office boys and a beat were
+tried here and reverted: the lobby is where a new player finds out what walking
+and healing are, and a tutorial that has to be fought through is not one. It is
+the only floor with no `reinforcements` key either, and that follows rather than
+being a second choice — a beat is cued by kills, so a room with nobody in it can
+never reach one.
+
 ### Reinforcements — the second beat
 
 Not waves. A room here is an ARRANGEMENT, not a population: the studio is three
@@ -109,9 +116,43 @@ clears and stays clear.
       - **F12 Khaled** — held until he exists. His three phases already fold in
         a `call_center` slow pulse and `social_media` drain, so whether real
         bodies would say the same thing twice is a question for the built fight.
-- [ ] Nowhere else without a reason. Floor 3 only if its lesson reads static in
-      play — it is already the heaviest floor before hellfire at 24 hits, so a
-      beat there deepens the ordering wrinkle above rather than fixing it.
+- [x] **Every floor but the lobby has a beat.** Reversed from "nowhere else
+      without a reason", and the reason it is not a walking back of "not
+      waves": what
+      that forbids is a floor answering a kill with a respawn forever, and what
+      each floor has is one authored group, of known types, at a known cue,
+      once. The test is unchanged — a beat must restate the floor's own lesson
+      rather than add bodies to it — which is why the studio's is drains and
+      not boys, why the call floor's adds no slower to the two already there,
+      and why F6 and F10 come in by the NORTH door, from the direction the
+      player has stopped watching. The full grid is in
+      `game/levels/CLAUDE.md`.
+- [x] **`per_head`: what a crowd brings, and what it never brings.** A beat's
+      `enemies` is a base group that never scales and `per_head` is added once
+      per head beyond the first, so `bodies = len(enemies) + (heads-1) *
+      len(per_head)`. The split exists because multiplying one list gave every
+      extra player a second `call_center`, and two slowers do not stack a slow,
+      they REFRESH it — a permanently slowed player cannot sidestep a telegraph,
+      which is the one thing here that reads unfair rather than hard. So
+      `call_center` is in no floor's `per_head`, and head count now matters
+      MORE, not less: a beat can hand a solo player the arrangement it was
+      tuned for and still answer a party of four.
+- [x] **The boss pair is `social_media` + `call_center`, and the annoyance is
+      the point.** What makes a boss fight hard is reading one telegraph, and
+      these two attack the reading rather than the health bar: the drain has NO
+      wind-up to interrupt, so it cannot be answered with the timing the boss
+      is teaching, and the slow takes the dodge away — Ahmed's fire wave is a
+      sidestep and nothing else. Every boss floor runs drain, then the slow at
+      the halfway point, then drain again, one slower per threshold. Mostafa's
+      final quarter is the one place two can be alive at once, the deliberate
+      peak, and the first thing to check in play.
+- [ ] **A boss's health does not scale with head count, and should not.** 96 is
+      exactly four heavies and 144 exactly six, so a fractional multiplier
+      lands him on a last swing that does nothing visible — the same arithmetic
+      that keeps 24/17/36 off every difficulty dial. His adds are the honest
+      dial instead, which is why boss floors put every body they have in a
+      beat. Open question for playtest: two players kill a boss in half the
+      wall-clock, and whether the extra adds cover that is not yet known.
 
 **Still missing, and it is the next thing this wants: a beat has no telegraph.**
 The staggered single-file walk-in through a known door carries it for now.

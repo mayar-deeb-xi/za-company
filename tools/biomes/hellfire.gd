@@ -32,4 +32,15 @@ const BIOME := {
 		{"type": "wraith", "at": Vector2(440, 272)},
 		{"type": "warden", "at": Vector2(64, 152)},
 	],
+	# In by the NORTH door, like the marble hall's - and here it means something
+	# the marble hall's does not. This is the floor where the reskins stop and
+	# the originals start, so the beat coming DOWN the stairs is the building
+	# saying the thing above you is worse than the thing you just cleared. No
+	# warden: this room already holds one, and its 36 HP is six hits the player
+	# has to spend standing still.
+	"reinforcements": [
+		{"after_kills": 4, "from": "returned",
+			"enemies": ["regular", "regular", "wraith"],
+			"per_head": ["regular"]},
+	],
 }

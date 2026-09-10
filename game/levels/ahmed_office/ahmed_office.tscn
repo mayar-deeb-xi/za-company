@@ -105,11 +105,18 @@ position = Vector2(272, 80)
 [node name="Reinforcements" type="Node2D" parent="." unique_id=1235743421]
 script = ExtResource("11_r8wh8")
 waves = [{
-"at_boss_health": 64,
-"enemies": ["office_boy"],
-"from": "start"
+"at_boss_health": 72,
+"enemies": ["social_media", "office_boy"],
+"from": "start",
+"per_head": ["social_media"]
 }, {
-"at_boss_health": 32,
-"enemies": ["office_boy"],
-"from": "start"
+"at_boss_health": 48,
+"enemies": ["call_center"],
+"from": "start",
+"per_head": ["office_boy"]
+}, {
+"at_boss_health": 24,
+"enemies": ["social_media", "social_media"],
+"from": "start",
+"per_head": ["social_media"]
 }]

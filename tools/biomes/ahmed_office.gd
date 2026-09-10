@@ -38,15 +38,35 @@ const BIOME := {
 	# instead, where they are a phase of his fight rather than furniture in it.
 	"enemies": [],
 	"boss": {"type": "ahmed", "at": Vector2(272, 140)},
-	# DESIGN.md's "SECURITY!" - one office boy at each third of his 96 HP, in
-	# by the south door, which on this floor is the only door that opens. Cued
-	# by his health rather than by kills because `after_kills` cannot reach any
-	# number but zero on a boss floor (see reinforcements.gd's `_due`).
+	# DESIGN.md's "SECURITY!", in by the south door - the only door on this
+	# floor that opens. Cued by his health rather than by kills because
+	# `after_kills` cannot reach any number but zero on a boss floor (see
+	# reinforcements.gd's `_due`).
 	#
-	# One at a time and never two: the pair would be a crowd fight happening
-	# during a duel, and the floor after next is where crowds are taught.
+	# QUARTERS, and the pair is chosen to be ANNOYING rather than dangerous,
+	# which is a different job from a crowd floor's. What makes a boss fight
+	# hard is reading one telegraph; these two attack the reading:
+	#
+	#   social_media  has NO wind-up to interrupt - its harm is proximity - so
+	#                 it cannot be answered with the timing the boss is
+	#                 teaching. It just bleeds you while you watch him.
+	#   call_center   takes the DODGE away. Ahmed's fire wave is a sidestep and
+	#                 nothing else; slowed, it stops being dodgeable.
+	#
+	# So the shape is drain, then the slow at the halfway point, then drain
+	# again - the slower arriving as one distinct event rather than a state the
+	# player lives in. ONE of him, ever, and he is in no `per_head` list: two
+	# do not stack a slow, they refresh it, and permanent slow through a
+	# telegraph is the one thing here that reads unfair instead of hard.
 	"reinforcements": [
-		{"at_boss_health": 64, "from": "start", "enemies": ["office_boy"]},
-		{"at_boss_health": 32, "from": "start", "enemies": ["office_boy"]},
+		{"at_boss_health": 72, "from": "start",
+			"enemies": ["social_media", "office_boy"],
+			"per_head": ["social_media"]},
+		{"at_boss_health": 48, "from": "start",
+			"enemies": ["call_center"],
+			"per_head": ["office_boy"]},
+		{"at_boss_health": 24, "from": "start",
+			"enemies": ["social_media", "social_media"],
+			"per_head": ["social_media"]},
 	],
 }

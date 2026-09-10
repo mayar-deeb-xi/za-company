@@ -57,7 +57,7 @@ func _tick(frame: int) -> void:
 				{"after_kills": 2, "from": "start",
 					"enemies": ["office_boy", "office_boy"]},
 				{"after_kills": 5, "from": "start",
-					"enemies": ["office_boy"]},
+					"enemies": ["office_boy"], "per_head": ["office_boy"]},
 			])
 			_level().add_child(_beats)
 		34:
@@ -138,7 +138,7 @@ func _tick(frame: int) -> void:
 				get_nodes_in_group("enemies").size() == 1)
 		200:
 			var here := get_nodes_in_group("enemies")
-			_check("reinforcements: two heads doubled a one-enemy beat (%d)"
+			_check("reinforcements: a second head added its per_head body (%d)"
 				% here.size(), here.size() == 2)
 			var tough := here.filter(func(e: Node) -> bool:
 				return e.get("max_health") != 24)
@@ -154,12 +154,12 @@ func _tick(frame: int) -> void:
 			# he never counts as a kill and `_killed()` can only ever reach 0
 			# on a floor whose whole population is him.
 			#
-			# The room is cleared back to one head first. The head count is
-			# asserted above and doubling it here would only make the arrivals
-			# harder to count; what is under test now is the CUE.
-			var second := _level().get_node_or_null("SecondPlayer")
-			if second != null:
-				second.queue_free()
+			# The second head STAYS for this section, and that is the point:
+			# Ahmed's real middle threshold sends one `call_center` in its base
+			# group and an `office_boy` in `per_head`, so two heads must produce
+			# exactly ONE slower and one extra body. That is the whole reason
+			# the two lists are not one list multiplied - see the export doc in
+			# reinforcements.gd.
 			for enemy in get_nodes_in_group("enemies"):
 				enemy.free()
 			# Named "Boss" and under Props because that is where build_levels.gd
@@ -176,12 +176,18 @@ func _tick(frame: int) -> void:
 			_boss_beats = Node2D.new()
 			_boss_beats.name = "BossBeats"
 			_boss_beats.set_script(REINFORCEMENTS)
-			# Ahmed's own floor: one boy at each third of his 96.
+			# Ahmed's own floor, verbatim: quarters of his 96, drain then the
+			# slow then drain.
 			_boss_beats.set("waves", [
-				{"at_boss_health": 64, "from": "start",
-					"enemies": ["office_boy"]},
-				{"at_boss_health": 32, "from": "start",
-					"enemies": ["office_boy"]},
+				{"at_boss_health": 72, "from": "start",
+					"enemies": ["social_media", "office_boy"],
+					"per_head": ["social_media"]},
+				{"at_boss_health": 48, "from": "start",
+					"enemies": ["call_center"],
+					"per_head": ["office_boy"]},
+				{"at_boss_health": 24, "from": "start",
+					"enemies": ["social_media", "social_media"],
+					"per_head": ["social_media"]},
 			])
 			_level().add_child(_boss_beats)
 		246:
@@ -190,28 +196,44 @@ func _tick(frame: int) -> void:
 			_check("boss cue: and he does not count as a kill against it (%s)"
 				% _ahmed.get("health"), _ahmed.get("health") == 96)
 		248:
-			_ahmed.call("take_damage", 40)
-		258:
-			_check("boss cue: down to a third and security arrives (%s HP, %d in)"
-				% [_ahmed.get("health"), _arrivals().size()],
-				_ahmed.get("health") == 56 and _arrivals().size() == 1)
-		300:
-			_check("boss cue: one threshold is one beat, not a stream (%d)"
-				% _arrivals().size(), _arrivals().size() == 1)
-		302:
-			# Straight to zero, crossing the second threshold and conceding on
-			# the same blow.
+			_ahmed.call("take_damage", 24)   # 96 -> 72, the first quarter
+		360:
+			# Base group (drain + boy) plus one per_head drain for the second
+			# head: three bodies, two of them drains.
+			_check("boss cue: the first quarter sends its group and one per head (%d)"
+				% _arrivals().size(), _arrivals().size() == 3)
+			_check("boss cue: two drains and a boy, at 17/17/24 (%s)"
+				% [_hp_of_arrivals()], _hp_of_arrivals() == [17, 17, 24])
+		362:
+			_ahmed.call("take_damage", 24)   # 72 -> 48, the halfway slow
+		460:
+			# THE REASON per_head EXISTS. Two heads on a threshold whose base
+			# group is one `call_center` must produce exactly ONE of him - two
+			# slowers do not stack a slow, they refresh it, and a permanently
+			# slowed player cannot sidestep a telegraph. The extra head is paid
+			# in an office boy instead.
+			var slowers: int = _arrivals().filter(func(e: Node) -> bool:
+				return e.get("max_health") == 36).size()
+			_check("boss cue: two heads, still exactly one slower (%d)"
+				% slowers, slowers == 1)
+			_check("boss cue: the extra head was paid in a boy instead (%s)"
+				% [_hp_of_arrivals()], _hp_of_arrivals() == [17, 17, 24, 24, 36])
+		462:
+			# Straight to zero, crossing the last threshold and conceding on the
+			# same blow.
 			_ahmed.call("take_damage", 999)
-		306:
+		466:
 			_check("boss cue: he conceded (%s)" % _ahmed.get("has_conceded"),
 				_ahmed.get("has_conceded") == true)
-		340:
+		600:
 			# THE GUARD. He concedes AT zero, which satisfies every threshold at
 			# once, so without the concede check in _due() the last beat of a
 			# fight lands on the frame the fight ends - reinforcements walking
-			# in to a room whose boss is already kneeling.
-			_check("boss cue: conceding does not cash in the beats he outlived (%d)"
-				% _arrivals().size(), _arrivals().size() == 1)
+			# in to a room whose boss is already kneeling. Burst him past a
+			# threshold and he never answers it, which is deliberate: kill him
+			# that fast and he does not get to call security.
+			_check("boss cue: conceding does not cash in the beat he outlived (%d)"
+				% _arrivals().size(), _arrivals().size() == 5)
 			_baked()
 			_finish()
 
@@ -233,11 +255,17 @@ func _baked() -> void:
 			% waves.size(), waves.size() == 1)
 		if waves.size() == 1:
 			var beat: Dictionary = waves[0]
-			_check("reinforcements: two office boys at three kills, by the south door (%s)"
+			_check("reinforcements: three boys at three kills, by the south door (%s)"
 				% beat,
 				int(beat.get("after_kills", 0)) == 3
 					and String(beat.get("from", "")) == "start"
-					and beat.get("enemies", []) == ["office_boy", "office_boy"])
+					and beat.get("enemies", [])
+						== ["office_boy", "office_boy", "office_boy"])
+			# The heaviest per_head in the game, and the crowd floor is the one
+			# entitled to it - two more bodies per head rather than one.
+			_check("reinforcements: and two more per head, boys only (%s)"
+				% [beat.get("per_head", [])],
+				beat.get("per_head", []) == ["office_boy", "office_boy"])
 	room.free()
 	# The health cue makes the same round trip, and a boss floor is where an
 	# empty array would be invisible: the room looks right, the boss fights,
@@ -249,9 +277,17 @@ func _baked() -> void:
 		var waves: Array = [] if beats == null else beats.get("waves")
 		var cued: Array = waves.filter(func(w: Dictionary) -> bool:
 			return w.has("at_boss_health") and not w.has("after_kills"))
-		_check("reinforcements: %s carries two health-cued beats (%d of %d)"
+		_check("reinforcements: %s carries three health-cued beats (%d of %d)"
 			% [floor_name, cued.size(), waves.size()],
-			waves.size() == 2 and cued.size() == 2)
+			waves.size() == 3 and cued.size() == 3)
+		# THE FAIRNESS RULE, checked on the floors it protects: `call_center`
+		# takes the dodge away, and a head count that multiplied it would leave
+		# a party permanently slowed. It may stand in a base group, never in a
+		# per_head list.
+		var multiplied: Array = waves.filter(func(w: Dictionary) -> bool:
+			return w.get("per_head", []).has("call_center"))
+		_check("reinforcements: no head ever buys a second slower on %s (%d)"
+			% [floor_name, multiplied.size()], multiplied.is_empty())
 		# A boss floor's adds must not ALSO be placed: an add standing in the
 		# arena from the first frame is the thing the cue exists to avoid.
 		var standing: Array = arena.get_node("Props").get_children().filter(
@@ -270,6 +306,16 @@ func _baked() -> void:
 		% ("<missing>" if marker == null else marker.position),
 		marker != null and marker.position == Vector2(272, 168))
 	exam.free()
+
+
+## Every arrival's max_health, sorted - which is how this suite tells the three
+## reskins apart without naming their scenes: 17 is a drain, 24 a boy, 36 the
+## slower. The breakpoints ARE the identity here.
+func _hp_of_arrivals() -> Array:
+	var hp: Array = _arrivals().map(func(e: Node) -> int:
+		return int(e.get("max_health")))
+	hp.sort()
+	return hp
 
 
 ## An office boy standing where it is put: sight zeroed so it never chases and

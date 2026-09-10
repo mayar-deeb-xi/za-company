@@ -81,17 +81,29 @@ const BIOME := {
 	# him. Naming a boss here is also what swaps the north door's script for
 	# boss_door.gd - it stays shut until he concedes.
 	"boss": {"type": "mostafa", "at": Vector2(272, 138)},
-	# One office boy at each half of his 144 HP, in by the south door. Cued by
-	# his health rather than by kills, for the reason in reinforcements.gd's
-	# `_due`, and one at a time for the reason Ahmed's floor keeps: a duel with
-	# a crowd in it is neither.
+	# Quarters of his 144, in by the south door, cued by his health for the
+	# reason in reinforcements.gd's `_due`. Ahmed's floor explains why this
+	# pair and not boys; this floor is where the pair bites hardest, because a
+	# RHYTHM fight is the one thing a drain and a slow can actually break.
+	# Mostafa's combination is jab-jab-hook on a beat you learn, and being bled
+	# while you count it and slowed while you step out of it is the fight asked
+	# again with both hands occupied - which is also DESIGN.md's corner rush
+	# made worse in the only fair way: the corners get busier, not stronger.
 	#
-	# It lands on this floor's own idea rather than beside it. The corner rush
-	# already makes the edges the dangerous place; a body arriving mid-rhythm
-	# is a body you have to fit into a rhythm, which is the fight the room is
-	# for, asked once more with a hand occupied.
+	# The last threshold is the ONE place in the game where two slowers can be
+	# alive at once - the 72 HP one may still be standing - and it is the
+	# deliberate peak rather than an oversight. It is also the first thing to
+	# check in play: if the final quarter reads as a room you cannot move in
+	# rather than a crescendo, this is the beat to thin.
 	"reinforcements": [
-		{"at_boss_health": 96, "from": "start", "enemies": ["office_boy"]},
-		{"at_boss_health": 48, "from": "start", "enemies": ["office_boy"]},
+		{"at_boss_health": 108, "from": "start",
+			"enemies": ["social_media", "social_media"],
+			"per_head": ["social_media"]},
+		{"at_boss_health": 72, "from": "start",
+			"enemies": ["call_center", "social_media"],
+			"per_head": ["office_boy"]},
+		{"at_boss_health": 36, "from": "start",
+			"enemies": ["social_media", "social_media", "call_center"],
+			"per_head": ["social_media"]},
 	],
 }

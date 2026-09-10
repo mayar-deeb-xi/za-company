@@ -176,15 +176,76 @@ to read the same in every biome.
 ## Reinforcements - a room's second beat
 
 A floor with `reinforcements` in its biome gets one extra node,
-`Reinforcements`, holding the list as an export; a floor without the key gets
-no node at all. Four floors have one:
+`Reinforcements`, holding the list as an export; a floor without the key gets no
+node at all, which today is the lobby alone. **Every other floor has one**, and
+the shape of a floor's beat is the shape of its lesson restated:
 
-| floor | beat | cue |
-|-------|------|-----|
-| F4 ahmed_office | 1 `office_boy`, twice | `at_boss_health` 64, then 32 |
-| F8 conflict_resolution | 1 `office_boy`, twice | `at_boss_health` 96, then 48 |
-| F9 asset_recovery | 2 `office_boy` | `after_kills` 3 |
-| F11 executive_floor | 1 `warden` | `after_kills` 4 |
+| floor | cue | base group | `per_head` | in by |
+|-------|-----|------------|-----------|-------|
+| F1 lobby | — | *none: see below* | — | — |
+| F2 content_studio | 2 kills | 2 `social_media` | +1 `social_media` | south |
+| F3 call_center | 3 kills | 2 `office_boy` | +1 `office_boy` | south |
+| F4 ahmed_office | HP 72 / 48 / 24 | drain+boy / **slow** / 2 drains | +drain / +boy / +drain | south |
+| F5 the_hub | 2 kills | 2 `office_boy` | +1 `office_boy` | south |
+| F6 marble_hall | 2 kills | 2 `office_boy` | +1 `office_boy` | **north** |
+| F7 innovation_lab | 2 kills | one of each | +1 `office_boy` | south |
+| F8 conflict_resolution | HP 108 / 72 / 36 | 2 drains / **slow**+drain / 2 drains+**slow** | +drain / +boy / +drain | south |
+| F9 asset_recovery | 3 kills | 3 `office_boy` | +2 `office_boy` | south |
+| F10 hellfire | 4 kills | 2 `regular` + 1 `wraith` | +1 `regular` | **north** |
+| F11 executive_floor | 4 kills | 1 `warden` + 2 `regular` | +1 `regular` | chokepoint |
+| F12 khaled_office | HP 144 / 96 / 48 | 2 drains / **slow**+boy / 2 drains+boy | +drain / +boy / +drain | south |
+
+Four of those rows carry something worth knowing:
+
+- **F1 has no beat, and could not have one.** The lobby is deliberately the one
+  room with nobody in it - the first thing a new player does is walk, and floor
+  1 is where they learn that safely - so it has no kills to count and an
+  `after_kills` there would never fire. The emptiness and the missing beat are
+  one decision, not two.
+- **F6 and F10 come in by the NORTH door** - the way out. Half the room is dead,
+  the stairs are in sight, and the beat arrives from the direction the player
+  has stopped watching. On hellfire it also says what the floor above is.
+- **F12 is authored and inert.** Khaled is build step 6; `_due()` returns false
+  while `Props/Boss` is null, so the list costs nothing standing there. Its
+  thresholds ASSUME 192 HP and nothing will complain if he lands elsewhere -
+  set them from his real `max_health` when the scene exists.
+- **F9 has the heaviest `per_head` in the game** (+2 rather than +1), because
+  the crowd floor is the one whose lesson IS the head count.
+
+## `per_head` - what a crowd brings, and what it never brings
+
+`enemies` is a beat's base group and never scales. `per_head` is added once per
+head BEYOND the first, so `bodies = len(enemies) + (heads - 1) * len(per_head)`.
+
+The split is not a convenience. Multiplying one list gave every extra player a
+copy of every type in the beat - which on a boss floor means a second
+`call_center`, and **two slowers do not stack a slow, they refresh it.** A
+permanently slowed player cannot sidestep a telegraph, and being unable to
+dodge is the one thing here that reads as unfair rather than hard. So
+**`call_center` appears in no floor's `per_head`**, a rule
+`tests/test_reinforcements.gd` checks against both boss floors' baked data.
+
+It also makes head count matter MORE: a beat can hand a solo player the
+arrangement it was tuned for and still answer a party of four, instead of every
+number being a multiple of the solo one.
+
+## The pair that makes a boss fight annoying
+
+Boss floors field `social_media` and `call_center` rather than boys, and the
+choice is pointed at the thing a boss fight actually is - reading one telegraph:
+
+- **`social_media` has no wind-up to interrupt.** Its harm is proximity, so it
+  cannot be answered with the timing the boss is teaching. It just bleeds you
+  while you watch him.
+- **`call_center` takes the dodge away.** Ahmed's fire wave is a sidestep and
+  nothing else; Mostafa's rush needs you to move. Slowed, neither is dodgeable.
+
+So every boss floor runs drain, then the slow at the halfway point, then drain
+again - the slower arriving as one distinct event rather than a state the player
+lives in. ONE of him per threshold. Mostafa's final quarter is the single place
+in the game where two can be alive at once, as the deliberate peak, and it is
+the first thing to check in play: if it reads as a room you cannot move in
+rather than a crescendo, that is the beat to thin.
 
 **This is deliberately not waves, and the reason is the whole design.** A room
 here is an ARRANGEMENT, not a population - the content studio is three
@@ -193,8 +254,15 @@ colonnade you pull one at a time, the executive floor is one 64px gap you
 choose to step through. Every one of those fights is made of WHERE the enemies
 are, and a stream of respawns flattens all three into the same fight, because a
 room's shape only matters while its enemies are placed. So a beat is finite,
-authored and fires once; the room clears and stays clear, and no floor gets one
-unless its lesson is worth restating.
+authored and fires once; the room clears and stays clear.
+
+**Every floor having one is not a walking back of that.** What "not waves"
+forbids is a floor answering a kill with a respawn forever; what each floor has
+is one authored group, of known types, at a known cue, once. The test of a beat
+is still whether it restates the floor's own lesson rather than adding bodies to
+it - which is why the studio's beat is drains and not boys, why the call floor's
+adds no slower to the two already standing there, why the executive floor's
+arrives at the chokepoint and nowhere else, and why the lobby has none at all.
 
 Three things follow from that and are worth knowing before touching it:
 

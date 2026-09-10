@@ -175,7 +175,9 @@ const BIOME := {
 	# gallery, so it fires once the half you arrive into is broken - never
 	# during the first fight, and never after the room is already clear.
 	"reinforcements": [
-		{"after_kills": 4, "from": "chokepoint", "enemies": ["warden"]},
+		{"after_kills": 4, "from": "chokepoint",
+			"enemies": ["warden", "regular", "regular"],
+			"per_head": ["regular"]},
 	],
 	# No debris anywhere, and that is a choice rather than an omission. Every
 	# floor below this has litter on it because every floor below this is used;

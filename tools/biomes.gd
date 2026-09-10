@@ -46,6 +46,15 @@ extends RefCounted
 ## is worth restating. The rationale in full, and the reason this is not waves,
 ## is in game/levels/reinforcements.gd.
 ##
+## `per_head` is the other half of a beat's `enemies`: the base group arrives
+## whatever the head count, and `per_head` is added once per head BEYOND the
+## first. Multiplying one list instead gave every extra player a copy of every
+## type, which on a boss floor means a second `call_center` - and two of those
+## do not stack a slow, they refresh it, so the player is slowed permanently and
+## a telegraph they could sidestep stops being dodgeable. **`call_center` is
+## therefore in no floor's `per_head`**, and the rule a beat obeys is the one
+## Difficulty obeys: more bodies, never a worse one.
+##
 ## A BOSS floor's beat is cued by `at_boss_health` instead of `after_kills` -
 ## the health he has to be down to - because `after_kills` cannot reach any
 ## number but zero there: a boss is in the `enemies` group and is never freed,

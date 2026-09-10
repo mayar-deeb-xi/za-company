@@ -90,11 +90,31 @@ const BIOME := {
 		{"type": "cable_spool", "at": Vector2(330, 200)},
 		{"type": "debris", "at": Vector2(400, 240)},
 	],
-	# Empty, and this one is empty because it was ASKED to be: the floor's
-	# people are being placed by hand. What the design wants when they land is
-	# 3 social_media whose sight radii overlap across the middle of the room,
-	# and 1 office boy by the north door so that one fight has to happen inside
-	# the field. The four quadrants are dressed and the middle is not, which is
-	# the room those placements need.
-	"enemies": [],
+	# Three drain fields and the one fight that has to happen inside one.
+	#
+	# The two on the west overlap: 136 px apart against a 120 px radius, so
+	# their fields meet across the west end of the central band - which is
+	# exactly where the fallen ring light stands at (120, 152). Crossing the
+	# west side costs drain AND burn, and that is the routing lesson this floor
+	# is built to teach.
+	#
+	# The boy is 75 px from the eastern drain, so fighting him happens inside
+	# her radius. The design asked for him "by the north door", which is not
+	# legal - an 80 px sight anywhere near x 272 owns the door lane - so east
+	# of the exit is the nearest honest reading of it.
+	"enemies": [
+		{"type": "social_media", "at": Vector2(104, 76)},    # the set
+		{"type": "social_media", "at": Vector2(76, 238)},     # off camera
+		{"type": "social_media", "at": Vector2(440, 244)},    # the green room
+		{"type": "office_boy", "at": Vector2(416, 168)},      # inside her field
+	],
+	# Two dead and two more walk on. Drains rather than a guard: the floor's
+	# lesson is that standing still in the wrong place costs you, and a second
+	# pair of overlapping fields restates it in a room the player has already
+	# half-solved.
+	"reinforcements": [
+		{"after_kills": 2, "from": "start",
+			"enemies": ["social_media", "social_media"],
+			"per_head": ["social_media"]},
+	],
 }

@@ -250,6 +250,7 @@ position = Vector2(272, 80)
 script = ExtResource("25_r474p")
 waves = [{
 "after_kills": 3,
-"enemies": ["office_boy", "office_boy"],
-"from": "start"
+"enemies": ["office_boy", "office_boy", "office_boy"],
+"from": "start",
+"per_head": ["office_boy", "office_boy"]
 }]

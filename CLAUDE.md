@@ -118,19 +118,51 @@ spawn is the one deliberate exception to the rule below.
 Which enemies a room gets is per-biome data (type + position), and positions
 keep every sight radius clear of the door line, spawns and both stands - the
 straight walk between the doors stays safe in every biome, and the flow and
-combat tests depend on it. Types, seams, tuning and the art pipeline:
+combat tests depend on it. The lane is x 246-300 at every y, and clearing its
+EDGE by the type's own radius is the rule, which gives a hard band per
+archetype: a guard (80) needs x <= 166 or x >= 380, a wraith (120) x <= 126 or
+x >= 420, a warden (130) x <= 116 or x >= 430.
+
+**The reskins hold floors 1-9 and 12; the originals appear only from hellfire
+up**, where the building stops pretending to be an office and the people in it
+stop looking like colleagues. Types, seams, tuning and the art pipeline:
 game/enemies/CLAUDE.md.
 
-A floor may also have a **second beat** - `reinforcements` in its biome, a
-finite authored group that walks in through a named door once enough of the
-opening arrangement is dead (asset recovery, and only it, today). It is
+**Every floor but the lobby has a second beat** - `reinforcements` in its
+biome, a finite authored group that walks in through a named door at a known
+cue. Floor 1 is the exception for one reason and it is not squeamishness: a beat
+is cued by kills, and a room deliberately empty of enemies can never reach one,
+so an `after_kills` there would sit in the data forever without firing. The
+lobby staying crossable without a fight and the lobby having no beat are the
+same decision. It is
 deliberately not waves: **a room is an ARRANGEMENT, not a population**, and
 respawns flatten every floor's fight into the same one because a room's shape
-only matters while its enemies are placed. Reinforcements are the only enemies
-in the game with no authored position - they name a spawn marker instead -
-which is also what makes them the one place a future multiplayer head count can
-scale, under the rule Difficulty already follows: more bodies, never tougher
-ones. game/levels/CLAUDE.md has the rest.
+only matters while its enemies are placed. A beat fires ONCE, and once the room
+is clear it stays clear.
+
+Reinforcements are the only enemies in the game with no authored position -
+they name a spawn marker instead - and three things follow that are worth
+knowing before touching a beat:
+
+- **It is the one place head count lives.** A beat's `enemies` is a base group
+  that never scales; `per_head` is added once per head beyond the first. The
+  split exists because multiplying one list gave every extra player a second
+  `call_center`, and two slowers do not stack a slow, they refresh it - a
+  permanently slowed player cannot sidestep a telegraph. `call_center` is in no
+  floor's `per_head`. Nothing else in the game scales with players, and the rule
+  is Difficulty's: more bodies, never a worse one.
+- **A boss floor's cue is `at_boss_health`, not `after_kills`.** A boss is in
+  the `enemies` group and is never freed, so he never counts as a kill and the
+  count can only ever reach 0 there. His adds all live in his beat and his
+  `enemies` list stays empty: an add arriving at a threshold is a PHASE of the
+  one fight, where the same add placed in the arena is furniture standing in it
+  from the first frame.
+- **A beat is the only legal way to put a body on the door line.** Placements
+  must keep every sight radius off it (see above); an arrival has no position to
+  check. The executive floor's chokepoint is the case - the gap is on the line -
+  which is what the biome `spawns` key is for.
+
+game/levels/CLAUDE.md has the rest.
 
 ## Generated resources - regenerate, don't hand-edit
 

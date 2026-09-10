@@ -97,7 +97,25 @@ const BIOME := {
 		{"type": "dead_plant", "at": Vector2(500, 250)},
 		{"type": "debris", "at": Vector2(470, 196)},
 	],
-	# Empty, like every floor built since the reskins were deferred: whoever
-	# this floor fights is placed by hand.
-	"enemies": [],
+	# THE FIRST ONE-OF-EACH MIX, and one body per quadrant so the room is a lap
+	# rather than a line: two boys north, the drain south-west, the slower
+	# south-east. This floor had no mechanic of its own assigned, and being the
+	# first room that asks the player to hold all three answers at once is the
+	# mechanic - which is also what earns the executive floor for free, since
+	# the exam is this fight one rank bigger with the masks off.
+	"enemies": [
+		{"type": "office_boy", "at": Vector2(144, 104)},
+		{"type": "office_boy", "at": Vector2(424, 84)},
+		{"type": "social_media", "at": Vector2(76, 236)},
+		{"type": "call_center", "at": Vector2(456, 236)},
+	],
+	# One of each again, because the beat has to restate the floor's lesson and
+	# the lesson here IS the mix. The only floor whose beat carries a
+	# `call_center`, and it is why `per_head` exists: a party gets more boys to
+	# be slowed among, never a second slower.
+	"reinforcements": [
+		{"after_kills": 2, "from": "start",
+			"enemies": ["office_boy", "social_media", "call_center"],
+			"per_head": ["office_boy"]},
+	],
 }

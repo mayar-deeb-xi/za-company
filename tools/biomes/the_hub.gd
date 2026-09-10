@@ -124,9 +124,24 @@ const BIOME := {
 		{"type": "pc_tower", "at": Vector2(410, 250)},
 		{"type": "debris", "at": Vector2(388, 240)},
 	],
-	# Empty, and not as an oversight: this floor is the room, built before
-	# anybody is put in it. The call team's own reskin (`call_center`) is build
-	# order step 2 and the media team's (`social_media`) is with it, so a
-	# placement here now would be dungeon guards standing in an office.
-	"enemies": [],
+	# The floor's split made literal: the call team holds the west, the media
+	# team the east, and each is fought on its own side.
+	#
+	# Both drains are INSIDE the glass offices, which is what turns each office
+	# from decoration into a decision - the only way in is through its one
+	# 32 px gap, so entering means entering a radius on purpose. They are 158 px
+	# apart against a 120 px reach, so their fields also meet in the corridor
+	# between the two bays.
+	"enemies": [
+		{"type": "call_center", "at": Vector2(96, 168)},      # the call floor
+		{"type": "social_media", "at": Vector2(504, 62)},     # north office
+		{"type": "social_media", "at": Vector2(470, 240)},    # south office
+	],
+	# The breather floor, so the lightest ordinary beat: boys walking in behind
+	# you while you are committed inside one of the offices.
+	"reinforcements": [
+		{"after_kills": 2, "from": "start",
+			"enemies": ["office_boy", "office_boy"],
+			"per_head": ["office_boy"]},
+	],
 }

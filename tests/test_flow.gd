@@ -36,10 +36,14 @@ func _tick(frame: int) -> void:
 				_level() != null and _level().name == "Lobby")
 			# Floor 1 is deliberately the one room with nothing in it: the first
 			# thing a new player does is walk, and the lobby is where they learn
-			# that safely. Anything spawning here is a placement mistake.
+			# that safely. Anything spawning here is a placement mistake - and
+			# so is a `reinforcements` key, since a beat is cued by kills and a
+			# room with nobody in it can never reach one.
 			_check("level: the lobby is empty of enemies (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").is_empty())
+			_check("level: and so has no beat, which could never fire here",
+				_level().get_node_or_null("Reinforcements") == null)
 			# Empty of enemies is not the same as empty. The furniture is what
 			# says this is an office rather than a dungeon with the lights on,
 			# and it is the fragile half: re-running build_levels.gd overwrites a
@@ -259,9 +263,21 @@ func _tick(frame: int) -> void:
 			# the first floor above the lobby, where the rule first bites.
 			_check("level: no heart above the lobby",
 				_level().get_node_or_null("Props/Health") == null)
-			_check("level: the studio is empty of enemies for now (%d)"
-				% get_nodes_in_group("enemies").size(),
-				get_nodes_in_group("enemies").is_empty())
+			# Three drain fields and the one fight inside one of them. The two
+			# on the west are 136 px apart against a 120 px reach, so their
+			# fields overlap over the fallen ring light at (120, 152) - which is
+			# this floor's routing lesson, and it stops being true the moment
+			# either is nudged apart.
+			_check("enemies: the studio fields three drains and a boy (%s)"
+				% [_cast()], _cast() == ["office_boy", "social_media",
+					"social_media", "social_media"])
+			var west: Array = get_nodes_in_group("enemies").filter(
+				func(n: Node2D) -> bool:
+					return n.position.x < 160.0)
+			_check("enemies: and the two western fields still overlap (%d west)"
+				% west.size(),
+				west.size() == 2 and (west[0] as Node2D).position.distance_to(
+					(west[1] as Node2D).position) < 240.0)
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		501:
@@ -295,9 +311,23 @@ func _tick(frame: int) -> void:
 			# machine nobody should touch. Both are in this room.
 			_check("level: the jammed copier is standing in the room",
 				_level().get_node_or_null("Props/Torch") != null)
-			_check("level: the call floor is empty of enemies for now (%d)"
-				% get_nodes_in_group("enemies").size(),
-				get_nodes_in_group("enemies").is_empty())
+			# Two slowers and three boys, and the PAIR is the lesson - so when
+			# this floor's weight needs trimming it loses a boy, never one of
+			# these.
+			_check("enemies: the call floor fields the pair and three boys (%s)"
+				% [_cast()], _cast() == ["call_center", "call_center",
+					"office_boy", "office_boy", "office_boy"])
+			# Nobody parked behind a divider's 48 px of panel. Eighteen dividers
+			# is eighteen chances to make an enemy invisible rather than merely
+			# unfair, and only the ones NORTH of a foot hide anything.
+			var hidden: Array = get_nodes_in_group("enemies").filter(
+				func(n: Node2D) -> bool:
+					for x in [72, 152, 232, 312, 392, 472]:
+						if absf(n.position.x - float(x)) < 24.0 								and n.position.y < 160.0:
+							return true
+					return false)
+			_check("enemies: none of the five hides behind a divider (%d)"
+				% hidden.size(), hidden.is_empty())
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		581:
@@ -343,9 +373,18 @@ func _tick(frame: int) -> void:
 				_level() != null and _level().name == "TheHub")
 			_check("title: the hub announces itself (got '%s')"
 				% _title_text(), _title_text() == "THE HUB")
-			_check("level: the hub is empty of enemies (%d)"
-				% get_nodes_in_group("enemies").size(),
-				get_nodes_in_group("enemies").is_empty())
+			# The floor's split, fought: the slower holds the call side and both
+			# drains are INSIDE the glass offices - which is what makes each
+			# office a decision rather than dressing, since the only way in is
+			# through its one 32 px gap.
+			_check("enemies: the hub fields a slower west, two drains east (%s)"
+				% [_cast()], _cast() == ["call_center", "social_media",
+					"social_media"])
+			var east: Array = get_nodes_in_group("enemies").filter(
+				func(n: Node2D) -> bool:
+					return n.position.x > 300.0 						and n.scene_file_path.contains("social_media"))
+			_check("enemies: and both drains sit in the media half (%d of 2)"
+				% east.size(), east.size() == 2)
 			# One room, two halves, and what is checked is that BOTH halves came
 			# through the regeneration: phones and cubicles on the call side,
 			# glass and lit screens on the media side. Same guard as every other
@@ -383,9 +422,15 @@ func _tick(frame: int) -> void:
 			_check("door: the chain continues on into the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "MarbleHall")
-			var guards := get_nodes_in_group("enemies")
-			_check("enemies: the marble hall fields four guards (%d)" % guards.size(),
-				guards.size() == 4)
+			# Four guards, and they are the RESKIN. This floor was the last one
+			# outside hellfire and the exam still fielding an original, and the
+			# retype is the building's rule made whole: the reskins are the
+			# company's staff and hold floors 1-9, the originals appear only
+			# from hellfire up. Mechanically identical - the same 24 HP, the
+			# same cycle - so this check is about the costume and nothing else.
+			_check("enemies: the marble hall fields four office boys (%s)"
+				% [_cast()], _cast() == ["office_boy", "office_boy",
+					"office_boy", "office_boy"])
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		841:
@@ -415,9 +460,19 @@ func _tick(frame: int) -> void:
 			_check("level: it has the power strip and no heart",
 				_level().get_node_or_null("Props/Torch") != null
 					and _level().get_node_or_null("Props/Health") == null)
-			_check("level: the innovation lab is empty of enemies for now (%d)"
-				% get_nodes_in_group("enemies").size(),
-				get_nodes_in_group("enemies").is_empty())
+			# THE FIRST ONE-OF-EACH MIX, one body to a quadrant. This floor had
+			# no mechanic assigned, and being the first room that asks for all
+			# three answers at once IS the mechanic - which is also what earns
+			# the executive floor as its exam, the same fight one rank bigger.
+			_check("enemies: the lab fields one of each, two boys (%s)"
+				% [_cast()], _cast() == ["call_center", "office_boy",
+					"office_boy", "social_media"])
+			var quadrants := {}
+			for n in get_nodes_in_group("enemies"):
+				var at: Vector2 = (n as Node2D).position
+				quadrants["%d%d" % [int(at.x > 272.0), int(at.y > 152.0)]] = true
+			_check("enemies: one to a quadrant, so the room is a lap (%d of 4)"
+				% quadrants.size(), quadrants.size() == 4)
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		921:
@@ -566,13 +621,9 @@ func _tick(frame: int) -> void:
 			# stops pretending to be an office, so this floor and the one below
 			# it are the only two that field the originals. A reskin appearing
 			# here is the rule quietly broken.
-			var cast: Array = get_nodes_in_group("enemies").map(
-				func(n: Node) -> String:
-					return n.scene_file_path.get_file().get_basename())
-			cast.sort()
 			_check("enemies: the exam fields six originals, masks off (%s)"
-				% [cast], cast == ["regular", "regular", "regular", "warden",
-					"wraith", "wraith"])
+				% [_cast()], _cast() == ["regular", "regular", "regular",
+					"warden", "wraith", "wraith"])
 			# THE INVARIANT THE WHOLE CHAIN RESTS ON, checked on the floor with
 			# the most people standing on it: no placed enemy's sight reaches
 			# the door lane, so the straight walk between the two doors stays
@@ -609,10 +660,12 @@ func _tick(frame: int) -> void:
 			# looser check.
 			var beat := _level().get_node_or_null("Reinforcements")
 			var waves: Array = [] if beat == null else beat.get("waves")
-			_check("beat: a late warden is authored, in by the chokepoint (%s)"
+			_check("beat: a late group is authored, in by the chokepoint (%s)"
 				% [waves],
 				waves.size() == 1 and waves[0].get("from", "") == "chokepoint"
-					and waves[0].get("enemies", []) == ["warden"])
+					and waves[0].get("enemies", [])
+						== ["warden", "regular", "regular"]
+					and waves[0].get("per_head", []) == ["regular"])
 			_check("beat: and the chokepoint marker exists to arrive at (%s)"
 				% _level().call("spawn_position", &"chokepoint"),
 				_level().call("spawn_position", &"chokepoint")
@@ -719,3 +772,15 @@ func _tick(frame: int) -> void:
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn"
 					and not paused)
 			_finish()
+
+
+## Every enemy standing in the current room, by type, sorted. Six floors assert
+## their own composition as this suite walks past, and composition is most of
+## what makes one room feel unlike the next - so the cast is the check rather
+## than the head count.
+func _cast() -> Array:
+	var cast: Array = get_nodes_in_group("enemies").map(
+		func(n: Node) -> String:
+			return n.scene_file_path.get_file().get_basename())
+	cast.sort()
+	return cast

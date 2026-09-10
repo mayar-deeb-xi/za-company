@@ -88,9 +88,28 @@ const BIOME := {
 		{"type": "debris", "at": Vector2(448, 148)},
 		{"type": "debris", "at": Vector2(192, 224)},
 	],
-	# Empty: this floor's people are being placed by hand. What the design
-	# wants is 2 call_center at the chokepoints the dividers make and 3 office
-	# boys between them - and see the note on `columns` before choosing any
-	# position, because eighteen dividers is eighteen ways to hide one.
-	"enemies": [],
+	# Two slowers in the pockets the dividers make, three boys between them.
+	# Every one of the five is either off the divider xs (72 / 152 / 232 / 312 /
+	# 392 / 472) or SOUTH of a divider's foot, where Y-sorting draws it in front
+	# of the panel rather than behind it - which is the mistake this floor
+	# offers eighteen chances to make.
+	#
+	# This is the floor where being slowed near a guard is the lesson, so the
+	# pair is the point and must not be trimmed: DESIGN.md's escape hatch for
+	# this room's weight is one office boy, never a call_center.
+	"enemies": [
+		{"type": "call_center", "at": Vector2(96, 192)},
+		{"type": "call_center", "at": Vector2(456, 168)},
+		{"type": "office_boy", "at": Vector2(96, 136)},
+		{"type": "office_boy", "at": Vector2(152, 200)},    # south of the foot
+		{"type": "office_boy", "at": Vector2(424, 216)},
+	],
+	# Boys only, and no third slower: this room already holds two, and a third
+	# arriving would stop being pressure and start being a room the player
+	# cannot move in. What the beat adds is bodies to be slowed AMONG.
+	"reinforcements": [
+		{"after_kills": 3, "from": "start",
+			"enemies": ["office_boy", "office_boy"],
+			"per_head": ["office_boy"]},
+	],
 }

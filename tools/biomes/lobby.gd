@@ -65,9 +65,19 @@ const BIOME := {
 		{"type": "desk", "at": Vector2(180, 250)},
 		{"type": "chair", "at": Vector2(180, 262)},
 	],
-	# Deliberately empty. The design gives floor 1 two office boys, but that
-	# type does not exist yet (build order step 2, with the other reskins);
-	# placing `regular` here would dress the lobby with dungeon guards and then
-	# need undoing. An empty room is the honest intermediate state.
+	# DELIBERATELY EMPTY, and the only floor that is. The first thing a new
+	# player does is walk, and this is where they learn that safely - so floor 1
+	# stays crossable without a fight. It is also where they find out what a
+	# heal is, which is why it is the one floor that leaves a heart lying about.
+	#
+	# **Which is also why it is the one floor with no second beat.** A beat is
+	# cued by kills, and a room with nobody in it can never reach one - an
+	# `after_kills` here would sit in the data forever without firing. The
+	# emptiness and the missing beat are the same decision, not two.
+	#
+	# Being empty is load-bearing beyond the design, too: test_combat.gd,
+	# test_bosses.gd and test_reinforcements.gd all boot into this room and
+	# place the exact fight they measure, so anything standing here is noise in
+	# three suites. Each of them asserts the room is empty before it starts.
 	"enemies": [],
 }

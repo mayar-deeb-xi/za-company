@@ -272,6 +272,7 @@ position = Vector2(272, 168)
 script = ExtResource("29_omkmo")
 waves = [{
 "after_kills": 4,
-"enemies": ["warden"],
-"from": "chokepoint"
+"enemies": ["warden", "regular", "regular"],
+"from": "chokepoint",
+"per_head": ["regular"]
 }]

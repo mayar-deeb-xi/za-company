@@ -74,7 +74,21 @@ const ENEMY_SCENE := "res://game/enemies/%s/%s.tscn"
 ##                   to be down to. See `_due()`
 ##   from            the spawn marker they walk in through ("start" = south
 ##                   door); a floor can name markers of its own under `spawns`
-##   enemies         types, in release order - no positions, see above
+##   enemies         the base group, in release order - no positions, see above
+##   per_head        added once per head BEYOND the first, in release order
+##
+## **`enemies` is fixed and only `per_head` scales, and that split is the whole
+## reason there are two lists.** Multiplying one list gave every extra player a
+## copy of every type in the beat - which on a boss floor means a second
+## `call_center`, and two of those do not stack a slow, they REFRESH it. Two
+## slowers is a player who is slowed permanently, and being slowed through a
+## telegraph you could otherwise sidestep is the one thing here that reads as
+## unfair rather than hard. So a beat now says outright which bodies a crowd
+## brings, and `call_center` is in no floor's `per_head`.
+##
+## It also makes the head count matter MORE, not less: a beat can hand a solo
+## player the arrangement it was tuned for and still answer a party of four,
+## instead of every number being a multiple of the solo one.
 @export var waves: Array = []
 
 ## The room as built, counted on the first frame rather than in _ready: callers
@@ -108,10 +122,13 @@ func _process(delta: float) -> void:
 	# would inherit the previous beat's wait before its own first body. The
 	# first one through the door goes as soon as the door is clear.
 	_cooldown = 0.0
-	# The head count multiplies the GROUP, not the enemies in it: two players
-	# get twice the bodies at the same difficulty, never tougher ones.
-	for _head in _head_count():
-		for type in wave.get("enemies", []):
+	# The base group arrives whatever the head count, and `per_head` is added
+	# once per head BEYOND the first. See the export doc for why the two lists
+	# are not one list multiplied.
+	for type in wave.get("enemies", []):
+		_queue.append(String(type))
+	for _extra in _head_count() - 1:
+		for type in wave.get("per_head", []):
 			_queue.append(String(type))
 
 
@@ -157,6 +174,14 @@ func _spawn(type: String, at: Vector2) -> void:
 ## sends, never what it is made of. Enemy HP are exact breakpoints on the
 ## player's combo (24 / 17 / 36), so more players means more BODIES and never a
 ## tougher one, for the same reason no difficulty mode touches health.
+##
+## **A BOSS's health does not scale either, and it is the strongest case for the
+## rule rather than an exception to it.** Ahmed's 96 is exactly four heavies and
+## Mostafa's 144 exactly six, so a fractional head multiplier would land a boss
+## on a last swing that does nothing visible. His adds are the only honest dial,
+## which is why the boss floors put every body they have in a beat - and why
+## `per_head` exists, so that dial can turn without also multiplying the one
+## `call_center` a threshold is allowed.
 func _head_count() -> int:
 	return maxi(1, get_tree().get_nodes_in_group("player").size())
 

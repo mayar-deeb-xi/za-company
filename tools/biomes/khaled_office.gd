@@ -83,9 +83,39 @@ const BIOME := {
 		{"type": "bar_cart", "at": Vector2(496, 214)},
 		{"type": "sofa", "at": Vector2(486, 262)},
 	],
-	# Empty. Khaled is build step 6 and does not exist yet, and DESIGN.md gives
-	# this floor nobody else - the last fight is one fight, and the south door
-	# sealing behind you is a `can_travel()` override on this level's own
-	# script when the boss lands.
+	# Empty, and it stays empty: nothing may STAND in the arena, since two of
+	# the last fight's three phases are about distance and the rug is the only
+	# thing in the middle of the room. The beat below is how this floor gets
+	# bodies without a placement - an arrival carries no `at`.
 	"enemies": [],
+	# **AUTHORED NOW, INERT UNTIL KHALED EXISTS.** He is build step 6, and
+	# `_due()` returns false while `Props/Boss` is null, so this list costs
+	# nothing standing here and switches on the day he lands.
+	#
+	# THE THRESHOLDS ASSUME 192 HP - eight heavies, the next breakpoint up from
+	# Mostafa's six - and are quarters of it. If his health lands anywhere else
+	# these three numbers are wrong and nothing will complain: the beat will
+	# simply fire at the wrong moments, or, if he opens below 144, all three at
+	# once. Set them from his real `max_health` when the scene exists.
+	#
+	# In by the SOUTH door, which is the door that seals behind you - so the
+	# bodies come through the one way out, and the seal is the reason they can.
+	# It is the only boss floor where the beat has a story rather than just a
+	# marker.
+	#
+	# His own phases already carry a slow pulse (P2) and a drain (P3), so the
+	# pair here is deliberately weighted toward drain and boys rather than
+	# repeating the slow: ONE call_center in the whole fight, at the halfway
+	# point, and never in `per_head`.
+	"reinforcements": [
+		{"at_boss_health": 144, "from": "start",
+			"enemies": ["social_media", "social_media"],
+			"per_head": ["social_media"]},
+		{"at_boss_health": 96, "from": "start",
+			"enemies": ["call_center", "office_boy"],
+			"per_head": ["office_boy"]},
+		{"at_boss_health": 48, "from": "start",
+			"enemies": ["social_media", "social_media", "office_boy"],
+			"per_head": ["social_media"]},
+	],
 }
