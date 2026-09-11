@@ -132,6 +132,28 @@ door, torch or heart is the level's: override `can_travel()` in a level's own
 script for a lock, or restructure that level's scenes freely. A column has no
 shared behaviour at all and carries no script.
 
+## A floor may also name its music
+
+A biome key, `music`, written into the level scene as an export beside its
+title and read by game.gd where it otherwise asks for `Music.DEFAULT`. A floor
+without the key is every floor: the bed plays, and the only thing that ever
+interrupts it is a boss, whose theme is HIS and leaves when the fight does.
+
+Two floors have one - the executive floor and the penthouse, which name the
+same file - and the reason it hangs on the ROOM rather than on the man standing
+in it is the whole point of the feature. A boss's theme starts on the frame his
+bar goes up, so it can never cover the floor below him; the finale has to begin
+a floor early, which means it cannot be his. Silverman therefore declares no
+`music` at all, and the door between the two rooms costs nothing because
+`Music.fade_to` is idempotent on the path - the arriving floor asks for the
+track that is already playing and is told it is already playing.
+
+The order inside `_watch_boss` is what makes both true at once: a live boss's
+theme still wins, and the floor's own track is what a room falls back to
+instead of the bed - including on the frame a boss concedes, where the room
+goes back to being an ordinary floor and an ordinary floor is still this one.
+`tests/test_music.gd` holds all of it, including the absence on the boss.
+
 ## Doors and spawns
 
 Each level has a door north to the next in `CHAIN` and a door south to the one

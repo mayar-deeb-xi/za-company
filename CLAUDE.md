@@ -790,9 +790,35 @@ tail-against-head correlation from 0.875 to -0.12. So the bar count picks WHICH
 peak to cut at and the measurement says where it is - correlate the tail's last
 second against the head's first, swept at sample resolution.
 
-Check both on any new music before wiring it up: the click is obvious once
-heard and invisible in a waveform view, and the fade is invisible in the
-waveform's shape until you look at where the last seconds of level went.
+The third is the one `finale_loop.wav` arrived with, and it hides from both of
+the checks the first two taught. **The export ends by drying up rather than by
+fading down**: the hits keep landing at full level to the last bar - the
+on-beat quarter-seconds measure +2.0 dB against the track's own body at 59.5 s,
+which is to say nothing whatever is fading - while the SPACE between them
+empties out, the off-beats falling -3.0, -4.6, -6.1, -11.6, -20.9 dB across the
+last four seconds as the reverb tail is pulled away. Peak level says the track
+is fine. The waveform's outline says the track is fine. What loops is a room
+that goes dry for two seconds once a minute and then snaps back wet, which
+reads as a skip rather than as a fade. The measurement that finds it is an
+envelope in quarter-second buckets with the ON-beat and OFF-beat buckets read
+SEPARATELY; the fix is the second failure's fix - cut back to the last whole
+bar before the off-beats start to move (56.0 s, bar 28, where they part
+at 56.75).
+
+And a measurement that works on a sparse track does not work on a dense one.
+The tail-against-head correlation above is how `level_loop` was placed, and on
+this track it is noise: a broadband sweep peaked at +0.20 on a cut 40 ms off
+the grid - a third of a 16th note, an audible stumble - because hats and noise
+are uncorrelated between two passes of the same music and drown the alignment
+they are averaged into. Swept on the LOW BAND alone (one-pole at 300 Hz, the
+kick and the sub, which is what carries the grid) the same track gives a single
+sharp peak of +0.86, falling to +0.32 sixty samples either side. **Correlate
+the band that keeps the beat, not the whole mix.**
+
+Check all three on any new music before wiring it up: the click is obvious once
+heard and invisible in a waveform view, the fade is invisible in the waveform's
+shape until you look at where the last seconds of level went, and the dry-up is
+invisible in both, because the hits never move.
 
 ## Settings
 
@@ -892,7 +918,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Sixteen suites,
+  They drive the real game with synthesized input and exit 0/1. Eighteen suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1018,6 +1044,19 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     about hoping to be found is a check that passes on a seed, and starting the
     machine far away makes the contact frame depend on the travel, which is what
     made the first version flaky.
+  - `test_music.gd` - the finale across a door: that an ordinary floor plays
+    the bed, that floor 11 gets the track its biome names, that the stream
+    really resolved and its loop is sealed to the stream's real length, that
+    the door into the penthouse does not restart it, that the boss standing
+    there names no theme of his own, and the RULE those two floors are only an
+    instance of - read off disk, so a `music` line pasted onto a room in the
+    middle of the building fails here. Its own suite because it is the first
+    check in this project that spans a DOOR rather than sitting in one room.
+    The no-restart check SEEKS the playhead to 30 s before travelling rather
+    than reading the position twice: headless mixing crawls (0.09 s across 160
+    frames), so "the position advanced" is a coin flip that would pass a
+    restart on a quiet frame, while a playhead parked where no fresh `play()`
+    could leave it either survives the door or does not.
   - `test_surge.gd` - floor 3's wiring: that a charging line warns without
     hurting, that the head then crosses whoever stood on it, that the drop is
     exactly the node's own scaled damage rather than merely non-zero (one pass
