@@ -7,6 +7,14 @@ extends RefCounted
 const BIOME := {
 	"node": "KhaledOffice",
 	"title": "KHALED'S OFFICE",
+	# The other half of the executive floor's track - the same file, named
+	# again rather than inherited, because a floor is furnished from its own
+	# data and nothing here reads the floor below. Silverman deliberately
+	# declares NO theme of his own: a boss theme would interrupt this one on
+	# the frame his bar goes up and hand it back on the frame he concedes,
+	# and the point of putting it a floor early is that the last stretch of
+	# the building is one unbroken piece of music.
+	"music": "res://assets/music/finale_loop.wav",
 	# Cold, and the only ramp in the game with no warmth anywhere in it. Every
 	# floor below has a temperature - asset recovery's worn brown, the executive
 	# floor's mahogany, the innovation lab's pale wood - and this one is charcoal
@@ -151,5 +159,5 @@ const BIOME := {
 	# he is on the inside of it with you. East of the desk and off the rug, in
 	# the open floor the fight is fought across.
 	"relief": {"npc": "ivan", "from": "start", "at": Vector2(400, 176),
-		"say": "res://game/npcs/ivan/after_the_fight.gd"},
+		"say": "res://game/npcs/ivan/after_khaled_office.gd"},
 }

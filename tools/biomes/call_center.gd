@@ -166,7 +166,7 @@ const BIOME := {
 	# between the middle desks: clear of the hazard at (120, 152), clear of the
 	# door line, and on the side of the room the fight tends to end on.
 	"relief": {"npc": "ivan", "from": "start", "at": Vector2(208, 168),
-		"say": "res://game/npcs/ivan/after_the_fight.gd"},
+		"say": "res://game/npcs/ivan/after_call_center.gd"},
 	# The FOURTH beat, and this is the first floor to carry one: Dominique comes
 	# DOWN the north stairs - the ones the player is about to go up - to say what
 	# is waiting at the top. `from: "returned"` is the whole reason she is

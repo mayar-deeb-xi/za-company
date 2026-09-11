@@ -2,20 +2,27 @@ extends RefCounted
 ## What Mostafa says, and the whole file is data - `game/enemies/enemy_lines.gd`
 ## is the only thing that reads it, and the only thing that decides when.
 ##
-## He is Ahmed's brother, which the floor below already told you: Ahmed asks
-## "Do you know who my brother is?" when he is hurt, and goes down saying "I'm
-## telling Mostafa." So the first thing this man says has to be the answer to
-## that, and the last thing he says has to pass it up the building the same way.
+## He is the name the floor below kept threatening you with: Ahmed asks "Do
+## you know who Mostafa is?" when he is hurt, and goes down saying "I'm telling
+## Mostafa." So the first thing this man says has to be the answer to that, and
+## the last thing he says has to pass it up the building the same way.
 ##
-## ## He is the opposite of his brother, on purpose
+## ## Nobody says HOW they are related
+##
+## Mostafa is Ahmed's uncle and Khaled is his brother, and not one line in the
+## game says so. A name is the whole threat - this man knows the next one and
+## can reach him - and spelling out the blood turns three bosses into a soap
+## opera. So he says "Ahmed" and he says "Khaled", and that is all he says.
+##
+## ## He is the opposite of Ahmed, on purpose
 ##
 ## Ahmed is entitled and loud and quite sure this is HR's fault. Mostafa runs
 ## CONFLICT RESOLUTION - a company gym with a boxing ring painted on the floor
 ## and a poster reading TALK IT OUT, crossed out, GLOVE IT OUT under it - and he
 ## talks like the process he is named after: calm, procedural, booking the room,
 ## noting your feedback, closing the distance. The joke is that none of it is a
-## threat and all of it is one. Two brothers shouting the same way would be one
-## boss fought twice.
+## threat and all of it is one. Two men of one family shouting the same way
+## would be one boss fought twice.
 ##
 ## **The rage is where the language breaks.** He catches fire at half health,
 ## once, and never comes back down, and `rage` is the only cue that fires on
@@ -40,9 +47,10 @@ const VOICE := "res://game/bosses/mostafa/sfx/voice/"
 
 const LINES := {
 	# He has noticed you. Jumps every queue, so it lands on the frame he looks
-	# up - and the first one is the answer to the last thing Ahmed said.
+	# up - and the first one is the answer to the last thing Ahmed said. A name,
+	# no relation: see the header.
 	"spot": [
-		{"text": "So you're the one who upset my brother.",
+		{"text": "So you're the one who upset Ahmed.",
 			"voice": VOICE + "spot_1.wav"},
 		{"text": "Conflict Resolution. Take a seat. Actually - stand up.",
 			"voice": VOICE + "spot_2.wav"},

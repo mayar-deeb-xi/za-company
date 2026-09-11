@@ -177,6 +177,19 @@ The staggered single-file walk-in through a known door carries it for now.
   Present on floors 3, 4, 7, 8, 9, 10. From floor 2 up he is the ONLY healing in
   the game: the floors themselves carry no heart, so the lobby's is the last one
   handed out for free.
+  **And he says a different thing on every one of them.** He shipped with one
+  set of three lines for all six floors, which was wrong the moment anybody
+  played more than one of them: the whole point of a man who walks in after a
+  fight is that he saw THAT fight, and a line that fits none of them in
+  particular reads as a vending machine with a voice. Six conversations now
+  (`game/npcs/ivan/after_<floor>.gd`), one per floor, and it cost no code -
+  `conversation` was always placement. He introduces himself on the call floor,
+  complains that Ahmed says the soup needs salt, knows that Mostafa eats two
+  plates standing up, tells you the office boys fix his ovens and that somebody
+  upstairs pointed them at you, notices on the executive floor that those ones
+  have never stood in his lunch queue, and on the top floor says there is
+  nothing above you now. Every one of them still ends on "Eat." - the refrain
+  the hearts land on. Voiced, eighteen clips, same pipeline.
 
 Both are friendly: no `player`-group targeting of them, enemies ignore them.
 They are in the `npcs` group and in neither `player` nor `enemies`, which is
@@ -432,6 +445,32 @@ names the room, and the fiction carries which floor it is.
   asserts that it stays that way until they exist. When they land they should
   stay light: this floor lands just past Ahmed and before the innovation
   lab, and its job is to be a breather rather than a test of anything.
+  **And it WANDERS.** Two floor scrubbers left running, one penned into each
+  half, trundling about at 60 px/s and turning whenever they hit something.
+  It is the third moving hazard in the building and deliberately the third
+  SHAPE: the studio's dolly runs a rail and the call floor's surges run four
+  fixed lines, so both are learned as geometry - find the danger, then time it -
+  and a third fixed path would have been that lesson a third time. **Nothing
+  about where these go is authored.** What decides the route is the furniture,
+  which is exactly why they belong here and nowhere else: this is the room with
+  two completely different interiors, so the west machine ricochets down cubicle
+  rows while the east one crosses open carpet and now and then finds a 32 px
+  office door. Same machine, two behaviours, neither written down.
+  - It takes your **position**, not your health - a low 6 and a real `shove()`,
+    which is a fourth way for the world to reach the player and lands on exactly
+    the terms game/player/CLAUDE.md had already reserved for one: shaped like a
+    status, carried, decaying, refreshing rather than stacking. On a floor whose
+    drains sit inside the glass offices, being moved a tile is worth more than
+    the six points.
+  - It is the first hazard in the game that is **not fire or sparks**, and its
+    scanner is cold for that reason. The player gets a rule rather than a list:
+    warm burns, cold moves you.
+  - It is a solid **body** rather than a trigger, because being in the way is the
+    other half of being an obstacle - the only hazard here that is not an Area2D.
+  - Random, but **penned**: `within` is what keeps the door lane walkable when a
+    hazard has no route to inspect, and what stops the two halves bleeding into
+    one.
+  `tests/test_scrubber.gd` owns it, and one new fixture painter (`scrubber`).
 - [x] **F6 The Innovation Lab** (light relief): where the software gets
   written, and the brightest room in the building after the lobby. Warm
   off-white and pale wood, the floor the company spent the refurbishment
@@ -815,6 +854,9 @@ never tougher ones**, because 24/17/36 are exact combo breakpoints.
         once per visit. The head count is game/heads.gd, shared with a second
         beat's `per_head`. His heart is his own scene (tools/build_npcs.gd), so
         no floor but the lobby carries one. Covered by `tests/test_ivan.gd`.
+        **Built since**: a conversation per floor rather than one for all six,
+        voiced - see his entry under NPCs for why one set of lines could not
+        survive being heard six times.
 - [x] 5. Boss plumbing: locked north door (done: game/levels/boss_door.gd),
         defeat -> concede -> unlock (done: boss_base.gd), boss HP bar on HUD
         (done: ui/hud/boss_bar.gd, found by group so every boss gets one).

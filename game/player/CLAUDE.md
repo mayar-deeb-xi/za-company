@@ -42,7 +42,7 @@ The player owns its health (player.gd): `MAX_HEALTH`, `take_damage()`,
 which the sprite blinks and further damage is ignored. Hazards, pickups and
 enemies reach the player by the `player` group + `has_method`, never by type.
 
-**Three ways the world reaches the player, and the splits between them are the
+**Four ways the world reaches the player, and the splits between them are the
 thing to get right.** A *blow* (`take_damage()`) is metered by the grace window
 and opens a fresh one. That window is the only rate limiter for blows anywhere
 in the game, and it is per-difficulty (`Difficulty.grace_seconds()`, read once
@@ -68,10 +68,40 @@ strongest in force wins and the timer extends, so two wardens keep you slow for
 longer but never make you slower; `MIN_SLOW_FACTOR` floors how far any
 combination can reach; and `revive()` clears them, because respawning into a
 room still crippled by whatever killed you is a second punishment for one
-death. Freeze and push land here when they come - the shape is meant to take
-them. A slow scales the walk animation as well as the speed, since a slowed walk
-played at full rate reads as skating, but deliberately not the swing: it takes
-your legs, not your sword.
+death. Freeze lands here when it comes - the shape is meant to take it. A slow
+scales the walk animation as well as the speed, since a slowed walk played at
+full rate reads as skating, but deliberately not the swing: it takes your legs,
+not your sword.
+
+A *shove* (`shove(direction, force)`) is the fourth, and it arrived on exactly
+the terms this section promised push would: it is shaped like a status, not like
+a blow. Something the player carries for half a second and which decays on its
+own, outside the grace window in both directions - a torch clip must not swallow
+it, and being pushed must not buy immunity from the guard winding up behind you.
+Overlapping shoves refresh rather than compound, the same rule a slow keeps: the
+strongest push wins and the clock resets, so two machines catching somebody
+between them cannot add up to a launch. The hub's floor scrubbers are what asked
+for it (game/levels/CLAUDE.md's *The machines*); where one also wants to hurt it
+calls `take_damage()` too, and the two meter themselves independently, which is
+correct - the damage is a blow and the push is not.
+
+Three things about it are load-bearing:
+
+- **It is never added to `velocity`.** Velocity is carried between frames and
+  only bled off at `FRICTION`, so adding a push to it every frame COMPOUNDS: a
+  70 px/s shove held for half a second reaches several hundred and then coasts
+  the player across the room long after the shove is over. It goes through its
+  own `move_and_collide()` after the ordinary move instead, which leaves the
+  state the stick owns alone.
+- **The room stops it.** Because it is a real move rather than a teleport, walls
+  and furniture bound it; and `MAX_SHOVE` (70) is under the walking speed of 90,
+  so one physics frame is about 1.2 px and nothing can be posted through a
+  16 px tile.
+- **It rides on top of whatever the player was doing.** Walking, sliding through
+  a light attack, rooted in the heavy - all pushed the same amount, because
+  being rooted is not being bolted down, and a push you cannot walk against is a
+  cutscene rather than a stumble. `MAX_SHOVE` and `SHOVE_SECONDS` together are
+  the whole feel: half a second off a 70 ceiling is about 17 px, which is a tile.
 
 The player also owns its lives (`MAX_LIVES`, 3): each death spends one via
 `lose_life()`, whose return value lets game.gd choose respawn or game over from

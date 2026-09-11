@@ -48,7 +48,7 @@ the root CLAUDE.md), so there is nothing to hang it on yet.
 
 ## Audio, and the seams it was built against
 
-**HR and Ivan are voiced** - twenty-three clips and three, cut by
+**HR and Ivan are voiced** - twenty-three clips and eighteen, cut by
 `tools/voice/`, the same pipeline Ahmed's barks come out of. Nothing about the runner changed to make that work,
 because the two seams it needed were put in before there was any sound at all:
 
@@ -74,13 +74,18 @@ That freedom has a cost worth knowing: a mistyped clip path is SILENT, not an
 error, so nothing at runtime would ever report one. `tests/test_dialogue.gd`
 is the only thing that would - it reads the induction off disk and checks that
 every line she speaks names a clip and every clip named is really there.
-`tests/test_ivan.gd` carries the same pair over his three.
+`tests/test_ivan.gd` carries the same pair over all six of his conversations,
+plus two that only a speaker with six of them needs: that no two floors name the
+same clip, since they all cut into one folder and a collision plays the wrong
+floor's read, and that no two floors say the same LINE, which is the whole
+reason there are six files instead of one.
 
 **What stays unvoiced is the PLAYER.** The contract branch has them answering
 back, and those beats carry no `voice` on purpose: the player is silent
 everywhere else in this game, and HR's voice in their mouth would be the one
 line of the induction that is a mistake. Ivan asks nothing and branches
-nowhere, so every line in him is his own and every one of them is recorded.
+nowhere on any of his six floors, so every line in them is his own and every one
+of them is recorded.
 
 ## Taking the wheel
 

@@ -661,17 +661,27 @@ Twenty-two lines across nine cues in `mostafa/taunts.gd`, cut by
 are. Three things about the set are decisions rather than transcription:
 
 - **He is the answer to a line the floor below already set up.** Ahmed asks
-  "Do you know who my brother is?" when hurt and goes down saying "I'm telling
-  Mostafa", so the first thing this man says is "So you're the one who upset my
-  brother" and the last is "I'm escalating this. To Khaled." The chain of
+  "Do you know who Mostafa is?" when hurt and goes down saying "I'm telling
+  Mostafa", so the first thing this man says is "So you're the one who upset
+  Ahmed" and the last is "I'm escalating this. To Khaled." The chain of
   command IS the boss order, and each concede hands you up it.
+
+  **Nobody in the building ever says HOW they are related, and that is the
+  rule rather than an omission.** Mostafa is Ahmed's uncle and Khaled is
+  Mostafa's brother; the family tree is the reason the three of them are the
+  three bosses, and stating it out loud turns a threat into a soap opera. A
+  name passed up the stairs already says everything the player needs - that
+  this man knows the next one and can reach him - so every line about another
+  boss carries the NAME and nothing else. That holds for the NPCs too: no
+  briefing and no kitchen story explains the blood.
 - **He talks like the department he runs, and that is the whole contrast.**
   Ahmed is entitled and loud - seven of his nine cues are tagged furious or
   shouting. Mostafa runs CONFLICT RESOLUTION and speaks like it: avoidance is
   not a resolution, I've booked this room for an hour, meeting you halfway.
   Seven of HIS nine cues are tagged quiet, and he is cast as Edward against
-  Ahmed's Jack - British both, because they are brothers, dark and low against
-  loud. Two brothers tagged the same way would be one boss fought twice.
+  Ahmed's Jack - British both, because they are family, dark and low against
+  loud. Two men of one family tagged the same way would be one boss fought
+  twice.
 - **`rage` is a cue he added himself**, said by `mostafa.gd` on the frame he
   catches fire - the base fires seven cues and none of them is "the moment the
   process stops". It has one line, like `concede`, because there is no second

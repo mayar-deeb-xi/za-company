@@ -13,6 +13,9 @@ const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(22, 42)
 const BLOCKS := Vector2(12, 6)
+## Small enough to be a snag rather than cover, so the enemies walk through
+## it and the player does not - tools/props.gd's clutter().
+const CLUTTER := true
 
 ## The heat. A lamp at this output is not something you stand next to, and on a
 ## floor that runs a studio clock this is the box it burns in - a `Burn` area at

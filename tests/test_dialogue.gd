@@ -366,4 +366,31 @@ func _report() -> void:
 	_check("npc: the prompt comes back up, so she can be talked to again",
 		(_hr.get_node("Prompt") as Control).visible)
 
+	_check_two_lines()
+
 	_finish()
+
+
+## The box grows for a line that wraps - checked with a string long enough to
+## force it, because the induction has none and the two checks above therefore
+## watched a promise nobody was making.
+##
+## Dominique's briefings do wrap, and every one of them overflowed a one-line
+## panel: a Label truncates to `visible_characters` BEFORE wrapping unless it
+## is told otherwise, and `say()` sets that to 0 one statement before measuring
+## - so the box asked how many lines an empty string takes. Handing the box a
+## long line here is what would notice that property going missing again,
+## whatever conversation it was noticed in.
+func _check_two_lines() -> void:
+	var panel := _box().get_node("%Panel") as Control
+	var one := panel.size.y
+	_box().call("say", "Dominique", "So you are going up. Fine. I will say "
+		+ "this once, because I have said it to others and they also went up, "
+		+ "and they are not coming back down to tell you about it themselves.")
+	_check("box: a line that wraps is measured as the %d lines it really is"
+		% _line().get_line_count(), _line().get_line_count() >= 2)
+	_check("box: and the panel grew to hold it (%.0f px against one line's "
+		% panel.size.y + "%.0f)" % one, panel.size.y > one)
+	_check("box: with nothing left hanging outside it",
+		_line().get_visible_line_count() >= _line().get_line_count())
+	_box().call("close")

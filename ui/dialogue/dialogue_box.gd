@@ -223,6 +223,14 @@ func _unhandled_input(event: InputEvent) -> void:
 ## the time `text` is assigned - no frame in between, and no second opinion. A
 ## re-measure through the font would be a second opinion, and the one time it
 ## disagreed the box would clip a line the player then could not read.
+##
+## That measurement rests on ONE property in the scene: the line label is
+## `visible_characters_behavior = VC_CHARS_AFTER_SHAPING`. A Label defaults to
+## BEFORE_SHAPING, which truncates the string to `visible_characters` and only
+## THEN wraps it - and `say()` sets that to 0 one statement before measuring,
+## so the box asks how many lines an empty string takes and is told one. Every
+## two-line beat in the game overflowed a one-line panel that way. It is also
+## what stops a long line re-wrapping word by word as it types.
 func _fit_panel() -> void:
 	var font := _line.get_theme_font("font")
 	var size := _line.get_theme_font_size("font_size")

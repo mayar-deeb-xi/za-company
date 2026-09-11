@@ -7,6 +7,15 @@ extends RefCounted
 const BIOME := {
 	"node": "ExecutiveFloor",
 	"title": "THE EXECUTIVE FLOOR",
+	# THE LAST TWO FLOORS SHARE A TRACK, and this is the floor it starts on.
+	# Every other floor in the building runs on Music.DEFAULT and the only
+	# thing that ever interrupts it is a boss, whose theme is his and leaves
+	# when he does. This one is a FLOOR's track: it comes up as the lift doors
+	# open here and it is still playing through the fight upstairs, because
+	# `Music.play` is idempotent on the path and the penthouse asks for the
+	# same file. The building stops changing the subject for the last two
+	# rooms.
+	"music": "res://assets/music/finale_loop.wav",
 	# Mahogany. The one thing every floor below this has in common is that it
 	# was furnished from a catalogue; this one was furnished from an auction,
 	# and the palette is the whole argument - a red-brown wood ramp, where
@@ -188,7 +197,7 @@ const BIOME := {
 	# the chokepoint at (272, 168) that the last warden arrived through - the
 	# one 64px gap in the room is not somewhere to leave a 64px man standing.
 	"relief": {"npc": "ivan", "from": "start", "at": Vector2(324, 196),
-		"say": "res://game/npcs/ivan/after_the_fight.gd"},
+		"say": "res://game/npcs/ivan/after_executive_floor.gd"},
 	# The FOURTH beat, and the last one in the game: the penthouse is above this
 	# room and there is no floor after it, so this is where she stops.
 	#

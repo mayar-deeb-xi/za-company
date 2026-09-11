@@ -173,6 +173,85 @@ through. A body that came to find you is not defending anything.
 `tests/test_combat.gd` ends on it - the pursuit past the circle, the giving up,
 the walk home, and a guard dragged 160 px and not one pixel more.
 
+## Getting round the furniture: the desk problem
+
+An enemy could be stopped for good by one desk, and it presented as the enemy
+not attacking - which is why it survived twelve floors. There is no pathfinding
+here and deliberately still is none; steering is *walk at the player*, and
+`move_and_slide` takes care of a glancing approach by sliding along whatever
+was hit.
+
+The case it does not take care of is **the one sliding creates**. As a blocked
+body slides it comes to face the player ever more squarely, the sideways part
+of the walk decays towards zero, and it parks flat against the obstacle with
+the player two tiles beyond it - hunting, awake, permanently unable to arrive.
+That is an attractor rather than an accident, which is why it happened in every
+room rather than occasionally. And because the attack cycle begins on
+`touching_player`, a body that cannot arrive never swings: the whole of a
+movement bug shows up as an enemy standing in a corner ignoring you.
+
+Three numbers and a ray, all in `_steer`:
+
+- **`BLOCKED_SECONDS` (0.12)** - asked for a frame of ground and got less than
+  half of it for that long. Not one frame: depenetration takes a little back on
+  ordinary frames, and grinding against the player is not furniture.
+- **One side, committed to.** Which side is the way it was already sliding, and
+  with nothing leaning it either way it takes the same side every time and
+  finds out - it knows something is in the way and nothing at all about the
+  shape of it. The commitment is the trick; re-aiming every frame is precisely
+  what parks it.
+- **The step ends when the way is OPEN**, on one ray from the body to its
+  target. A clock was tried first and is the plausible version that does not
+  work: long enough to clear a boardroom table is far too long for a chair, and
+  a body that walks a full second sideways past a pot plant reads worse than
+  the bug did. `SIDESTEP_MIN` (0.2) and `SIDESTEP_MAX` (1.5) are only the floor
+  and the ceiling - the floor so a step cannot end on the frame it began, the
+  ceiling so a step can fail.
+- **`SIDESTEP_LIMIT` (3)** - a step that runs to the ceiling was the wrong
+  side, and the next goes the other way. After three it stops trying, because a
+  heuristic that can be wrong has to be able to lose: it gives up for
+  `GIVE_UP_SECONDS` (3) and walks home, so the worst case is a body on its mark
+  rather than a body wearing a groove in a wall.
+
+**Only a body with a POST gives up**, and that one condition decides who the
+last rule applies to without anybody keeping a list. A boss has no post - his
+arena is the fight, and a boss who stopped fighting halfway through would be a
+bug rather than a recovery. A reinforcement has none either: it came through a
+door to find you, so giving up buys it nothing but standing still somewhere
+arbitrary. The walk home is steered identically and for a sharper reason - a
+body that can be jammed on the way back can be parked off its mark for the rest
+of the run, which is the one thing the leash exists to prevent.
+
+The ray is cast on the body's **own collision mask**, which is what makes the
+clutter layer below come out right without anybody saying so twice: a chair an
+enemy walks through is not a chair it has to be clever about.
+
+`tests/test_steering.gd` builds the bad arrangement by hand in the empty lobby
+- the room with no enemies of its own, so anything standing in it was put there
+by the test.
+
+## The small furniture is not an obstacle
+
+Every prop's box is solid, and below about one body's width that box was never
+cover - nobody hides behind a pot plant from a man with a sword. All it can be
+is a snag, and the two sides pay wildly different prices for one: a player
+snagged on a chair loses a moment and can see exactly why, while an enemy
+snagged on the same chair is steered by arithmetic that cannot see it at all.
+
+So a prop whose `BLOCKS` box is **16 px or narrower** declares `CLUTTER` in
+`tools/props/`, and the generator puts its body on physics layer 2 instead of
+layer 1. The player masks both layers; an enemy masks only the world. The room
+stays solid for the person who can read it.
+
+Eleven props are clutter today - the chairs, both plants, the cooler, the
+coffee table, the heavy bag, the tripods, the PC tower, the cable spool and the
+toolbox. It stops at 18 px, a server rack or a floor scrubber, because from
+there up a prop is big enough to walk around and watching something walk around
+it is worth having.
+
+This is the smaller half of the fix and not a substitute for the one above: it
+removes the cases that were never interesting, and `_steer` handles the desk.
+
 ## The types
 
 They deliberately threaten in different ways - damage, drain, and denial - so a

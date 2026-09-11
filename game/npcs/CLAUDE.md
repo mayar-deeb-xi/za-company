@@ -157,8 +157,8 @@ measure of whether this stayed small.
 - **The conversation tells him.** The director calls `set_talking()` on both
   edges of a talk, so the falling edge is "he has finished saying it" - no new
   signal, no beat key that spawns a pickup, and nothing in the dialogue system
-  learns that hearts exist. The last word of `after_the_fight.gd` is DESIGN.md's
-  one line for him, "Eat.", and the hearts land on it.
+  learns that hearts exist. The last word of every one of his conversations is
+  DESIGN.md's one line for him, "Eat.", and the hearts land on it.
 - **One heart per head**, counted by `game/heads.gd` - the same function a
   floor's second beat scales its arrivals by, read in the other direction. A
   party of four meeting four times the bodies and sharing one heart is the same
@@ -225,15 +225,22 @@ that starts itself takes the wheel off a player who has pressed nothing yet.
 
 - **All three are now placed and all three talk.** HR stands in the lobby
   (`tools/biomes/lobby.gd`) with `hr_lady/welcome.gd`, Ivan arrives on six
-  floors with `ivan/after_the_fight.gd`, and Dominique arrives on the three
+  floors with a conversation per floor (`ivan/after_<floor>.gd`), and Dominique
+  arrives on the three
   under a boss with one file of lines each
   (`dominique/before_<boss>.gd`) - the signpost the plan asked for, built as a
   beat rather than a placement so the warning lands while the fight is still
   ahead. Placement is biome data like everything else a room is dressed with -
   see tools/CLAUDE.md.
-- **Ivan says the same three lines on all six floors.** `conversation` is
-  placement, so a floor that has earned its own greeting is one more file, and
-  the finale is the one most obviously owed one.
+- **Ivan now says a different three on each of the six**, which is what
+  `conversation` being placement was always for: six files
+  (`ivan/after_<floor>.gd`) and no code. He used to say one set everywhere, and
+  the reason that had to go is in `after_call_center.gd`'s header - a man who
+  arrives after a fight and says something that fits no fight in particular is a
+  vending machine with a voice, and by the fourth floor the player has heard it
+  three times and reads none of it. What holds the six together is a routine
+  rather than a script: he talks about the room he just walked into, he knows
+  everybody in it by what they order, and the last word is always "Eat.".
 - **A conversation cannot be remembered.** HR will induct you again every time
   you walk back into the lobby, because rooms keep no state. That is the same
   decision as a respawned pickup, and it gets fixed when saves do.

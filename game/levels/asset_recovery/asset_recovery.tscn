@@ -106,9 +106,11 @@ rotation = -0.09
 
 [node name="Cooler1" type="StaticBody2D" parent="Props" unique_id=717416476 instance=ExtResource("10_4ngq2")]
 position = Vector2(452, 48)
+collision_layer = 2
 
 [node name="DeadPlant1" type="StaticBody2D" parent="Props" unique_id=1027550309 instance=ExtResource("11_6d1y5")]
 position = Vector2(492, 96)
+collision_layer = 2
 
 [node name="CrtStack1" type="StaticBody2D" parent="Props" unique_id=1937511831 instance=ExtResource("12_6ws6a")]
 position = Vector2(44, 128)
@@ -118,24 +120,30 @@ position = Vector2(44, 176)
 
 [node name="PcTower1" type="StaticBody2D" parent="Props" unique_id=671191708 instance=ExtResource("13_wd670")]
 position = Vector2(44, 208)
+collision_layer = 2
 
 [node name="CableSpool1" type="StaticBody2D" parent="Props" unique_id=1030670812 instance=ExtResource("14_ineg6")]
 position = Vector2(492, 130)
+collision_layer = 2
 
 [node name="ScrapPile3" type="StaticBody2D" parent="Props" unique_id=587462301 instance=ExtResource("7_1xl7j")]
 position = Vector2(492, 178)
 
 [node name="Toolbox1" type="StaticBody2D" parent="Props" unique_id=863856127 instance=ExtResource("15_dijs4")]
 position = Vector2(490, 212)
+collision_layer = 2
 
 [node name="Toolbox2" type="StaticBody2D" parent="Props" unique_id=863856128 instance=ExtResource("15_dijs4")]
 position = Vector2(196, 96)
+collision_layer = 2
 
 [node name="PcTower2" type="StaticBody2D" parent="Props" unique_id=671191709 instance=ExtResource("13_wd670")]
 position = Vector2(330, 96)
+collision_layer = 2
 
 [node name="Toolbox3" type="StaticBody2D" parent="Props" unique_id=863856129 instance=ExtResource("15_dijs4")]
 position = Vector2(452, 108)
+collision_layer = 2
 
 [node name="ScrapPile4" type="StaticBody2D" parent="Props" unique_id=587462302 instance=ExtResource("7_1xl7j")]
 position = Vector2(76, 108)
@@ -148,9 +156,11 @@ position = Vector2(392, 128)
 
 [node name="PcTower3" type="StaticBody2D" parent="Props" unique_id=671191710 instance=ExtResource("13_wd670")]
 position = Vector2(176, 188)
+collision_layer = 2
 
 [node name="CableSpool2" type="StaticBody2D" parent="Props" unique_id=1030670813 instance=ExtResource("14_ineg6")]
 position = Vector2(400, 190)
+collision_layer = 2
 
 [node name="Debris1" type="Node2D" parent="Props" unique_id=1602333553 instance=ExtResource("16_ua1ju")]
 position = Vector2(250, 140)
@@ -178,27 +188,32 @@ position = Vector2(72, 268)
 
 [node name="Chair1" type="StaticBody2D" parent="Props" unique_id=1379512927 instance=ExtResource("18_somc0")]
 position = Vector2(72, 282)
+collision_layer = 2
 
 [node name="Desk2" type="StaticBody2D" parent="Props" unique_id=1604707424 instance=ExtResource("17_s5pbk")]
 position = Vector2(196, 268)
 
 [node name="Chair2" type="StaticBody2D" parent="Props" unique_id=1379512928 instance=ExtResource("18_somc0")]
 position = Vector2(196, 282)
+collision_layer = 2
 
 [node name="Desk3" type="StaticBody2D" parent="Props" unique_id=1604707425 instance=ExtResource("17_s5pbk")]
 position = Vector2(348, 268)
 
 [node name="Chair3" type="StaticBody2D" parent="Props" unique_id=1379512929 instance=ExtResource("18_somc0")]
 position = Vector2(348, 282)
+collision_layer = 2
 
 [node name="Toolbox4" type="StaticBody2D" parent="Props" unique_id=863856130 instance=ExtResource("15_dijs4")]
 position = Vector2(160, 236)
+collision_layer = 2
 
 [node name="CrtStack3" type="StaticBody2D" parent="Props" unique_id=1937511833 instance=ExtResource("12_6ws6a")]
 position = Vector2(232, 240)
 
 [node name="CableSpool3" type="StaticBody2D" parent="Props" unique_id=1030670814 instance=ExtResource("14_ineg6")]
 position = Vector2(352, 236)
+collision_layer = 2
 
 [node name="Printer2" type="StaticBody2D" parent="Props" unique_id=1536407933 instance=ExtResource("8_3q6te")]
 position = Vector2(470, 272)
@@ -259,4 +274,4 @@ waves = [{
 [node name="Relief" type="Node2D" parent="." unique_id=403622360]
 script = ExtResource("26_1apj3")
 at = Vector2(80, 180)
-say = "res://game/npcs/ivan/after_the_fight.gd"
+say = "res://game/npcs/ivan/after_asset_recovery.gd"

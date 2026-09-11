@@ -25,6 +25,17 @@ extends RefCounted
 ## `node`, because "THE MARBLE HALL" is not a transformation of "MarbleHall"
 ## that any rule gets right for every room ("HELLFIRE" takes no article).
 ##
+## `music` is a track this floor plays, and a floor without the key plays
+## Music.DEFAULT like the other ten. It is written into the level scene as an
+## export beside `title` and read by game.gd, which is what makes it a fact
+## about the ROOM rather than about anybody standing in it: a boss's theme
+## lives on the boss, starts when his bar goes up and leaves when he concedes,
+## and could therefore never cover the floor below his. The last two floors
+## share one file for exactly that reason - the executive floor and the
+## penthouse both name it, so the music crosses the door between them without
+## restarting (Music.play is idempotent on the path) and the building plays one
+## unbroken piece from the lift doors to the end of the game.
+##
 ## `enemies` is what build_levels.gd dresses a fresh level with: a type (a
 ## folder under game/enemies/) and a position in level pixels. Composition is
 ## most of what makes one room feel unlike the next. Positions are chosen so no
@@ -150,6 +161,16 @@ extends RefCounted
 ##            and is the only per-run number that is not geometry. It obeys the
 ##            dolly's rule too: no run may reach x 246-300. The call floor is
 ##            the first and so far only one that is wired.
+##   scrubbers [{at, within, speed, damage, push, turn_seconds}] - the THIRD
+##            moving hazard, and the only one with no route: a floor scrubber
+##            that picks a heading, runs until the room stops it, and picks
+##            another. It is a solid BODY rather than a trigger (being in the
+##            way is half of what it is), it takes the player's POSITION rather
+##            than much of their health, and nothing about where it goes is
+##            authored - the furniture decides. `within` is the rectangle it may
+##            not leave, and it is how a routeless hazard keeps the same promise
+##            the other two keep by geometry: no pen may reach x 246-300. The
+##            hub is the first and so far only floor with any.
 ##   heart    true to stand a heal pickup in the room. Omitted means NO, and
 ##            that default is the rule rather than a convenience - only the
 ##            lobby hands one out, and from floor 2 up healing is Ivan's job.

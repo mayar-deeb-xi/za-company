@@ -172,60 +172,70 @@ position = Vector2(112, 104)
 
 [node name="Chair1" type="StaticBody2D" parent="Props" unique_id=1980313499 instance=ExtResource("8_wqivw")]
 position = Vector2(112, 118)
+collision_layer = 2
 
 [node name="CallDesk2" type="StaticBody2D" parent="Props" unique_id=475342200 instance=ExtResource("7_2fkqk")]
 position = Vector2(192, 104)
 
 [node name="Chair2" type="StaticBody2D" parent="Props" unique_id=1980313500 instance=ExtResource("8_wqivw")]
 position = Vector2(192, 118)
+collision_layer = 2
 
 [node name="CallDesk3" type="StaticBody2D" parent="Props" unique_id=475342201 instance=ExtResource("7_2fkqk")]
 position = Vector2(352, 104)
 
 [node name="Chair3" type="StaticBody2D" parent="Props" unique_id=1980313501 instance=ExtResource("8_wqivw")]
 position = Vector2(352, 118)
+collision_layer = 2
 
 [node name="CallDesk4" type="StaticBody2D" parent="Props" unique_id=475342202 instance=ExtResource("7_2fkqk")]
 position = Vector2(432, 104)
 
 [node name="Chair4" type="StaticBody2D" parent="Props" unique_id=1980313502 instance=ExtResource("8_wqivw")]
 position = Vector2(432, 118)
+collision_layer = 2
 
 [node name="CallDesk5" type="StaticBody2D" parent="Props" unique_id=475342203 instance=ExtResource("7_2fkqk")]
 position = Vector2(40, 184)
 
 [node name="Chair5" type="StaticBody2D" parent="Props" unique_id=1980313503 instance=ExtResource("8_wqivw")]
 position = Vector2(40, 198)
+collision_layer = 2
 
 [node name="CallDesk6" type="StaticBody2D" parent="Props" unique_id=475342204 instance=ExtResource("7_2fkqk")]
 position = Vector2(504, 184)
 
 [node name="Chair6" type="StaticBody2D" parent="Props" unique_id=1980313504 instance=ExtResource("8_wqivw")]
 position = Vector2(504, 198)
+collision_layer = 2
 
 [node name="CallDesk7" type="StaticBody2D" parent="Props" unique_id=475342205 instance=ExtResource("7_2fkqk")]
 position = Vector2(112, 264)
 
 [node name="Chair7" type="StaticBody2D" parent="Props" unique_id=1980313505 instance=ExtResource("8_wqivw")]
 position = Vector2(112, 278)
+collision_layer = 2
 
 [node name="CallDesk8" type="StaticBody2D" parent="Props" unique_id=475342206 instance=ExtResource("7_2fkqk")]
 position = Vector2(192, 264)
 
 [node name="Chair8" type="StaticBody2D" parent="Props" unique_id=1980313506 instance=ExtResource("8_wqivw")]
 position = Vector2(192, 278)
+collision_layer = 2
 
 [node name="CallDesk9" type="StaticBody2D" parent="Props" unique_id=475342207 instance=ExtResource("7_2fkqk")]
 position = Vector2(352, 264)
 
 [node name="Chair9" type="StaticBody2D" parent="Props" unique_id=1980313507 instance=ExtResource("8_wqivw")]
 position = Vector2(352, 278)
+collision_layer = 2
 
 [node name="CallDesk10" type="StaticBody2D" parent="Props" unique_id=653907079 instance=ExtResource("7_2fkqk")]
 position = Vector2(432, 264)
 
 [node name="Chair10" type="StaticBody2D" parent="Props" unique_id=925836075 instance=ExtResource("8_wqivw")]
 position = Vector2(432, 278)
+collision_layer = 2
 
 [node name="Wallboard1" type="Node2D" parent="Props" unique_id=1047734412 instance=ExtResource("9_i5ib4")]
 position = Vector2(92, 18)
@@ -238,9 +248,11 @@ position = Vector2(492, 104)
 
 [node name="Cooler1" type="StaticBody2D" parent="Props" unique_id=1216482520 instance=ExtResource("12_5ksgv")]
 position = Vector2(40, 60)
+collision_layer = 2
 
 [node name="DeadPlant1" type="StaticBody2D" parent="Props" unique_id=180545441 instance=ExtResource("13_0dj6e")]
 position = Vector2(500, 60)
+collision_layer = 2
 
 [node name="Table1" type="StaticBody2D" parent="Props" unique_id=489868860 instance=ExtResource("14_3h6tn")]
 position = Vector2(40, 264)
@@ -250,6 +262,7 @@ position = Vector2(496, 264)
 
 [node name="CableSpool1" type="StaticBody2D" parent="Props" unique_id=996797592 instance=ExtResource("16_w8scs")]
 position = Vector2(352, 224)
+collision_layer = 2
 
 [node name="Debris1" type="Node2D" parent="Props" unique_id=2101399597 instance=ExtResource("17_q6ucy")]
 position = Vector2(208, 140)
@@ -347,7 +360,7 @@ waves = [{
 [node name="Relief" type="Node2D" parent="." unique_id=244910356]
 script = ExtResource("27_yh217")
 at = Vector2(208, 168)
-say = "res://game/npcs/ivan/after_the_fight.gd"
+say = "res://game/npcs/ivan/after_call_center.gd"
 
 [node name="Briefing" type="Node2D" parent="." unique_id=911225251]
 script = ExtResource("27_yh217")

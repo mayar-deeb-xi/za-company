@@ -112,5 +112,5 @@ const BIOME := {
 	# anyway: (412, 144) is outside the ring's right edge at x 388, and clear of
 	# the weight rack above it and the debris below.
 	"relief": {"npc": "ivan", "from": "start", "at": Vector2(412, 144),
-		"say": "res://game/npcs/ivan/after_the_fight.gd"},
+		"say": "res://game/npcs/ivan/after_conflict_resolution.gd"},
 }

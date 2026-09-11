@@ -76,5 +76,5 @@ const BIOME := {
 	# the two colonnade rows, well off the walk to the north door - which has
 	# just unlocked and is the only reason anybody is still standing here.
 	"relief": {"npc": "ivan", "from": "start", "at": Vector2(180, 160),
-		"say": "res://game/npcs/ivan/after_the_fight.gd"},
+		"say": "res://game/npcs/ivan/after_ahmed_office.gd"},
 }

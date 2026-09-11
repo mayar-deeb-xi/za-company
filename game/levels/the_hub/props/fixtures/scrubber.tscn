@@ -1,0 +1,26 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://game/levels/scrubber.gd" id="1_suunj"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_kkfit"]
+_data = PackedByteArray("AAADAAUAAAABAAAAFgAAABAAAAAGAQAAUklGRv4AAABXRUJQVlA4TPIAAAAvFcADEJ/BuG0bSSPOaxo4drd/YEtm00aSpC3vA2G10fFPjiPbSJLiMI2Ji6U/XIVNkG1Tp2kc6uhx3rsxRnPNf9+yzue8gwAIAkgAAQEEJAAiAJACCARBIBABCYACAQjsu/3/Dw5r200b50dJmZmZudH+wymSChNE9F9h27aNs3f7Bv+f4JLrPe/XM7BdL+fWAV6P2+V0IFotZpPRQLHOHknReNjvtoEckgXRW4gInVZDAEh2v7VoN+vVsuLDbrNa6KDVqFVKeaC/PB0PAZUtpqZRfbnXUdlC4qyCfNnJgjVlyLyILcUce5FFCJFLIfDXxA==")
+size_override = Vector2(22, 16)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_e3t2c"]
+size = Vector2(18, 10)
+
+[node name="Scrubber" type="CharacterBody2D" unique_id=497482962]
+collision_mask = 3
+motion_mode = 1
+wall_min_slide_angle = 3.1415927
+script = ExtResource("1_suunj")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1521727765]
+position = Vector2(-11, -14)
+texture = SubResource("PortableCompressedTexture2D_kkfit")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=276502779]
+position = Vector2(0, -5)
+shape = SubResource("RectangleShape2D_e3t2c")

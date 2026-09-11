@@ -1,18 +1,27 @@
 """Ivan's voice: the recipe. What he sounds like, line by line.
 
 The mechanism is `cut.py`; this is the data, the same split every generated
-thing in this project uses. `after_the_fight.gd` holds WHAT he says and is read
-straight off disk by cut.py, so this file never repeats a line - it only says
-how each one is delivered.
+thing in this project uses. The six conversations hold WHAT he says and are
+read straight off disk by cut.py, so this file never repeats a line - it only
+says how each one is delivered.
 
-## The second conversation, and the names come from him
+## Six conversations, one mouth
 
-He is a BEATS recipe like HR rather than a LINES one like the bosses: three
-beats said once each in order, and each one carries the `voice` path the game
-loads, so the clip names below are read back OUT of that file. His are worded
-rather than numbered - `still_standing`, `chair`, `eat` - because a numbered
-name renumbers the moment a line is written into the middle of him, and a
-renumbered name is a re-performance of lines nobody touched. See cut.py.
+He used to say one set of three lines on all six floors he arrives on. He now
+says a different three on each (`after_<floor>.gd`, and after_call_center.gd
+carries the reasoning), so `BEATS` is a LIST, exactly as Dominique's is for the
+three briefings.
+
+They cut as one voice into one folder, which is the whole reason the clip names
+are namespaced by floor: nothing dedupes across files, so two floors that both
+called their last clip `eat` would cut once and the second floor would quietly
+play the first floor's read. `call_`, `ahmed_`, `gym_`, `assets_`, `exec_`,
+`khaled_` makes that impossible to do by accident - and every floor really does
+end on the same word, so it is not a hypothetical here.
+
+The names are worded rather than numbered for the reason every conversation's
+are (see cut.py): a line written into the middle of a floor's three must not
+renumber - or re-bill - the ones after it.
 
 ## Why this voice
 
@@ -24,68 +33,123 @@ costing a word - he is heard once per floor, over a room the player has just
 finished fighting in, and a line that has to be replayed to be understood is a
 line that lands after the moment it was for.
 
-## Three reads, because he only has three lines
+## Five reads across eighteen lines
 
-HR shares ten reads across twenty-three lines; there is nothing to share here.
-Each line gets its own direction, and the arc is one man relaxing: he opens
-braced for the count, corrects himself mid-sentence about the chair, and only
-by the last line is he warm - which is the line the hearts land on.
+Shared the way HR's ten are shared across twenty-three: a tag per line would be
+eighteen separate performances of one person. The arc inside a floor is the
+same three steps every time - arrive gruff, be fond about a colleague, land the
+food warm - which is what makes six floors sound like one man with a routine
+rather than six visits from six different cooks.
 
-## `eat` is frozen, and it has no export beside it
+The two exceptions are both the same floor being wrong: on the executive floor
+he is quiet and then hurried, because it is the one room he is frightened of
+being SEEN in, and the read has to carry that where the words are still about
+lunch.
 
-It is the audition take - the one performance that was actually listened to and
-picked - so KEEP pins it and no re-run may replace it. It is also the one clip
-in the game whose untouched export was not kept, because it was cut before
-there was an `ivan` recipe to write a `src/` for. `cut.py --relevel` says so
-and skips it rather than failing; the other two re-level normally. Nothing else
-here is affected, and the alternative - re-cutting it to tidy the folder - would
-throw away the only take anybody chose.
+## Nothing is frozen
+
+`KEEP` pinned the old `eat` - the audition take, and the only clip in the game
+whose untouched export was never written to `src/`. The line it was a
+performance of is gone with the file it was in, so the entry went with it. The
+audition's real outcome was VOICE_ID above, which is what actually carries
+forward; every clip here has a `src/` half and re-levels for free.
 """
 
 VOICE_ID = "XaEUesE01wKIKaa0xI0h"
 MODEL = "eleven_v3"
 
 ## Where the recordings land. `sfx/` is what the game loads, `src/` keeps the
-## untouched export beside it - the same split HR, the bosses and the music are
-## on. See the header for the one clip that has no `src/` half.
+## untouched export beside it - the same split HR, Dominique, the bosses and the
+## music are on.
 OUT = "game/npcs/ivan/sfx/voice"
 RAW = "game/npcs/ivan/src/voice"
 
-## The conversation, read for its `voice` paths and its text. Declaring BEATS
-## rather than LINES is what tells cut.py which mouth this is.
-BEATS = "game/npcs/ivan/after_the_fight.gd"
+## The six floors he arrives on, in chain order, read for their `voice` paths
+## and their text. Declaring BEATS rather than LINES is what tells cut.py which
+## mouth this is; declaring a LIST of them is what tells it there is more than
+## one floor.
+BEATS = [
+    "game/npcs/ivan/after_call_center.gd",
+    "game/npcs/ivan/after_ahmed_office.gd",
+    "game/npcs/ivan/after_conflict_resolution.gd",
+    "game/npcs/ivan/after_asset_recovery.gd",
+    "game/npcs/ivan/after_executive_floor.gd",
+    "game/npcs/ivan/after_khaled_office.gd",
+]
 
-## Levelling. Ahmed's voice sits at -19 and so do HR's: a file's own level IS
-## the mix here, there is no bus layout, so one number across every mouth in the
-## game is what keeps a quiet floor and a boss floor at the same volume.
+## Levelling. Every mouth in the game sits at -19: a file's own level IS the mix
+## here, there is no bus layout, so one number across every mouth is what keeps
+## a quiet floor and a boss floor at the same volume.
 TARGET_RMS_DB = -19.0
 PEAK_CEILING_DB = -3.0
 
-_BRACED = ("[gruff and weary, relieved but not showing it]", 0.4)
-_FUSSING = ("[brisk, catching himself mid-sentence, fussing]", 0.35)
+_GRUFF = ("[gruff and weary, relieved but not showing it]", 0.4)
+_DRY = ("[dry, fond, complaining about a colleague he likes]", 0.4)
 _WARM = ("[warm and gruff, weary, a cook who has seen too much]", 0.4)
+_LOW = ("[quiet and confiding, saying it only to you]", 0.45)
+_HUSHED = ("[hushed and hurried, glancing over his shoulder]", 0.35)
 
-## clip name -> (direction, stability). Three lines, three reads - see header.
+## clip name -> (direction, stability). Six floors, the same three steps in
+## each: arrive gruff, be fond, land the food warm - see the header for the one
+## floor that breaks it and why.
 TAGS = {
-    "still_standing": _BRACED,
-    "chair": _FUSSING,
-    "eat": _WARM,
+    "call_kitchen": _GRUFF,
+    "call_hold": _DRY,
+    "call_eat": _WARM,
+
+    "ahmed_embarrassed": _DRY,
+    "ahmed_salt": _DRY,
+    "ahmed_axe": _WARM,
+
+    "gym_ring": _DRY,
+    "gym_two_plates": _DRY,
+    "gym_hands": _WARM,
+
+    "assets_counted": _GRUFF,
+    "assets_boys": _LOW,
+    "assets_crate": _WARM,
+
+    "exec_not_staff": _LOW,
+    "exec_kitchen": _LOW,
+    "exec_quickly": _HUSHED,
+
+    "khaled_heard": _GRUFF,
+    "khaled_sixteen": _LOW,
+    "khaled_nothing_above": _WARM,
 }
 
 ## A beat written tomorrow that nobody has directed yet still cuts, in the read
-## he ends on. A missing tag is not worth a crash.
+## he ends every floor on. A missing tag is not worth a crash.
 DEFAULT_TAG = _WARM
 
 SIMILARITY = 0.75
 SPEAKER_BOOST = True
 
 ## (clip name, text) -> the take that was approved for it. Text-to-speech is not
-## deterministic, so a re-run must not re-cut a read somebody chose.
-KEEP = {
-    ("eat", "I made too much again. I always make too much. Eat."):
-        "the audition take, picked over three other voices",
-}
+## deterministic, so a re-run must not re-cut a read somebody chose. Empty until
+## somebody has actually listened - see the header.
+KEEP = {}
 
-## Transcript variants that are the transcriber, not the take. Empty: he says
-## no numbers and no names, which is what fills this table for everyone else.
-SPELLINGS = {}
+## Transcript variants that are the transcriber, not the take. `--verify` reads
+## a clip back and compares, and a check that always shows the same failures
+## stops being read at all. His are three habits: the scribe contracts where the
+## line does not, it writes a number as a digit, and it picks the American
+## spelling of a word with one pronunciation and its own transliteration of a
+## name - the same habits Dominique's table documents.
+##
+## Every one of these was listened to before it was written down. A spelling
+## entry is how a take is FORGIVEN, so it must never be how a bad one is hidden:
+## the three lines where the scribe had actually caught a wrong word - "I ran
+## the kitchen" for "I run", "leave him way he is", "find the crate" for "a
+## crate" - were re-cut rather than spelled away.
+SPELLINGS = {
+    "do not": "dont",
+    "don't": "dont",
+    "he is": "hes",
+    "he's": "hes",
+    "i have": "ive",
+    "i've": "ive",
+    "ax": "axe",             # one word, two spellings, one sound
+    "16": "sixteen",         # a number said, a digit written
+    "mustafa": "mostafa",    # scribe's transliteration against the game's
+}

@@ -74,6 +74,58 @@ class_name EnemyBase
 ## body and no arrangement, and a boss's own scripts read `sight_radius`
 ## directly for his dash, his taunt and his attack gates.
 ##
+## ## Getting round the furniture
+##
+## Steering is one line - walk at the player - and that is enough until
+## something solid is between the two. There is no pathfinding in this game and
+## deliberately still is none: `move_and_slide` slides a blocked body along
+## whatever it hit, which handles a glancing approach on its own.
+##
+## What it does NOT handle is the approach that ends square-on, and that is not
+## the rare case but the ATTRACTOR. As a body slides it comes to face the
+## player more and more directly, the sideways part of "walk at the player"
+## decays towards zero, and it parks perpendicular to the obstacle with the
+## player a few tiles beyond it - hunting, awake, and permanently unable to
+## reach anybody. One desk does it. The attack cycle is gated on
+## `touching_player`, so a body that cannot arrive never swings: a movement
+## failure reads as an enemy that does not care.
+##
+## The fix is to keep sliding past the point where sliding stops paying:
+##
+## - **`BLOCKED_SECONDS`** - having asked for a frame's worth of ground and got
+##   less than half of it for that long, something is in the way.
+## - It then commits to ONE side, regardless of where the player has got to.
+##   The commitment is the whole trick, because re-aiming every frame is
+##   precisely what parks it. Which side is the way it was already sliding.
+## - **The step ends when the way is OPEN**, which is one ray from here to the
+##   target - not on a clock. A clock was tried first and is the version that
+##   looks right and is not: the step has to be long enough to clear the widest
+##   thing in the room, which makes it far too long for a chair, and a body
+##   that walks a full second sideways past a pot plant reads worse than the
+##   bug. The ray also gets the CLUTTER rule for free, because it is cast on
+##   this body's own mask - a chair the enemy walks through is not a chair the
+##   enemy walks around. `SIDESTEP_MIN` and `SIDESTEP_MAX` are only the floor
+##   and ceiling on that: the floor so a step cannot end on the frame it began,
+##   the ceiling so one can fail.
+## - **`SIDESTEP_LIMIT`** - a step that runs to the ceiling without the way
+##   opening was the wrong side, and the next one goes the other way round.
+##   After that many it stops trying, because a heuristic that can be wrong has
+##   to be able to lose. It gives up the hunt for `GIVE_UP_SECONDS` and walks
+##   back to its post, so the worst case is a body standing on its mark rather
+##   than one grinding into a corner for the rest of the run.
+##
+## **Only a body with a POST gives up**, which is the one line deciding who
+## that last part applies to, and it falls out of what a post means rather than
+## being a list of exceptions. A boss has none - his arena is the fight, and a
+## boss who stopped hunting halfway through it would be a bug rather than a
+## recovery. A reinforcement has none either: it came through a door to find
+## the player and has nowhere to walk back to, so giving up would buy it
+## nothing but standing still somewhere arbitrary.
+##
+## The walk home is steered the same way and has to be: a body that can be
+## jammed on the way back is a body that can be parked off its mark for the
+## rest of the run, which is the one thing the leash exists to prevent.
+##
 ## ## Seams
 ##
 ## What a touch DOES is the seam between enemy types - the base deals damage on
@@ -192,6 +244,35 @@ const MUTTER_POLL := 2.0
 ## the last half pixel, which is the same reason game/npcs/npc_base.gd has one.
 const HOME_SLACK := 2.0
 
+## Getting round the furniture - see the header. How long it has to be making
+## no real ground before it accepts that something is in the way. Short, but
+## not one frame: move_and_slide gives a little back to depenetration on
+## perfectly ordinary frames, and grinding against the player is not an
+## obstacle to be walked around.
+const BLOCKED_SECONDS := 0.12
+## Where the ray is cast from and to. Every body in this game - the player, all
+## six enemies - carries its collision circle 4 px above the position it stands
+## on, and a prop's box sits directly on top of its own, so a ray along the
+## ground line grazes the bottom edge of everything it should be hitting.
+const EYE := Vector2(0, -4.0)
+## The floor and ceiling on one side-step, which normally ends on neither: the
+## ray decides. The floor stops a step ending on the frame it started, which a
+## body wedged on something that is NOT between it and the player would
+## otherwise do sixty times a second. The ceiling is a little over what it
+## takes to clear the widest prop in the catalogue from its middle - 92 px, so
+## 46 of them at 45-55 px/s - because a step that has not worked by then is not
+## going to.
+const SIDESTEP_MIN := 0.2
+const SIDESTEP_MAX := 1.5
+## How many fruitless steps before it stops trying. Three, because the search
+## alternates: one side, then the other, then the first again from wherever the
+## other two left it standing.
+const SIDESTEP_LIMIT := 3
+## And how long it then leaves the player alone. Long enough to actually get
+## home, so a give-up ends with the room back in its shape rather than with a
+## body re-acquiring halfway there and jamming on the same corner again.
+const GIVE_UP_SECONDS := 3.0
+
 const HURT_FLASH_SECONDS := 0.15
 const HURT_TINT := Color(1.0, 0.4, 0.4)
 ## Reads hotter the closer the swing is to landing, so a wind-up is legible even
@@ -239,6 +320,18 @@ var _roaming := false
 ## Seconds until the next mutter is ASKED for. See `_ready` for why the first
 ## one is random.
 var _mutter_in := 0.0
+## Getting round the furniture: how long it has been making no ground, how much
+## of the current side-step is left and which way it goes, how many have run
+## out in a row, and how long it has sworn off hunting. `_slid` is the
+## direction it last actually MOVED in, which is what picks the side -
+## deliberately not the direction it asked for, which is the one that is
+## useless here by definition.
+var _blocked := 0.0
+var _sidestep := 0.0
+var _sidestep_dir := Vector2.ZERO
+var _failed := 0
+var _gave_up := 0.0
+var _slid := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -262,6 +355,8 @@ func _physics_process(delta: float) -> void:
 		_flash = maxf(_flash - delta, 0.0)
 	if _interrupt_locked > 0.0:
 		_interrupt_locked = maxf(_interrupt_locked - delta, 0.0)
+	if _gave_up > 0.0:
+		_gave_up = maxf(_gave_up - delta, 0.0)
 	_phase_time += delta
 
 	# Taken on the first frame rather than in _ready, because a reinforcement is
@@ -288,11 +383,18 @@ func _physics_process(delta: float) -> void:
 		advancing = distance > stop_distance and phase == Phase.CHASE \
 			and _can_advance() and not _leashed()
 		if advancing:
-			velocity = direction * speed
+			var heading := _steer(player.global_position, delta)
+			# Facing where it WALKS, while it walks. The line above stands for
+			# every other frame, the rooted ones included - but a body edging
+			# round a desk that is still staring at you is moonwalking.
+			_face(heading)
+			velocity = heading * speed
 	elif phase == Phase.CHASE and _can_advance():
 		# Nothing to hunt, so back to the post - if it has one and is off it.
-		advancing = _walk_home()
+		advancing = _walk_home(delta)
+	var was := global_position
 	move_and_slide()
+	_measure(was, advancing, delta)
 
 	touching_player = false
 	for body in _touch_area.get_overlapping_bodies():
@@ -327,6 +429,11 @@ func _hunt(player: Node2D, delta: float) -> bool:
 	if player == null:
 		hunting = false
 		return false
+	# Having tried to get round whatever is in the way and failed at it, this
+	# body is not looking at the player at all for a while - see the header.
+	if _gave_up > 0.0:
+		hunting = false
+		return false
 	if global_position.distance_to(player.global_position) <= sight_radius:
 		hunting = true
 		_patience = patience_seconds
@@ -341,6 +448,110 @@ func _hunt(player: Node2D, delta: float) -> bool:
 	return hunting
 
 
+## One frame of steering: straight at the target, unless straight at the target
+## has stopped working. See the header - the commitment is the whole of it, and
+## everything here is in service of holding one side long enough to get past
+## the end of whatever is in the way.
+func _steer(target: Vector2, delta: float) -> Vector2:
+	var direction := (target - global_position).normalized()
+	if _sidestep > 0.0:
+		_sidestep -= delta
+		if _sidestep <= 0.0:
+			# Held one side for as long as it is worth holding one and the way
+			# never opened, so that was the wrong side. The next one is the
+			# other, and _around() reads `_failed` to know it.
+			_failed += 1
+			# Giving up is only for a body with somewhere to go back to, and
+			# only while hunting. The walk home falls through and keeps
+			# alternating, which is right: a body that cannot reach its own
+			# mark has no third option to take.
+			if _failed >= SIDESTEP_LIMIT and hunting and post != Vector2.INF:
+				_give_up()
+			return direction
+		if SIDESTEP_MAX - _sidestep >= SIDESTEP_MIN and not _obstructed(target):
+			# Round it. Straight on from here.
+			_sidestep = 0.0
+			_failed = 0
+			return direction
+		return _sidestep_dir
+	if _blocked < BLOCKED_SECONDS:
+		return direction
+	_blocked = 0.0
+	_sidestep = SIDESTEP_MAX
+	_sidestep_dir = _around(direction)
+	return _sidestep_dir
+
+
+## Whether anything solid stands between this body and where it is going. One
+## ray, cast on this body's OWN collision mask, which is what makes the clutter
+## layer come out right for free: a chair an enemy walks through is not a chair
+## it needs to walk around, and nobody had to say so twice.
+##
+## The player is not an obstruction, obviously - they are the target - and the
+## ray stops on them rather than passing through, so reaching them at all is
+## the answer.
+func _obstructed(target: Vector2) -> bool:
+	var space := get_world_2d().direct_space_state
+	var query := PhysicsRayQueryParameters2D.create(
+			global_position + EYE, target + EYE, collision_mask, [get_rid()])
+	var hit := space.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	var collider := hit.get("collider") as Node
+	return collider == null or not collider.is_in_group("player")
+
+
+## Which way round. The way it was already sliding, because that is the way
+## round the obstacle it had already started taking - and `_slid` is the
+## movement that actually happened rather than the one that was asked for,
+## which at the moment this is called is pointing squarely into the wall.
+##
+## A body that walked dead-on into something from a standstill has no slide to
+## read, and the dot falls to zero. Both sides are genuinely equal there - this
+## knows the obstacle is in the way and nothing whatever about its shape - so
+## it takes the same one every time and finds out. Deterministic on purpose:
+## two bodies stuck on one desk should peel off the same way rather than
+## mirroring each other, and a coin flip would make the test of this a flake.
+func _around(direction: Vector2) -> Vector2:
+	var tangent := Vector2(-direction.y, direction.x)
+	var pick := tangent if tangent.dot(_slid) >= 0.0 else -tangent
+	# A step that bought nothing is not repeated: the next one goes the other
+	# way round, and that alternation is the whole of the search.
+	return -pick if _failed % 2 == 1 else pick
+
+
+## What the last move was actually worth, measured after the fact because
+## `move_and_slide` is the only thing that knows. Two readings come out of it:
+## the direction that survived the slide, which picks the side to go round, and
+## whether the ground asked for was ground got.
+func _measure(was: Vector2, advancing: bool, delta: float) -> void:
+	var moved := was.distance_to(global_position)
+	if moved > 0.1:
+		_slid = (global_position - was) / moved
+	if not advancing:
+		_blocked = 0.0
+		return
+	# Half a frame's worth rather than any shortfall at all: depenetration
+	# takes a little back on ordinary frames, and a body that is merely walking
+	# uphill against another body is not stuck behind furniture.
+	if moved < speed * delta * 0.5:
+		_blocked += delta
+	else:
+		_blocked = 0.0
+
+
+## Stops trying. Not a state of its own - it clears the hunt and holds the
+## player out of sight for a few seconds, which drops this body into the walk
+## home it would take if the player had simply left the room.
+func _give_up() -> void:
+	_gave_up = GIVE_UP_SECONDS
+	_sidestep = 0.0
+	_blocked = 0.0
+	_failed = 0
+	hunting = false
+	_patience = 0.0
+
+
 ## Whether the leash is out of slack. An enemy this far from its post holds
 ## where it stands and keeps watching, rather than being walked across the room
 ## by a player who has worked out that being followed is free.
@@ -352,15 +563,17 @@ func _leashed() -> bool:
 ## One frame of the walk back. Returns whether it is actually walking, which is
 ## what the animation reads - so a body already home stands there rather than
 ## miming a step over the last half pixel.
-func _walk_home() -> bool:
+func _walk_home(delta: float) -> bool:
 	if post == Vector2.INF:
 		return false
-	var home := post - global_position
-	if home.length() <= HOME_SLACK:
+	if post.distance_to(global_position) <= HOME_SLACK:
 		return false
-	var direction := home.normalized()
-	_face(direction)
-	velocity = direction * speed
+	# Steered exactly like the chase, and for a sharper reason - see the
+	# header. Nothing gives up on going home: there is nowhere further back to
+	# go, and `hunting` is false down this branch, which is what says so.
+	var heading := _steer(post, delta)
+	_face(heading)
+	velocity = heading * speed
 	return true
 
 

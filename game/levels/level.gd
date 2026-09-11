@@ -16,6 +16,17 @@ class_name Level
 ## tools/biomes.gd and written in by the generator.
 @export var display_name: String = ""
 
+## The track this floor plays, empty for the building's bed (Music.DEFAULT).
+## Authored per biome and written in by the generator exactly as display_name
+## is, because a floor's music is the same kind of fact about it as its name.
+##
+## It hangs on the FLOOR rather than on a boss, which is the one thing to
+## understand here. A boss names his own theme on his scene and that still wins
+## while he is fighting (game.gd's _watch_boss), but a theme is HIS and dies
+## with the fight: the last two floors share one track across a door, and only
+## one of them has anybody standing on it to name it.
+@export_file("*.wav") var music: String = ""
+
 
 ## Third of the questions a level answers about itself, alongside bounds() and
 ## spawn_position(). Falls back to the node name so a level hand-built in the

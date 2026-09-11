@@ -158,5 +158,5 @@ const BIOME := {
 	# the power strip at (120, 152), which is still live after the last body
 	# falls.
 	"relief": {"npc": "ivan", "from": "start", "at": Vector2(80, 180),
-		"say": "res://game/npcs/ivan/after_the_fight.gd"},
+		"say": "res://game/npcs/ivan/after_asset_recovery.gd"},
 }

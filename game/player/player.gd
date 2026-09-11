@@ -52,6 +52,19 @@ const MIN_SLOW_FACTOR := 0.2
 ## blink the grace window owns, so being hurt and being slowed never look alike.
 const SLOW_TINT := Color(0.6, 0.75, 1.0)
 
+## Ceiling on a single shove, in pixels per second. Below the walking speed of
+## 90 on purpose: a push has to be something you feel and then walk out of, not
+## something that takes the character away from you. It is also the guarantee
+## that a shove can never post anybody through a wall - it is applied through
+## `move_and_collide()`, and at this speed one physics frame moves about 1.2 px,
+## nowhere near a 16 px tile.
+const MAX_SHOVE := 70.0
+## How long a shove takes to decay away, ramping linearly to nothing. The two
+## numbers together are the whole feel: half a second off a 70 ceiling is about
+## 17 px, which is a tile - far enough to read as being moved, near enough that
+## a push you are still fighting a second later never happens.
+const SHOVE_SECONDS := 0.5
+
 ## How close the player has to get to a scripted destination before it counts
 ## as arrived. Six pixels rather than one: the escort's destination MOVES (it
 ## trails whoever is being followed), and a tighter ring makes the walk stutter
@@ -94,6 +107,13 @@ var lives := MAX_LIVES
 ## icon would read the same pair.
 var slow_factor := 1.0
 var slow_seconds := 0.0
+
+## The shove the player is currently carrying, and how long is left of it.
+## Private where the slow pair is public because nothing reads this but the
+## movement below - a push has no tint and no HUD row: you find out about it by
+## ending up somewhere else.
+var _shove := Vector2.ZERO
+var _shove_seconds := 0.0
 
 ## Cutscene control. While the world has the wheel the stick and the attack
 ## button are ignored outright - not merely unread: an attack in progress is
@@ -161,6 +181,14 @@ func _physics_process(delta: float) -> void:
 	if _combo_grace > 0.0:
 		_combo_grace = maxf(_combo_grace - delta, 0.0)
 
+	# A shove decays on its own clock, up here with the other things the player
+	# is CARRYING rather than down in the movement - so it runs out at the same
+	# rate whether the player is walking out of it, swinging, or stood still.
+	if _shove_seconds > 0.0:
+		_shove_seconds = maxf(_shove_seconds - delta, 0.0)
+		_shove = _shove.move_toward(Vector2.ZERO,
+			MAX_SHOVE / SHOVE_SECONDS * delta)
+
 	# Scripted movement short-circuits everything below: no stick, no attack,
 	# no combo. The timers above still run, because a blow landed during a
 	# conversation still has its grace window to spend.
@@ -214,6 +242,23 @@ func _physics_process(delta: float) -> void:
 		_apply_animation("idle")
 
 	move_and_slide()
+
+	# The shove rides ON TOP of whatever the player was doing rather than
+	# replacing it: a stumble you can still walk against is a stumble, and one
+	# that takes the stick away for half a second is a cutscene. Applied after
+	# the ordinary move and to every branch above alike - walking, sliding
+	# through a light attack, rooted in the heavy - because being rooted is not
+	# being bolted down.
+	#
+	# It is a SEPARATE displacement and deliberately never added to `velocity`.
+	# Velocity is carried between frames and only bled off at FRICTION, so
+	# adding the push to it every frame compounds: a 70 px/s shove held for a
+	# third of a second reaches several hundred, then coasts the player across
+	# the room long after the shove itself is over. `move_and_collide` keeps the
+	# one guarantee that matters - the room's own walls stop it - without
+	# touching the state the stick owns.
+	if _shove_seconds > 0.0:
+		move_and_collide(_shove * delta)
 
 
 ## The world takes the wheel. Any swing, thrust, charge or heavy in flight is
@@ -464,6 +509,35 @@ func apply_slow(factor: float, seconds: float) -> void:
 	if slow_seconds <= 0.0 or strength < slow_factor:
 		slow_factor = strength
 	slow_seconds = maxf(slow_seconds, seconds)
+
+
+## A FOURTH thing, and the first one that does not touch health at all: being
+## moved. The hub's floor scrubbers are heavy machines that bump into people,
+## and what a bump costs is not blood, it is your position.
+##
+## It is shaped like apply_slow() rather than like take_damage(), and the shape
+## is the whole of what makes it safe to add. A shove is something the player
+## CARRIES for a moment and which expires on its own, so it sits outside the
+## grace window in both directions - it is not a blow, so a torch clip must not
+## swallow it, and being pushed must not buy immunity from the guard winding up
+## behind you. Where a scrubber also wants to hurt, it calls take_damage() too,
+## and the two meter themselves independently, which is correct: the damage is
+## a blow and the push is not.
+##
+## Like a slow, overlapping shoves REFRESH rather than compound - the strongest
+## push wins and the clock resets. Two machines catching a player between them
+## must not add up to a launch across the room, and, more to the point, must
+## never be able to post somebody through a wall: the impulse is fed through
+## `move_and_slide()` with everything else, so the room's own collision is what
+## stops it, and a velocity big enough to tunnel a 16px wall in one frame is the
+## one way that guarantee could be lost.
+func shove(direction: Vector2, force: float) -> void:
+	if health <= 0 or direction == Vector2.ZERO:
+		return
+	var push := direction.normalized() * minf(force, MAX_SHOVE)
+	if _shove_seconds <= 0.0 or push.length() > _shove.length():
+		_shove = push
+	_shove_seconds = SHOVE_SECONDS
 
 
 func _lose_health(amount: int) -> void:

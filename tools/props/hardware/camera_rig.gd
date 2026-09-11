@@ -14,6 +14,9 @@ const SIZE := Vector2i(22, 34)
 ## Only the feet block - the same base-only rule every solid prop follows, so
 ## the player passes behind the legs and Y-sorting draws the two in order.
 const BLOCKS := Vector2(14, 6)
+## Small enough to be a snag rather than cover, so the enemies walk through
+## it and the player does not - tools/props.gd's clutter().
+const CLUTTER := true
 
 
 static func paint(spec: Dictionary) -> Image:

@@ -3,7 +3,8 @@ extends "res://tests/helpers.gd"
 ## quiet room, that he walks in through the door and crosses to his spot, that
 ## the hearts land on the last word of his lines, that they heal, that there is
 ## one per HEAD, and that there is only ever one lot of them. He is voiced, so
-## it also reads his lines off disk and checks each one has a recording.
+## it also reads his lines off disk and checks each one has a recording - all
+## SIX floors' worth, since he says a different three on each of them.
 ##
 ## Boots into the empty lobby and builds the beat by hand, the way
 ## test_reinforcements.gd does and for the same reason: what is under test is
@@ -21,7 +22,18 @@ extends "res://tests/helpers.gd"
 const RELIEF := preload("res://game/levels/relief.gd")
 const IVAN := "res://game/npcs/ivan/ivan.tscn"
 const OFFICE_BOY := "res://game/enemies/office_boy/office_boy.tscn"
-const SAY := "res://game/npcs/ivan/after_the_fight.gd"
+## What he says, per floor - `conversation` is placement, so each of the six
+## names its own. This suite's own beat borrows the first one; `_baked()` is
+## what checks every floor got the right one, and `_clips()` sweeps all six.
+const SAYS := {
+	"call_center": "res://game/npcs/ivan/after_call_center.gd",
+	"ahmed_office": "res://game/npcs/ivan/after_ahmed_office.gd",
+	"conflict_resolution": "res://game/npcs/ivan/after_conflict_resolution.gd",
+	"asset_recovery": "res://game/npcs/ivan/after_asset_recovery.gd",
+	"executive_floor": "res://game/npcs/ivan/after_executive_floor.gd",
+	"khaled_office": "res://game/npcs/ivan/after_khaled_office.gd",
+}
+const SAY: String = SAYS["call_center"]
 
 ## Where this suite's beat sends him: clear of the lobby's furniture, clear of
 ## HR at (356, 226), and off the door line.
@@ -216,25 +228,60 @@ func _tick(frame: int) -> void:
 ## also need the WAVs imported, which is the one thing a fresh checkout has not
 ## done yet; that is the same miss every other sound here is allowed, and this
 ## is the one place it is not quiet about it.
+##
+## It sweeps all SIX floors, and it carries two checks the single conversation
+## never needed:
+##
+## - **No two floors may name the same clip.** All six cut into one folder
+##   (tools/voice/ivan.py) and nothing dedupes across files, so a duplicated
+##   name is cut ONCE and the second floor silently plays the first floor's
+##   read - audible only to somebody who has played both floors in one run.
+## - **No two floors may say the same thing.** That is the whole point of there
+##   being six of them, and it is the one part a copied-and-edited file gets
+##   wrong: a floor whose text was never rewritten is a man repeating himself
+##   two hours apart, which is exactly what these replaced.
 func _clips() -> void:
-	var beats: Array = (load(SAY) as GDScript) \
-		.get_script_constant_map().get("BEATS", [])
 	var silent: Array[String] = []
 	var missing: Array[String] = []
-	for beat in beats:
-		var path := String(beat.get("voice", ""))
-		if path == "":
-			silent.append(String(beat.get("text", "")).substr(0, 24))
-			continue
-		if not ResourceLoader.exists(path):
-			missing.append(path.get_file())
+	var clips := {}
+	var texts := {}
+	var shared_clips: Array[String] = []
+	var shared_texts: Array[String] = []
+	var spoken := 0
+	for floor_name in SAYS:
+		var beats: Array = (load(SAYS[floor_name]) as GDScript) 			.get_script_constant_map().get("BEATS", [])
+		_check("voice: %s has something of its own to say (%d beats)"
+			% [floor_name, beats.size()], beats.size() > 0)
+		for beat in beats:
+			spoken += 1
+			var text := String(beat.get("text", ""))
+			if texts.has(text):
+				shared_texts.append("%s = %s" % [floor_name, texts[text]])
+			texts[text] = floor_name
+			var path := String(beat.get("voice", ""))
+			if path == "":
+				silent.append(text.substr(0, 24))
+				continue
+			if clips.has(path):
+				shared_clips.append("%s = %s" % [floor_name, clips[path]])
+			clips[path] = floor_name
+			if not ResourceLoader.exists(path):
+				missing.append(path.get_file())
 	_check("voice: every line he says names a clip (%d of them%s)"
-		% [beats.size(),
+		% [spoken,
 			"" if silent.is_empty() else ", missing " + ", ".join(silent)],
-		beats.size() > 0 and silent.is_empty())
+		spoken > 0 and silent.is_empty())
 	_check("voice: and every clip is on disk (%s)"
 		% ("all there" if missing.is_empty() else ", ".join(missing)),
 		missing.is_empty())
+	_check("voice: no two floors share a clip (%s)"
+		% ("all %d distinct" % clips.size() if shared_clips.is_empty()
+			else ", ".join(shared_clips)),
+		shared_clips.is_empty())
+	_check("voice: and no two floors say the same line (%s)"
+		% ("all %d distinct" % texts.size() if shared_texts.is_empty()
+			else ", ".join(shared_texts)),
+		shared_texts.is_empty())
 
 
 ## The floors that actually carry the beat, read back off disk. Everything above
@@ -260,8 +307,12 @@ func _baked() -> void:
 			_check("relief: %s sends him to %s (%s)"
 				% [name, floors[name], node.get("at")],
 				node.get("at") == floors[name])
-			_check("relief: and gives him something to say on %s (%s)"
-				% [name, node.get("say")], String(node.get("say")) == SAY)
+			# Its OWN lines, not merely some lines: the six files are only
+			# worth having if the six floors point at six different ones, and
+			# a copied biome entry is the way that stops being true.
+			_check("relief: and gives him %s's own lines to say (%s)"
+				% [name, String(node.get("say")).get_file()],
+				String(node.get("say")) == SAYS[name])
 		# THE FURNITURE RULE, on the one spot in the game that is authored for
 		# somebody who walks to it: an NPC is a solid body, and one standing on
 		# the straight walk between the two doors is one the player has to get

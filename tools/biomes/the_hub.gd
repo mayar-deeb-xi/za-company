@@ -51,6 +51,41 @@ const BIOME := {
 	# office boys' hazard, and a row of cubicles with a charger at every seat is
 	# exactly where their work follows them upstairs.
 	"hazard": "power_strip",
+	# THE MACHINES. Two floor scrubbers left running, one per half, wandering
+	# on no authored route at all - they pick a heading, run until the room
+	# stops them, stop, decide, and go again.
+	#
+	# It is the third moving hazard in the building and deliberately the third
+	# SHAPE. The studio's dolly runs a rail and the call floor's surges run four
+	# fixed lines, so both are learned as geometry: you find out where the
+	# danger is and then you time it. A third fixed path would have been that
+	# lesson a third time. This one cannot be learned at all, and what it asks
+	# for instead is that you keep looking.
+	#
+	# This is also the only floor it belongs on, because nothing here decides
+	# its route except the furniture - and this is the room with two completely
+	# different interiors. The west machine spends its life ricocheting down
+	# cubicle rows; the east one crosses open carpet and occasionally finds its
+	# way through a 32 px office door. Same machine, two behaviours, and neither
+	# of them authored.
+	#
+	# What it takes is your POSITION, not your health: a low 6 and a real shove
+	# (game/player/CLAUDE.md's fourth way the world reaches the player). On a
+	# floor whose two drain fields sit inside the glass offices and whose power
+	# strip sits in the middle corridor, being moved three feet is worth more
+	# than the six points. It is also a solid BODY rather than a trigger, which
+	# is the other half of being an obstacle - it is in the way even when it is
+	# standing still.
+	#
+	# `within` is the fence, and it does the job the other two hazards do by
+	# being authored to stop short: the door lane (x 246-300) stays walkable
+	# because neither pen reaches it. It is also what keeps the floor's two
+	# halves two halves - a machine that could cross the middle would make the
+	# call side and the media side the same place.
+	"scrubbers": [
+		{"at": Vector2(150, 230), "within": Rect2(32, 32, 200, 240)},
+		{"at": Vector2(400, 160), "within": Rect2(312, 32, 200, 240)},
+	],
 	"props": [
 		# ---- WEST: the call floor -------------------------------------------
 		# Two rows of stations, three bays each, separated by the dividers. The

@@ -263,26 +263,32 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   VOICE carries its own terms separately from the audio: this one is
   `XaEUesE01wKIKaa0xI0h`, and it comes from the shared library rather than the
   account's own list, so its licence wants checking before the game ships.
-- Files: `game/npcs/ivan/sfx/voice/*.wav` - three clips for the three lines he
-  speaks in `game/npcs/ivan/after_the_fight.gd`, named by the beat the way HR's
-  are (`still_standing`, `chair`, `eat`) rather than numbered
+- Files: `game/npcs/ivan/sfx/voice/*.wav` - eighteen clips, three for each of
+  the six floors he arrives on, named by the beat the way HR's and Dominique's
+  are (`call_eat`, `ahmed_salt`, `gym_ring`) rather than numbered. The names are
+  namespaced by floor because all six conversations cut into one folder and
+  nothing dedupes across them - every floor ends on the same word, so two files
+  calling that clip `eat` is a mistake waiting rather than a hypothetical
 - **An English read with an Eastern-European accent**, which is the whole of the
   brief and the one thing worth auditioning rather than picking: four voices
   were cut on his last line and compared side by side before this one was
-  chosen. The pick is pinned in `tools/voice/ivan.py`'s KEEP, so no re-run can
-  quietly replace the only take anybody actually listened to.
-- That take is also the one clip in the game with no untouched export beside it
-  in `src/` - it was cut during the audition, before there was a recipe to
-  write one for. `cut.py --relevel` says so and skips it; the other two
-  re-level normally.
-- Three delivery tags for three lines: there is nothing to share across a
-  conversation this short, and the arc is one man relaxing - braced for the
-  count, fussing about the chair, warm only by the line the hearts land on.
+  chosen. What carries forward from that audition is the VOICE ID above; the
+  take itself was a performance of a line that no longer exists, since his three
+  shared lines became eighteen per-floor ones, and it went with the file it was
+  in. Every clip now has its untouched export in `src/` and re-levels for free.
+- Five delivery tags across eighteen lines, shared the way HR's ten are: the arc
+  inside a floor is the same three steps every time - arrive gruff, be fond
+  about a colleague, land the food warm - which is what makes six visits sound
+  like one man with a routine. The executive floor is the one exception, quiet
+  and then hurried, because it is the only room he is frightened of being seen
+  in.
 - Levelled to -19 dBFS on the 75th percentile of speech, the same figure as
   every other mouth in the game.
-- `cut.py --verify` is green on all three and needs no `SPELLINGS` entries: he
-  says no numbers and no names, which is what fills that table for everyone
-  else.
+- `cut.py --verify` is green on all eighteen, over a `SPELLINGS` table of three
+  transcriber habits - a contraction, a digit for a spoken number, and a
+  transliterated name. Three takes that had actually caught a WRONG word ("I ran
+  the kitchen" for "I run") were re-cut instead of being spelled away, which is
+  the line that table is not allowed to cross.
 
 ## Dominique's voice
 - Author: **generated with ElevenLabs** (text-to-speech, Eleven v3), then
@@ -320,12 +326,28 @@ Credited voluntarily; CC0 imposes no obligation to do so.
 - Author: **generated with ElevenLabs** (text-to-music)
 - License: per the ElevenLabs terms in force for the generating account -
   **not** CC0 like the art above, on the same footing as the sound effects
-- Files: `assets/music/menu_loop.wav` (the front end),
+- Files: `assets/music/finale_loop.wav` (the last two floors - the executive
+  floor and the penthouse, which share it so the music crosses the door between
+  them unbroken; dark cyberpunk / industrial darksynth, 120 BPM read as
+  half-time, which is the same grid Mostafa's sits on and therefore Silverman's
+  0.5 s wind-up on the beat rather than drifting against it),
+  `assets/music/menu_loop.wav` (the front end),
   `assets/music/level_loop.wav` (the bed under every floor without a boss on
   it - see below), `assets/music/ahmed_theme_loop.wav` (Ahmed's fight, floor 4)
   and `assets/music/mostafa_theme_loop.wav` (Mostafa's, the gym on floor 7 -
   industrial cyberpunk techno at 120 BPM, which is a beat every 30 frames and
   therefore his 0.25 s jab on the grid rather than drifting against it)
+- **The finale's numbers**, since every one of them was measured rather than
+  chosen: the export ran 60.000 s at a true 119.9975 BPM, cut back to 28 whole
+  bars at **56.0011 s** - the bar count picking which peak, and a low-band
+  sweep saying where it is (+55 samples off the nominal 56.000, r +0.86) - then
+  the usual 12 ms equal-power crossfade, then **-5.24 dB** to land on
+  `mostafa_theme_loop`'s -16.24 dBFS RMS. That last number is the one that
+  looks wrong and is not: this track plays over an ORDINARY floor as well as a
+  boss arena, so it sits above the enemies whose telegraphs are levelled at -29
+  rather than above nothing, and matching the other techno track in the game is
+  matching the one whose kick lives in the same band. Peak lands at -5.81
+  dBFS, so no limiting was needed.
 - These live in `assets/` rather than in the feature that plays them, which is
   the one place that rule bends: `menu_loop` is asked for by three front-end
   screens and belongs to none of them, and keeping the tracks in one folder

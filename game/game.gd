@@ -273,7 +273,7 @@ func _watch_boss() -> void:
 			# ordinary floor the moment he concedes - Ivan walks in on half of
 			# them - and the theme leaving is the fight ending, not the music
 			# ending.
-			node.connect(&"conceded", Callable(Music, "fade_to").bind(Music.DEFAULT))
+			node.connect(&"conceded", Callable(Music, "fade_to").bind(_bed()))
 		break
 
 	# After the loop, not inside it: a floor with no boss AND a boss floor whose
@@ -288,9 +288,24 @@ func _watch_boss() -> void:
 	# it: the music crosses the building with the player, and only a boss
 	# interrupts it.
 	if theme == "":
-		Music.fade_to(Music.DEFAULT)
+		Music.fade_to(_bed())
 	else:
 		Music.play(theme)
+
+
+## What this floor plays with no live boss over it: its own track if its biome
+## named one, and the building's bed otherwise. The fallback is here rather than
+## spelled out at each of the three places that used to say Music.DEFAULT,
+## because a floor with a track of its own has to win in all three - including
+## the one that runs when its boss gives in, where the room goes back to being
+## an ordinary floor and an ordinary floor is still THIS one.
+func _bed() -> String:
+	if _level == null:
+		return Music.DEFAULT
+	var declared: Variant = _level.get("music")
+	if declared is String and declared != "":
+		return declared
+	return Music.DEFAULT
 
 
 ## A boss shouting. Dropped rather than queued while an NPC is talking: the

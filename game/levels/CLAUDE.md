@@ -316,6 +316,66 @@ be understood.
 swept across every run, and the drop being exactly the node's own scaled
 `damage` rather than merely non-zero.
 
+## The machines - a room that wanders
+
+The hub's `scrubbers` key buys two floor scrubbers
+(`game/levels/scrubber.gd`), one per half. Each picks a heading, runs until the
+room stops it, stops, swings its scanner to wherever it has decided to go, and
+drives off again. **Nothing about where they go is authored.**
+
+That is the point, and it is the third SHAPE rather than a third hazard:
+
+| floor | what is authored | what it asks |
+|-------|------------------|--------------|
+| F2 dolly | one rail | patience - watch it, wait, go |
+| F3 surge | four lines | timing - cross between beats |
+| F5 scrubber | **nothing** | awareness - you cannot learn where it is |
+
+Two floors teaching "find out where the danger is, then time it" is one lesson
+twice, and a third fixed path would have been it a third time. It is also why
+this floor: the machine's route is decided by the FURNITURE, and the hub is the
+one room with two completely different interiors - the west machine spends its
+life ricocheting down cubicle rows, the east one crosses open carpet and
+occasionally finds its way through a 32px office door. Same machine, two
+behaviours, neither of them written down.
+
+Five things are load-bearing:
+
+- **It takes your POSITION, not your health.** A low `damage` and a real
+  `shove()`, which is the fourth way anything in this game reaches the player
+  (game/player/CLAUDE.md). On a floor whose two drain fields sit inside the
+  glass offices and whose power strip sits in the middle corridor, being moved a
+  tile is worth more than the six points. It is the first hazard in the game
+  that is not fire, sparks or heat, and the scanner is COLD for that reason: the
+  player gets a rule rather than a list - **warm burns, cold moves you.**
+- **It is a solid BODY, not a trigger.** Being in the way is the other half of
+  being an obstacle, so it is a `CharacterBody2D` and it can corner you the way
+  furniture could if furniture moved. It is the only hazard here that is not an
+  `Area2D`.
+- **It cannot pin anybody.** The failure mode of a wandering solid is a machine
+  that traps you against a wall and grinds. A bump always ends in a turn AWAY
+  from whatever was bumped - the new heading is the old one reflected off the
+  contact normal, and the player is a contact like any other - so it backs off
+  by construction rather than by a rule about players.
+- **Random, but PENNED.** `within` is the rectangle it may not leave, and it is
+  how a routeless hazard keeps the promise the other two keep by geometry: the
+  dolly and the surges are authored to stop short of x 246-300, and a wanderer
+  is fenced out of it. It is also what keeps the hub's two halves two halves.
+- **The turn is the telegraph.** A bump does not snap the heading round; the
+  machine stops, swings its scanner to the new one, and only then goes. You
+  cannot be told where a random thing will be in three seconds; you can always
+  be told where it is about to go next.
+
+It masks world AND clutter, unlike the enemies - a machine routed by the
+furniture that could drive through half of it would be a machine in a room that
+had had the chairs taken out. The reason enemies do not is `Props.clutter()`'s,
+and it does not apply here: a hunting enemy snagged on a pot plant is steered by
+arithmetic that cannot see the plant, while a machine with nowhere in particular
+to be just turns round, which is what it does at every other contact anyway.
+
+`tests/test_scrubber.gd` owns it, and every check there is a property rather
+than a position - see the root CLAUDE.md's note on why the bump is staged.
+
 ## Reinforcements - a room's second beat
 
 A floor with `reinforcements` in its biome gets one extra node,

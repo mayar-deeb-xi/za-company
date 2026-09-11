@@ -117,6 +117,19 @@ them is fair. The lane rule holds here too and pays for itself: cutting each
 aisle in two at x 246-300 is what made four runs out of two.
 game/levels/CLAUDE.md's *The wiring*.
 
+**And the hub WANDERS.** Its `scrubbers` key buys two floor scrubbers, one per
+half, and nothing about where they go is authored at all - they pick a heading,
+run until the room stops them, and pick another, so the FURNITURE is what
+decides the route. Two floors teaching "learn where the danger is, then time it"
+is one lesson twice; this one cannot be learned and asks you to keep looking
+instead. It is also the first hazard that is not fire or sparks: it takes your
+POSITION, with a low damage and a real `shove()` - the fourth way the world
+reaches the player - which is why its scanner is cold. Warm burns, cold moves
+you. Being random, it keeps the door lane clear the only way a routeless thing
+can: `within` pens each machine into its own half. And it is a solid BODY rather
+than a trigger, because being in the way is half of what an obstacle is.
+game/levels/CLAUDE.md's *The machines*.
+
 Adding a floor is a data file in `tools/biomes/` plus a `CHAIN` entry;
 **inserting** one mid-chain also stales its NEIGHBOURS' baked door targets -
 rebuild all three: `build_levels.gd -- <before> <new> <after>`. The full
@@ -131,13 +144,18 @@ truth; adding a character is one sheet row plus one roster entry, then
 build_characters.gd. Enemies deliberately do NOT share a sheet - each owns its
 own, seeded once from a frozen body copy (see game/enemies/CLAUDE.md).
 
-The player owns its health and its lives (`MAX_LIVES` 3). **Three ways the
+The player owns its health and its lives (`MAX_LIVES` 3). **Four ways the
 world reaches it, and the splits are the thing to get right**: a *blow*
 (`take_damage()`) is metered by the grace window and opens one - that window is
 per-difficulty and is secretly the CROWD dial; a *drain* (`drain()`) knows its
 own rate and sits outside the window in both directions - never blocked by one,
 never opens one; a *status* (`apply_slow()`) is something the player carries
-that expires on its own, refreshing rather than compounding. Everything reaches
+that expires on its own, refreshing rather than compounding; and a *shove*
+(`shove()`) is the fourth, shaped like a status rather than like a blow - the
+hub's machines take your POSITION rather than your health, and the push is
+carried, decays on its own, and refreshes rather than stacking. It is
+deliberately never added to `velocity`, which is carried between frames and
+would compound it into a launch. Everything reaches
 the player by the `player` group + `has_method`, never by type. Full rationale,
 the HUD, the combo and the heavy: game/player/CLAUDE.md.
 
@@ -203,6 +221,20 @@ leave, and a room is an ARRANGEMENT. A boss opts out of all of it
 POST only (`unleash()` - it is the one enemy with no authored position, so it
 still gives up, it just has no mark to be held near or to return to). Full rationale:
 game/enemies/CLAUDE.md's The leash.
+
+**An enemy gets round the furniture, and there is still no pathfinding.**
+Steering is *walk at the player*; what that cannot do is the thing it creates -
+a body sliding along a desk turns to face the player ever more squarely until
+the sideways part of the walk is gone, and it parks flat against the desk
+forever. It presented as an enemy that would not attack, because the attack
+cycle starts on contact. `_steer` commits to ONE side when it stops making
+ground and holds it until a ray says the way is open, and after three fruitless
+tries it gives up and walks home - only a body with a POST does that, which is
+what keeps a boss and a reinforcement out of it without a list. The other half
+is the collision layer: a prop whose box is 16 px or narrower is CLUTTER, solid
+to the player and thin air to everything hunting them, because a box that small
+was never cover and a snag costs the two sides very different amounts.
+game/enemies/CLAUDE.md's *Getting round the furniture*.
 
 **Enemy HP (24 / 17 / 36) are exact breakpoints on the player's combo** -
 "dies in exactly N hits" - and `HEAVY_POWER` equals a guard's health by design.
@@ -457,11 +489,29 @@ a line in either of them. Six floors have him: call_center, ahmed_office,
 conflict_resolution, asset_recovery, executive_floor and khaled_office - the
 floor before the first boss, and then after every big fight to the roof.
 Everything else about him is npc_base, and `ivan.gd` is the only NPC script in
-the folder. **He is VOICED too** - three clips out of the same `tools/voice/`,
-in English with an Eastern-European accent, which is the only direction his
-lines needed: he is the one man in the building who is glad to see you, and he
-is heard over a room the player has just finished fighting in, so an accent
-that ever costs a word would cost the moment it was written for.
+the folder.
+
+**He says a different thing on every one of those six floors**, and that cost
+six files and no code: `conversation` is placement, so each floor's biome names
+its own (`game/npcs/ivan/after_<floor>.gd`). One shared set of lines was the
+first version and it was wrong in a way only repetition shows - a man who walks
+in after a fight and says something that fits no fight in particular reads as a
+vending machine with a voice, and a player who has heard it three times has
+stopped reading the box he cannot skip. What keeps six files one character is a
+ROUTINE rather than a script: he talks about the room he has just walked into,
+he knows everybody in it by what they order - Ahmed complains about his soup,
+the office boys fix his ovens - and the last word is "Eat." every time, because
+that is the word ivan.gd's gift lands on. The rest, including why the finale
+names nobody, is `after_call_center.gd`'s header.
+
+**He is VOICED too** - eighteen clips out of the same `tools/voice/`, three per
+floor, in English with an Eastern-European accent, which is the only direction
+his lines needed: he is the one man in the building who is glad to see you, and
+he is heard over a room the player has just finished fighting in, so an accent
+that ever costs a word would cost the moment it was written for. His clip names
+are namespaced by floor (`call_eat`, `ahmed_axe`) because all six conversations
+cut into one folder and nothing dedupes across them - and every floor really
+does end on the same word.
 
 **Dominique is the FOURTH beat, and the only one that hands over information.**
 A floor with `briefing` in its biome walks them in once the room is clear to say
@@ -701,7 +751,22 @@ work before it could loop keeps its untouched export beside it in
 `assets/music/src/`, on the enemies' and bosses' exact terms: `src/` is the
 hand-owned original, the file above it is what the game plays.
 
-**A generated loop does not loop**, and it fails in two different ways. The
+**The last two floors are the one exception to all of that, and it is a
+FLOOR's track rather than a boss's.** A biome may carry a `music` key, which
+the generator writes into the level scene beside its title and game.gd reads
+where it used to say `Music.DEFAULT`; the executive floor and the penthouse
+both name `finale_loop.wav`, so the finale comes up as the lift doors open on
+floor 11 and is still playing through the last fight. It had to hang on the
+floor and not on Silverman for the reason a theme is HIS: a boss's track starts
+where his bar goes up and leaves where it clears, so it can never cover the
+floor below him, and one on him here would interrupt this twice in the last
+four minutes of the game. He therefore declares no `music` at all - the one
+boss in the building who doesn't - and `tests/test_music.gd` checks that
+absence, because nothing else would notice a line being added to his scene.
+Crossing the door costs nothing because `fade_to` is idempotent on the path,
+which is the same trick the bed already relied on, one level up.
+
+**A generated loop does not loop**, and it fails in THREE different ways. The
 first is the seam: an ElevenLabs export ends mid-waveform, so the last sample
 steps straight to the first and clicks once per pass - on `menu_loop.wav` that
 step was 22376 of 32768, and every 30 seconds. The fix is a 12 ms equal-power
@@ -827,7 +892,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Fifteen suites,
+  They drive the real game with synthesized input and exit 0/1. Sixteen suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -878,7 +943,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     spot, that a late arrival can still be talked to (game.gd wires NPCs as
     they arrive, which is the failure that would be silent on six floors),
     that the hearts land on the last word and heal, one per head, once. Builds
-    the beat by hand in the empty lobby, then checks the six floors off disk.
+    the beat by hand in the empty lobby, then checks the six floors off disk -
+    that each carries the beat, sends him to its own spot, and gives him its OWN
+    conversation. It also sweeps all six of those: every line names a clip,
+    every clip is on disk, no two floors share a clip (they cut into one folder,
+    so a collision silently plays another floor's read) and no two floors say
+    the same line, which is the whole reason there are six files.
   - `test_dominique.gd` - the fourth beat, the one that hands over information
     rather than a heart: that they wait for a fight and not merely for a quiet
     room, that they come down the NORTH door while Ivan comes up the south one,
@@ -937,6 +1007,17 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     dressing still carries the clock. It also guards the one invariant a
     moving hazard could break without ever being placed: the rail's span
     against the door lane.
+  - `test_scrubber.gd` - floor 5's wandering machines, and the shove they
+    arrived with. Every check is a PROPERTY rather than a position, because
+    there is no authored route to compare against: neither machine left its pen
+    in 420 sampled frames, neither was ever on the door lane, both covered
+    ground rather than wedging in a corner, and a staged bump costs health and
+    position together. Then the push on its own terms - it moves you, it wears
+    off, and three at once move you no further than one. The bump is STAGED (a
+    machine placed beside the player and aimed) rather than waited for: standing
+    about hoping to be found is a check that passes on a seed, and starting the
+    machine far away makes the contact frame depend on the travel, which is what
+    made the first version flaky.
   - `test_surge.gd` - floor 3's wiring: that a charging line warns without
     hurting, that the head then crosses whoever stood on it, that the drop is
     exactly the node's own scaled damage rather than merely non-zero (one pass
@@ -945,6 +1026,15 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     check is the lane swept across all four runs - a surge is the second thing
     that could threaten x 246-300 without being placed in it, and unlike the
     dolly there are four.
+  - `test_steering.gd` - getting round the furniture: that a guard with two
+    desks between it and the player arrives anyway and swings, that it got
+    there by going AROUND rather than by some accident of the geometry, that a
+    body with no way round stops trying and walks home instead of grinding,
+    that an enemy with nothing in its way still walks a dead straight line, and
+    that a chair is something it walks through. Its own suite because it needs
+    a room arranged WRONG - every floor in the game is dressed so the fight
+    works, so none of them can ask this - and it builds the bad case by hand in
+    the empty lobby, the way test_reinforcements.gd builds its beat.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

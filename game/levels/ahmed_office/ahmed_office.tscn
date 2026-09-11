@@ -70,6 +70,7 @@ position = Vector2(472, 224)
 position = Vector2(272, 140)
 motion_mode = 1
 script = ExtResource("5_2t8x7")
+music = "res://assets/music/ahmed_theme_loop.wav"
 max_health = 96
 contact_damage = 16
 speed = 40.0
@@ -125,4 +126,4 @@ waves = [{
 [node name="Relief" type="Node2D" parent="." unique_id=129785744]
 script = ExtResource("12_rgrus")
 at = Vector2(180, 160)
-say = "res://game/npcs/ivan/after_the_fight.gd"
+say = "res://game/npcs/ivan/after_ahmed_office.gd"

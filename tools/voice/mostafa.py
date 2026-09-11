@@ -5,16 +5,16 @@ thing in this project uses. `game/bosses/mostafa/taunts.gd` holds WHAT he says
 and is read straight off disk by cut.py, so this file never repeats a line - it
 only says how each cue is delivered.
 
-## A different voice, and a different register, because he is not his brother
+## A different voice, and a different register, because he is not Ahmed
 
 Ahmed is Jack, British, and he ROARS: seven of his nine cues are tagged
-furious or shouting. Mostafa is Edward - British too, because they are
-brothers, but dark and low - and the tags below run the other way. He is
+furious or shouting. Mostafa is Edward - British too, because the two of them
+are family, but dark and low - and the tags below run the other way. He is
 CONFLICT RESOLUTION, and he talks like it: calm, measured, procedural, booking
 the room. Seven of his nine cues are quiet.
 
-That inversion is the point. Two brothers tagged the same way would be one
-boss fought twice, and the fights are already different shapes - Ahmed is a
+That inversion is the point. Two men of one family tagged the same way would
+be one boss fought twice, and the fights are already different shapes - Ahmed is a
 menu of attacks chosen by range, Mostafa is a rhythm.
 
 ## The rage is the one explosion, and it has to be
@@ -44,7 +44,7 @@ LINES = "game/bosses/mostafa/taunts.gd"
 
 ## Ahmed's exact numbers. The two bosses are never heard together, but they are
 ## heard four floors apart by the same person at the same system volume, and a
-## brother who is 4 dB louder is a mixing error rather than a character.
+## relative who is 4 dB louder is a mixing error rather than a character.
 TARGET_RMS_DB = -19.0
 PEAK_CEILING_DB = -3.0
 

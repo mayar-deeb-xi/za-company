@@ -11,6 +11,9 @@ const WATER_DARK := Color("2f7fa8")
 
 const SIZE := Vector2i(16, 22)
 const BLOCKS := Vector2(12, 6)
+## Small enough to be a snag rather than cover, so the enemies walk through
+## it and the player does not - tools/props.gd's clutter().
+const CLUTTER := true
 
 
 static func paint(spec: Dictionary) -> Image:

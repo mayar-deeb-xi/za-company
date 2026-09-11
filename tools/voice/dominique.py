@@ -75,7 +75,7 @@ _HARD = ("[hard and direct - the one thing that matters]", 0.35)
 ## each: open brisk, state the fight flat, land the tell hard.
 TAGS = {
     "ahmed_listen": _BRISK,
-    "ahmed_family": _DRY,
+    "ahmed_axe": _DRY,
     "ahmed_slam": _FLAT,
     "ahmed_fire": _HARD,
 

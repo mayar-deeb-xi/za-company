@@ -36,6 +36,11 @@ extends SceneTree
 ## is lost on the next run. Run it to reset a level or to add a new one to
 ## CHAIN, and prefer moving positions into biomes.gd over nudging them here.
 
+## Where the small furniture goes. Bit 2, matching "clutter" in the project's
+## 2D physics layer names - see tools/setup_project.gd, and Props.clutter() for
+## what it is for.
+const CLUTTER_LAYER := 2
+
 const Biomes := preload("res://tools/biomes.gd")
 const Props := preload("res://tools/props.gd")
 const StableIds := preload("res://tools/stable_ids.gd")
@@ -133,6 +138,13 @@ const DOLLY_SCRIPT := "res://game/levels/dolly.gd"
 ## coming apart. So there is no scene to write and nothing to delete; the nodes
 ## are built straight into the level.
 const SURGE_SCRIPT := "res://game/levels/surge.gd"
+## The THIRD moving hazard, under `scrubbers`, and the only one with no route:
+## a floor scrubber that picks a heading, runs until the room stops it, and
+## picks another. It is a solid body rather than an area - being in the way is
+## half of what it is - so unlike the other two it is a CharacterBody2D, and
+## what keeps it off the door lane is the `within` pen rather than an authored
+## span. See game/levels/scrubber.gd.
+const SCRUBBER_SCRIPT := "res://game/levels/scrubber.gd"
 ## How dark the conduit is on the room's own ramp. A piece of the building, so
 ## it takes the building's metal - only what FIRES is fixed.
 const CONDUIT_TONE := 0.22
@@ -195,6 +207,12 @@ func _build(level: String) -> bool:
 		bad = _write_dolly_scene(props, spec) or bad
 	else:
 		_drop("%s/fixtures/dolly.tscn" % props)
+	# The wandering one. Same terms again: written where the biome asks and
+	# deleted where it does not.
+	if not spec.get("scrubbers", []).is_empty():
+		bad = _write_scrubber_scene(props, spec) or bad
+	else:
+		_drop("%s/fixtures/scrubber.tscn" % props)
 	for type in Biomes.prop_types(level):
 		bad = _write_prop_scene(props, type, spec) or bad
 	bad = _write_level_scene(level, dir, props, tileset) or bad
@@ -243,6 +261,8 @@ func _write_column_scene(dir: String, spec: Dictionary) -> bool:
 ##            the neon sign reading the floor's clock.
 ##   BURNS    adds a `Burn` Area2D at the foot carrying BURN_SCRIPT, for a thing
 ##            that hurts - the ring lights going hot during a take.
+##   CLUTTER  puts that solid body on the clutter layer instead of the world's,
+##            which the player collides with and the enemies do not.
 ##
 ## They are separate nodes because they are separate sizes: a lamp BLOCKS with
 ## its tripod and BURNS across a patch of floor several times wider, and one
@@ -275,6 +295,12 @@ func _write_prop_scene(dir: String, type: String, spec: Dictionary) -> bool:
 	sprite.owner = root
 
 	if solid:
+		# Layer 2 rather than 1 for the small stuff, which is the whole of what
+		# CLUTTER buys: the player's mask takes both, an enemy's takes only the
+		# world, so a chair is furniture to the person who can see it and thin
+		# air to the thing that cannot. Props.clutter() has the reasoning.
+		if Props.clutter(type):
+			(root as StaticBody2D).collision_layer = CLUTTER_LAYER
 		var body := CollisionShape2D.new()
 		body.name = "CollisionShape2D"
 		body.position = Vector2(0, -blocks.y / 2.0)
@@ -425,6 +451,56 @@ func _write_dolly_scene(dir: String, spec: Dictionary) -> bool:
 	return _pack(root, "%s/fixtures/dolly.tscn" % dir)
 
 
+## The level's own floor scrubber. The one hazard in the game that is a BODY
+## rather than a trigger: being in the way is half of what it does, so the
+## player walks into it and it walks into the furniture, which is also the only
+## thing deciding where it goes.
+func _write_scrubber_scene(dir: String, spec: Dictionary) -> bool:
+	var root := CharacterBody2D.new()
+	root.name = "Scrubber"
+	root.set_script(load(SCRUBBER_SCRIPT))
+	# Straight into whatever it hits, with no sliding along it: a slide would
+	# let the machine skim a wall for half a room, and what makes its route
+	# unpredictable is turning at every contact instead.
+	root.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
+	root.wall_min_slide_angle = PI
+	# World AND clutter, the same pair the player masks. Nothing about where
+	# this machine goes is authored - the furniture decides - so furniture it
+	# could drive straight through would be furniture that had been taken out of
+	# the room. It is the opposite call to the one the enemies get, and for the
+	# reason Props.clutter() gives: a hunting enemy snagged on a pot plant is
+	# steered by arithmetic that cannot see the plant, while a machine with
+	# nowhere in particular to be just turns round, which is what it does at
+	# every other contact anyway.
+	root.collision_mask = 1 | CLUTTER_LAYER
+
+	var sprite := Sprite2D.new()
+	sprite.name = "Sprite2D"
+	sprite.centered = false
+	sprite.position = Props.offset("scrubber")
+	sprite.texture = Props.texture(Props.scrubber(spec))
+	root.add_child(sprite)
+	sprite.owner = root
+
+	var shape := CollisionShape2D.new()
+	shape.name = "CollisionShape2D"
+	# Centred on the shell rather than sitting above the foot like a torch's
+	# box: this thing has no upper half to walk behind, it is all base.
+	shape.position = Vector2(0, -5)
+	# A rectangle under a round shell, like every other solid body here. A disc
+	# would be truer to the picture and worse to play against: axis-aligned
+	# contact normals are what make a bounce off a desk read as a bounce off
+	# that desk, where a circle glancing a corner turns by some angle nobody can
+	# see a reason for. The shape is Props.blocks() so the painter still owns it.
+	var disc := RectangleShape2D.new()
+	disc.size = Props.blocks("scrubber")
+	shape.shape = disc
+	root.add_child(shape)
+	shape.owner = root
+
+	return _pack(root, "%s/fixtures/scrubber.tscn" % dir)
+
+
 ## The level's own heal pickup, on the shared pickup_base.gd.
 func _write_health_scene(dir: String, spec: Dictionary) -> bool:
 	var root := Area2D.new()
@@ -458,6 +534,7 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	root.y_sort_enabled = true
 	root.set_script(load(LEVEL_SCRIPT))
 	root.set("display_name", Biomes.BIOMES[level].get("title", ""))
+	root.set("music", Biomes.BIOMES[level].get("music", ""))
 
 	var floor_layer := _layer("Floor", tileset, root)
 	var walls := _layer("Walls", tileset, root)
@@ -510,6 +587,21 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 		rig.position = dolly["from"]
 		props.add_child(rig)
 		rig.owner = root
+
+	# The machines, where the floor runs any. They carry a starting position
+	# like a placed prop and a PEN like nothing else does - `within` is what
+	# keeps the door lane walkable on a floor whose hazard has no route to
+	# inspect, and what stops the hub's two halves bleeding into each other.
+	var machines: Array = Biomes.BIOMES[level].get("scrubbers", [])
+	for i in machines.size():
+		var machine: Dictionary = machines[i]
+		var bot := _reload("%s/fixtures/scrubber.tscn" % props_dir).instantiate()
+		bot.name = "Scrubber%d" % (i + 1)
+		bot.position = machine["at"]
+		bot.set("within", machine["within"])
+		_carry(bot, machine, ["speed", "damage", "push", "turn_seconds"])
+		props.add_child(bot)
+		bot.owner = root
 
 	# The faults in the wiring, where the floor has any. One node per run, built
 	# here rather than instanced from a scene because a surge has no picture -

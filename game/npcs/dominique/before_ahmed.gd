@@ -29,9 +29,9 @@ const BEATS := [
 		"voice": "res://game/npcs/dominique/sfx/voice/ahmed_listen.wav",
 	},
 	{
-		"text": "Ahmed is family. That is the whole reason nobody has taken "
-			+ "the axe off him. Nobody has put out the axe either.",
-		"voice": "res://game/npcs/dominique/sfx/voice/ahmed_family.wav",
+		"text": "Ahmed carries an axe. Nobody in this building has taken "
+			+ "it off him, and nobody has put it out either.",
+		"voice": "res://game/npcs/dominique/sfx/voice/ahmed_axe.wav",
 	},
 	{
 		"text": "He swings wide, he swings close. Every third one he puts "

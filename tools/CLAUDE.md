@@ -49,11 +49,13 @@ type fails at generation time with "nothing in tools/props/ draws 'tabel'".
 `_brush.gd` is the shared painting kit (the primitives, the multi-user fixed
 colours, the pixel font), kept out of the catalogue by sitting at the root -
 only the shelves are scanned. `fixtures/` is the shelf `known()` refuses:
-levels place column, hazard, heart and the studio's dolly themselves, so
+levels place column, hazard, heart, the studio's dolly and the hub's floor
+scrubber themselves, so
 those can be painted but never listed as furniture. Every one of them is a
 floor's to decline - an empty `columns` layout, `"hazard": "none"`, and
-`"heart": true` or `"dolly"` left unsaid - and the generator then deletes that
-level's column.tscn, torch.tscn, health_item.tscn or dolly.tscn rather than
+`"heart": true`, `"dolly"` or `"scrubbers"` left unsaid - and the generator
+then deletes that level's column.tscn, torch.tscn, health_item.tscn,
+dolly.tscn or scrubber.tscn rather than
 leave a scene nothing points at. The gym and Khaled's office decline the lot,
 and both have an empty `fixtures/` folder to show for it.
 
