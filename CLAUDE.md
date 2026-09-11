@@ -296,11 +296,26 @@ landing, the end - plus two it does not: the frame he first sees the player,
 and the player refusing to come near him, which is the taunt. He emits `said`
 and game.gd puts it on `ui/subtitle/`, which is deliberately NOT the dialogue
 box: that one types, waits for a keypress and takes the player's hands, and in
-a fight a line that eats the attack key is a line that gets you hit. Ahmed is
-the one who talks, and he is VOICED: twenty-three clips, cut by
-`tools/voice/` with the read tagged per cue, and the subtitle holds for as long
-as the recording runs. Nothing in the game changed to make that work - a line
-always carried its clip path - see game/bosses/CLAUDE.md's The mouth.
+a fight a line that eats the attack key is a line that gets you hit. **All
+three talk, and all three are VOICED** - Ahmed twenty-three clips, Mostafa
+twenty-two, Silverman twenty - cut by `tools/voice/` with the read tagged per
+cue, and the subtitle holds for as long as the recording runs. Nothing in the
+game changed to make that work - a line always carried its clip path - see
+game/bosses/CLAUDE.md's The mouth.
+
+**Silverman says everything twice: Swedish, then the same thing in English.**
+It is one `text` with a `\n` in it, one clip and one generation - the subtitle
+draws two rows and the recording runs through both, and `enemy_lines.gd` never
+learns a second language exists. That is the point rather than a detail: a
+second field, a second clip or a second timer would have been a rewrite of a
+node three bosses and two enemies share, for one boss, and the only thing that
+changed anywhere was `cut.py` turning that `\n` into a real break on its way to
+the API. What it COSTS is length - his lines run twice as long and stand three
+rows tall - so he says fewer of them (`cue_seconds` 12 against the default 9,
+14 on both attack cues), and anything added to his file has to be short in both
+languages. He is Khaled; the bar still says SILVERMAN, and nothing in his lines
+mentions either fact, on the rule that a name passed up the stairs is the whole
+threat.
 
 **A boss makes noise the way he gets a health bar: by owning the files.**
 `game/enemies/enemy_audio.gd` is an `Audio` child holding id -> stream, and
@@ -584,6 +599,8 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
                                        from there; how it is delivered is
                                        tools/voice/<id>.py
 - `game/bosses/ahmed/sfx/voice/*.wav`
+  `game/bosses/mostafa/sfx/voice/*.wav`
+  `game/bosses/silverman/sfx/voice/*.wav`
   `game/npcs/hr_lady/sfx/voice/*.wav`
   `game/npcs/ivan/sfx/voice/*.wav`
   `game/npcs/dominique/sfx/voice/*.wav`
@@ -608,7 +625,17 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
                                        MIDDLE of an induction, and a numbered
                                        name would renumber every clip after the
                                        insert and re-cut, and re-bill, lines
-                                       nobody touched
+                                       nobody touched.
+                                       A `\n` in a line is a real break by the
+                                       time it reaches the API: Silverman's
+                                       lines are Swedish, a break, then the
+                                       same thing in English, and that is ONE
+                                       generation because v3 changes language
+                                       mid-read. `--verify` collapses
+                                       whitespace before it compares, or the
+                                       words either side of the break weld into
+                                       one and every clip he has reads back as
+                                       a DIFF on a word that was never wrong
 - sheet shaping & slicing engine    <- tools/character_art.gd (shared by both)
 - playable cast & recipes           <- game/player/characters/roster.gd
                                        (data, edited by hand)
@@ -962,7 +989,14 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     being merely hurt saying different things, the concede line jumping the
     queue, and the subtitle taking itself down. Its own suite because a taunt
     needs a boss who never reaches anybody, which is the exact opposite of the
-    fight test_bosses.gd runs.
+    fight test_bosses.gd runs. It also keeps the two checks that are about
+    talking rather than about Ahmed: that a boss whose `Lines` child is TORN
+    OFF is silent and still fights (it used to ask this of whichever boss was
+    still mute, and there is no longer one), and the sweep of Silverman's file
+    off disk - every line said twice with the halves differing, every clip
+    really on disk, no two lines sharing one, and every cue he speaks on a cue
+    something fires. An English-only line is legal everywhere else in the game,
+    so nothing but that sweep would notice him stopping.
   - `test_reinforcements.gd` - a later beat's trigger, its single-file
     arrival, the door it uses, the hold while the player stands in that door,
     that a beat fires once, and the head count. Builds the beat by hand in the

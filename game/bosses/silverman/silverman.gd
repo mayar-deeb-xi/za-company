@@ -142,6 +142,18 @@ const SHAKE_SECONDS := 0.14
 const HERALD_SECONDS := 0.9
 const HERALD_SHAKE := 6.0
 
+## What he SAYS as a phase arrives, by the phase that arrived. His alone - the
+## base fires spot/taunt/hurt/stagger/concede and one cue per attack, and none
+## of those is "the ladder just moved".
+##
+## A cue per phase rather than one `herald` cue holding both lines, which is
+## the same call `_begin_attack` makes with an attack id: which rung just
+## arrived is the ONLY information in the line, and a cue with two lines in it
+## picks between them at random and throws that away. The names are DESIGN.md's
+## own for the phases. Phase one needs none - `spot` is already the line for
+## the fight starting.
+const PHASE_CUE := {2: "meeting", 3: "review"}
+
 ## True for the whole crossing; `dash_moving` only for the three beats he is
 ## actually travelling. Both public because smear.gd reads the second one and
 ## the tests read the first - neither is told anything.
@@ -499,6 +511,10 @@ func take_damage(amount: int) -> void:
 	_glare_timer = 0.0
 	_split_timer = 0.0
 	shook.emit(HERALD_SHAKE, SHAKE_SECONDS)
+	# And the line, on the cue named after the phase that arrived. A boss with
+	# nothing to say here has no `Lines` child and this does nothing, which is
+	# the deal every other cue in the fight is on.
+	_say(PHASE_CUE.get(now, ""))
 
 
 ## Losing flight is the defeat, so the crossing stops wherever it had got to -

@@ -93,13 +93,21 @@ def lines_of(rel):
 
     Parsed entry-wise with DOTALL, because a long line is wrapped across two
     lines in that file and a line-at-a-time parse silently finds only some.
+
+    A `\\n` in a line is a real break by the time it leaves here. Silverman says
+    everything twice - Swedish, then the same thing in English - and the two
+    halves are one string with a newline between them, which is what lets the
+    subtitle draw two rows without `enemy_lines.gd` learning a second language.
+    Passed through as the two characters a backslash and an `n` actually are,
+    that break reaches the API inside the text and is read out.
     """
     src = open(os.path.join(ROOT, rel), encoding="utf-8").read()
     src = src[src.index("const LINES"):]
     cues, heads = {}, list(re.finditer(r'\n\t"(\w+)": \[', src))
     for i, h in enumerate(heads):
         end = heads[i + 1].start() if i + 1 < len(heads) else len(src)
-        cues[h.group(1)] = re.findall(r'\{"text": "(.*?)"[,}]', src[h.end():end], re.S)
+        cues[h.group(1)] = [t.replace("\\n", "\n") for t in
+                            re.findall(r'\{"text": "(.*?)"[,}]', src[h.end():end], re.S)]
     return cues
 
 
@@ -270,11 +278,15 @@ def transcribe(path):
     """What the clip actually says. Used to prove the delivery tag was acted on
     rather than read out - which is the one failure that is inaudible in a
     waveform and obvious in a fight."""
+    # utf-8 explicitly: `text=True` decodes with the machine's locale, which on
+    # Windows is cp1252, and a Swedish transcript comes back as mojibake. It
+    # compares the same either way - `same()` strips both sides down to ascii -
+    # but the printout is the half of --verify a person actually reads.
     p = subprocess.run(
         ["curl", "-s", "--max-time", "120", "-X", "POST", STT,
          "-H", "xi-api-key: " + key(), "-F", "model_id=scribe_v1",
          "-F", "file=@%s;type=audio/wav" % path],
-        capture_output=True, text=True)
+        capture_output=True, text=True, encoding="utf-8", errors="replace")
     try:
         return json.loads(p.stdout).get("text", "")
     except Exception:
@@ -301,7 +313,11 @@ def same(a, b, spellings=None):
     """
     def norm(s):
         s = re.sub(r"\[.*?\]", " ", s).lower()
-        s = " ".join(re.sub(r"[^a-z0-9' ]", "", s).split())
+        # Whitespace to spaces BEFORE the strip, or a newline is deleted rather
+        # than collapsed and the words either side of it are welded into one.
+        # Silverman's lines carry one - Swedish, break, English - so every clip
+        # he has read back as a DIFF on a word that was never wrong.
+        s = " ".join(re.sub(r"[^a-z0-9' ]", "", re.sub(r"\s+", " ", s)).split())
         for k in sorted(spellings or {}, key=len, reverse=True):
             s = re.sub(r"\b%s\b" % re.escape(k), spellings[k], s)
         return " ".join(s.split())

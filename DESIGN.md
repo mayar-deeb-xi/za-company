@@ -751,11 +751,25 @@ unlocks.
   change never land together. It is the one boss floor with no door to lock: the
   penthouse ends the chain, so there is no north wall to cut and beating him
   opens nothing.
-  **Still open: is Silverman Khaled?** The floor is still called
-  `khaled_office` and announces itself as KHALED'S OFFICE, while the man
-  standing in it is Silverman and his HUD bar says SILVERMAN. A rename, a boss
-  above him, or what Khaled turns into - the decision changes a biome entry, a
-  title and the ending, not a pixel of the art or the fight.
+  **Settled: Silverman IS Khaled, and the bar still says SILVERMAN.** There is
+  no boss above him and no rename coming. The floor announces itself as
+  KHALED'S OFFICE, his bar says SILVERMAN, and the two never meet on screen -
+  `title()` reads the scene's filename and the floor card reads the biome, so
+  neither had to learn about the other. Nothing in the game says he is Khaled;
+  it is the rule the other two already follow, that a name passed up the stairs
+  is the whole threat and the blood is never spelled out. Mostafa escalates
+  "to Khaled", the player walks into KHALED'S OFFICE, and the man waiting there
+  does not introduce himself.
+  **He talks, and he says everything twice** - Swedish, then the same thing in
+  English. Twenty lines across nine cues in `silverman/taunts.gd`, voiced by a
+  Swedish voice reading both halves in one take. He is the gracious one: he
+  compliments you for arriving, thanks you for hitting him, and there is not
+  one insult in the file. Two cues are his own, `meeting` and `review`, said as
+  he crosses into phases two and three - the phase names above, spoken. His
+  concede is "Du har jobbet. Det har du haft hela tiden. / You have the job.
+  You always did.", which is the handoff into the ending below: the job was
+  never the thing being fought over. See game/bosses/CLAUDE.md's
+  *He says everything twice*.
 
 ## Ending — two codes, two jobs
 

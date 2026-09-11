@@ -313,22 +313,124 @@ func _close() -> void:
 	# A boss with no lines is legal and silent, with no branch anywhere but
 	# `_say` - the same deal a boss with no sounds and no theme is on.
 	#
-	# Silverman holds this now. It was Mostafa until he was given a mouth, and
-	# the swap is the check working rather than the check breaking: this asks
-	# whether SILENCE still works, so it has to be asked of whoever is actually
-	# still silent. The day Silverman talks, move it again - and if nobody is
-	# left to move it to, that is the day this deletes.
+	# It used to be asked of whichever boss happened to still be mute: Mostafa
+	# until he was given a mouth, then Silverman until he was. That ran out,
+	# which the note here always said it would - all three talk now, and a
+	# promise about SILENCE cannot be kept by a boss who has lines.
+	#
+	# So it is asked the way test_player_sfx.gd asks its own version: TEAR THE
+	# CHILD OFF and swing anyway. That is the better question in any case. The
+	# old one could only ever be answered by a boss nobody had got round to
+	# writing yet, and it proved the absence was survivable by accident; this
+	# one proves it on the boss who talks most, and it cannot go stale.
 	var quiet := (load("res://game/bosses/silverman/silverman.tscn") as PackedScene).instantiate() as Node2D
+	var mouth := quiet.get_node_or_null("Lines")
+	var had_mouth := mouth != null
+	if had_mouth:
+		quiet.remove_child(mouth)
+		mouth.queue_free()
 	_level().get_node("Props").add_child(quiet)
 	var heard := [false]
 	quiet.connect("said", func(_s, _t, _x): heard[0] = true)
 	quiet.call("_say", "concede")
-	_check("barks: a boss with no lines says nothing (%s)"
-		% quiet.get_node_or_null("Lines"),
-		quiet.get_node_or_null("Lines") == null and not heard[0])
+	_check("barks: a boss whose Lines child is gone says nothing (had one: %s)"
+		% had_mouth,
+		had_mouth and quiet.get_node_or_null("Lines") == null and not heard[0])
+	# And he is not merely quiet - he is still a working boss. A missing mouth
+	# that took the fight with it would pass the check above.
+	quiet.call("take_damage", 8)
+	_check("barks: and he still takes a hit with no mouth to say so (%d)"
+		% int(quiet.get("health")),
+		int(quiet.get("health")) < int(quiet.get("max_health")))
 	quiet.queue_free()
+
+	_bilingual()
 	# The run does not end here any more: `_settled()` waits Ahmed's breath out
 	# and finishes instead.
+
+
+## Silverman says everything twice - Swedish, then the same thing in English -
+## and this is the only place anything checks that he still does.
+##
+## A sweep off disk rather than a fight, so it lives here rather than in
+## test_silverman.gd: that file walks him down three phases and every check
+## after the first depends on how much health he has left, while none of this
+## needs him standing anywhere. It is the shape test_ivan.gd's six-floor sweep
+## already has.
+##
+## The headline is the one nothing else in the game would notice. A line added
+## in English only is legal everywhere - `enemy_lines.gd` reads a string and
+## has no opinion about how many languages are in it, the clip is cut from
+## whatever is written, and the subtitle draws one row instead of two without
+## complaining. It would simply be a man who stopped doing the thing that makes
+## him him, and it would ship.
+func _bilingual() -> void:
+	var lines: Dictionary = load("res://game/bosses/silverman/taunts.gd") \
+		.get_script_constant_map().get("LINES", {})
+	_check("barks: Silverman has lines at all (%d cues)" % lines.size(),
+		not lines.is_empty())
+
+	var one_language: Array = []
+	var same_twice: Array = []
+	var missing: Array = []
+	var clips: Dictionary = {}
+	var shared: Array = []
+	var total := 0
+	for cue in lines:
+		for line in lines[cue]:
+			total += 1
+			var halves := String(line.get("text", "")).split("\n")
+			if halves.size() != 2 or halves[0].strip_edges() == "" \
+					or halves[1].strip_edges() == "":
+				one_language.append(cue)
+			elif halves[0] == halves[1]:
+				same_twice.append(cue)
+			var clip := String(line.get("voice", ""))
+			if clip == "" or not ResourceLoader.exists(clip):
+				missing.append(clip if clip != "" else "<none> on " + cue)
+			if clips.has(clip):
+				shared.append(clip)
+			clips[clip] = true
+
+	_check("barks: every one of his lines is said twice, Swedish then English (%d lines%s)"
+		% [total, "" if one_language.is_empty() else ", one language on " + str(one_language)],
+		one_language.is_empty())
+	# A halved line that is the same string twice is the failure the check
+	# above cannot see: it has two rows and says one thing.
+	_check("barks: and the two halves are not the same words twice (%s)"
+		% ("all differ" if same_twice.is_empty() else str(same_twice)),
+		same_twice.is_empty())
+	# A missing clip is legal and silent by design, which is exactly why a typo
+	# in one has to be caught here - the game's own answer is a man moving his
+	# lips. Cf. the mutterers in test_enemy_sfx.gd.
+	_check("barks: and every line names a clip that is really on disk (%s)"
+		% ("all %d" % total if missing.is_empty() else str(missing)),
+		missing.is_empty())
+	# They all cut into one folder off a derived name, so a collision would
+	# silently play another cue's read.
+	_check("barks: and no two lines share one recording (%s)"
+		% ("%d clips" % clips.size() if shared.is_empty() else str(shared)),
+		shared.is_empty())
+
+	# Every cue he has lines for is a cue something actually fires. `glare` and
+	# `split` are his attack ids, which the base says on the wind-up; `meeting`
+	# and `review` are his own, said by silverman.gd as a phase arrives. A cue
+	# nobody fires is a line nobody hears, and it reads as written work.
+	var base := ["spot", "taunt", "hurt", "stagger", "concede"]
+	var his: Array = load("res://game/bosses/silverman/silverman.gd") \
+		.get_script_constant_map().get("PHASE_CUE", {}).values()
+	var attacks := ["glare", "split"]
+	var reachable := base + his + attacks
+	var orphans := lines.keys().filter(func(c: String) -> bool: return not c in reachable)
+	_check("barks: and every cue he speaks on is one something fires (%s)"
+		% ("all %d" % lines.size() if orphans.is_empty() else str(orphans)),
+		orphans.is_empty())
+	# The other direction, and the one a new phase would break: his two phase
+	# cues have to be the two silverman.gd actually names.
+	var unsaid := his.filter(func(c: String) -> bool: return not lines.has(c))
+	_check("barks: and both phase announcements have something to announce (%s)"
+		% ("" if unsaid.is_empty() else str(unsaid)),
+		his.size() == 2 and unsaid.is_empty())
 
 
 ## His `Lines` child - what decides whether he has room to say anything.

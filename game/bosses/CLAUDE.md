@@ -315,6 +315,12 @@ is what moves. The numbers are in CREDITS.md.
 ## The mouth
 
 A boss can also TALK, and it is the third thing in this file built on the same
+shape as the bar: `enemy_lines.gd` is the mechanism, his lines are not. A scene
+gets a `Lines` child naming a `.gd` of them, `boss_base` already calls the
+cues, and game.gd hands what comes out to `ui/subtitle/`. So a boss talks by
+owning a file - the exact deal his bar, his theme and his grunts are on - and
+a boss with no `Lines` child says nothing, with no branch anywhere but `_say`.
+
 **It is in `game/enemies/` and it used to be `boss_lines.gd` here**, the same
 move `enemy_audio.gd` made and on the same rule - except that this time the
 second user needed the node completely unchanged. Two enemies mutter to
@@ -328,15 +334,15 @@ What a boss still owns is the SUBTITLE. `_say` is overridden here to emit
 boss is addressing the player, an enemy is being overheard.** An enemy's line
 deliberately never reaches the box.
 
-shape as the bar: `enemy_lines.gd` is the mechanism, his lines are not. A scene
-gets a `Lines` child naming a `.gd` of them, `boss_base` already calls the
-cues, and game.gd hands what comes out to `ui/subtitle/`. So a boss talks by
-owning a file - the exact deal his bar, his theme and his grunts are on - and
-a boss with no `Lines` child says nothing, with no branch anywhere but `_say`.
-
-Ahmed is the one who talks. `ahmed/taunts.gd` is his, beside his poses and his
-sheet, on the placement rule an NPC's own conversation already follows: a line
-is owned by the mouth it comes out of.
+**All three talk now.** `ahmed/taunts.gd`, `mostafa/taunts.gd` and
+`silverman/taunts.gd` sit beside their own poses and sheets, on the placement
+rule an NPC's own conversation already follows: a line is owned by the mouth it
+comes out of. There is no silent boss left in the building, and that cost
+test_barks.gd a check it had been handing from one boss to the next - "a boss
+with no lines says nothing" could only ever be asked of whoever had not been
+written yet. It asks the better question now: it tears the `Lines` child OFF
+Silverman, the boss who talks most, and checks he is still silent and still
+fighting. That one cannot go stale.
 
 ### The cues, and where they are fired from
 
@@ -889,9 +895,74 @@ than guessed. They also sit deliberately OFF his phase boundaries (128 and 64):
 one thing to read at a time was the whole argument for the arena being empty,
 and it applies just as much to two clocks running on the same health bar.
 
-The open question is no longer where he stands but who he is: DESIGN.md's final boss is KHALED on F10, and whether Silverman
-is a rename of him, a second boss above him or what he turns into is an open
-decision that changes a biome entry and the ending, not the art.
+**He is Khaled, and the bar still says SILVERMAN.** That was the open question
+here and it is closed: there is no boss above him and no rename coming - the
+man in KHALED'S OFFICE is Khaled, and SILVERMAN is what the fight is called.
+The two never meet on screen, because `title()` reads the scene's filename and
+the floor card reads the biome, so neither had to learn about the other. His
+own lines are written knowing who he is; nothing in them says so, on the rule
+Mostafa's file already set (see What he says).
+
+### He says everything twice
+
+Swedish first, then the same thing in English, and it is the cheapest character
+in the building: **one `text`, one clip, and not a line of shared code.** The
+two halves live in one string with a `\n` between them, so the subtitle draws
+two rows and the recording runs straight through. `enemy_lines.gd` reads a
+string, measures it and holds it for the clip's length, and has no opinion
+about how many languages are in it.
+
+That was the whole test of whether the idea was affordable. A second language
+that wanted a second field, a second clip or a second timer would have been a
+rewrite of a node three bosses and two enemies share, for one boss. It wanted
+none of them, so it is a data file - and the one thing that did change is in
+`cut.py`, which now turns that `\n` into a real break on its way to the API
+rather than sending the two characters a backslash and an `n` actually are.
+
+Three things follow, and the first two are the cost:
+
+- **A line is twice as long, so he says fewer of them.** His clips run 2.7 to
+  9.4 s against Ahmed's 1 to 3, and the subtitle holds for as long as the clip
+  does. The answer is not shorter lines - it is his `Lines` child's
+  `cue_seconds` at 12 against the default 9, and 14 on both attack cues, so a
+  0.5 s wind-up cannot drag a seven-second speech across the fight that
+  follows it. Anything added to his file has to be short in BOTH languages.
+- **Three rows of subtitle, not two.** Speaker, Swedish, English. The block is
+  pinned 46 px off the bottom and grows UPWARD, so it clears the boss bar the
+  way it always did - the check in test_barks.gd that measures that is
+  unaffected, because what moved is the top of the block.
+- **Nothing on screen would notice him stopping.** An English-only line is
+  legal everywhere: the node reads it, the clip is cut from whatever is
+  written, the box draws one row. So test_barks.gd sweeps his file off disk -
+  every line has two halves, the halves differ, every clip resolves, no two
+  lines share one, and every cue he speaks on is a cue something fires.
+
+The voice is a Swedish one reading English rather than an English one
+attempting Swedish, which is Ivan's decision again: the Swedish half has to be
+a native's or the conceit dies on the first line, and the accent the English
+half inherits is free characterisation for a man who has all the time in the
+building. Adam Composer, picked from three auditioned on one line rather than
+from the label on it - `tools/voice/silverman.py` has the rest.
+
+### What he says
+
+Twenty lines across nine cues in `silverman/taunts.gd`, cut by
+`tools/voice/cut.py silverman`. Two things about the set are decisions:
+
+- **He is gracious, and that is what makes him the third boss.** Ahmed is
+  entitled and loud and sure this is HR's fault; Mostafa is procedural, booking
+  the room and noting your feedback; Khaled is PLEASED TO MEET YOU. He
+  compliments you on arriving, he thanks you for hitting him, and he is going
+  to kill you anyway. There is not one insult in the file and the only thing he
+  ever says about himself is how much time he has. Two men of one family
+  shouting would be one boss fought twice; three would be a shame.
+- **`meeting` and `review` are cues he added himself**, said by `silverman.gd`
+  as he crosses into phases two and three - DESIGN.md's own names for them.
+  They are two cues rather than one `herald` cue holding two lines for the
+  reason `_begin_attack` says the attack id: which rung just arrived is the
+  only information in the line, and one cue would pick between them at random
+  and throw it away. The crossing gets no cue at all - it never runs through
+  `_begin_attack`, and a man who announces his own dash is hurrying.
 
 ## Adding a boss
 
