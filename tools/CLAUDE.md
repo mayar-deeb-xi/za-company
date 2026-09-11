@@ -202,6 +202,103 @@ from disk every run. A boss floor places him through the biome's `boss` key,
 which build_levels.gd instances as `Props/Boss` and answers by giving the
 north door the lock script. The rest is game/bosses/CLAUDE.md.
 
+## Voice and sound effects - the python, and the generators that cost money
+
+`tools/voice/` and `tools/sfx/` break two rules this folder otherwise keeps,
+and both breaks are deliberate. What follows describes the voice; `tools/sfx/`
+is the same shape and the differences are at the end.
+
+It is **python rather than GDScript**, because it talks to a web API and
+Godot's headless HTTP client is a poor place to do that. Everything it writes
+is ordinary art the game loads like any other file, so no game code knows it
+exists - which is the test that keeps it honest as a tool rather than a
+dependency. The usual split still holds inside it: `cut.py` is the mechanism
+and `<who>.py` is that one mouth's recipe, the way props.gd is the facade and
+each prop file is a prop.
+
+**Two shapes of mouth, one driver.** A boss shouts on CUES - `taunts.gd` maps a
+cue to the several things he might say on it, and his clip is named after the
+cue and the pick (`taunt_1.wav`), derived, because nothing chose those names.
+An NPC has a CONVERSATION - `welcome.gd`, a flat list said once each in order -
+and its clip name is AUTHORED: read back out of the `voice` path the beat
+already carries for the game to load. The recipe says which by declaring
+`BEATS` instead of `LINES`, and `jobs()` flattens both into one list so
+everything below it is shared.
+
+That split is worth the branch. Lines get written into the MIDDLE of an
+induction, and a derived number would renumber every clip after the insert -
+which on a generator that costs money and never repeats a performance means
+re-billing and re-recording lines nobody touched.
+
+And **it is not free and not deterministic**, which every other generator here
+is. Re-running build_levels.gd costs nothing and reproduces the file; re-running
+this costs credits and produces a DIFFERENT performance of the same line. Two
+consequences:
+
+- A take somebody listened to and approved is pinned in the recipe's `KEEP`
+  and skipped. Without that, a routine re-run quietly replaces a chosen read.
+- Existing files are skipped by default; `--force` is what re-cuts them.
+
+`--verify` transcribes every clip back and compares it to the line it was cut
+from. That is not belt-and-braces: the delivery is given to the model as an
+inline tag (`[furious, roaring]`), and the failure mode is the model READING
+the tag aloud instead of acting on it - which is silent in a waveform, obvious
+in a fight, and invisible to anyone who does not listen to all twenty-three.
+Its `SPELLINGS` map exists so the check means something: a transcriber that
+writes "20" for a spoken "twenty" would otherwise flag the same two lines
+forever, and a check that always fails the same way stops being read.
+
+A spelling is a **phrase on both sides**, not a word for a word, because the
+habits that turn up do not line up one-for-one - a clock written `8:59` comes
+back as three words, and no word-for-word map can put those together. Both
+texts are normalized and then rewritten by the same table, longest rule first
+so `nine` cannot claim the tail of `fifty nine`. And the transcriber is not
+deterministic either: the same take can read clean on one pass and show a
+homophone or an unpacked contraction on the next, which is the give-away that
+the difference is in the listener rather than in the voice - transcribe it a
+second time before adding a rule for it.
+
+The audio rules themselves - 48 kHz mono, no ffmpeg, levelled on speech rather
+than on peaks - are in cut.py's own header and in CREDITS.md.
+
+### tools/sfx - the same shape, for things that are not a voice
+
+`make.py enemies` cuts the bestiary's sounds: the mechanism in `make.py`, the
+audio kit in `wav.py`, and every prompt, length and level in `enemies.py`. The
+recipe/mechanism split, the `KEEP` pins and the skip-what-exists default are
+cut.py's, deliberately - a second pipeline that behaved differently would be a
+second set of habits to remember.
+
+Four things differ, and each is the endpoint rather than a preference:
+
+- `/v1/sound-generation` returns STEREO PCM where text-to-speech returns mono,
+  so everything is summed down first. The channel count is DERIVED from the
+  length against the duration asked for rather than assumed, because a
+  pipeline that would silently go half-speed the day that changes is not worth
+  two saved lines.
+- There is no transcript, so nothing can be verified by machine the way
+  `--verify` verifies a line. `--report` prints what is on disk and how loud it
+  is, and the ears do the rest. What CAN be checked without ears is SHAPE, and
+  it is worth doing: a telegraph whose energy sits at the end, an impact that
+  arrives half a second in, a "loop" that decays to nothing. All three shipped
+  in the first batch and all three are visible in a coarse RMS envelope.
+- A voice is levelled against its SPEECH level; a sound effect has no speech in
+  it and is levelled against its whole self. That is why `wav.py` is its own
+  audio kit rather than an import from `tools/voice/` - the same reason
+  `CC0_LAYOUT` and `CAST_LAYOUT` are two constants.
+- **A loop is CHOSEN, not trimmed.** Asked for an unchanging bed the model
+  still writes a sound with a beginning and an end, and a decay crossfaded into
+  its own head pulses once per pass. So a loop is generated long and
+  `wav.steadiest` keeps the stretch whose windows vary least. Trimming asks
+  where a sound starts, which is the wrong question about something meant not
+  to.
+
+`--relevel` is the one to know: it re-trims, re-caps, re-seals and re-levels
+every played file from the untouched exports in `game/enemies/<id>/src/sfx/`,
+spends nothing and changes no performance. It is how a sound cut under an
+older leveller is carried onto a better one without paying for it twice, and
+it is why `src/` is kept at all.
+
 ## NPCs
 
 A floor's `npcs` key places the friendly faces the same way `enemies` places

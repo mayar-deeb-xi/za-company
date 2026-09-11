@@ -1,7 +1,13 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://game/enemies/enemy_base.gd" id="1_enemy"]
 [ext_resource type="SpriteFrames" path="res://game/enemies/regular/regular_frames.tres" id="2_frames"]
+[ext_resource type="Script" path="res://game/enemies/enemy_audio.gd" id="3_audio"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/regular/sfx/die.wav" id="4_die"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/regular/sfx/hit.wav" id="5_hit"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/regular/sfx/hurt.wav" id="6_hurt"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/regular/sfx/stagger.wav" id="7_stagger"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/regular/sfx/windup.wav" id="8_windup"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 5.0
@@ -29,3 +35,13 @@ monitorable = false
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Touch"]
 position = Vector2(0, -4)
 shape = SubResource("CircleShape2D_touch")
+
+[node name="Audio" type="Node2D" parent="."]
+script = ExtResource("3_audio")
+sounds = {
+"die": ExtResource("4_die"),
+"hit": ExtResource("5_hit"),
+"hurt": ExtResource("6_hurt"),
+"stagger": ExtResource("7_stagger"),
+"windup": ExtResource("8_windup")
+}

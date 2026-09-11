@@ -49,8 +49,36 @@ class_name EnemyBase
 ## `_contact_state()` is what contact looks like, and `_resting_tint()` is how
 ## the enemy reads while it works.
 ##
+## ## The noise
+##
+## Five cues, fired from the five moments the cycle above already has: `windup`
+## as the telegraph starts, `hit` when a blow actually lands, `hurt` and
+## `stagger` off the two ways a hit reads, and `die`. An enemy gets them by
+## owning an `Audio` child with the files in it and NOTHING else - the same deal
+## as the HUD bar a boss gets by standing in a group. An enemy with no `Audio`
+## child, an id it was never given, and a fresh checkout whose WAVs have not
+## been imported all land in the same null check in `_sfx` and play nothing, so
+## the fight works before anybody has imported anything.
+##
+## **The stagger REPLACES the grunt**, which is the boss's rule inherited rather
+## than re-decided (game/bosses/CLAUDE.md, The noise): the one thing the player
+## needs off that hit is that the swing died, and two sounds on one frame is the
+## fastest way to hear neither.
+##
+## **And `die` cannot be played the ordinary way.** It fires on the frame the
+## body is freed, and a player parented to a freed node is freed with it - the
+## sound would be cut before its first sample. `_sfx_detached` hands that one to
+## the enemy's parent instead. Nothing else in the game has this problem, because
+## a boss concedes rather than dying and is never freed at all.
+##
 ## Stats are @exports so a level can retune the instance it places; the numbers
 ## below are the "regular" enemy the whole system is tuned around.
+
+## The mechanism, shared with the bosses, who need it for exactly the same job:
+## a boss IS an enemy (boss_base.gd extends this file), so its sounds live one
+## level up from both of them by the placement rule in CLAUDE.md, the same way
+## this script does.
+const EnemyAudio := preload("res://game/enemies/enemy_audio.gd")
 
 @export var max_health := 24
 ## Dealt by a completed strike, not by contact. Higher than it was when merely
@@ -102,6 +130,7 @@ enum Phase { CHASE, WINDUP, RECOVER, STAGGER }
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var _touch_area: Area2D = $Touch
+@onready var _audio: EnemyAudio = get_node_or_null("Audio")
 
 var health := 0
 ## True on every frame this enemy is in contact with the player. Settled before
@@ -198,6 +227,11 @@ func _advance_phase() -> void:
 			# Reaching the player is what starts a swing, so an enemy that has
 			# closed the ground commits to something rather than idling on you.
 			if touching_player:
+				# The telegraph, said out loud. A boss never reaches this line
+				# - his override returns before `super()` on CHASE, because he
+				# picks an attack first and names the sound after it - so the
+				# two ways of announcing a wind-up do not stack.
+				_sfx("windup")
 				_enter(Phase.WINDUP)
 		Phase.WINDUP:
 			# A swing carries on into empty air - stepping back does not unwind
@@ -220,9 +254,20 @@ func _advance_phase() -> void:
 ## standing there. Stepping out of the arc during the wind-up is the other half
 ## of the counterplay, the half that costs nothing but timing.
 func _strike() -> void:
+	var landed := false
 	for body in _touch_area.get_overlapping_bodies():
 		if body.is_in_group("player"):
+			landed = true
 			_touch_strike(body)
+	# Only a blow that found somebody. A swing through empty air already said
+	# everything it had to say on the wind-up, and an impact with nothing under
+	# it teaches the player that the sound does not mean they were hit.
+	#
+	# Bosses pass through here without a word: theirs are named after the
+	# attack (`chop_hit`), so `hit` is an id no boss owns and the call is one
+	# more legal miss.
+	if landed:
+		_sfx("hit")
 
 
 ## What a completed strike does - the one thing melee enemy types differ in. The
@@ -306,11 +351,17 @@ func take_damage(amount: int) -> void:
 	# that decides how the sprite reads.
 	_flash = HURT_FLASH_SECONDS
 	if health == 0:
+		# Detached, because the next line frees the thing that would play it.
+		_sfx_detached("die")
 		queue_free()
 		return
 	if _interruptible():
 		_interrupt_locked = interrupt_cooldown
 		_enter(Phase.STAGGER)
+		# Replaces the grunt rather than layering over it - see the header.
+		_sfx("stagger")
+	else:
+		_sfx("hurt")
 
 
 ## Whether this hit cancels what the enemy is doing. Three ways it does not:
@@ -321,6 +372,38 @@ func _interruptible() -> bool:
 	return phase == Phase.WINDUP \
 		and _interrupt_locked <= 0.0 \
 		and _windup_progress() < commit_fraction
+
+
+## One sound, if this enemy has one by that name and an `Audio` child at all.
+## Every miss is legal: an enemy with no sounds yet, an id it was never given,
+## and a checkout whose WAVs have not been imported all arrive here. Bosses use
+## these four unchanged - they were written for one and moved up when the
+## second needed them, which is the placement rule rather than a favour.
+func _sfx(id: String) -> void:
+	if _audio != null:
+		_audio.play(id)
+
+
+## The same deal for a sound that keeps going - the wraith's drain - and for
+## taking one back down. Here rather than in each type so no type ever writes
+## the null check above twice.
+func _sfx_loop(id: String) -> void:
+	if _audio != null:
+		_audio.loop(id)
+
+
+func _sfx_fade(id: String, seconds: float) -> void:
+	if _audio != null:
+		_audio.fade_out(id, seconds)
+
+
+## A sound that has to outlive the thing making it. Only `die` needs this, and
+## it needs it absolutely: `queue_free()` takes the `Audio` child and every
+## player under it, so the ordinary path plays a death sound for zero frames.
+## The level is handed a copy that buries itself.
+func _sfx_detached(id: String) -> void:
+	if _audio != null:
+		_audio.play_detached(id, get_parent(), global_position)
 
 
 func _face(direction: Vector2) -> void:

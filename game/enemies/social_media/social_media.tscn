@@ -1,8 +1,12 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://game/enemies/wraith_base.gd" id="1_drain"]
 [ext_resource type="SpriteFrames" path="res://game/enemies/social_media/social_media_frames.tres" id="2_frames"]
 [ext_resource type="Script" path="res://game/enemies/drain_aura.gd" id="3_aura"]
+[ext_resource type="Script" path="res://game/enemies/enemy_audio.gd" id="4_audio"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/social_media/sfx/die.wav" id="5_die"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/social_media/sfx/drain.wav" id="6_drain"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/social_media/sfx/hurt.wav" id="7_hurt"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 5.0
@@ -39,3 +43,11 @@ monitorable = false
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Touch"]
 position = Vector2(0, -4)
 shape = SubResource("CircleShape2D_aura")
+
+[node name="Audio" type="Node2D" parent="."]
+script = ExtResource("4_audio")
+sounds = {
+"die": ExtResource("5_die"),
+"drain": ExtResource("6_drain"),
+"hurt": ExtResource("7_hurt")
+}

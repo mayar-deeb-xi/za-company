@@ -1,8 +1,14 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://game/enemies/warden_base.gd" id="1_warden"]
 [ext_resource type="SpriteFrames" path="res://game/enemies/warden/warden_frames.tres" id="2_frames"]
 [ext_resource type="Script" path="res://game/enemies/charge_ring.gd" id="3_ring"]
+[ext_resource type="Script" path="res://game/enemies/enemy_audio.gd" id="4_audio"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/warden/sfx/die.wav" id="5_die"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/warden/sfx/hit.wav" id="6_hit"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/warden/sfx/hurt.wav" id="7_hurt"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/warden/sfx/stagger.wav" id="8_stagger"]
+[ext_resource type="AudioStreamWAV" path="res://game/enemies/warden/sfx/windup.wav" id="9_windup"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 5.0
@@ -43,3 +49,13 @@ monitorable = false
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Touch"]
 position = Vector2(0, -4)
 shape = SubResource("CircleShape2D_area")
+
+[node name="Audio" type="Node2D" parent="."]
+script = ExtResource("4_audio")
+sounds = {
+"die": ExtResource("5_die"),
+"hit": ExtResource("6_hit"),
+"hurt": ExtResource("7_hurt"),
+"stagger": ExtResource("8_stagger"),
+"windup": ExtResource("9_windup")
+}

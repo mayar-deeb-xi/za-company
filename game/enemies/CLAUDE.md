@@ -260,6 +260,90 @@ room is built by mixing them rather than by adding more of the same:
   other colour tried, so the two-second warning reads on the body as clearly as
   it does on the ring.
 
+## The noise: every enemy owns its sounds, exactly as it owns its sheet
+
+The sheet rule below applied to the other sense. `enemy_audio.gd` is the
+mechanism and it is shared; the files are not, and a reskin is no more a
+recolour here than it is in the PNG. `office_boy` is the regular down to the
+last frame of its wind-up and must not sound like it: the regular swings a
+sword, the office boy THRUSTS a wrench, and a thrust that rings like a blade
+is the animation telling the truth while the audio lies. Six characters, not
+three.
+
+**The node moved up here, and that is the placement rule rather than a
+favour.** `enemy_audio.gd` was `game/bosses/boss_audio.gd` until the plain
+enemies wanted the identical node for the identical job. A boss IS an enemy -
+`boss_base.gd` extends `enemy_base.gd` - so it now sits beside the base it
+serves, and `_sfx`, `_sfx_loop` and `_sfx_fade` moved with it and are
+inherited. `wraith_base.gd` made the same journey for the same reason when it
+got a reskin. What stays in boss_base is only WHERE a boss fires them.
+
+**Five cues, fired off moments the cycle already had**: `windup` as the
+telegraph starts, `hit` when a blow actually lands, `hurt` and `stagger` off
+the two ways a hit reads, `die`. An enemy gets them by owning an `Audio` child
+with the files in it and nothing else - the HUD-bar deal. No `Audio` child, an
+id it was never given, and a fresh checkout whose WAVs are not imported all
+land in the same null check and play nothing, so the fight works before anyone
+has imported anything. `tests/test_enemy_sfx.gd` passes with the sounds
+missing.
+
+Four things are load-bearing, and three of them are the bosses' rules
+inherited rather than re-decided (game/bosses/CLAUDE.md, The noise):
+
+- **The stagger REPLACES the grunt.** The one thing the player needs off that
+  hit is that the swing died, and two sounds on one frame is the fastest way
+  to hear neither.
+- **`hit` fires only on a blow that found somebody.** A swing through empty
+  air said everything it had to say on the wind-up, and an impact with nothing
+  under it teaches the player that the sound does not mean they were hit. It
+  lives in `_strike()` for that reason and not in `_touch_strike()`, which the
+  warden overrides and which cannot see whether anyone was there.
+- **A telegraph is levelled and LENGTH-capped under the wind-up it plays
+  beneath**, 7 dB below its own impact. A warning still sounding when the blow
+  lands has stopped being a warning.
+- **`die` cannot be played the ordinary way, and this one is new.** It fires
+  on the frame the body is `queue_free`d, and every player under the node is
+  freed with it - the ordinary path starts a sound and destroys it in the same
+  frame. `_sfx_detached()` hands a copy to the enemy's PARENT, which buries
+  itself when it finishes. No boss ever hit this, because a boss concedes
+  instead of dying and is still standing in the room when you leave.
+
+**The wraith's drain is the only sound in the game that is a STATE**, and it
+is the one enemy that needs one: nothing is swung and nothing lands, so
+without it the one enemy that hurts you by standing there is also the one you
+cannot hear. `wraith_base` asks for it every frame it is feeding and fades it
+over 0.08 s when contact breaks - both calls are idempotent, so that is a
+dictionary lookup and no branch. The fade is not politeness: the clip ends
+mid-waveform because it is a seamless loop, and cutting it dead clicks.
+
+**A generated loop does not loop**, which the menu track paid for first (root
+CLAUDE.md, Music). Two separate failures live in one clip and each is
+invisible on its own: the seam, fixed by a 12 ms equal-power crossfade in
+`tools/sfx/wav.py`; and `loop_end` 0, which is NOT "to the end" - a forward
+loop ending on frame 0 wraps before it has played anything and the bus
+receives exact silence with every flag reading correct. `enemy_audio.loop()`
+seals it on the stream rather than trusting the `.import`, and
+test_enemy_sfx.gd checks both.
+
+Levels are relative and baked into the files, because there is no bus layout
+and no volume setting - a file's own level IS the mix. The enemies sit UNDER
+the bosses and that is arithmetic rather than deference: a boss floor holds
+one boss, hellfire holds four guards, two wraiths and a warden, and seven
+bodies at a boss's level is a wall rather than a fight.
+
+    boss ordinary blow   -19 RMS      the number everything else is set from
+    enemy hit            -22 RMS      3 under it, and there are six of them
+    enemy telegraph      -29 RMS      7 under its own impact, the boss's ratio
+    the drain loop       -30 RMS      continuous, so it lives near the floor
+
+The sounds are generated: `tools/sfx/make.py enemies`, with the prompts,
+durations and levels in `tools/sfx/enemies.py` - mechanism and recipe, the
+same split as `cut.py` to `ahmed.py`. Unlike the bosses' sounds, whose prompts
+went with the scratchpad script that made them, this one is in the repo.
+`--relevel` re-shapes from the untouched exports in `src/sfx/` and costs
+nothing, which is the way to carry a sound onto a better leveller without
+paying for it twice.
+
 ## Sheets: every enemy owns its own
 
 **Every enemy owns its sprite sheet**, and this is the one place enemies and the

@@ -18,7 +18,10 @@ checklist. This file says HOW things work; DESIGN.md says WHAT to build.
 - `assets/` - ONLY files shared across features (fonts, tilesets, audio), plus
   source art no feature owns yet; it moves into the feature that claims it
 - `autoload/` - global singletons registered in project.godot
-- `tools/` - editor-side generator scripts run headless; never game code
+- `tools/` - editor-side generator scripts run headless; never game code.
+  `tools/voice/` is the one corner of it that is python rather than GDScript,
+  because it talks to a web API; what it writes is ordinary art the game loads
+  like any other file
 - `addons/` - editor plugins, and there is one: `za_build`, which puts the
   `tools/` generators on the Project > Tools menu (see Workflow)
 
@@ -55,7 +58,8 @@ specific map beyond `START_LEVEL`.
 
 Its **CanvasLayer stack is now stated rather than defaulted**, because things
 below the HUD have started arriving: -1 background, 0 the world, **1 a boss's
-own screen effects**, 2 HUD, 5 transition fade, 6 level title. Anything
+own screen effects**, 2 HUD, 3 the dialogue box, **4 what a boss is
+shouting**, 5 transition fade, 6 level title. Anything
 full-screen a fight draws goes in at 1 - above the room, under the bars, since
 a flash that washes out the health bar hides the number the player is reading
 while it lands. game.gd also owns **camera shake**, applied as an offset so
@@ -166,8 +170,21 @@ generalize out of them:
   rung, so a wind-up can only ever dim him - worth knowing before designing an
   attack for a boss whose ramp runs one way.
 
+**A boss can also TALK, and it is the same deal a third time.** He carries a
+`Lines` child naming a file of them (`game/bosses/ahmed/taunts.gd`), boss_base
+fires the cues off moments the fight already has - an attack beginning, a hit
+landing, the end - plus two it does not: the frame he first sees the player,
+and the player refusing to come near him, which is the taunt. He emits `said`
+and game.gd puts it on `ui/subtitle/`, which is deliberately NOT the dialogue
+box: that one types, waits for a keypress and takes the player's hands, and in
+a fight a line that eats the attack key is a line that gets you hit. Ahmed is
+the one who talks, and he is VOICED: twenty-three clips, cut by
+`tools/voice/` with the read tagged per cue, and the subtitle holds for as long
+as the recording runs. Nothing in the game changed to make that work - a line
+always carried its clip path - see game/bosses/CLAUDE.md's The mouth.
+
 **A boss makes noise the way he gets a health bar: by owning the files.**
-`game/bosses/boss_audio.gd` is an `Audio` child holding id -> stream, and
+`game/enemies/enemy_audio.gd` is an `Audio` child holding id -> stream, and
 boss_base fires `hurt`, `stagger` and `concede` on whichever of them exist -
 Ahmed adds his burning axe and his beaten breath himself. Sound is the first
 thing in this project that is NOT generated from data, so it brings back the
@@ -199,6 +216,36 @@ x >= 420, a warden (130) x <= 116 or x >= 430.
 up**, where the building stops pretending to be an office and the people in it
 stop looking like colleagues. Types, seams, tuning and the art pipeline:
 game/enemies/CLAUDE.md.
+
+**And every enemy makes noise on the bosses' exact terms: by owning the
+files.** The `Audio` child that gives a boss his grunts is the same node -
+`game/enemies/enemy_audio.gd`, which moved here from `game/bosses/` the day a
+second feature wanted it, the placement rule doing its job for the third time
+in this folder. enemy_base fires five cues off moments the cycle already had -
+`windup`, `hit`, `hurt`, `stagger`, `die` - so an enemy gets them by having the
+WAVs and nothing else, and one that has none is silent with no branch anywhere.
+Sound is per enemy, never per archetype: a reskin is no more a recolour here
+than in its sheet, and the office boy's wrench must not ring like the guard's
+sword.
+
+Three things generalize out of it, and two are traps the bosses never hit:
+
+- **A death cannot be played the ordinary way.** `die` fires on the frame the
+  body is `queue_free`d and every player under it is freed too, so the normal
+  path starts a sound and destroys it in the same frame. It is handed to the
+  enemy's PARENT instead. No boss has this problem - he concedes rather than
+  dying and is never freed.
+- **`hit` fires only on a blow that landed.** A swing through empty air already
+  said its piece on the wind-up, and an impact over nothing teaches the player
+  that the sound does not mean they were hit.
+- **The wraith's drain is the one sound that is a STATE**, and the one enemy
+  that needs one: nothing is swung and nothing lands, so it is otherwise the
+  only threat in the game you cannot hear. It is a sealed loop, with both of
+  the two ways a loop ships broken guarded against - see Music below, and
+  game/enemies/CLAUDE.md's The noise for the rest.
+
+Enemies are levelled UNDER the bosses and that is arithmetic, not deference: a
+boss floor holds one boss, hellfire holds seven bodies.
 
 **Every floor but the lobby has a second beat** - `reinforcements` in its
 biome, a finite authored group that walks in through a named door at a known
@@ -279,7 +326,16 @@ in range, puts a prompt over its head and emits `talk_requested`. game.gd wires
 that to the director in game.tscn exactly as it wires a door's `travelled`, so
 an NPC never learns that a subtitle box exists. HR stands in the lobby and her
 induction is the first one built: a tour she walks and tows the player through,
-ending in a contract that cannot be refused. Dialogue: game/dialogue/CLAUDE.md.
+ending in a contract that cannot be refused.
+
+**She is also VOICED** - twenty-three clips out of the same `tools/voice/`
+Ahmed's barks come from - and, as with him, nothing was rewritten to allow it:
+a beat always carried its clip path, and the dialogue box always took one. What
+the clip buys is the TYPING RATE, which is now the line's length over the
+clip's, so the subtitle finishes as she stops rather than racing her. A beat
+with no clip, or one not yet imported, is silent and types at the flat rate, so
+every unwritten conversation in this game still reads. Dialogue:
+game/dialogue/CLAUDE.md.
 
 **Ivan heals, and he is the only healing in the game from floor 2 up.** He is
 also the only person in it who ARRIVES: a floor with `relief` in its biome walks
@@ -322,6 +378,40 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
                                        the painter tools/bosses/<id>.gd (which
                                        draws game/bosses/<id>/poses.gd), then
                                        slices whatever is on disk, 64px cells
+- `game/enemies/*/sfx/*.wav`         <- tools/sfx/make.py enemies, the second
+                                       thing here that talks to a web API and
+                                       the second that costs something to run.
+                                       Mechanism in `make.py` + `wav.py`, the
+                                       prompts, lengths and levels in
+                                       `enemies.py`, on cut.py's exact split.
+                                       Re-shaping is FREE: `--relevel` re-trims
+                                       and re-levels from the untouched exports
+                                       in `game/enemies/<id>/src/sfx/`, so only
+                                       a new PERFORMANCE costs credits
+- `game/bosses/ahmed/sfx/voice/*.wav`
+  `game/npcs/hr_lady/sfx/voice/*.wav`
+                                    <- tools/voice/cut.py, the only generator
+                                       here that COSTS something to run and the
+                                       only one that is not deterministic: a
+                                       re-cut line is a new performance, so
+                                       takes that were listened to and approved
+                                       are pinned in the recipe's KEEP and
+                                       skipped. Its data is the delivery;
+                                       WHAT is said stays with the mouth that
+                                       says it and is read from there.
+                                       **Two shapes of mouth, one driver**: a
+                                       boss shouts on CUES and his clip is
+                                       named after the cue and the pick
+                                       (`taunt_1.wav`, derived); a conversation
+                                       is a flat list of beats and its clip
+                                       name is AUTHORED - read back out of the
+                                       `voice` path the beat already carries
+                                       for the game to load. That split is not
+                                       tidiness: lines get written into the
+                                       MIDDLE of an induction, and a numbered
+                                       name would renumber every clip after the
+                                       insert and re-cut, and re-bill, lines
+                                       nobody touched
 - sheet shaping & slicing engine    <- tools/character_art.gd (shared by both)
 - playable cast & recipes           <- game/player/characters/roster.gd
                                        (data, edited by hand)
@@ -437,8 +527,26 @@ hear. `track()` is the readout, for callers and tests alike. game.gd calls
 `fade_out()` in `_ready`, so the menu carries over the load and goes out under
 the first room's fade-in.
 
+**Every floor plays something, and a boss is the only thing that interrupts
+it.** `Music.DEFAULT` (`assets/music/level_loop.wav`) is the bed, and game.gd
+asks for it in exactly the place it used to ask for silence: after the hunt for
+a boss with a `music` on him, where a floor with no boss and a boss floor whose
+boss has already conceded both land. A conceded boss hands it back on the same
+signal that used to take his theme away - the fight ending is not the floor
+ending, and Ivan walks in on half of those rooms.
+
+The ask is `fade_to()` rather than `play()`, and it is the same idempotence
+trick one level up: **a door between two ordinary floors must not restart the
+bed**, so asking for the track already playing is a no-op and the music crosses
+the building with the player. What `fade_to` adds is the handoff - there is ONE
+player, so no crossfade is possible, and a track that is on its way out has to
+finish leaving before the next one starts. That queue is why the first room
+does not cut the menu off mid-fade: `_ready` asks the menu to leave, the lobby
+asks for the bed, and the bed comes up when the fade lands. An explicit `play()`
+or `stop()` always beats a queued handoff.
+
 The loop flag is set on the stream in code, not trusted to the `.import`, for
-the same reason `game/bosses/boss_audio.gd` sets it - and unlike a boss's
+the same reason `game/enemies/enemy_audio.gd` sets it - and unlike a boss's
 sounds, which are HIS and live in his scene, the track paths are a short
 catalogue of constants on Music, because a path spelled out in three screens is
 the one that goes stale when a file moves.
@@ -449,13 +557,26 @@ work before it could loop keeps its untouched export beside it in
 `assets/music/src/`, on the enemies' and bosses' exact terms: `src/` is the
 hand-owned original, the file above it is what the game plays.
 
-**A generated loop does not loop.** An ElevenLabs export ends mid-waveform, so
-the last sample steps straight to the first and clicks once per pass - on
-`menu_loop.wav` that step was 22376 of 32768, and every 30 seconds. The fix is
-a 12 ms equal-power crossfade of the tail over the head, which costs 12 ms of
-length (0.04% across a 30 s loop, well under a 32nd note) and takes the step to
-33. Check the seam on any new music before wiring it up; the click is obvious
-once heard and invisible in a waveform view.
+**A generated loop does not loop**, and it fails in two different ways. The
+first is the seam: an ElevenLabs export ends mid-waveform, so the last sample
+steps straight to the first and clicks once per pass - on `menu_loop.wav` that
+step was 22376 of 32768, and every 30 seconds. The fix is a 12 ms equal-power
+crossfade of the tail over the head, which costs 12 ms of length (0.04% across
+a 30 s loop, well under a 32nd note) and takes the step to 33.
+
+The second is worse and is what `level_loop.wav` arrived with: **the export
+ENDS**, fading out over its last 3.75 s, so the loop dies away to silence and
+then restarts at full level - a hole once a minute rather than a click. A
+crossfade cannot fix that, because there is nothing left at the end to fade.
+The music has to be cut back to the last whole BAR before the fade begins, and
+only then crossfaded. That is the one measurement worth taking on a new track
+before anything else: the tempo, so the cut lands on the grid. The bed is
+120 BPM, so a bar is 2.0 s and 56.000 s is 28 of them - which is also 3360
+frames at 60 fps, on the same frame grid Mostafa's theme is on.
+
+Check both on any new music before wiring it up: the click is obvious once
+heard and invisible in a waveform view, and the fade is invisible in the
+waveform's shape until you look at where the last seconds of level went.
 
 ## Settings
 
@@ -490,7 +611,8 @@ marks the event handled so the press cannot also unpause.
 The page has three rows, and the split between the last two is the thing to get
 right - it is the one players get wrong:
 
-- **WINDOW MODE** - windowed or fullscreen.
+- **WINDOW MODE** - windowed or fullscreen. The game launches windowed at
+  1920x1080, which is an exact 3x of the base viewport.
 - **WINDOW SIZE** - deliberately not called a resolution. The game always
   renders at the 640x360 base viewport, so the window only decides how many
   screen pixels one game pixel becomes. Choices are whole multiples of the base
@@ -502,7 +624,7 @@ right - it is the one players get wrong:
   (`Display.ZOOMS`). At 1 a whole room fits and the camera sits still; above
   that the camera follows the player. Shown as a **percentage** - 100% / 125% /
   150% / 200% / 300% / 400% - which is the convention where a game exposes zoom
-  at all, and the only labelling that stays true. Names for the result were
+  at all, and the only labelling that stays true. The default is 150%. Names for the result were
   tried and dropped: "WHOLE ROOM" describes the zoom against the size of the
   room the player is standing in, so it becomes a lie the first time a level is
   bigger than the screen, and word ladders like ALMOST WHOLE / MOST OF ROOM do
@@ -554,7 +676,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Nine suites,
+  They drive the real game with synthesized input and exit 0/1. Eleven suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -587,6 +709,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     frame number: his band is a 20 px lane and his crossing only moves along x,
     so a player parked 30 px off his line is untouchable by both while the copy,
     which homes in two dimensions, still reaches them.
+  - `test_barks.gd` - what Ahmed shouts: the hello, the taunt when he is
+    kited, an attack announcing itself on the wind-up, being interrupted and
+    being merely hurt saying different things, the concede line jumping the
+    queue, and the subtitle taking itself down. Its own suite because a taunt
+    needs a boss who never reaches anybody, which is the exact opposite of the
+    fight test_bosses.gd runs.
   - `test_reinforcements.gd` - a second beat's trigger, its single-file
     arrival, the door it uses, the hold while the player stands in that door,
     that a beat fires once, and the head count. Builds the beat by hand in the
@@ -597,11 +725,28 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     they arrive, which is the failure that would be silent on six floors),
     that the hearts land on the last word and heal, one per head, once. Builds
     the beat by hand in the empty lobby, then checks the six floors off disk.
+  - `test_enemy_sfx.gd` - the bestiary's noise: that all six own the cues
+    their archetype can actually reach and no cue it can never reach, that
+    every declared stream resolves, that the wraith's drain is a sealed loop
+    rather than a one-shot with a flag on it, and that a death sound outlives
+    the body that made it. Its own suite because that last one is destructive
+    - it kills an enemy and counts what the room is left holding. What it
+    deliberately does NOT check is that a one-shot is audible: headless has no
+    `playing` and `--fixed-fps` makes `get_playback_position()` a coin flip
+    (see test_menu.gd's note), so the evidence is structure plus the two calls
+    that leave a visible mark - the loop flag, and the detached player.
   - `test_dialogue.gd` - HR's whole induction: the prompt, the typewriter, a
     dead stick while she talks, the choices and the branch one takes, the
     escorted tour, the contract, and the wheel coming back. Driven by what is
     on screen rather than by frame numbers - a line's LENGTH is its duration,
-    so numbered frames would need re-timing every time one is reworded.
+    so numbered frames would need re-timing every time one is reworded. It also
+    keeps her VOICE, and the check that matters there is not that audio is
+    playing (see the wall-clock note below) but that the line is typed at the
+    CLIP's rate rather than the flat one: that is arithmetic the game did on
+    the stream's own length, so it can only pass if the clip was really found,
+    loaded and applied, and it does not depend on the wall clock at all. Plus
+    the sweep a silent-by-design miss needs: every line she speaks names a
+    clip, and every clip named is on disk.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

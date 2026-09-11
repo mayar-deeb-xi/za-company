@@ -55,10 +55,27 @@ func _ready() -> void:
 	drain_per_second *= Difficulty.damage_scale()
 
 
+## How fast the drain lets go when the player steps out. Not a hard stop: the
+## clip ends mid-waveform - it is a seamless LOOP, that is the point of it -
+## so cutting it dead clicks. Short enough that walking out of the aura still
+## reads as instant, long enough to land on a zero crossing on the way.
+const DRAIN_RELEASE := 0.08
+
+
 func _physics_process(delta: float) -> void:
 	super(delta)
 	# Read once, after the base has settled touching_player for the frame.
 	_aura.set_feeding(touching_player, _feed_time)
+	# The only sound in the game that is a STATE rather than a moment, and it
+	# is the wraith's whole threat made audible: nothing is swung and nothing
+	# lands, so without it the one enemy that hurts you by standing there is
+	# also the one you cannot hear. Both calls are idempotent - `loop()` does
+	# nothing while it is already playing and `fade_out()` nothing while it is
+	# not - so asking every frame costs a dictionary lookup and no branch here.
+	if touching_player:
+		_sfx_loop("drain")
+	else:
+		_sfx_fade("drain", DRAIN_RELEASE)
 
 
 ## No wind-up, no strike, nothing to stagger. Its harm is _touch(), every frame.
