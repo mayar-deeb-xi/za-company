@@ -14,6 +14,22 @@ const Brush := preload("../_brush.gd")
 const SIZE := Vector2i(22, 42)
 const BLOCKS := Vector2(12, 6)
 
+## The heat. A lamp at this output is not something you stand next to, and on a
+## floor that runs a studio clock this is the box it burns in - a `Burn` area at
+## the stand's foot, driven by BURN_SCRIPT, which draws the pool it is about to
+## hurt in before it hurts in it.
+##
+## Wider than it is tall by exactly two, because a pool of light on a floor
+## looked down on at an angle is an ellipse - the same squash markings/rug.gd
+## puts on anything lying flat. The stand itself blocks the middle of it, so
+## what actually burns is a ring of floor around the tripod, which is both
+## correct and the reason the box can afford to be this generous.
+##
+## On a floor with no clock this costs nothing: the script finds nobody to read
+## and stays inert for ever. See game/levels/hot_light.gd.
+const BURNS := Vector2(30, 18)
+const BURN_SCRIPT := "res://game/levels/hot_light.gd"
+
 ## A light at full output, and the faint bloom around it. The bloom is real
 ## alpha rather than a lighter shade, so the ring reads as bright against a
 ## dark floor and a pale one alike.

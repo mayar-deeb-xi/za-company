@@ -107,7 +107,35 @@ const REINFORCEMENTS_SCRIPT := "res://game/levels/reinforcements.gd"
 ## is clear. Carries a destination rather than a position for the same reason a
 ## reinforcement carries neither - you cannot walk in at a spot - so it travels
 ## into the scene as one node beside the second beat, not as a placed instance.
+##
+## It is also the FOURTH, under `briefing`: the guide who comes DOWN the stairs
+## on the floor below a boss to say what is at the top of them. Same script,
+## because relief.gd names nobody - the two beats differ by which door, which
+## NPC and which lines, and none of that is code. They are named by ROLE, the
+## way the prop shelves are, so a room's scene says which arrival is which.
 const RELIEF_SCRIPT := "res://game/levels/relief.gd"
+## A floor's CLOCK, under `studio`: one node counting take / cue / rest, which
+## everything on that floor that can hurt you reads. It carries no position -
+## a rhythm is not anywhere - so like the two beats it travels into the scene as
+## a single node with its numbers as exports, and a floor without the key gets
+## no node and no rhythm. See game/levels/studio.gd.
+const STUDIO_SCRIPT := "res://game/levels/studio.gd"
+## The one hazard in the game that moves, under `dolly`: a rig running a rail
+## while a take is rolling. A fixture rather than a prop, exactly like the
+## torch, because a level places its own hazards; the rail it runs on is
+## ordinary furniture (`rail` on the markings shelf) and the two are authored
+## next to each other.
+const DOLLY_SCRIPT := "res://game/levels/dolly.gd"
+## The other moving hazard, under `surge`: a short racing the cable trunking.
+## Unlike every other thing a level places, it has NO art file - it draws its
+## own conduit and its own spark from the two points it is authored with, which
+## is what keeps the lane a player reads and the lane that hurts from ever
+## coming apart. So there is no scene to write and nothing to delete; the nodes
+## are built straight into the level.
+const SURGE_SCRIPT := "res://game/levels/surge.gd"
+## How dark the conduit is on the room's own ramp. A piece of the building, so
+## it takes the building's metal - only what FIRES is fixed.
+const CONDUIT_TONE := 0.22
 
 
 ## Names passed after `--` build only those levels. Since a re-run overwrites
@@ -160,6 +188,13 @@ func _build(level: String) -> bool:
 		bad = _write_health_scene(props, spec) or bad
 	else:
 		_drop("%s/fixtures/health_item.tscn" % props)
+	# The moving hazard, on the same terms as the two standing ones: written
+	# where the biome asks for it and DELETED where it does not, so a level
+	# folder never keeps a rig nothing points at.
+	if not spec.get("dolly", {}).is_empty():
+		bad = _write_dolly_scene(props, spec) or bad
+	else:
+		_drop("%s/fixtures/dolly.tscn" % props)
 	for type in Biomes.prop_types(level):
 		bad = _write_prop_scene(props, type, spec) or bad
 	bad = _write_level_scene(level, dir, props, tileset) or bad
@@ -200,9 +235,19 @@ func _write_column_scene(dir: String, spec: Dictionary) -> bool:
 ## draws the two in the right order. Decor gets a bare Node2D: a banner nailed
 ## to a wall has nothing to walk into, and a body with no shape is a lie.
 ##
-## No script: furniture has no behaviour to share. The ones that grow some -
-## DESIGN.md's arcing power strip and jammed photocopier - are hazards, and will
-## carry hazard_base.gd exactly the way the torch does.
+## Furniture mostly has no behaviour to share, and gets no script. The ones that
+## grow some say so themselves, in two optional constants on their painter, and
+## the studio's lighting is the first to use either:
+##
+##   SCRIPT   goes on the prop, for a thing that changes what it looks like -
+##            the neon sign reading the floor's clock.
+##   BURNS    adds a `Burn` Area2D at the foot carrying BURN_SCRIPT, for a thing
+##            that hurts - the ring lights going hot during a take.
+##
+## They are separate nodes because they are separate sizes: a lamp BLOCKS with
+## its tripod and BURNS across a patch of floor several times wider, and one
+## node cannot be a solid body and a trigger at two sizes. A prop declaring
+## neither is written exactly as it always was.
 func _write_prop_scene(dir: String, type: String, spec: Dictionary) -> bool:
 	# The friendly failure: a biome placing a type tools/props/ has no file for
 	# should say so, not die inside a null texture three calls later.
@@ -213,6 +258,11 @@ func _write_prop_scene(dir: String, type: String, spec: Dictionary) -> bool:
 	var solid := blocks != Vector2.ZERO
 	var root: Node2D = StaticBody2D.new() if solid else Node2D.new()
 	root.name = type.to_pascal_case()
+	# Before any child, so a script that reaches for one in _ready finds the
+	# finished prop rather than half of it.
+	var behaviour := Props.script_of(type)
+	if behaviour != "":
+		root.set_script(load(behaviour))
 
 	var sprite := Sprite2D.new()
 	sprite.name = "Sprite2D"
@@ -233,6 +283,25 @@ func _write_prop_scene(dir: String, type: String, spec: Dictionary) -> bool:
 		body.shape = shape
 		root.add_child(body)
 		body.owner = root
+
+	# The heat, where the prop declares any. Centred ON the placement position
+	# rather than sitting above it like the torch's box: this is a pool of light
+	# lying on the floor, and the foot is its middle.
+	var burns := Props.burns(type)
+	if burns != Vector2.ZERO:
+		var burn := Area2D.new()
+		burn.name = "Burn"
+		burn.monitorable = false
+		burn.set_script(load(Props.burn_script(type)))
+		root.add_child(burn)
+		burn.owner = root
+		var burn_shape := CollisionShape2D.new()
+		burn_shape.name = "CollisionShape2D"
+		var burn_rect := RectangleShape2D.new()
+		burn_rect.size = burns
+		burn_shape.shape = burn_rect
+		burn.add_child(burn_shape)
+		burn_shape.owner = root
 
 	# The scene lands on the same shelf its painter sits on in tools/props/,
 	# so finding a prop in a level is the same walk as finding its brush.
@@ -319,6 +388,43 @@ func _write_torch_scene(dir: String, spec: Dictionary) -> bool:
 	return _pack(root, "%s/fixtures/torch.tscn" % dir)
 
 
+## The level's own camera dolly: the one hazard in the game that MOVES. Written
+## exactly like the torch - the level's own art, the level's own scene, shared
+## behaviour - because it is the same kind of thing. What differs is that its
+## script carries the two ends of the rail and a speed, handed in from the biome
+## where the scene is placed rather than baked in here, so the rig and the rail
+## painted under it are authored as one pair of numbers.
+func _write_dolly_scene(dir: String, spec: Dictionary) -> bool:
+	var root := Area2D.new()
+	root.name = "Dolly"
+	root.monitorable = false
+	root.set_script(load(DOLLY_SCRIPT))
+
+	var sprite := Sprite2D.new()
+	sprite.name = "Sprite2D"
+	sprite.centered = false
+	# The painter pins its own foot - the wheels, which have to land on the
+	# rail - so the offset comes from the art rather than from a number here.
+	sprite.position = Props.offset("dolly")
+	sprite.texture = Props.texture(Props.dolly(spec))
+	root.add_child(sprite)
+	sprite.owner = root
+
+	var shape := CollisionShape2D.new()
+	shape.name = "CollisionShape2D"
+	# Over the platform rather than over the whole rig: the camera head is at
+	# eye height and passes over anybody standing on the track, and what would
+	# actually hit them is the base going past their shins.
+	shape.position = Vector2(0, -7)
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(22, 14)
+	shape.shape = rect
+	root.add_child(shape)
+	shape.owner = root
+
+	return _pack(root, "%s/fixtures/dolly.tscn" % dir)
+
+
 ## The level's own heal pickup, on the shared pickup_base.gd.
 func _write_health_scene(dir: String, spec: Dictionary) -> bool:
 	var root := Area2D.new()
@@ -388,6 +494,58 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 		torch.position = TORCH_POS
 		props.add_child(torch)
 		torch.owner = root
+
+	# The moving hazard, parked at the end of its rail. Placed here rather than
+	# from the props list because it is a fixture like the torch; what makes it
+	# different from every other thing in this game that hurts is that `from`
+	# and `to` are two positions instead of one, and it is somewhere between
+	# them for most of a take.
+	var dolly: Dictionary = Biomes.BIOMES[level].get("dolly", {})
+	if not dolly.is_empty():
+		var rig := _reload("%s/fixtures/dolly.tscn" % props_dir).instantiate()
+		rig.name = "Dolly"
+		rig.set("from", dolly["from"])
+		rig.set("to", dolly["to"])
+		_carry(rig, dolly, ["speed", "damage"])
+		rig.position = dolly["from"]
+		props.add_child(rig)
+		rig.owner = root
+
+	# The faults in the wiring, where the floor has any. One node per run, built
+	# here rather than instanced from a scene because a surge has no picture -
+	# it draws its conduit and its spark from the same two points, so there is
+	# nothing to bake and nothing to keep in step.
+	var surge: Dictionary = Biomes.BIOMES[level].get("surge", {})
+	var runs: Array = surge.get("runs", [])
+	for i in runs.size():
+		var run: Dictionary = runs[i]
+		var fault := Area2D.new()
+		fault.name = "Surge%d" % (i + 1)
+		fault.monitorable = false
+		# Under everybody. A short is in the floor, and a player crossing one
+		# should have it pass beneath their feet rather than over their head.
+		fault.z_index = -1
+		fault.set_script(load(SURGE_SCRIPT))
+		fault.set("from", run["from"])
+		fault.set("to", run["to"])
+		# The numbers a floor sets once for all its runs, and the one it sets
+		# per run: `after` is what stops four lines from firing as one. Copied
+		# across only where the biome names them, so a value the data does not
+		# mention keeps whatever surge.gd declares - see _carry().
+		_carry(fault, surge, ["speed", "period", "charge", "damage"])
+		_carry(fault, run, ["after"])
+		fault.set("conduit", Biomes.shade(Biomes.BIOMES[level], CONDUIT_TONE))
+		props.add_child(fault)
+		fault.owner = root
+		var head := CollisionShape2D.new()
+		head.name = "CollisionShape2D"
+		var ball := CircleShape2D.new()
+		# The head only. A surge is one hit as it passes, never a lane you are
+		# caught inside - see game/levels/surge.gd.
+		ball.radius = 6.0
+		head.shape = ball
+		fault.add_child(head)
+		head.owner = root
 
 	# Same as the hazard: a heart is per-biome, and almost no floor has one.
 	if Biomes.has_heart(level):
@@ -483,6 +641,24 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	for spawn_name in extra:
 		_marker(spawns, root, String(spawn_name), extra[spawn_name])
 
+	# The floor's CLOCK, where its biome runs one. Written before the two beats
+	# because it is not one: a beat fires once and is spent, and this is a
+	# rhythm the room keeps for as long as the player is standing in it.
+	#
+	# It joins the `studio` group PERSISTENTLY, which is the load-bearing
+	# detail: a persistent group is recorded in the scene and applied the moment
+	# a node enters the tree, so every light, sign and rig in the room finds the
+	# clock in its own _ready without anybody having to be built first.
+	var clock: Dictionary = Biomes.BIOMES[level].get("studio", {})
+	if not clock.is_empty():
+		var studio := Node2D.new()
+		studio.name = "Studio"
+		studio.set_script(load(STUDIO_SCRIPT))
+		studio.add_to_group("studio", true)
+		_carry(studio, clock, ["take", "rest", "lead"])
+		root.add_child(studio)
+		studio.owner = root
+
 	# The floor's second beat, where its biome asks for one. Written AFTER the
 	# spawns because that is what it walks in through: a reinforcement names a
 	# marker instead of carrying a position, which is the whole reason the list
@@ -496,20 +672,25 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 		root.add_child(reinforcements)
 		reinforcements.owner = root
 
-	# The third beat, which is not a fight: Ivan walking in with a heart per
-	# head once the room is finally empty. Written after the second because he
-	# WAITS on it - a room between two arrivals is quiet rather than clear - and
-	# beside it rather than inside it because the two ask opposite questions of
-	# the same room. See game/levels/relief.gd.
-	var relief: Dictionary = Biomes.BIOMES[level].get("relief", {})
-	if not relief.is_empty():
+	# The beats that are not fights, and there are two of them now: Ivan walking
+	# in with a heart per head once the room is finally empty, and Dominique
+	# coming down the stairs on the floor below a boss to say what is waiting at
+	# the top. One script serves both - relief.gd names nobody - so the pair is
+	# two nodes named by ROLE rather than two scripts, and a floor can carry one,
+	# the other, or both. Written after the second beat because both WAIT on it:
+	# a room between two arrivals is quiet rather than clear.
+	for beat: Array in [["relief", "Relief", "ivan"],
+			["briefing", "Briefing", "dominique"]]:
+		var arriving: Dictionary = Biomes.BIOMES[level].get(beat[0], {})
+		if arriving.is_empty():
+			continue
 		var arrival := Node2D.new()
-		arrival.name = "Relief"
+		arrival.name = beat[1]
 		arrival.set_script(load(RELIEF_SCRIPT))
-		arrival.set("npc", relief.get("npc", "ivan"))
-		arrival.set("from", StringName(relief.get("from", "start")))
-		arrival.set("at", relief["at"])
-		arrival.set("say", relief.get("say", ""))
+		arrival.set("npc", arriving.get("npc", beat[2]))
+		arrival.set("from", StringName(arriving.get("from", "start")))
+		arrival.set("at", arriving["at"])
+		arrival.set("say", arriving.get("say", ""))
 		root.add_child(arrival)
 		arrival.owner = root
 
@@ -584,6 +765,22 @@ func _marker(parent: Node2D, root: Node2D, name: String, at: Vector2) -> void:
 	marker.position = at
 	parent.add_child(marker)
 	marker.owner = root
+
+
+## Copies the keys a biome actually named onto a node it just built, and the
+## keys it did not name are LEFT ALONE.
+##
+## The alternative was `node.set(key, data.get(key, 78.0))`, which quietly puts
+## a second copy of every default in this file. Godot serializes only the
+## properties that differ from a script's declared default, so a biome authoring
+## the same number the script already declares writes nothing into the scene -
+## and the day somebody retunes the script, every floor that had agreed with it
+## follows along without its own data changing. Naming a default in exactly one
+## place (the `@export` itself) is what makes that impossible.
+func _carry(node: Node, data: Dictionary, keys: Array) -> void:
+	for key: String in keys:
+		if data.has(key):
+			node.set(key, data[key])
 
 
 ## Reads a scene back off disk so the instance carries a scene_file_path -

@@ -35,8 +35,9 @@ Placement rules:
 
 **Deep documentation lives with its subject**, in nested CLAUDE.md files that
 load when files there are touched: `game/levels/CLAUDE.md` (the host, the
-camera, room anatomy, doors and spawns), `game/enemies/CLAUDE.md` (the attack
-cycle, the types, the enemy art pipeline), `game/bosses/CLAUDE.md` (multiple
+camera, room anatomy, doors and spawns, and the studio's clock),
+`game/enemies/CLAUDE.md` (the attack cycle, the types, the enemy art
+pipeline), `game/bosses/CLAUDE.md` (multiple
 attacks on that cycle, conceding, the poses-painter-fire contract, boss
 floors), `game/player/CLAUDE.md` (characters,
 health, the combo and the heavy), `game/npcs/CLAUDE.md` (why an NPC is twice
@@ -85,6 +86,37 @@ on the next visit - rooms keep no state yet. Doors are found through the `door`
 group and levels are typed via `preload`, never `class_name`: global class
 names live in an editor-written cache a fresh headless checkout does not have.
 
+**One floor also keeps a CLOCK, and it is the first room that is not the same
+room on every frame.** The content studio's biome carries a `studio` key, which
+buys one node counting rest / cue / take, and three things read it: its five
+ring lights go hot, its camera dolly runs a rail, and its neon sign says which
+of the two the room is in. The reason is not damage but MEMORY - every other
+threat in the game stands where it was placed, so a routing floor is solved
+exactly once - and the three rules that generalize are one number (`heat()`)
+driving every consumer, a cue phase that is visible and harmless because a
+hazard which merely switches on is a hazard you cannot have avoided, and the
+`studio` group being the only way anything finds the clock, so a floor without
+one leaves every one of those props exactly the furniture it always was. The
+dolly is also the first thing that could threaten the door lane without being
+placed in it, and deliberately does not: its rail stops at x 228. All of it:
+game/levels/CLAUDE.md's *The clock*.
+
+**The call floor is WIRED, and it is that idea turned inside out.** Its `surge`
+key buys four runs of cable trunking that flare end to end and then put
+something very fast down their length, every 2.4s, staggered so the room fires
+about every six tenths of a second. The dolly asks for patience, which is the
+wrong question on the floor whose whole lesson is that your movement gets taken
+away - so this one is small, fast and comes in fours. Three things generalize:
+it **draws its own conduit** from the same two points it burns along, so the
+lane the player reads and the lane that hurts cannot come apart (and it is the
+one hazard in the game with no art file); the **whole run charges** rather than
+one end of it, so a warning does not also have to teach a direction; and **one
+pass is exactly one hit**, because the head crosses a player in a tenth of a
+second against a far longer grace window - which is the entire reason four of
+them is fair. The lane rule holds here too and pays for itself: cutting each
+aisle in two at x 246-300 is what made four runs out of two.
+game/levels/CLAUDE.md's *The wiring*.
+
 Adding a floor is a data file in `tools/biomes/` plus a `CHAIN` entry;
 **inserting** one mid-chain also stales its NEIGHBOURS' baked door targets -
 rebuild all three: `build_levels.gd -- <before> <new> <after>`. The full
@@ -116,6 +148,19 @@ the HUD, the combo and the heavy: game/player/CLAUDE.md.
 RECOVER), never by mere contact. Damage interrupts a wind-up, bounded by
 `commit_fraction` and `interrupt_cooldown`; the player is deliberately not
 interruptible in return.
+
+**`sight_radius` is how an enemy NOTICES the player and nothing more, and that
+is load-bearing**: every authored position is placed to keep it off the door
+lane, so widening it breaks all twelve floors and two suites at once. What
+happens AFTER seeing you is the leash - `patience_seconds` (2.5) keeps it
+coming that long after losing sight, `leash_factor` (2.0) stops it following
+further than that multiple of its sight FROM ITS POST, and then it walks back
+and stands on its mark. The second half is the one that matters: an enemy that
+halted wherever it gave up let a player walk one body out of position and
+leave, and a room is an ARRANGEMENT. A boss opts out (`_leashes()` - an arena
+has no arrangement) and so does a reinforcement (`unleash()` - it has no
+authored position to be anchored to). Full rationale:
+game/enemies/CLAUDE.md's The leash.
 
 **Enemy HP (24 / 17 / 36) are exact breakpoints on the player's combo** -
 "dies in exactly N hits" - and `HEAVY_POWER` equals a guard's health by design.
@@ -375,7 +420,21 @@ in English with an Eastern-European accent, which is the only direction his
 lines needed: he is the one man in the building who is glad to see you, and he
 is heard over a room the player has just finished fighting in, so an accent
 that ever costs a word would cost the moment it was written for.
-Dominique still has no lines and stands on no floor.
+
+**Dominique is the FOURTH beat, and the only one that hands over information.**
+A floor with `briefing` in its biome walks them in once the room is clear to say
+what is standing on the floor above - and it is the three floors that sit under
+a boss, which is the rule rather than the list: `tests/test_dominique.gd` reads
+the whole chain off disk and fails if a boss ever gets one without a warning
+under it. They come down the NORTH door, the one the player is about to go up,
+where Ivan comes up the south one - two of the three floors have both, and one
+doorway cannot take two 64px bodies on one cue. It is the same
+`game/levels/relief.gd` doing both, because that file has never named anybody:
+the beats are told apart by node name and biome key, the way the prop shelves
+are told apart by role. Their lines are one file per boss
+(`game/npcs/dominique/before_<boss>.gd`) and they are voiced too - twelve clips,
+bold and Slavic and impatient, deliberately not Ivan's warmth: he is glad to see
+you, and they have given this speech before to people who did not come back.
 
 The rest - the pipeline's three steps, why the robe goes down before the head,
 and what a third NPC would need: game/npcs/CLAUDE.md.
@@ -424,6 +483,7 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
 - `game/bosses/ahmed/sfx/voice/*.wav`
   `game/npcs/hr_lady/sfx/voice/*.wav`
   `game/npcs/ivan/sfx/voice/*.wav`
+  `game/npcs/dominique/sfx/voice/*.wav`
                                     <- tools/voice/cut.py, the only generator
                                        here that COSTS something to run and the
                                        only one that is not deterministic: a
@@ -710,7 +770,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Eleven suites,
+  They drive the real game with synthesized input and exit 0/1. Fourteen suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -722,7 +782,10 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     It walks the whole chain on foot, so inserting a floor means renumbering
     the frames after the new leg (~80 frames per door) and it asserts each
     room's own composition and dressing as it passes through.
-  - `test_combat.gd` - guard telegraph and interrupts, wraith, warden, heavy.
+  - `test_combat.gd` - guard telegraph and interrupts, wraith, warden, heavy,
+    and the leash: that losing sight of the player does not stop a chase, that
+    it ends 2.5s later, that the body walks back to the spot it was placed on,
+    and that kiting drags it exactly 160 px and no further.
   - `test_bosses.gd` - Ahmed's attacks, the order he picks them in, the
     interrupt and the concede.
   - `test_rage.gd` - Mostafa going up at 72 and staying up: that it fires at
@@ -759,6 +822,15 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     they arrive, which is the failure that would be silent on six floors),
     that the hearts land on the last word and heal, one per head, once. Builds
     the beat by hand in the empty lobby, then checks the six floors off disk.
+  - `test_dominique.gd` - the fourth beat, the one that hands over information
+    rather than a heart: that they wait for a fight and not merely for a quiet
+    room, that they come down the NORTH door while Ivan comes up the south one,
+    that they cross to the spot and can be talked to after arriving late, and
+    that nothing is healed by any of it. Its own suite because test_ivan.gd
+    ends by hurting the player and counting hearts, and this one has to prove
+    no heart is ever thrown. It also checks the RULE the three floors are only
+    an instance of - a briefing under every boss floor and under no other - by
+    reading the whole chain off disk, so a fourth boss cannot ship unannounced.
   - `test_enemy_sfx.gd` - the bestiary's noise: that all six own the cues
     their archetype can actually reach and no cue it can never reach, that
     every declared stream resolves, that the wraith's drain is a sealed loop
@@ -786,6 +858,25 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     loaded and applied, and it does not depend on the wall clock at all. Plus
     the sweep a silent-by-design miss needs: every line she speaks names a
     clip, and every clip named is on disk.
+  - `test_studio.gd` - floor 2's clock and the two things that read it: that a
+    lamp with no clock in the room is furniture (checked in the LOBBY, because
+    a promise about absence has to be tested where the thing is absent), that
+    the cue warms the pools and the sign without hurting anybody, that the
+    take then burns and the rig runs, and that a rig being pushed back to its
+    mark is harmless even parked on top of you. Its own suite because checking
+    a rhythm means standing still in one room for eleven seconds, which is the
+    opposite of every other file here; test_flow.gd keeps only that the
+    dressing still carries the clock. It also guards the one invariant a
+    moving hazard could break without ever being placed: the rail's span
+    against the door lane.
+  - `test_surge.gd` - floor 3's wiring: that a charging line warns without
+    hurting, that the head then crosses whoever stood on it, that the drop is
+    exactly the node's own scaled damage rather than merely non-zero (one pass
+    is one hit, which is what makes four runs fair), that the head parks off
+    the line between runs, and that the cycle comes round again. Its headline
+    check is the lane swept across all four runs - a surge is the second thing
+    that could threaten x 246-300 without being placed in it, and unlike the
+    dolly there are four.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

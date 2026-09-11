@@ -39,8 +39,45 @@ const BIOME := {
 	# DESIGN.md's hazard: a ring light knocked over, still at full output.
 	# Its standing twin is `ring_light` in the props below - the same object,
 	# once as the furniture that makes this a studio and once as the thing on
-	# the floor that hurts.
+	# the floor that hurts. From here up it is both: the standing five go hot
+	# on the clock below, so the room says "these things burn" five times and
+	# means it every time.
 	"hazard": "fallen_light",
+	# THE CLOCK, and it is what this floor is now built around. A take rolls,
+	# the lights go hot, the dolly runs; between takes the room is the room it
+	# always was. One number drives all three (game/levels/studio.gd), so the
+	# player learns one rhythm and then knows what the whole floor is about to
+	# do.
+	#
+	# The three numbers are tuned against the player's 90 px/s. `lead` is 1.5 s
+	# of warning, which is 135 px - most of the way across the west half, the
+	# half this floor is fought in. `rest` is 5 s, comfortably longer than the
+	# 2.2 s the dolly needs to get back to its mark, so every take starts from
+	# the same end and the room is readable rather than merely busy. `take` is
+	# deliberately the SHORTEST of the three: the floor's own lesson is routing,
+	# and a room that is hot more than it is cold stops being a route and starts
+	# being a wait.
+	"studio": {"take": 4.5, "rest": 5.0, "lead": 1.5},
+	# The one hazard in the game that moves, and the rail it moves on. Two
+	# entries because they are two things - behaviour and paint - and they are
+	# written touching because nothing checks that they agree: `from` and `to`
+	# are the rig's ends, and the `rail` prop below is the track drawn under
+	# exactly that span.
+	#
+	# It runs the WEST HALF ONLY, and that is the deliberate answer to the one
+	# question a moving hazard raises. Every floor keeps x 246-300 walkable top
+	# to bottom so the straight walk between the doors is safe in every biome;
+	# a rig crossing the room would be the first thing ever to threaten that
+	# lane without being placed in it. Tracking across the SET instead is both
+	# the legal answer and the better one - a dolly belongs in front of the
+	# thing being filmed - and it charges the exact ground this floor already
+	# makes expensive: the two overlapping drain fields and the fallen light
+	# sitting between them.
+	#
+	# 78 px/s is under the player's 90 on purpose. Being hit by it has to be a
+	# consequence of standing still, never of being run down from behind.
+	"dolly": {"from": Vector2(48, 168), "to": Vector2(220, 168),
+		"speed": 78.0, "damage": 14},
 	# The kit. Two rules shape where it goes, and they are the same two every
 	# floor keeps: the door line (x 246-300) stays clear top to bottom, and the
 	# central band (y 128-176) stays clear left to right - the fallen light
@@ -62,6 +99,11 @@ const BIOME := {
 		{"type": "ring_light", "at": Vector2(94, 104)},
 		{"type": "ring_light", "at": Vector2(208, 112)},
 		{"type": "camera_rig", "at": Vector2(156, 124)},
+		# The dolly track, under the set and across both western drain fields.
+		# Pinned by its top-left like every marking, so this is where the band
+		# STARTS: 188 px of it, ending at x 228 and leaving the door lane
+		# untouched. Its y brackets the rig's wheels at 168 - see `dolly`.
+		{"type": "rail", "at": Vector2(40, 162)},
 		# The sign, on the stretch of north wall the backdrop leaves free and
 		# directly above the set - which is where a studio hangs the thing it
 		# wants in frame behind the presenter.

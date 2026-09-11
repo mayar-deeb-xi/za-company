@@ -285,6 +285,19 @@ func _tick(frame: int) -> void:
 			# pick a hazard style that is neither fire nor sparks.
 			_check("level: the fallen ring light is standing in the room",
 				_level().get_node_or_null("Props/Torch") != null)
+			# And from here up the standing five are hazards too, on the floor's
+			# clock. What the rhythm actually DOES is tests/test_studio.gd's -
+			# it takes eleven seconds to watch one turn of it, which is not
+			# something to do in the middle of a walk through twelve floors.
+			# What belongs here is that the dressing still carries it: a biome
+			# that lost the `studio` key would leave a room that looks right,
+			# passes every check above, and never switches on.
+			_check("level: the studio runs a clock",
+				_level().get_node_or_null("Studio") != null
+					and (_level().get_node("Studio") as Node).is_in_group("studio"))
+			_check("level: the rig and the rail it runs on are both in the room",
+				_level().get_node_or_null("Props/Dolly") != null
+					and _level().get_node_or_null("Props/Rail1") != null)
 			# Hearts are the lobby's alone: floor 1 is where a player finds out
 			# what a heal is, and above it the supply is meant to be Ivan
 			# carrying one to you, not a room leaving one lying about. Checked on

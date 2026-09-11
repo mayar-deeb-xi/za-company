@@ -199,8 +199,18 @@ number only matters the day one of them is asked to go somewhere.
 **Built so far**: `game/npcs/` with all three NPCs' art, scenes, roster and
 `npc_base.gd`, plus the whole dialogue system (`game/dialogue/`,
 `ui/dialogue/`), HR standing in the lobby with an induction to deliver, and Ivan
-arriving on six floors with a heart per head. Still to come: lines for Dominique
-and a floor for her to stand on.
+arriving on six floors with a heart per head.
+
+**Built since: Dominique, and the signpost became a BEAT.** The plan was one
+line per visit on floors 1/4/7/10; what shipped is four beats on each of the
+three floors that sit under a boss, arriving the way Ivan does once the room is
+clear - because a warning is only information while the fight is still ahead,
+and a signpost standing in the room during the fight is furniture. Each briefing
+names the boss and ends on that fight's actual tell: sidestep Ahmed's wave,
+break Mostafa's third punch, spend everything before Silverman's last phase.
+They come down the north door while Ivan comes up the south one. Voiced, twelve
+clips, in the same pipeline as the other three mouths. `tests/test_dominique.gd`
+holds the rule that put them on exactly those three floors.
 
 ## HR's induction — the first conversation in the game
 
@@ -298,6 +308,33 @@ names the room, and the fiction carries which floor it is.
   The room reads dark because the WALLS are near-black, not the floor.
   **Still to add**: its people, being placed by hand - 3 social_media across the
   middle plus 1 office boy by the north door.
+  **And it now runs on a CLOCK**, which is the first room in the game that is
+  not the same room on every frame. A take rolls for 4.5s, the room rests for
+  5, and a 1.5s cue sits between them; three things read it and nothing else in
+  the building does yet. The reason was not that the floor was too easy - it was
+  that every threat on it stood where it was placed, so a routing floor is a
+  puzzle solved exactly once and walked from memory afterwards. A clock adds a
+  reason to be somewhere at a MOMENT, which a fixed arrangement cannot have.
+  - The five standing ring lights **go hot** during a take, opening a visible
+    pool of light at each foot through the cue and burning in exactly that
+    footprint once it rolls. Nothing new was drawn: this floor's hazard was
+    already a ring light knocked over at full output, and the room said "these
+    things burn" five times while meaning it once.
+  - A **camera dolly** runs a painted rail across the set - the first thing in
+    the game that hurts you and moves. It tracks the WEST HALF only, which
+    keeps the door lane (x 246-300) walkable the way every floor keeps it, and
+    charges exactly the ground the floor already makes expensive: the two
+    overlapping drain fields with the fallen light between them. It is slower
+    than a walk on purpose, so being hit is always a consequence of standing
+    still. Between takes it slides back to its mark, harmlessly, which is the
+    earliest warning the room gives.
+  - The LIVE / LAUGH / ENGAGE neon is the **tally light**: the tubes drop to a
+    third between takes and come back over the cue, so the brightest object on
+    a near-black wall says what the floor is about to do.
+  Two new props (`rail` on the markings shelf, `dolly` on fixtures) and a small
+  extension to the prop catalogue - a painter can now declare a `SCRIPT` and a
+  `BURNS` box, which is how furniture grows behaviour without every other floor
+  learning about it. `tests/test_studio.gd` owns the rhythm.
 - [x] **F3 The Call Center** (denial): cubicle maze, densest columns.
   2 call_center planted at chokepoints, 3 office boys between them. The
   lesson: a slow near guards is lethal. Ivan. Hazard: jammed photocopier.
@@ -321,6 +358,32 @@ names the room, and the fiction carries which floor it is.
   this floor has eighteen chances to make that mistake instead of six.
   **Still to add**: its people, being placed by hand - 2 call_center at the
   chokepoints, 3 office boys between them.
+  **And the floor is now WIRED.** Four runs of cable trunking down the aisles at
+  y 128 and y 224, each one dull until it flares end to end for half a second
+  and then puts something very fast and very bright down its length. On a 2.4s
+  cycle with the four staggered, so a spark goes off roughly every six tenths of
+  a second and two are usually in flight at once - the room never stops moving.
+  It is deliberately the opposite of the studio's dolly one floor down. That rig
+  is slow and heavy and what it asks for is patience, which is exactly the wrong
+  question on the floor whose whole lesson is that your movement gets taken
+  away: a threat you beat by standing still is a threat a slow makes easier. So
+  this one is small, fast, and comes in fours.
+  - It **draws its own conduit** - the trunking and the spark come off the same
+    two authored points, so the lane the player reads and the lane that hurts
+    cannot come apart. It is the only thing in the game that hurts you and has
+    no art file at all.
+  - The **whole run charges**, not one end of it, so the warning does not also
+    have to teach a direction.
+  - **One pass is one hit**: the head crosses a standing player in about a tenth
+    of a second against a grace window six times that, so a surge is a tax on
+    crossing at the wrong moment and never a lane you are trapped inside. That
+    is the whole argument for four of them, and why the damage (8) sits under
+    the copier's 10 - the copier is a place you chose to stand in.
+  - Every run stops clear of the door lane (x 246-300), which is not a
+    compromise: cutting each aisle in two at the lane is what made four runs out
+    of two, and it is also what keeps the arrival at (272, 240) safe while the
+    first line is already charging.
+  `tests/test_surge.gd` owns it.
 - [ ] **F4 Ahmed's Corner Office** (BOSS): oversized office, golf putter,
   framed family photo. Small arena, no adds at rest. Ivan + Dominique.
   **Built**: the room, and it is the marble hall's room - the same stone and

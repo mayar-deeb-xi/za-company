@@ -226,7 +226,16 @@ func _pause_menu() -> CanvasLayer:
 
 
 ## game.tscn swaps one Level child in and out; its node name identifies the map.
+##
+## Null-safe at BOTH ends, and the first one is easy to trip over: a suite that
+## polls for a level every frame - waiting to be told the room it asked for has
+## arrived - is polling across two `change_scene_to_file` calls, and
+## `current_scene` is briefly null inside each of them. That is a script error
+## every frame of a scene change rather than the "no level yet" this already
+## answers everywhere else.
 func _level() -> Node2D:
+	if current_scene == null:
+		return null
 	for child in current_scene.get_children():
 		if child is Node2D and child.has_method("spawn_position"):
 			return child

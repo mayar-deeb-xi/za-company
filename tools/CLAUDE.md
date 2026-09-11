@@ -25,9 +25,10 @@ backdrop, a punch bag, a rack of weights), `signs/` (the welcome banner, a
 taped-up notice, two whiteboards - one lettered, one an architecture diagram
 nobody may erase - two printed posters, two lit boards with a number on them,
 the founder's portrait and one sticky note lying face down), `markings/` (what
-is spread on the floor rather than stood on it: the gym's boxing ring and the
-executive floor's rug) and `openings/` (what is cut through the building's
-shell rather than stood against it: the penthouse's city window) - and a biome
+is spread on the floor rather than stood on it: the gym's boxing ring, the
+executive floor's rug and the studio's dolly track) and `openings/` (what is
+cut through the building's shell rather than stood against it: the penthouse's
+city window) - and a biome
 says which ones it puts where in its own `props` list, exactly the way it
 already says which enemies it gets. That list drives everything:
 build_levels.gd writes a scene per type into the level's `props/`, paints its
@@ -48,13 +49,13 @@ type fails at generation time with "nothing in tools/props/ draws 'tabel'".
 `_brush.gd` is the shared painting kit (the primitives, the multi-user fixed
 colours, the pixel font), kept out of the catalogue by sitting at the root -
 only the shelves are scanned. `fixtures/` is the shelf `known()` refuses:
-levels place column, hazard and heart themselves, so those can be painted but
-never listed as furniture. All three are a floor's to decline - an empty
-`columns` layout, `"hazard": "none"`, and `"heart": true` left unsaid - and the
-generator then deletes that level's column.tscn, torch.tscn or
-health_item.tscn rather than leave a scene nothing points at. The gym and
-Khaled's office both decline all three, and both have an empty `fixtures/`
-folder to show for it.
+levels place column, hazard, heart and the studio's dolly themselves, so
+those can be painted but never listed as furniture. Every one of them is a
+floor's to decline - an empty `columns` layout, `"hazard": "none"`, and
+`"heart": true` or `"dolly"` left unsaid - and the generator then deletes that
+level's column.tscn, torch.tscn, health_item.tscn or dolly.tscn rather than
+leave a scene nothing points at. The gym and Khaled's office decline the lot,
+and both have an empty `fixtures/` folder to show for it.
 
 **And a shelf that does not exist yet is made by putting the first file on
 it.** props.gd enumerates the directories under `tools/props/` rather than
@@ -122,6 +123,33 @@ sorts after the desk, and its art - twenty pixels up from that foot - lands on
 the desktop. The alternative, painting the note into the desk, was rejected
 for a reason that has nothing to do with drawing: the ending turns the note
 over, so it needs a node of its own in the level scene for a script to find.
+
+**A prop can also grow BEHAVIOUR, and it declares it the same way it declares
+its size.** Two more optional constants, and most props will never carry
+either - a desk is a picture with a box under it:
+
+```gdscript
+const SCRIPT      := "res://game/levels/on_air.gd"     # on the prop itself
+const BURNS       := Vector2(30, 18)                   # a Burn area at its foot
+const BURN_SCRIPT := "res://game/levels/hot_light.gd"  # what drives that area
+```
+
+`SCRIPT` is for a thing that changes what it LOOKS like - the studio's neon sign
+reading the floor's clock. `BURNS` is for a thing that HURTS, and it is a
+separate node rather than a flag on the collision box because they are different
+sizes on the one prop that has both: a ring light blocks with its tripod and
+burns across a patch of floor several times wider, and one node cannot be a
+solid body and a trigger at two sizes. `BURN_SCRIPT` defaults to the shared
+`hazard_base.gd`, which is the honest default - a thing that burns and says
+nothing else about itself burns the way the torch does.
+
+Both keep the rule every optional thing in this project keeps: **a prop that
+declares neither is written exactly as it always was, and a script that finds
+nothing to read does nothing.** That is what lets `ring_light` be a hazard on
+the content studio and ordinary furniture on any floor that stands one without
+running a clock - see game/levels/CLAUDE.md's *The clock*. build_levels.gd was
+always going to need this (its own comment promised the power strip and the
+photocopier would arrive as hazards); the studio's lighting got there first.
 
 **A prop can also be architecture.** The colonnade is a fixture the level
 places itself and its layout is a cross product of rows and columns, which
@@ -346,6 +374,15 @@ in the game. Because he arrives rather than stands, the furniture rule applies
 to `at` alone - the room is empty by the time he reaches it, so that spot only
 has to clear the scenery and the door line. Why it is an arrival, what counts as
 "clear" on a boss floor, and why he does not greet: game/levels/CLAUDE.md.
+
+`briefing` is the same four keys and the same script, and it is Dominique:
+who walks in once the floor is CLEAR to say what is on the floor ABOVE. It
+is on the three floors that sit under a boss and on no others, and it names
+`from: "returned"` - the north door - where `relief` names the south one,
+because two of those three floors have both and one doorway cannot take two
+bodies at once. The two keys are separate rather than a list for the reason
+the prop shelves are named by role: a room's scene should say which arrival
+is which.
 
 `build_npcs.gd` also writes ONE thing that is not an NPC -
 `game/npcs/ivan/heart.tscn`, the pickup he throws - and that is the single place

@@ -25,7 +25,8 @@ extends SceneTree
 
 const SUITES := ["test_menu", "test_flow", "test_combat", "test_bosses",
 	"test_rage", "test_silverman", "test_barks", "test_reinforcements",
-	"test_dialogue", "test_ivan", "test_enemy_sfx"]
+	"test_dialogue", "test_ivan", "test_dominique", "test_enemy_sfx",
+	"test_studio", "test_surge"]
 
 
 func _initialize() -> void:

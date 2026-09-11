@@ -173,6 +173,149 @@ build_biomes.gd like everything else: the stand and plinth in the biome's own
 ramp, the flame and the heart in fixed colours, because fire and health have
 to read the same in every biome.
 
+## The clock - a room that switches on
+
+One floor no longer hurts you at a fixed set of addresses. The content studio
+carries a `studio` key, and it buys one node, `Studio`
+(`game/levels/studio.gd`), that counts three phases forever:
+
+| phase | studio | what it means |
+|-------|--------|---------------|
+| REST | 5.0s | nothing in the room is hot |
+| CUE | 1.5s | the lead-in. Nothing hurts, and everything about to says so |
+| TAKE | 4.5s | rolling: the pools burn and the dolly runs |
+
+**The problem it solves is not damage, it is memory.** Floor 2 teaches routing
+and routing is a lesson a player solves exactly once, because every threat in
+the room stands where it was placed - the second visit is the first visit walked
+from memory. A clock does not add a threat; it adds a REASON TO BE SOMEWHERE AT
+A MOMENT, which is the thing a static arrangement cannot have.
+
+Four things about it generalize, and the second is the one to copy:
+
+- **One number, not three timers.** Consumers ask `heat()`: 0 at rest, ramping
+  0 to 1 across the cue, 1 for the whole take. A light multiplies its pool's
+  alpha by it and the sign its brightness, so the telegraph and the danger are
+  the same number seen twice - and a light therefore *cannot* draw a pool it
+  does not then burn in. Three timers would have been three things for a player
+  to read while two drains tick, which is a room that is merely noisy.
+- **CUE is the whole of what makes it fair.** A hazard that switches on hits you
+  for standing somewhere that was safe when you decided to stand there; a hazard
+  that opens a visible pool for a second and a half first is a hazard you walked
+  into. It is the enemies' wind-up applied to the ROOM, read the same way - by
+  watching, not by counting. `rolling()` is deliberately false for every frame
+  of it.
+- **Consumers find it through the `studio` group, and a floor without one has
+  nobody to find.** The group is PERSISTENT, written into the scene, so it is
+  applied on tree entry and every light, sign and rig finds the clock in its own
+  `_ready` without anybody having to be built first. `ring_light` is a catalogue
+  prop any floor may stand; only a floor that also runs a clock makes it
+  dangerous, with no branch anywhere - the same deal a missing sound gets.
+- **Rooms keep no state, and here that is load-bearing.** Levels are
+  re-instantiated per entry, so the clock starts at REST on every arrival and
+  the player always gets a full rest to read the room. Walking back out and
+  in again is therefore not an exploit worth having.
+
+### What reads it
+
+**The five ring lights go hot** (`game/levels/hot_light.gd`), and the point is
+that nothing new was drawn. This floor's hazard art is a ring light knocked over
+and left at full output, and standing beside it were five identical lights still
+upright - the room said "these things burn" five times and meant it once. The
+heat is a `Burn` child declared by the prop itself (see tools/CLAUDE.md), and
+its pool is measured FROM the collision shape rather than from a constant, so
+the footprint drawn and the footprint burned are the same rectangle. It is drawn
+as an ellipse half as tall as it is wide, the same squash `rug.gd` puts on
+anything lying flat, in scanline `draw_rect`s like every effect the bosses draw.
+The pool being drawn OVER a player standing north of the lamp is not tolerated,
+it is correct: that is what a lamp at floor level does to somebody in front of
+it.
+
+**The dolly runs its rail** (`game/levels/dolly.gd`) - the first thing in this
+game that hurts you and MOVES. Everything else the world deals either stands
+where it was placed or is a person who came looking for you, and a room whose
+threats all have addresses is a room you solve by learning the addresses. Three
+rules bind it, and the third is the one to check before authoring a second:
+
+- **A rail is painted under it** (`rail` on the markings shelf), authored to the
+  same span in the same biome file. A moving threat has to be legible before it
+  arrives; a lane the player can see is a lane they time.
+- **It is slower than a walk** - 78 against the player's 90. Being hit has to be
+  a consequence of standing still, never of being run down from behind.
+- **It stops short of the door lane.** Every floor keeps x 246-300 walkable top
+  to bottom, and a rig crossing the room would be the first thing ever to
+  threaten that lane without being PLACED in it. The studio's runs the WEST HALF
+  only, which is both the legal answer and the better one: a dolly belongs in
+  front of the thing being filmed, and the set is where the two drain fields
+  already overlap. Between takes it returns to its parked end and does NOT hurt,
+  which is the floor's one rule seen from the other side - and is also the
+  earliest warning the room gives.
+
+**The neon sign says which it is** (`game/levels/on_air.gd`), and it is the only
+consumer that hurts nobody. No new art: the tubes drop to a third between takes
+and come back over the cue, so the brightest object on a near-black wall changes
+value and a player who never consciously reads the sign still learns the room
+off it.
+
+`tests/test_studio.gd` owns the rhythm, and it is its own suite for one reason -
+checking a rhythm means standing still in a room for eleven seconds, which is
+the exact opposite of every other suite here. `tests/test_flow.gd` keeps only
+that the dressing still carries the clock, because a biome that lost the key
+would leave a room that looks right, passes every other check, and never
+switches on.
+
+## The wiring - a room that goes off
+
+The call floor's `surge` key buys four `Surge` nodes
+(`game/levels/surge.gd`), one per run of cable trunking. A run lies dull, flares
+end to end for half a second, then puts a bright head down its length at
+260 px/s and goes dull again - on a 2.4 s cycle, with the four staggered so
+something in the room fires roughly every six tenths of a second.
+
+**It is the studio's dolly turned inside out, and the contrast is the design.**
+One slow rig crossing a room asks for patience: you watch, you wait, you go.
+That is the wrong question on the DENIAL floor, where two slowers exist to take
+the player's movement away - a threat you beat by waiting is a threat a slow
+makes *easier*. So the call floor got the opposite shape: small, fast, frequent,
+and four of them. 78 px/s and one rig is furniture with a schedule; 260 px/s and
+four lines is a room you cross between beats.
+
+Four things worth keeping:
+
+- **It draws its own conduit.** The rail under the dolly is a separate painted
+  marking authored to match the rig's two ends, with nothing checking the pair
+  agrees - survivable for one rig, a liability at four or six. A surge draws the
+  trunking AND the spark from the same two points, so the lane the player reads
+  and the lane that hurts cannot come apart. It is the only thing in this game
+  that hurts you and has **no art file at all**, which is also why it needs no
+  scene: build_levels.gd builds the nodes directly.
+- **The whole run charges, not one end of it.** A player standing anywhere along
+  a line learns that *this* line is the one going off, without having to work
+  out which direction it is coming from or how long they have. It is the
+  studio's cue phase argued from the other side: there the room warms and the
+  danger is a PLACE, here the lane flares and the danger is a MOMENT.
+- **One pass is exactly one hit.** The head crosses a standing player in about a
+  tenth of a second against a grace window six times that, so a run costs one
+  blow however it catches you and can never be a lane you are trapped inside.
+  That is the entire argument for having four, and it is why the damage (8) sits
+  under the copier's 10 - the copier is one place you chose to stand in, these
+  are four lanes you have to cross.
+- **The lane rule again, and it now protects the arrival.** No run may reach
+  x 246-300. On this floor that is not a compromise but the reason there are
+  four runs instead of two: cutting each aisle in half at the lane DOUBLED them.
+  It also means a player walking in at (272, 240) cannot be hit while the first
+  line is already charging.
+
+The conduit takes the room's own metal, handed in by the generator as a colour,
+because it is a piece of the building; everything that FIRES is fixed white and
+gold, on the rule that already fixes fire, sparks and the heart - a hazard that
+took the room's palette would camouflage itself in it, and this one has 0.8 s to
+be understood.
+
+`tests/test_surge.gd` owns it, and the two checks that carry weight are the lane
+swept across every run, and the drop being exactly the node's own scaled
+`damage` rather than merely non-zero.
+
 ## Reinforcements - a room's second beat
 
 A floor with `reinforcements` in its biome gets one extra node,
@@ -230,6 +373,12 @@ arrangement it was tuned for and still answer a party of four, instead of every
 number being a multiple of the solo one.
 
 ## Relief - a room's third beat
+
+`game/levels/relief.gd` runs the two beats that are not fights, and this is
+the first of them. The second is **Briefing**, below: same script, same cue,
+different job - the file has never named Ivan outside its comments, so the
+day a second arrival was wanted it cost a biome key and a node name and
+nothing else.
 
 A floor with `relief` in its biome gets one more node, `Relief`
 (`game/levels/relief.gd`), and it is the only beat that is not a fight: when the
@@ -292,6 +441,43 @@ Two more things follow from him arriving late:
 The gift itself is `game/npcs/ivan/ivan.gd`: one heart per head from
 `game/heads.gd`, thrown on the falling edge of the conversation, once per visit.
 See game/npcs/CLAUDE.md.
+
+## Briefing - a room's fourth beat
+
+A floor with `briefing` in its biome gets a `Briefing` node, the same
+`game/levels/relief.gd` on the same cue, and what walks in is **Dominique, down
+the NORTH door - the one the player is about to go up** - to say what is waiting
+at the top of it. Three floors have one, and they are exactly the three that sit
+under a boss:
+
+| floor | they stand at | what is upstairs |
+|-------|---------------|------------------|
+| F3 call_center | (340, 144) | F4 Ahmed - the axe, the slam, and the fire that answers running |
+| F7 innovation_lab | (232, 120) | F8 Mostafa - two fast, one slow, and the fire at half |
+| F11 executive_floor | (310, 97) | F12 Silverman - three phases, and no interrupts by the last |
+
+**A briefing is only information while the fight is still ahead**, which is the
+whole reason it is a beat on the floor BELOW rather than a line inside the boss
+room. It is also why the cue is the room being emptied rather than merely being
+quiet: a warning handed to somebody who has not yet fought is a warning about a
+floor they have not reached.
+
+**The north door is load-bearing twice.** Two of the three floors also have
+Ivan, who arrives on the SAME cue through the south door - and two people
+walking in at one threshold is two solid bodies in the same sixteen pixels,
+shoving each other out of it. It also says the thing each of them is for
+without a line of dialogue: he has come from where the player has been, and
+they have come from where the player is going.
+
+Her spot obeys the furniture rule on `at` alone, exactly as Ivan's does - off
+the door line (x 246-300), off the divider xs on the floors that have them, and
+far enough from Ivan's spot that the two are not standing on each other. The
+lines live in `game/npcs/dominique/before_<boss>.gd`, one file per floor, and
+`conversation` is placement: a floor names the warning it wants.
+
+`tests/test_dominique.gd` checks the beat and then checks the RULE - a briefing
+under every boss floor and under no other - by reading the whole chain off disk,
+so a fourth boss added later fails there rather than shipping unannounced.
 
 ## The pair that makes a boss fight annoying
 

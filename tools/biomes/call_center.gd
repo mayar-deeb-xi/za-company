@@ -41,6 +41,52 @@ const BIOME := {
 	# Not the `printer` in the catalogue - that one is a machine nobody can
 	# use, this is a machine nobody should touch.
 	"hazard": "copier",
+	# THE WIRING, and it is what makes this floor move. Four runs of cable
+	# trunking down the aisles, each one dull until it flares end to end and
+	# then puts something very fast down its length. Something in the room is
+	# going off roughly every six tenths of a second, and two of the four are
+	# usually in flight at once.
+	#
+	# It is on this floor rather than any other because of what it asks. The
+	# studio's dolly is one slow rig and what it wants is patience; this is the
+	# DENIAL floor, where two slowers take your movement away, and the honest
+	# threat for a room like that is one that punishes being slow rather than
+	# one that rewards waiting. A surge is a tax on crossing at the wrong
+	# moment - the head passes a standing player in a tenth of a second, well
+	# inside one grace window, so a run costs exactly one blow however it
+	# catches you and can never be a lane you are trapped in. That is what
+	# makes four of them fair, and why 8 sits under the copier's 10: the copier
+	# is one place you chose to stand in, these are four lanes you have to
+	# cross.
+	#
+	# Three things about the geometry, and the first is the rule:
+	#
+	# - **Every run stops clear of the door lane.** x 246-300 stays walkable top
+	#   to bottom on every floor, so the aisles are cut in two at the lane
+	#   rather than run across it: the west halves end at 232 and the east
+	#   halves start at 312. Splitting them is not a compromise - it DOUBLED
+	#   the number of runs, which is most of what makes the room feel busy.
+	# - **y 128 and y 224 are the aisles**, between the divider rows whose feet
+	#   are at 80 / 160 / 240. The northern pair sits on the top edge of the
+	#   central band rather than through it, so the 48 px of band the routing
+	#   fight needs is still there - it now has a metronome along one side.
+	#   Both clear Ivan at (208, 168) and Dominique at (340, 144), which matters
+	#   more than it looks: a conversation takes the player's hands, and being
+	#   zapped while somebody is talking to you is the one version of this that
+	#   would read as the game cheating.
+	# - **`after` is the only per-run number that is not geometry**, and the
+	#   four are spread across the cycle so no two neighbours fire in sequence -
+	#   the sparks appear to jump around the room rather than sweep it. Two of
+	#   the four run east-to-west for the same reason.
+	"surge": {
+		"speed": 260.0, "period": 2.4, "charge": 0.5, "damage": 8,
+		"runs": [
+			{"from": Vector2(24, 128), "to": Vector2(232, 128), "after": 0.0},
+			{"from": Vector2(520, 224), "to": Vector2(312, 224), "after": 0.6},
+			{"from": Vector2(312, 128), "to": Vector2(520, 128), "after": 1.2},
+			{"from": Vector2(232, 224), "to": Vector2(24, 224), "after": 1.8},
+		],
+	},
 	# The stations. Three ranks of them in the pockets the dividers leave, at
 	# x 112 / 192 / 352 / 432 with the two outer walls taking one each, so the
 	# room reads as a grid of identical seats - which is the whole of what a
@@ -121,4 +167,19 @@ const BIOME := {
 	# door line, and on the side of the room the fight tends to end on.
 	"relief": {"npc": "ivan", "from": "start", "at": Vector2(208, 168),
 		"say": "res://game/npcs/ivan/after_the_fight.gd"},
+	# The FOURTH beat, and this is the first floor to carry one: Dominique comes
+	# DOWN the north stairs - the ones the player is about to go up - to say what
+	# is waiting at the top. `from: "returned"` is the whole reason she is
+	# legible here: Ivan arrives on the same cue through the south door, and two
+	# people walking in at one threshold is two bodies shoving each other across
+	# the same sixteen pixels. Opposite doors also say the two things they are
+	# for - he has come from where you have been, she from where you are going.
+	#
+	# She stands east of the third divider rank, off the divider xs
+	# (72 / 152 / 232 / 312 / 392 / 472) and off the door line on the enemies'
+	# exact terms, in the pocket between the desk at (352, 104) and the one at
+	# (352, 264) - which is on the way to the north door rather than beside it,
+	# so walking past her is a decision rather than an accident.
+	"briefing": {"npc": "dominique", "from": "returned", "at": Vector2(340, 144),
+		"say": "res://game/npcs/dominique/before_ahmed.gd"},
 }

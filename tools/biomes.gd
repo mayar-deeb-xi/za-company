@@ -119,6 +119,37 @@ extends RefCounted
 ##            with nothing on it to hurt you. Omitted means "torch": a floor
 ##            that has no hazard says so, rather than the absence of a key
 ##            deciding it.
+##   studio   {take, rest, lead} in seconds - the floor's CLOCK, and the one
+##            key here that is a rhythm rather than a thing. A take rolls, the
+##            room's hazards go live, and between takes they are furniture. It
+##            carries no position because a rhythm is not anywhere. Everything
+##            that reads it finds it through the `studio` group and a floor
+##            without the key simply has nobody to find, so the props that can
+##            react to it stay exactly the props they were on every other
+##            floor - see game/levels/studio.gd. The content studio is the
+##            first and so far only floor that runs one.
+##   dolly    {from, to, speed, damage} - the one hazard in the game that
+##            MOVES, running between two points while a take is rolling and
+##            parked at `from` between them. A fixture like the torch: the
+##            level places it, not the props list. Two rules bind it, and the
+##            second is the one to check before authoring another: a rail must
+##            be drawn under it (the `rail` prop, authored to the same span,
+##            because a moving threat has to be legible before it arrives), and
+##            its span must not reach the door lane at x 246-300, which is the
+##            first thing in this game that could threaten that lane without
+##            ever being PLACED in it.
+##   surge    {speed, period, charge, damage, runs: [{from, to, after}]} - the
+##            OTHER moving hazard, and the one that comes in fours. A short
+##            racing a run of cable trunking: the conduit lies dull, flares end
+##            to end for `charge` seconds, then puts a head down its length at
+##            `speed`. Unlike everything else a level places it has no art -
+##            each node draws its own conduit AND its own spark from the two
+##            points it is given, so the lane the player reads and the lane that
+##            hurts cannot come apart, which is the thing that would otherwise
+##            need policing across six authored pairs. `after` staggers the runs
+##            and is the only per-run number that is not geometry. It obeys the
+##            dolly's rule too: no run may reach x 246-300. The call floor is
+##            the first and so far only one that is wired.
 ##   heart    true to stand a heal pickup in the room. Omitted means NO, and
 ##            that default is the rule rather than a convenience - only the
 ##            lobby hands one out, and from floor 2 up healing is Ivan's job.

@@ -1,0 +1,24 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://game/levels/dolly.gd" id="1_mk6x8"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_35jym"]
+_data = PackedByteArray("AAADAAUAAAABAAAAGAAAAB4AAAD2AAAAUklGRu4AAABXRUJQVlA4TOEAAAAvF0AHENegKJKk5nIETGKTNxaQghW1jSS12T+Dh5TYlIKiSJKay4lX+GEAFRT+BaAHAUnif2hzUbUPQEyBQAhGIEwBICJDJEyl8YEDSxAZU8w5sIRYrTV5aUTq7WXf7bzr/+OeFxxEkqRIV8f0zD/+lc5eLxmI6D8Dt20biW1vj3dYAMUU4H5w0jtcfmrpdcuBPIUTbZvo03Wqr6p7yba3qtNtqaeByGNK/3JhEbMz4bnve2ehW1exR6jiAenOaSbY0wywpmlhTtOQzkzdF/uH64jfl/APeJT7h4zT/0SWzAAA")
+size_override = Vector2(24, 30)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_j8pk0"]
+size = Vector2(22, 14)
+
+[node name="Dolly" type="Area2D" unique_id=675391421]
+monitorable = false
+script = ExtResource("1_mk6x8")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1710105812]
+position = Vector2(-12, -29)
+texture = SubResource("PortableCompressedTexture2D_35jym")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=566809530]
+position = Vector2(0, -7)
+shape = SubResource("RectangleShape2D_j8pk0")

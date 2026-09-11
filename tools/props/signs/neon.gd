@@ -18,6 +18,14 @@ const BLOCKS := Vector2.ZERO
 ## Fixed to the wall by its top-left corner, like every other sign.
 const PIN := Vector2i(0, 0)
 
+## Behaviour, on the sign itself rather than on an area under it: this is the
+## one thing on the studio's clock that does not hurt anybody. It is the tally
+## light - the tubes drop to a third between takes and come back up over the
+## cue, so the brightest object on a near-black wall says what the floor is
+## about to do. A floor that stands the sign without running a clock gets it at
+## full output, which is what it always was.
+const SCRIPT := "res://game/levels/on_air.gd"
+
 ## The eight neighbours the glow spreads into. A typed constant rather than an
 ## inline array, because the bloom pass adds them to a Vector2i and an untyped
 ## element makes that sum untyped too.

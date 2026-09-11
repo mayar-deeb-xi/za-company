@@ -23,8 +23,30 @@ extends RefCounted
 ##                                   corner - the nail it hangs from.
 ##   static func paint(spec) -> Image   the picture, in the biome's palette
 ##
-## fixtures/ (column, hazard, heart) is the shelf known() refuses: a level
-## places those itself, so they can be painted here but never listed as
+## Two more, both optional, for the props that grow BEHAVIOUR. Most never will -
+## a desk is a picture with a box under it - but build_levels.gd always said
+## these were coming ("the ones that grow some are hazards, and will carry
+## hazard_base.gd exactly the way the torch does"), and the studio's ring lights
+## are the first:
+##
+##   const SCRIPT := "res://..."     a script on the prop ITSELF. The neon sign
+##                                   uses it to read the studio clock and change
+##                                   what the wall is worth looking at.
+##   const BURNS  := Vector2(w, h)   a `Burn` Area2D of this size at the prop's
+##                                   foot, carrying BURN_SCRIPT (hazard_base.gd
+##                                   if the prop names none). The split from
+##                                   BLOCKS is not tidiness: a lamp blocks with
+##                                   its tripod and burns over a far wider patch
+##                                   of floor, and one node cannot be a solid
+##                                   body and a trigger at two different sizes.
+##
+## Both keep the rule every optional thing in this game keeps: a prop that
+## declares neither is exactly what it always was, and a script that finds
+## nothing to read does nothing - so a catalogue prop can grow behaviour on one
+## floor without becoming something every other floor has to think about.
+##
+## fixtures/ (column, hazard, heart, dolly) is the shelf known() refuses: a
+## level places those itself, so they can be painted here but never listed as
 ## furniture. _brush.gd is the shared painting kit, kept out of the catalogue
 ## by sitting at the root - only the shelves are scanned.
 ##
@@ -87,6 +109,26 @@ static func blocks(type: String) -> Vector2:
 	return _const(type, "BLOCKS", Vector2.ZERO)
 
 
+## The box a prop burns in, at its foot, or ZERO for the ones that only stand
+## there. Separate from blocks() because they are different sizes on the one
+## prop that has both - see the header.
+static func burns(type: String) -> Vector2:
+	return _const(type, "BURNS", Vector2.ZERO)
+
+
+## What drives that box. Defaults to the shared hazard, which is the honest
+## default: a thing that burns and says nothing else about itself burns the way
+## the torch does.
+static func burn_script(type: String) -> String:
+	return _const(type, "BURN_SCRIPT", "res://game/levels/hazard_base.gd")
+
+
+## A script on the prop itself, or "" for the overwhelming majority that are a
+## picture and a box.
+static func script_of(type: String) -> String:
+	return _const(type, "SCRIPT", "")
+
+
 ## Offset from the placement position to the art's top-left corner - what the
 ## Sprite2D's position has to be for the prop to stand where the level put it.
 static func offset(type: String) -> Vector2:
@@ -113,6 +155,13 @@ static func hazard(spec: Dictionary) -> Image:
 
 static func heart() -> Image:
 	return _painter("heart").paint()
+
+
+## The camera dolly, and it is a fixture for the same reason the torch is: the
+## level places it from its biome's own key rather than from the furniture list,
+## because what it is is a hazard that happens to be photogenic.
+static func dolly(spec: Dictionary) -> Image:
+	return _painter("dolly").paint(spec)
 
 
 ## Wraps a painted image as an embeddable texture. Every picture in this project
