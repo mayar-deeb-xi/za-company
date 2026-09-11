@@ -9,7 +9,6 @@ keep_compressed_buffer = true
 size = Vector2(16, 6)
 
 [node name="Toolbox" type="StaticBody2D" unique_id=2034414387]
-collision_layer = 2
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1362936647]
 position = Vector2(-10, -14)

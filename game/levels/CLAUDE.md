@@ -388,39 +388,47 @@ Five things are load-bearing:
   cannot be told where a random thing will be in three seconds; you can always
   be told where it is about to go next.
 
-It masks world AND clutter, unlike the enemies - a machine routed by the
-furniture that could drive through half of it would be a machine in a room that
-had had the chairs taken out. The reason enemies do not is `Props.clutter()`'s,
-and it does not apply here: a hunting enemy snagged on a pot plant is steered by
-arithmetic that cannot see the plant, while a machine with nowhere in particular
-to be just turns round, which is what it does at every other contact anyway.
+Everything solid stops it, chairs included - a machine routed by the furniture
+that could drive through half of it would be a machine in a room that had had
+the chairs taken out.
 
 `tests/test_scrubber.gd` owns it, and every check there is a property rather
 than a position - see the root CLAUDE.md's note on why the bump is staged.
 
-## Reinforcements - a room's second beat
+## Reinforcements - a room's later beats
 
 A floor with `reinforcements` in its biome gets one extra node,
 `Reinforcements`, holding the list as an export; a floor without the key gets no
-node at all, which today is the lobby alone. **Every other floor has one**, and
-the shape of a floor's beat is the shape of its lesson restated:
+node at all, which today is the lobby alone. **Every other floor has at least
+one, and the ordinary floors have two or three**, and the shape of a floor's
+beats is the shape of its lesson restated:
 
 | floor | cue | base group | `per_head` | in by |
 |-------|-----|------------|-----------|-------|
 | F1 lobby | — | *none: see below* | — | — |
 | F2 content_studio | 2 kills | 2 `social_media` | +1 `social_media` | south |
+| | 5 kills | boy + drain | +1 `social_media` | **north** |
 | F3 call_center | 3 kills | 2 `office_boy` | +1 `office_boy` | south |
+| | 7 kills | 2 `office_boy` | +1 `office_boy` | **north** |
 | F4 ahmed_office | HP 72 / 48 / 24 | drain+boy / **slow** / 2 drains | +drain / +boy / +drain | south |
 | F5 the_hub | 2 kills | 2 `office_boy` | +1 `office_boy` | south |
-| F6 marble_hall | 2 kills | 2 `office_boy` | +1 `office_boy` | **north** |
-| F7 innovation_lab | 2 kills | one of each | +1 `office_boy` | south |
+| | 6 kills | drain + boy | +1 `office_boy` | **north** |
+| F6 marble_hall | 3 kills | 2 `office_boy` | +1 `office_boy` | **north** |
+| | 6 kills | 2 `office_boy` | +1 `office_boy` | south |
+| F7 innovation_lab | 3 kills | one of each | +1 `office_boy` | south |
+| | 7 kills | boy + drain | +1 `office_boy` | **north** |
 | F8 conflict_resolution | HP 108 / 72 / 36 | 2 drains / **slow**+drain / 2 drains+**slow** | +drain / +boy / +drain | south |
 | F9 asset_recovery | 3 kills | 3 `office_boy` | +2 `office_boy` | south |
-| F10 hellfire | 4 kills | 2 `regular` + 1 `wraith` | +1 `regular` | **north** |
+| | 8 kills | 2 `office_boy` | +2 `office_boy` | **north** |
+| F10 hellfire | 3 kills | 2 `regular` + 1 `wraith` | +1 `regular` | **north** |
+| | 7 kills | `regular` + **`warden`** | +1 `regular` | south |
+| | 11 kills | `wraith` + `regular` | +1 `regular` | **north** |
 | F11 executive_floor | 4 kills | 1 `warden` + 2 `regular` | +1 `regular` | chokepoint |
+| | 9 kills | `regular` + drain | +1 `regular` | south |
+| | 13 kills | 2 `regular` | +1 `regular` | chokepoint |
 | F12 khaled_office | HP 144 / 96 / 48 | 2 drains / **slow**+boy / 2 drains+boy | +drain / +boy / +drain | south |
 
-Four of those rows carry something worth knowing:
+Five of those rows carry something worth knowing:
 
 - **F1 has no beat, and could not have one.** The lobby is deliberately the one
   room with nobody in it - the first thing a new player does is walk, and floor
@@ -436,6 +444,16 @@ Four of those rows carry something worth knowing:
   set them from his real `max_health` when the scene exists.
 - **F9 has the heaviest `per_head` in the game** (+2 rather than +1), because
   the crowd floor is the one whose lesson IS the head count.
+- **The ordinary floors carry two beats and the last two carry three, and they
+  ALTERNATE DOORS.** One beat per floor meant one surprise per floor: the room
+  spiked once and the player walked the rest of it knowing nothing else was
+  coming. A second beat cued later, arriving from the door the first did not,
+  is what stops a room being finished before it is over - and it costs nothing
+  a beat did not already cost, because `waves` was always a list and `from` was
+  always per-beat. F10 and F11 get a third because they are the last two
+  ordinary rooms in the building and the exam should be the fight that refuses
+  to end just before the one that has to. This is still not waves: every group
+  is authored, finite, and fires once. What repeats is the CUE, never the room.
 
 ## `per_head` - what a crowd brings, and what it never brings
 

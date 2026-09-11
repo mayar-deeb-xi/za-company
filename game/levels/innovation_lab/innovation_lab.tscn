@@ -75,21 +75,18 @@ position = Vector2(128, 58)
 
 [node name="Chair1" type="StaticBody2D" parent="Props" unique_id=1921376841 instance=ExtResource("8_136n4")]
 position = Vector2(128, 72)
-collision_layer = 2
 
 [node name="DevDesk2" type="StaticBody2D" parent="Props" unique_id=1597212553 instance=ExtResource("7_brfd6")]
 position = Vector2(204, 58)
 
 [node name="Chair2" type="StaticBody2D" parent="Props" unique_id=1921376842 instance=ExtResource("8_136n4")]
 position = Vector2(204, 72)
-collision_layer = 2
 
 [node name="BuildBoard1" type="Node2D" parent="Props" unique_id=933858010 instance=ExtResource("9_lba7j")]
 position = Vector2(330, 18)
 
 [node name="Cooler1" type="StaticBody2D" parent="Props" unique_id=1419056454 instance=ExtResource("10_nb7p5")]
 position = Vector2(316, 58)
-collision_layer = 2
 
 [node name="ServerRack1" type="StaticBody2D" parent="Props" unique_id=1610588506 instance=ExtResource("11_qkheg")]
 position = Vector2(410, 56)
@@ -99,43 +96,36 @@ position = Vector2(436, 56)
 
 [node name="PcTower1" type="StaticBody2D" parent="Props" unique_id=202990854 instance=ExtResource("12_iklo5")]
 position = Vector2(462, 52)
-collision_layer = 2
 
 [node name="Coffee1" type="StaticBody2D" parent="Props" unique_id=1408167114 instance=ExtResource("13_h8j1c")]
 position = Vector2(500, 58)
-collision_layer = 2
 
 [node name="DevDesk3" type="StaticBody2D" parent="Props" unique_id=1597212554 instance=ExtResource("7_brfd6")]
 position = Vector2(400, 100)
 
 [node name="Chair3" type="StaticBody2D" parent="Props" unique_id=1921376843 instance=ExtResource("8_136n4")]
 position = Vector2(400, 114)
-collision_layer = 2
 
 [node name="DevDesk4" type="StaticBody2D" parent="Props" unique_id=1597212555 instance=ExtResource("7_brfd6")]
 position = Vector2(52, 252)
 
 [node name="Chair4" type="StaticBody2D" parent="Props" unique_id=1921376844 instance=ExtResource("8_136n4")]
 position = Vector2(52, 266)
-collision_layer = 2
 
 [node name="DevDesk5" type="StaticBody2D" parent="Props" unique_id=1597212556 instance=ExtResource("7_brfd6")]
 position = Vector2(128, 252)
 
 [node name="Chair5" type="StaticBody2D" parent="Props" unique_id=1921376845 instance=ExtResource("8_136n4")]
 position = Vector2(128, 266)
-collision_layer = 2
 
 [node name="DevDesk6" type="StaticBody2D" parent="Props" unique_id=1597212557 instance=ExtResource("7_brfd6")]
 position = Vector2(204, 252)
 
 [node name="Chair6" type="StaticBody2D" parent="Props" unique_id=1921376846 instance=ExtResource("8_136n4")]
 position = Vector2(204, 266)
-collision_layer = 2
 
 [node name="CableSpool1" type="StaticBody2D" parent="Props" unique_id=830962694 instance=ExtResource("14_eupxc")]
 position = Vector2(36, 200)
-collision_layer = 2
 
 [node name="Debris1" type="Node2D" parent="Props" unique_id=156489883 instance=ExtResource("15_duyj6")]
 position = Vector2(100, 208)
@@ -148,7 +138,6 @@ position = Vector2(120, 196)
 
 [node name="Plant1" type="StaticBody2D" parent="Props" unique_id=287402497 instance=ExtResource("17_y00u2")]
 position = Vector2(330, 120)
-collision_layer = 2
 
 [node name="Debris3" type="Node2D" parent="Props" unique_id=156489885 instance=ExtResource("15_duyj6")]
 position = Vector2(340, 230)
@@ -158,7 +147,6 @@ position = Vector2(400, 210)
 
 [node name="Chair7" type="StaticBody2D" parent="Props" unique_id=1921376847 instance=ExtResource("8_136n4")]
 position = Vector2(400, 224)
-collision_layer = 2
 
 [node name="Sofa1" type="StaticBody2D" parent="Props" unique_id=988508619 instance=ExtResource("18_fyopj")]
 position = Vector2(360, 262)
@@ -168,11 +156,9 @@ position = Vector2(360, 282)
 
 [node name="Plant2" type="StaticBody2D" parent="Props" unique_id=287402498 instance=ExtResource("17_y00u2")]
 position = Vector2(420, 258)
-collision_layer = 2
 
 [node name="DeadPlant1" type="StaticBody2D" parent="Props" unique_id=110444879 instance=ExtResource("20_3xjfi")]
 position = Vector2(500, 250)
-collision_layer = 2
 
 [node name="Debris4" type="Node2D" parent="Props" unique_id=156489886 instance=ExtResource("15_duyj6")]
 position = Vector2(470, 196)
@@ -183,11 +169,20 @@ motion_mode = 1
 script = ExtResource("22_eknys")
 
 [node name="Enemy2" type="CharacterBody2D" parent="Props" unique_id=2006911489 groups=["enemies"] instance=ExtResource("21_7wnlv")]
-position = Vector2(424, 84)
+position = Vector2(56, 88)
 motion_mode = 1
 script = ExtResource("22_eknys")
 
 [node name="Enemy3" type="CharacterBody2D" parent="Props" unique_id=2006911490 groups=["enemies"] instance=ExtResource("23_l5ags")]
+position = Vector2(100, 140)
+motion_mode = 1
+script = ExtResource("24_0f52c")
+max_health = 17
+contact_damage = 0
+speed = 45.0
+sight_radius = 120.0
+
+[node name="Enemy4" type="CharacterBody2D" parent="Props" unique_id=2006911491 groups=["enemies"] instance=ExtResource("23_l5ags")]
 position = Vector2(76, 236)
 motion_mode = 1
 script = ExtResource("24_0f52c")
@@ -196,7 +191,31 @@ contact_damage = 0
 speed = 45.0
 sight_radius = 120.0
 
-[node name="Enemy4" type="CharacterBody2D" parent="Props" unique_id=2006911491 groups=["enemies"] instance=ExtResource("25_uevop")]
+[node name="Enemy5" type="CharacterBody2D" parent="Props" unique_id=2006911492 groups=["enemies"] instance=ExtResource("21_7wnlv")]
+position = Vector2(150, 230)
+motion_mode = 1
+script = ExtResource("22_eknys")
+
+[node name="Enemy6" type="CharacterBody2D" parent="Props" unique_id=2006911493 groups=["enemies"] instance=ExtResource("21_7wnlv")]
+position = Vector2(424, 84)
+motion_mode = 1
+script = ExtResource("22_eknys")
+
+[node name="Enemy7" type="CharacterBody2D" parent="Props" unique_id=2006911494 groups=["enemies"] instance=ExtResource("21_7wnlv")]
+position = Vector2(470, 120)
+motion_mode = 1
+script = ExtResource("22_eknys")
+
+[node name="Enemy8" type="CharacterBody2D" parent="Props" unique_id=2006911495 groups=["enemies"] instance=ExtResource("23_l5ags")]
+position = Vector2(430, 180)
+motion_mode = 1
+script = ExtResource("24_0f52c")
+max_health = 17
+contact_damage = 0
+speed = 45.0
+sight_radius = 120.0
+
+[node name="Enemy9" type="CharacterBody2D" parent="Props" unique_id=2006911496 groups=["enemies"] instance=ExtResource("25_uevop")]
 position = Vector2(456, 236)
 motion_mode = 1
 script = ExtResource("26_or2d0")
@@ -238,9 +257,14 @@ position = Vector2(272, 80)
 [node name="Reinforcements" type="Node2D" parent="." unique_id=521812463]
 script = ExtResource("31_pp2q5")
 waves = [{
-"after_kills": 2,
+"after_kills": 3,
 "enemies": ["office_boy", "social_media", "call_center"],
 "from": "start",
+"per_head": ["office_boy"]
+}, {
+"after_kills": 7,
+"enemies": ["office_boy", "social_media"],
+"from": "returned",
 "per_head": ["office_boy"]
 }]
 

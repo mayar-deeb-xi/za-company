@@ -28,12 +28,6 @@ func _initialize() -> void:
 	ProjectSettings.set_setting("display/window/size/window_width_override", 1920)
 	ProjectSettings.set_setting("display/window/size/window_height_override", 1080)
 
-	# Two physics layers, because the small furniture is solid to the player and
-	# not to the things hunting them - tools/props.gd's clutter() has the why.
-	# Named here so the editor's layer grid reads as words rather than numbers.
-	ProjectSettings.set_setting("layer_names/2d_physics/layer_1", "world")
-	ProjectSettings.set_setting("layer_names/2d_physics/layer_2", "clutter")
-
 	# Physical keycodes so WASD stays positional on non-QWERTY layouts.
 	ProjectSettings.set_setting("input/move_up", _action([_key(KEY_W), _key(KEY_UP)]))
 	ProjectSettings.set_setting("input/move_down", _action([_key(KEY_S), _key(KEY_DOWN)]))

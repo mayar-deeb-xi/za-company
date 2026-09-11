@@ -42,7 +42,6 @@ position = Vector2(32, 18)
 
 [node name="Chair1" type="StaticBody2D" parent="Props" unique_id=1341760907 instance=ExtResource("4_usd7h")]
 position = Vector2(150, 100)
-collision_layer = 2
 
 [node name="ExecDesk1" type="StaticBody2D" parent="Props" unique_id=603848880 instance=ExtResource("5_kkrdu")]
 position = Vector2(150, 136)
@@ -52,11 +51,9 @@ position = Vector2(174, 138)
 
 [node name="Plant1" type="StaticBody2D" parent="Props" unique_id=1855270211 instance=ExtResource("7_djto5")]
 position = Vector2(36, 104)
-collision_layer = 2
 
 [node name="Plant2" type="StaticBody2D" parent="Props" unique_id=1855270212 instance=ExtResource("7_djto5")]
 position = Vector2(508, 104)
-collision_layer = 2
 
 [node name="Table1" type="StaticBody2D" parent="Props" unique_id=1998799916 instance=ExtResource("8_keke3")]
 position = Vector2(430, 108)
@@ -66,7 +63,6 @@ position = Vector2(164, 170)
 
 [node name="Plant3" type="StaticBody2D" parent="Props" unique_id=1855270213 instance=ExtResource("7_djto5")]
 position = Vector2(36, 210)
-collision_layer = 2
 
 [node name="Sofa1" type="StaticBody2D" parent="Props" unique_id=124966093 instance=ExtResource("10_83wwc")]
 position = Vector2(60, 250)

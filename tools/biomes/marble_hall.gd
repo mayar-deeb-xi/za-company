@@ -14,28 +14,49 @@ const BIOME := {
 	# the lobby's polisher, and the floors that still have one are the two
 	# office floors and hellfire.
 	"hazard": "none",
-	# Four guards, one to a corner rather than a line across the top, so they
-	# can be picked off one at a time instead of arriving as a wall.
+	# TWO GANGS, not four corners. The old arrangement stood one guard in each
+	# corner, which reads as an arrangement and plays as four separate duels:
+	# no spot on this floor was inside two sight radii at once, so the player
+	# fought 24 HP, walked, fought 24 HP, and never once had to choose which
+	# one to answer. Four knots of one is not a crowd, it is a queue.
 	#
-	# `office_boy`, not `regular`, and the same four positions: the reskin IS
-	# the guard - 24 HP, the same cycle, the same numbers - so this is a change
-	# of costume and nothing else. It is the rule the whole building follows,
-	# and this floor was the last one breaking it: the reskins are the company's
-	# staff and hold floors 1-9, and the originals appear only from hellfire up,
-	# where the building stops pretending to be an office.
+	# So they pair off into a west gang and an east gang of four, each standing
+	# close enough that their 80 px looks overlap - anywhere in the middle of
+	# either knot wakes all four. The room still has a safe middle and the
+	# straight walk between the doors is still clear; what it no longer has is
+	# a way to take them one at a time by default.
+	#
+	# `office_boy`, not `regular`: the reskin IS the guard - 24 HP, the same
+	# cycle, the same numbers - so this is a change of costume and nothing else.
+	# The reskins are the company's staff and hold floors 1-9, and the originals
+	# appear only from hellfire up, where the building stops pretending to be an
+	# office.
 	"enemies": [
-		{"type": "office_boy", "at": Vector2(64, 48)},
-		{"type": "office_boy", "at": Vector2(480, 48)},
-		{"type": "office_boy", "at": Vector2(150, 264)},
-		{"type": "office_boy", "at": Vector2(400, 264)},
+		# The west gang, knotted around (95, 100).
+		{"type": "office_boy", "at": Vector2(56, 64)},
+		{"type": "office_boy", "at": Vector2(128, 72)},
+		{"type": "office_boy", "at": Vector2(64, 132)},
+		{"type": "office_boy", "at": Vector2(132, 136)},
+		# The east gang, the same shape mirrored about (440, 200).
+		{"type": "office_boy", "at": Vector2(404, 160)},
+		{"type": "office_boy", "at": Vector2(472, 168)},
+		{"type": "office_boy", "at": Vector2(408, 236)},
+		{"type": "office_boy", "at": Vector2(476, 240)},
 	],
-	# In by the NORTH door, which is the one thing this beat does that the
-	# others do not: it arrives from the way OUT. Half the room is dead, the
-	# stairs are in sight, and two more come down them - so the floor's own
-	# lesson (they arrive one at a time, not as a wall) is restated from the
-	# direction the player has stopped watching.
+	# Two beats rather than one, and they arrive from opposite doors. The first
+	# is the old one: in by the NORTH door, the way OUT, so half the room is
+	# dead, the stairs are in sight, and two more come down them - the floor
+	# answered from the direction the player has stopped watching.
+	#
+	# The second comes by the SOUTH door, the way IN, once the second gang is
+	# broken. A floor with one beat has one surprise in it and the player walks
+	# the rest of the room; two from two doors means it is not over until the
+	# room says so.
 	"reinforcements": [
-		{"after_kills": 2, "from": "returned",
+		{"after_kills": 3, "from": "returned",
+			"enemies": ["office_boy", "office_boy"],
+			"per_head": ["office_boy"]},
+		{"after_kills": 6, "from": "start",
 			"enemies": ["office_boy", "office_boy"],
 			"per_head": ["office_boy"]},
 	],

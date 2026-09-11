@@ -12,9 +12,6 @@ const Brush := preload("../_brush.gd")
 
 const SIZE := Vector2i(18, 46)
 const BLOCKS := Vector2(12, 6)
-## Small enough to be a snag rather than cover, so the enemies walk through
-## it and the player does not - tools/props.gd's clutter().
-const CLUTTER := true
 
 
 static func paint(spec: Dictionary) -> Image:

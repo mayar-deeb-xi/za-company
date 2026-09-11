@@ -13,9 +13,6 @@ const SOIL := Color("42301f")
 
 const SIZE := Vector2i(20, 24)
 const BLOCKS := Vector2(12, 5)
-## Small enough to be a snag rather than cover, so the enemies walk through
-## it and the player does not - tools/props.gd's clutter().
-const CLUTTER := true
 
 
 static func paint(spec: Dictionary) -> Image:

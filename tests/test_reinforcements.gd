@@ -251,9 +251,9 @@ func _baked() -> void:
 		node != null)
 	if node != null:
 		var waves: Array = node.get("waves")
-		_check("reinforcements: its one beat came back off disk (%d)"
-			% waves.size(), waves.size() == 1)
-		if waves.size() == 1:
+		_check("reinforcements: both beats came back off disk (%d)"
+			% waves.size(), waves.size() == 2)
+		if waves.size() == 2:
 			var beat: Dictionary = waves[0]
 			_check("reinforcements: three boys at three kills, by the south door (%s)"
 				% beat,
@@ -266,6 +266,16 @@ func _baked() -> void:
 			_check("reinforcements: and two more per head, boys only (%s)"
 				% [beat.get("per_head", [])],
 				beat.get("per_head", []) == ["office_boy", "office_boy"])
+			# The second beat comes down the NORTH stairs, and that is the half of
+			# the round trip one beat could never check: `from` is per-beat, so a
+			# generator collapsing the list onto the first beat's door would leave
+			# every check above passing and the room still arriving from one side.
+			var late: Dictionary = waves[1]
+			_check("reinforcements: and two more at eight kills, by the north door (%s)"
+				% late,
+				int(late.get("after_kills", 0)) == 8
+					and String(late.get("from", "")) == "returned"
+					and late.get("enemies", []) == ["office_boy", "office_boy"])
 	room.free()
 	# The health cue makes the same round trip, and a boss floor is where an
 	# empty array would be invisible: the room looks right, the boss fights,

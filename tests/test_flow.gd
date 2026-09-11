@@ -304,21 +304,37 @@ func _tick(frame: int) -> void:
 			# the first floor above the lobby, where the rule first bites.
 			_check("level: no heart above the lobby",
 				_level().get_node_or_null("Props/Health") == null)
-			# Three drain fields and the one fight inside one of them. The two
-			# on the west are 136 px apart against a 120 px reach, so their
-			# fields overlap over the fallen ring light at (120, 152) - which is
-			# this floor's routing lesson, and it stops being true the moment
-			# either is nudged apart.
-			_check("enemies: the studio fields three drains and a boy (%s)"
-				% [_cast()], _cast() == ["office_boy", "social_media",
+			# Four drain fields and the two fights inside one of them. The west
+			# side is a POCKET rather than a picket, and the property below is what
+			# that means: there is a spot over there where all four of the west's
+			# bodies can see the player at once. Four spread across a half is four
+			# errands; four whose fields share a point is a fight, and it is the
+			# floor's routing lesson - the fallen ring light at (120, 152) sits
+			# under it. It stops being true the moment any of them is nudged out.
+			_check("enemies: the studio fields four drains and three boys (%s)"
+				% [_cast()], _cast() == ["office_boy", "office_boy",
+					"office_boy", "social_media", "social_media",
 					"social_media", "social_media"])
 			var west: Array = get_nodes_in_group("enemies").filter(
 				func(n: Node2D) -> bool:
 					return n.position.x < 160.0)
-			_check("enemies: and the two western fields still overlap (%d west)"
-				% west.size(),
-				west.size() == 2 and (west[0] as Node2D).position.distance_to(
-					(west[1] as Node2D).position) < 240.0)
+			var together := false
+			for px in range(16, 160, 4):
+				for py in range(16, 288, 4):
+					var at := Vector2(px, py)
+					var all_see := true
+					for n in west:
+						var d := (n as Node2D).position.distance_to(at)
+						if d > float(n.get("sight_radius")):
+							all_see = false
+							break
+					if all_see:
+						together = true
+						break
+				if together:
+					break
+			_check("enemies: and the four western fields share a spot (%d west)"
+				% west.size(), west.size() == 4 and together)
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		501:
@@ -366,11 +382,13 @@ func _tick(frame: int) -> void:
 			# machine nobody should touch. Both are in this room.
 			_check("level: the jammed copier is standing in the room",
 				_level().get_node_or_null("Props/Torch") != null)
-			# Two slowers and three boys, and the PAIR is the lesson - so when
-			# this floor's weight needs trimming it loses a boy, never one of
-			# these.
-			_check("enemies: the call floor fields the pair and three boys (%s)"
+			# Two slowers and seven boys, and the PAIR is still the lesson - so
+			# when this floor's weight needs trimming it loses a boy, never one of
+			# these. The boys went up because a slow the player can walk off before
+			# reaching the next body is the lesson cancelling itself out.
+			_check("enemies: the call floor fields the pair and seven boys (%s)"
 				% [_cast()], _cast() == ["call_center", "call_center",
+					"office_boy", "office_boy", "office_boy", "office_boy",
 					"office_boy", "office_boy", "office_boy"])
 			# Nobody parked behind a divider's 48 px of panel. Eighteen dividers
 			# is eighteen chances to make an enemy invisible rather than merely
@@ -381,7 +399,7 @@ func _tick(frame: int) -> void:
 						if absf(n.position.x - float(x)) < 24.0 								and n.position.y < 160.0:
 							return true
 					return false)
-			_check("enemies: none of the five hides behind a divider (%d)"
+			_check("enemies: none of the nine hides behind a divider (%d)"
 				% hidden.size(), hidden.is_empty())
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
@@ -476,9 +494,10 @@ func _tick(frame: int) -> void:
 			# drains are INSIDE the glass offices - which is what makes each
 			# office a decision rather than dressing, since the only way in is
 			# through its one 32 px gap.
-			_check("enemies: the hub fields a slower west, two drains east (%s)"
-				% [_cast()], _cast() == ["call_center", "social_media",
-					"social_media"])
+			_check("enemies: the hub fields a slower, four boys, three drains (%s)"
+				% [_cast()], _cast() == ["call_center", "office_boy",
+					"office_boy", "office_boy", "office_boy", "social_media",
+					"social_media", "social_media"])
 			var east: Array = get_nodes_in_group("enemies").filter(
 				func(n: Node2D) -> bool:
 					return n.position.x > 300.0 						and n.scene_file_path.contains("social_media"))
@@ -521,14 +540,16 @@ func _tick(frame: int) -> void:
 			_check("door: the chain continues on into the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "MarbleHall")
-			# Four guards, and they are the RESKIN. This floor was the last one
+			# Eight guards in two gangs, and they are the RESKIN. This floor was
+			# the last one
 			# outside hellfire and the exam still fielding an original, and the
 			# retype is the building's rule made whole: the reskins are the
 			# company's staff and hold floors 1-9, the originals appear only
 			# from hellfire up. Mechanically identical - the same 24 HP, the
 			# same cycle - so this check is about the costume and nothing else.
-			_check("enemies: the marble hall fields four office boys (%s)"
+			_check("enemies: the marble hall fields eight office boys (%s)"
 				% [_cast()], _cast() == ["office_boy", "office_boy",
+					"office_boy", "office_boy", "office_boy", "office_boy",
 					"office_boy", "office_boy"])
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
@@ -559,13 +580,17 @@ func _tick(frame: int) -> void:
 			_check("level: it has the power strip and no heart",
 				_level().get_node_or_null("Props/Torch") != null
 					and _level().get_node_or_null("Props/Health") == null)
-			# THE FIRST ONE-OF-EACH MIX, one body to a quadrant. This floor had
+			# THE FIRST ONE-OF-EACH MIX, and the quadrants are PAIRS now - the lap
+			# check below still holds, which is the point: the room is still a lap,
+			# it just no longer offers to be walked one body at a time. This floor
+			# had
 			# no mechanic assigned, and being the first room that asks for all
 			# three answers at once IS the mechanic - which is also what earns
 			# the executive floor as its exam, the same fight one rank bigger.
-			_check("enemies: the lab fields one of each, two boys (%s)"
+			_check("enemies: the lab fields a slower, five boys, three drains (%s)"
 				% [_cast()], _cast() == ["call_center", "office_boy",
-					"office_boy", "social_media"])
+					"office_boy", "office_boy", "office_boy", "office_boy",
+					"social_media", "social_media", "social_media"])
 			var quadrants := {}
 			for n in get_nodes_in_group("enemies"):
 				var at: Vector2 = (n as Node2D).position
@@ -651,9 +676,9 @@ func _tick(frame: int) -> void:
 			var boys := get_nodes_in_group("enemies")
 			var reskinned: Array = boys.filter(func(e: Node) -> bool:
 				return e.scene_file_path.contains("office_boy"))
-			_check("enemies: asset recovery fields four office boys (%d of %d)"
+			_check("enemies: asset recovery fields ten office boys (%d of %d)"
 				% [reskinned.size(), boys.size()],
-				boys.size() == 4 and reskinned.size() == 4)
+				boys.size() == 10 and reskinned.size() == 10)
 			_check("enemies: an office boy is a reskin, so it has a guard's health (%s)"
 				% (boys[0].get("max_health") if not boys.is_empty() else "<none>"),
 				not boys.is_empty() and boys[0].get("max_health") == 24)
@@ -694,10 +719,10 @@ func _tick(frame: int) -> void:
 			var slowers := here.filter(func(e): return e.get("slow_seconds") != null)
 			_check("enemies: hellfire fields all three types (%d: %dD %dS)"
 				% [here.size(), drainers.size(), slowers.size()],
-				here.size() == 7 and drainers.size() == 2 and slowers.size() == 1)
+				here.size() == 10 and drainers.size() == 3 and slowers.size() == 1)
 			# Straight on through, and the walk is the check: hellfire keeps
-			# every sight radius off the door line like every other floor, so
-			# seven enemies in the room still let the player cross it.
+			# every sight radius off the door line like every other floor, so ten
+			# enemies in the room still let the player cross it.
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		1161:
@@ -739,8 +764,9 @@ func _tick(frame: int) -> void:
 			# stops pretending to be an office, so this floor and the one below
 			# it are the only two that field the originals. A reskin appearing
 			# here is the rule quietly broken.
-			_check("enemies: the exam fields six originals, masks off (%s)"
+			_check("enemies: the exam fields eleven originals, masks off (%s)"
 				% [_cast()], _cast() == ["regular", "regular", "regular",
+					"regular", "regular", "regular", "regular", "warden",
 					"warden", "wraith", "wraith"])
 			# THE INVARIANT THE WHOLE CHAIN RESTS ON, checked on the floor with
 			# the most people standing on it: no placed enemy's sight reaches
@@ -753,7 +779,7 @@ func _tick(frame: int) -> void:
 				func(n: Node2D) -> bool:
 					return maxf(246.0 - n.position.x, n.position.x - 300.0) \
 						<= float(n.get("sight_radius")))
-			_check("enemies: none of the six sees the door lane (%s)"
+			_check("enemies: none of the eleven sees the door lane (%s)"
 				% [seeing.map(func(n: Node) -> String: return n.name)],
 				seeing.is_empty())
 			# Both drains belong IN the north half, and this is a placement
@@ -778,12 +804,13 @@ func _tick(frame: int) -> void:
 			# looser check.
 			var beat := _level().get_node_or_null("Reinforcements")
 			var waves: Array = [] if beat == null else beat.get("waves")
-			_check("beat: a late group is authored, in by the chokepoint (%s)"
+			_check("beat: three late groups, the first and last by the chokepoint (%s)"
 				% [waves],
-				waves.size() == 1 and waves[0].get("from", "") == "chokepoint"
+				waves.size() == 3 and waves[0].get("from", "") == "chokepoint"
 					and waves[0].get("enemies", [])
 						== ["warden", "regular", "regular"]
-					and waves[0].get("per_head", []) == ["regular"])
+					and waves[0].get("per_head", []) == ["regular"]
+					and waves[2].get("from", "") == "chokepoint")
 			_check("beat: and the chokepoint marker exists to arrive at (%s)"
 				% _level().call("spawn_position", &"chokepoint"),
 				_level().call("spawn_position", &"chokepoint")

@@ -144,29 +144,45 @@ const BIOME := {
 	#
 	# The room is two rooms and the composition is that split, not a spread:
 	#
-	# BEHIND THE GLASS, one drain per half, and this is what makes the trophy
-	# wall a decision - every awards cabinet is inside a radius, so DESIGN.md's
-	# "every prize requires stepping into a radius on purpose" is drawn rather
-	# than described. Both belong IN the north half: an enemy on the far side
-	# of the partitioning from the player grinds along it instead of coming
-	# round through the gap, so whoever guards a half has to start in it.
+	# BEHIND THE GLASS, a drain per half with guards standing in it, and this is
+	# what makes the trophy wall a decision - every awards cabinet is inside a
+	# radius, so DESIGN.md's "every prize requires stepping into a radius on
+	# purpose" is drawn rather than described. Both drains belong IN the north
+	# half: an enemy on the far side of the partitioning from the player grinds
+	# along it instead of coming round through the gap, so whoever guards a half
+	# has to start in it.
 	#
-	# IN THE GALLERY, the three guards and the warden you arrive into. The
-	# warden is south-west rather than at the chokepoint because the chokepoint
-	# is on the door line and nothing may be placed there - see the beat below,
-	# which is the only legal way to put a body at this floor's own idea.
+	# IN THE GALLERY, the guards and two wardens. The first warden is south-west
+	# rather than at the chokepoint because the chokepoint is on the door line
+	# and nothing may be placed there - see the beat below, which is the only
+	# legal way to put a body at this floor's own idea.
+	#
+	# It is the exam, so it is the one floor where BOTH halves are crowds rather
+	# than pickets: the north half cannot be entered without waking a drain and
+	# a guard together, and the south half answers with a warden in the middle
+	# of it. Nothing on this floor is a duel, which is the whole difference
+	# between an exam and a lap.
 	#
 	# Every x here clears the door lane's edges (246 / 300) by its own sight
-	# radius: 80 for a guard, 120 for a wraith, 130 for the warden. That is the
+	# radius: 80 for a guard, 120 for a wraith, 130 for a warden. That is the
 	# constraint that decides these positions, and it is why none of them is
 	# where the room would otherwise want them.
 	"enemies": [
-		{"type": "wraith", "at": Vector2(60, 96)},    # the boardroom
-		{"type": "wraith", "at": Vector2(486, 98)},   # the trophy wall
+		# Behind the glass: the boardroom.
+		{"type": "wraith", "at": Vector2(60, 96)},
+		{"type": "regular", "at": Vector2(52, 56)},
+		{"type": "regular", "at": Vector2(150, 60)},
+		# Behind the glass: the trophy wall.
+		{"type": "wraith", "at": Vector2(486, 98)},
+		{"type": "regular", "at": Vector2(400, 96)},
+		# The gallery, west.
 		{"type": "warden", "at": Vector2(64, 232)},
 		{"type": "regular", "at": Vector2(136, 180)},
 		{"type": "regular", "at": Vector2(144, 268)},
+		# The gallery, east.
+		{"type": "warden", "at": Vector2(470, 200)},
 		{"type": "regular", "at": Vector2(408, 252)},
+		{"type": "regular", "at": Vector2(492, 252)},
 	],
 	# The mouth of the gap, and SOUTH of the glass on purpose. Enemies slide off
 	# what they hit and have no pathfinding, so a warden arriving on the far
@@ -180,12 +196,24 @@ const BIOME := {
 	# twice, which is this floor's lesson restated, which is the only reason a
 	# floor gets a beat at all.
 	"spawns": {"chokepoint": Vector2(272, 168)},
-	# The floor's own idea arriving late. Four kills is two thirds of the
-	# gallery, so it fires once the half you arrive into is broken - never
-	# during the first fight, and never after the room is already clear.
+	# The floor's own idea arriving late, three times. Four kills is most of one
+	# half, so the first fires once the side the player arrived into is broken -
+	# never during the opening fight, and never after the room is already clear.
+	#
+	# The second comes up the south stairs behind them, and the third back
+	# through the chokepoint once the room is nearly answered. Three beats is
+	# what the last ordinary room in the building gets: the penthouse is above
+	# this floor, and the exam should be the fight that refuses to end just
+	# before the one that has to.
 	"reinforcements": [
 		{"after_kills": 4, "from": "chokepoint",
 			"enemies": ["warden", "regular", "regular"],
+			"per_head": ["regular"]},
+		{"after_kills": 9, "from": "start",
+			"enemies": ["regular", "wraith"],
+			"per_head": ["regular"]},
+		{"after_kills": 13, "from": "chokepoint",
+			"enemies": ["regular", "regular"],
 			"per_head": ["regular"]},
 	],
 	# No debris anywhere, and that is a choice rather than an omission. Every

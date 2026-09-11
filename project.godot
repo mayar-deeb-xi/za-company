@@ -79,11 +79,6 @@ interact={
 ]
 }
 
-[layer_names]
-
-2d_physics/layer_1="world"
-2d_physics/layer_2="clutter"
-
 [physics]
 
 3d/physics_engine="Jolt Physics"

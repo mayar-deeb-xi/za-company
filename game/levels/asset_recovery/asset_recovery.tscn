@@ -106,11 +106,9 @@ rotation = -0.09
 
 [node name="Cooler1" type="StaticBody2D" parent="Props" unique_id=717416476 instance=ExtResource("10_4ngq2")]
 position = Vector2(452, 48)
-collision_layer = 2
 
 [node name="DeadPlant1" type="StaticBody2D" parent="Props" unique_id=1027550309 instance=ExtResource("11_6d1y5")]
 position = Vector2(492, 96)
-collision_layer = 2
 
 [node name="CrtStack1" type="StaticBody2D" parent="Props" unique_id=1937511831 instance=ExtResource("12_6ws6a")]
 position = Vector2(44, 128)
@@ -120,30 +118,24 @@ position = Vector2(44, 176)
 
 [node name="PcTower1" type="StaticBody2D" parent="Props" unique_id=671191708 instance=ExtResource("13_wd670")]
 position = Vector2(44, 208)
-collision_layer = 2
 
 [node name="CableSpool1" type="StaticBody2D" parent="Props" unique_id=1030670812 instance=ExtResource("14_ineg6")]
 position = Vector2(492, 130)
-collision_layer = 2
 
 [node name="ScrapPile3" type="StaticBody2D" parent="Props" unique_id=587462301 instance=ExtResource("7_1xl7j")]
 position = Vector2(492, 178)
 
 [node name="Toolbox1" type="StaticBody2D" parent="Props" unique_id=863856127 instance=ExtResource("15_dijs4")]
 position = Vector2(490, 212)
-collision_layer = 2
 
 [node name="Toolbox2" type="StaticBody2D" parent="Props" unique_id=863856128 instance=ExtResource("15_dijs4")]
 position = Vector2(196, 96)
-collision_layer = 2
 
 [node name="PcTower2" type="StaticBody2D" parent="Props" unique_id=671191709 instance=ExtResource("13_wd670")]
 position = Vector2(330, 96)
-collision_layer = 2
 
 [node name="Toolbox3" type="StaticBody2D" parent="Props" unique_id=863856129 instance=ExtResource("15_dijs4")]
 position = Vector2(452, 108)
-collision_layer = 2
 
 [node name="ScrapPile4" type="StaticBody2D" parent="Props" unique_id=587462302 instance=ExtResource("7_1xl7j")]
 position = Vector2(76, 108)
@@ -156,11 +148,9 @@ position = Vector2(392, 128)
 
 [node name="PcTower3" type="StaticBody2D" parent="Props" unique_id=671191710 instance=ExtResource("13_wd670")]
 position = Vector2(176, 188)
-collision_layer = 2
 
 [node name="CableSpool2" type="StaticBody2D" parent="Props" unique_id=1030670813 instance=ExtResource("14_ineg6")]
 position = Vector2(400, 190)
-collision_layer = 2
 
 [node name="Debris1" type="Node2D" parent="Props" unique_id=1602333553 instance=ExtResource("16_ua1ju")]
 position = Vector2(250, 140)
@@ -188,32 +178,27 @@ position = Vector2(72, 268)
 
 [node name="Chair1" type="StaticBody2D" parent="Props" unique_id=1379512927 instance=ExtResource("18_somc0")]
 position = Vector2(72, 282)
-collision_layer = 2
 
 [node name="Desk2" type="StaticBody2D" parent="Props" unique_id=1604707424 instance=ExtResource("17_s5pbk")]
 position = Vector2(196, 268)
 
 [node name="Chair2" type="StaticBody2D" parent="Props" unique_id=1379512928 instance=ExtResource("18_somc0")]
 position = Vector2(196, 282)
-collision_layer = 2
 
 [node name="Desk3" type="StaticBody2D" parent="Props" unique_id=1604707425 instance=ExtResource("17_s5pbk")]
 position = Vector2(348, 268)
 
 [node name="Chair3" type="StaticBody2D" parent="Props" unique_id=1379512929 instance=ExtResource("18_somc0")]
 position = Vector2(348, 282)
-collision_layer = 2
 
 [node name="Toolbox4" type="StaticBody2D" parent="Props" unique_id=863856130 instance=ExtResource("15_dijs4")]
 position = Vector2(160, 236)
-collision_layer = 2
 
 [node name="CrtStack3" type="StaticBody2D" parent="Props" unique_id=1937511833 instance=ExtResource("12_6ws6a")]
 position = Vector2(232, 240)
 
 [node name="CableSpool3" type="StaticBody2D" parent="Props" unique_id=1030670814 instance=ExtResource("14_ineg6")]
 position = Vector2(352, 236)
-collision_layer = 2
 
 [node name="Printer2" type="StaticBody2D" parent="Props" unique_id=1536407933 instance=ExtResource("8_3q6te")]
 position = Vector2(470, 272)
@@ -224,16 +209,46 @@ motion_mode = 1
 script = ExtResource("20_kx7iu")
 
 [node name="Enemy2" type="CharacterBody2D" parent="Props" unique_id=1465047575 groups=["enemies"] instance=ExtResource("19_pexg1")]
-position = Vector2(436, 64)
+position = Vector2(56, 96)
 motion_mode = 1
 script = ExtResource("20_kx7iu")
 
 [node name="Enemy3" type="CharacterBody2D" parent="Props" unique_id=1465047576 groups=["enemies"] instance=ExtResource("19_pexg1")]
-position = Vector2(120, 248)
+position = Vector2(132, 116)
 motion_mode = 1
 script = ExtResource("20_kx7iu")
 
 [node name="Enemy4" type="CharacterBody2D" parent="Props" unique_id=1465047577 groups=["enemies"] instance=ExtResource("19_pexg1")]
+position = Vector2(140, 196)
+motion_mode = 1
+script = ExtResource("20_kx7iu")
+
+[node name="Enemy5" type="CharacterBody2D" parent="Props" unique_id=1465047578 groups=["enemies"] instance=ExtResource("19_pexg1")]
+position = Vector2(120, 248)
+motion_mode = 1
+script = ExtResource("20_kx7iu")
+
+[node name="Enemy6" type="CharacterBody2D" parent="Props" unique_id=1465047579 groups=["enemies"] instance=ExtResource("19_pexg1")]
+position = Vector2(56, 240)
+motion_mode = 1
+script = ExtResource("20_kx7iu")
+
+[node name="Enemy7" type="CharacterBody2D" parent="Props" unique_id=1465047580 groups=["enemies"] instance=ExtResource("19_pexg1")]
+position = Vector2(436, 64)
+motion_mode = 1
+script = ExtResource("20_kx7iu")
+
+[node name="Enemy8" type="CharacterBody2D" parent="Props" unique_id=1465047581 groups=["enemies"] instance=ExtResource("19_pexg1")]
+position = Vector2(400, 110)
+motion_mode = 1
+script = ExtResource("20_kx7iu")
+
+[node name="Enemy9" type="CharacterBody2D" parent="Props" unique_id=1465047582 groups=["enemies"] instance=ExtResource("19_pexg1")]
+position = Vector2(456, 200)
+motion_mode = 1
+script = ExtResource("20_kx7iu")
+
+[node name="Enemy10" type="CharacterBody2D" parent="Props" unique_id=1101929734 groups=["enemies"] instance=ExtResource("19_pexg1")]
 position = Vector2(424, 248)
 motion_mode = 1
 script = ExtResource("20_kx7iu")
@@ -268,6 +283,11 @@ waves = [{
 "after_kills": 3,
 "enemies": ["office_boy", "office_boy", "office_boy"],
 "from": "start",
+"per_head": ["office_boy", "office_boy"]
+}, {
+"after_kills": 8,
+"enemies": ["office_boy", "office_boy"],
+"from": "returned",
 "per_head": ["office_boy", "office_boy"]
 }]
 

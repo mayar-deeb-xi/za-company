@@ -103,43 +103,57 @@ const BIOME := {
 		{"type": "cable_spool", "at": Vector2(352, 236)},
 		{"type": "printer", "at": Vector2(470, 272)},
 	],
-	# Four office boys, one to a quadrant rather than a line, so the room is
-	# fought a corner at a time - and so the heavy has something to be the
-	# right answer to once two of them are following you.
+	# FOUR KNOTS, not four boys one to a quadrant. This is the crowd floor and
+	# the one that teaches the heavy, and the old arrangement could not teach
+	# it: one body per corner meant no point in the room stood inside two sight
+	# radii, so the sword was always the right answer and the ~1.9 rooted
+	# seconds the heavy costs never bought anything. An AoE needs a crowd to be
+	# an argument.
 	#
-	# Every one of them is clear of the door line, both spawns and both
-	# stands by more than its 80 px sight: the closest call is 89-96 px to
-	# the hazard and the heart, which is deliberate - the pickups on this
-	# floor are nearly, but not quite, watched.
+	# So the corners keep their shape and gain weight - three north-west, three
+	# south-west, two in each eastern corner - and every knot is tight enough
+	# that walking into one wakes all of it.
 	#
-	# None of them stands on a divider's x either, and that one is easy to
-	# get wrong: the colonnade sits at x 72/152/232/312/392/472 with its art
-	# 48 px tall, so an enemy parked at one of those x values and a lower y
-	# than the divider's foot is drawn BEHIND it and simply cannot be seen
-	# until it walks out. Two of these were at x 72 and 472 and were
-	# invisible in the room.
+	# Every one of them is clear of the door line and both spawns by more than
+	# its 80 px sight. None stands on a divider's x either, and that one is easy
+	# to get wrong: the colonnade sits at x 72/152/232/312/392/472 with its art
+	# 48 px tall, so an enemy parked at one of those x values and a lower y than
+	# the divider's foot is drawn BEHIND it and simply cannot be seen until it
+	# walks out. Two of these were at x 72 and 472 and were invisible in the
+	# room.
 	"enemies": [
+		# North-west.
 		{"type": "office_boy", "at": Vector2(104, 60)},
-		{"type": "office_boy", "at": Vector2(436, 64)},
+		{"type": "office_boy", "at": Vector2(56, 96)},
+		{"type": "office_boy", "at": Vector2(132, 116)},
+		# South-west, and this is the knot the hazard at (120, 152) sits over.
+		{"type": "office_boy", "at": Vector2(140, 196)},
 		{"type": "office_boy", "at": Vector2(120, 248)},
+		{"type": "office_boy", "at": Vector2(56, 240)},
+		# North-east.
+		{"type": "office_boy", "at": Vector2(436, 64)},
+		{"type": "office_boy", "at": Vector2(400, 110)},
+		# South-east.
+		{"type": "office_boy", "at": Vector2(456, 200)},
 		{"type": "office_boy", "at": Vector2(424, 248)},
 	],
-	# The second beat, and the first floor in the game to have one. Four boys
-	# in four corners is the arrangement; this is what happens once it has been
-	# three-quarters answered - two more walk in through the door you came in
-	# by, which on this floor is the only place anybody could come from.
+	# The second beat, and the first floor in the game to have had one. Four
+	# knots is the arrangement; this is what happens once it has been
+	# three-quarters answered - more walk in through the door you came in by,
+	# which on this floor is the only place anybody could come from.
 	#
 	# It is here rather than anywhere else because this is the CROWD floor and
-	# the one that teaches the heavy: the lesson is "two of them are following
+	# the one that teaches the heavy: the lesson is "three of them are following
 	# you and the sword is the wrong answer", and a floor whose whole job is to
 	# say that once can afford to say it twice. Nothing above F8 gets one for
 	# free - see game/levels/reinforcements.gd for why a room is an arrangement
-	# rather than a population, and why this is finite and once.
+	# rather than a population, and why these are finite and once each.
 	#
-	# Arriving through `start` needs no new marker and no vetted position: the
-	# two come in single file at the south threshold, which is the one spot in
-	# the room already guaranteed clear of furniture. They hold if the player is
-	# standing in it.
+	# Arriving through `start` needs no new marker and no vetted position: they
+	# come in single file at the south threshold, which is the one spot in the
+	# room already guaranteed clear of furniture. They hold if the player is
+	# standing in it. The SECOND beat comes down the north stairs instead, so
+	# the room's last word arrives from the door the player was leaving by.
 	"reinforcements": [
 		{"after_kills": 3, "from": "start",
 			"enemies": ["office_boy", "office_boy", "office_boy"],
@@ -148,6 +162,9 @@ const BIOME := {
 			# head count, so a party gets two more boys per head rather than
 			# one. Boys only, because this room's answer is the heavy and the
 			# heavy does not care how many there are.
+			"per_head": ["office_boy", "office_boy"]},
+		{"after_kills": 8, "from": "returned",
+			"enemies": ["office_boy", "office_boy"],
 			"per_head": ["office_boy", "office_boy"]},
 	],
 	# The west wall, which is where DESIGN.md always wanted him, and this is the

@@ -12,9 +12,6 @@ const COFFEE_LIT := Color("6b4128")
 
 const SIZE := Vector2i(20, 26)
 const BLOCKS := Vector2(16, 6)
-## Small enough to be a snag rather than cover, so the enemies walk through
-## it and the player does not - tools/props.gd's clutter().
-const CLUTTER := true
 
 
 static func paint(spec: Dictionary) -> Image:

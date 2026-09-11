@@ -65,22 +65,42 @@ position = Vector2(392, 224)
 position = Vector2(472, 224)
 
 [node name="Enemy1" type="CharacterBody2D" parent="Props" unique_id=1027242112 groups=["enemies"] instance=ExtResource("4_4dj01")]
-position = Vector2(64, 48)
+position = Vector2(56, 64)
 motion_mode = 1
 script = ExtResource("5_ntcfv")
 
 [node name="Enemy2" type="CharacterBody2D" parent="Props" unique_id=1027242113 groups=["enemies"] instance=ExtResource("4_4dj01")]
-position = Vector2(480, 48)
+position = Vector2(128, 72)
 motion_mode = 1
 script = ExtResource("5_ntcfv")
 
 [node name="Enemy3" type="CharacterBody2D" parent="Props" unique_id=1027242114 groups=["enemies"] instance=ExtResource("4_4dj01")]
-position = Vector2(150, 264)
+position = Vector2(64, 132)
 motion_mode = 1
 script = ExtResource("5_ntcfv")
 
 [node name="Enemy4" type="CharacterBody2D" parent="Props" unique_id=1027242115 groups=["enemies"] instance=ExtResource("4_4dj01")]
-position = Vector2(400, 264)
+position = Vector2(132, 136)
+motion_mode = 1
+script = ExtResource("5_ntcfv")
+
+[node name="Enemy5" type="CharacterBody2D" parent="Props" unique_id=1027242116 groups=["enemies"] instance=ExtResource("4_4dj01")]
+position = Vector2(404, 160)
+motion_mode = 1
+script = ExtResource("5_ntcfv")
+
+[node name="Enemy6" type="CharacterBody2D" parent="Props" unique_id=1027242117 groups=["enemies"] instance=ExtResource("4_4dj01")]
+position = Vector2(472, 168)
+motion_mode = 1
+script = ExtResource("5_ntcfv")
+
+[node name="Enemy7" type="CharacterBody2D" parent="Props" unique_id=1027242118 groups=["enemies"] instance=ExtResource("4_4dj01")]
+position = Vector2(408, 236)
+motion_mode = 1
+script = ExtResource("5_ntcfv")
+
+[node name="Enemy8" type="CharacterBody2D" parent="Props" unique_id=1027242119 groups=["enemies"] instance=ExtResource("4_4dj01")]
+position = Vector2(476, 240)
 motion_mode = 1
 script = ExtResource("5_ntcfv")
 
@@ -111,8 +131,13 @@ position = Vector2(272, 80)
 [node name="Reinforcements" type="Node2D" parent="." unique_id=164161647]
 script = ExtResource("10_c0a82")
 waves = [{
-"after_kills": 2,
+"after_kills": 3,
 "enemies": ["office_boy", "office_boy"],
 "from": "returned",
+"per_head": ["office_boy"]
+}, {
+"after_kills": 6,
+"enemies": ["office_boy", "office_boy"],
+"from": "start",
 "per_head": ["office_boy"]
 }]

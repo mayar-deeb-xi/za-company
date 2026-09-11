@@ -44,29 +44,38 @@ are counted in):
 | # | level | count | composition |
 |---|-------|-------|-------------|
 | 1 | lobby | 0 | the tutorial, and it stays empty |
-| 2 | content_studio | 4 | 3 `social_media` + 1 `office_boy` |
-| 3 | call_center | 5 | 2 `call_center` + 3 `office_boy` |
+| 2 | content_studio | 7 | 4 `social_media` + 3 `office_boy` |
+| 3 | call_center | 9 | 2 `call_center` + 7 `office_boy` |
 | 4 | ahmed_office | 0 | boss arena - his adds are a beat, see below |
-| 5 | the_hub | 3 | 1 `call_center` west + 2 `social_media` east |
-| 6 | marble_hall | 4 | 4 `office_boy` |
-| 7 | innovation_lab | 4 | 2 `office_boy` + 1 `social_media` + 1 `call_center` |
+| 5 | the_hub | 8 | 1 `call_center` + 4 `office_boy` + 3 `social_media` |
+| 6 | marble_hall | 8 | 8 `office_boy`, two gangs of four |
+| 7 | innovation_lab | 9 | 5 `office_boy` + 3 `social_media` + 1 `call_center` |
 | 8 | conflict_resolution | 0 | boss arena - his adds are a beat, see below |
-| 9 | asset_recovery | 4 | 4 `office_boy` |
-| 10 | hellfire | 7 | 4 `regular` + 2 `wraith` + 1 `warden` (placed) |
-| 11 | executive_floor | 6 | 3 `regular` + 2 `wraith` + 1 `warden` (placed) |
+| 9 | asset_recovery | 10 | 10 `office_boy`, four knots |
+| 10 | hellfire | 10 | 6 `regular` + 3 `wraith` + 1 `warden` (placed) |
+| 11 | executive_floor | 11 | 7 `regular` + 2 `wraith` + 2 `warden` (placed) |
 | 12 | khaled_office | 0 | final boss arena - SILVERMAN placed, beat live |
 
-Two of those are decisions rather than transcriptions of the floor list above.
+Three of those are decisions rather than transcriptions of the floor list above.
 **The innovation lab, which had no mechanic assigned, becomes the first
 one-of-each mix** — which earns the executive floor for free: the exam is the
-same fight one rank bigger with the masks off. And **the executive floor's six
-are the originals**, not the reskins its entry names, by the rule above.
+same fight one rank bigger with the masks off. And **the executive floor's
+eleven are the originals**, not the reskins its entry names, by the rule above.
 
-Two known wrinkles, both ordering rather than composition: floor 3 at 24 hits
-out-weighs every floor until hellfire (trim one office boy if it bites, never a
-`call_center` — the pair IS the lesson), and hellfire at 28 hits out-weighs the
-exam it precedes, which is a `CHAIN` question rather than a reason to thin a
-dressed room.
+The third is the SHAPE of every row, and it is worth more than any count here.
+These bodies stand in overlapping GROUPS, not spread across a floor: every
+ordinary room now has a spot where four or five of them can see the player at
+once, where the old arrangements topped out at one or two. Four enemies one to
+a corner is not a crowd, it is four duels with a walk between them - and a room
+of duels has no use for the heavy, no use for positioning, and no reason for a
+player to ever retreat. The count going up is what makes a floor last; the
+grouping is what makes it a fight.
+
+One known wrinkle, ordering rather than composition: floor 3 still out-weighs
+the floors just above it (trim one office boy if it bites, never a
+`call_center` — the pair IS the lesson). Hellfire no longer out-weighs the exam
+it precedes: the executive floor is now the heaviest room in the building,
+which is what an exam should be.
 
 **Floor 1 stays crossable without a fight.** Two office boys and a beat were
 tried here and reverted: the lobby is where a new player finds out what walking
@@ -549,7 +558,10 @@ names the room, and the fiction carries which floor it is.
   notice taped up beside it, toolboxes and half-stripped towers on the way in,
   three open-plan desks along the bottom, and loose litter over the middle.
   Hazard: the arcing power strip, as planned.
-  4 office boys, one per quadrant. Teaches the heavy.
+  10 office boys in four KNOTS - three to each western corner, two to each
+  eastern one. Teaches the heavy, and the grouping is HOW: one boy per quadrant
+  left no point in the room inside two sight radii, so the sword was always the
+  right answer and the heavy never repaid its ~1.9 rooted seconds.
   The junk is a thick PERIMETER around a clear arena (about x 200-350,
   y 110-200): a four-on-one fight and an AoE both need floor, so the only thing
   that goes in the middle is `debris`, which blocks nothing. Two placement

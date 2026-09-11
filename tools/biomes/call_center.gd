@@ -134,27 +134,49 @@ const BIOME := {
 		{"type": "debris", "at": Vector2(448, 148)},
 		{"type": "debris", "at": Vector2(192, 224)},
 	],
-	# Two slowers in the pockets the dividers make, three boys between them.
-	# Every one of the five is either off the divider xs (72 / 152 / 232 / 312 /
-	# 392 / 472) or SOUTH of a divider's foot, where Y-sorting draws it in front
-	# of the panel rather than behind it - which is the mistake this floor
+	# Two slowers in the pockets the dividers make, and seven boys knotted around
+	# them. Every one of the nine is either off the divider xs (72 / 152 / 232 /
+	# 312 / 392 / 472) or SOUTH of a divider's foot, where Y-sorting draws it in
+	# front of the panel rather than behind it - which is the mistake this floor
 	# offers eighteen chances to make.
 	#
 	# This is the floor where being slowed near a guard is the lesson, so the
 	# pair is the point and must not be trimmed: DESIGN.md's escape hatch for
 	# this room's weight is one office boy, never a call_center.
+	#
+	# What changed is the SPACING, not the pair. The five used to stand far
+	# enough apart that a slow could be walked off before the next body was
+	# reached, which is the lesson cancelling itself out. Now each slower sits
+	# inside a knot of boys, so the floor's whole sentence - slowed, and then
+	# swung at - happens without the player getting to pick the order. They also
+	# keep off the surge lanes at y 128 and y 224: a hazard that clears the room
+	# for you is a hazard doing the player's job.
 	"enemies": [
+		# The west knot, around (100, 170).
 		{"type": "call_center", "at": Vector2(96, 192)},
-		{"type": "call_center", "at": Vector2(456, 168)},
 		{"type": "office_boy", "at": Vector2(96, 136)},
 		{"type": "office_boy", "at": Vector2(152, 200)},    # south of the foot
+		{"type": "office_boy", "at": Vector2(56, 168)},
+		{"type": "office_boy", "at": Vector2(124, 150)},
+		# The east knot, around (445, 170).
+		{"type": "call_center", "at": Vector2(456, 168)},
 		{"type": "office_boy", "at": Vector2(424, 216)},
+		{"type": "office_boy", "at": Vector2(440, 120)},
+		{"type": "office_boy", "at": Vector2(400, 180)},
 	],
-	# Boys only, and no third slower: this room already holds two, and a third
-	# arriving would stop being pressure and start being a room the player
-	# cannot move in. What the beat adds is bodies to be slowed AMONG.
+	# Boys only, and still no third slower: this room already holds two, and a
+	# third arriving would stop being pressure and start being a room the player
+	# cannot move in. What a beat adds is bodies to be slowed AMONG.
+	#
+	# Two of them now, from opposite doors. The first lands while the west knot
+	# is being answered; the second comes down the north stairs once the player
+	# has crossed to the east one, which is the trick the room's own geometry
+	# already plays - there is always a knot behind you.
 	"reinforcements": [
 		{"after_kills": 3, "from": "start",
+			"enemies": ["office_boy", "office_boy"],
+			"per_head": ["office_boy"]},
+		{"after_kills": 7, "from": "returned",
 			"enemies": ["office_boy", "office_boy"],
 			"per_head": ["office_boy"]},
 	],

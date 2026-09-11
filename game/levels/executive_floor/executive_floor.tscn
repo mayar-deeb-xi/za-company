@@ -20,10 +20,10 @@
 [ext_resource type="PackedScene" path="res://game/levels/executive_floor/props/furniture/dead_plant.tscn" id="18_rn3he"]
 [ext_resource type="PackedScene" path="res://game/enemies/wraith/wraith.tscn" id="19_i0vl8"]
 [ext_resource type="Script" path="res://game/enemies/wraith_base.gd" id="20_8iqwo"]
-[ext_resource type="PackedScene" path="res://game/enemies/warden/warden.tscn" id="21_w4m86"]
-[ext_resource type="Script" path="res://game/enemies/warden_base.gd" id="22_7r32h"]
-[ext_resource type="PackedScene" path="res://game/enemies/regular/regular.tscn" id="23_bxdhm"]
-[ext_resource type="Script" path="res://game/enemies/enemy_base.gd" id="24_a5aai"]
+[ext_resource type="PackedScene" path="res://game/enemies/regular/regular.tscn" id="21_w4m86"]
+[ext_resource type="Script" path="res://game/enemies/enemy_base.gd" id="22_7r32h"]
+[ext_resource type="PackedScene" path="res://game/enemies/warden/warden.tscn" id="23_bxdhm"]
+[ext_resource type="Script" path="res://game/enemies/warden_base.gd" id="24_a5aai"]
 [ext_resource type="PackedScene" path="res://game/levels/executive_floor/door.tscn" id="25_4qq01"]
 [ext_resource type="Script" path="res://game/levels/door_base.gd" id="26_qanjr"]
 [ext_resource type="Texture2D" path="res://game/levels/executive_floor/doorway_out.tres" id="27_jh54b"]
@@ -116,34 +116,27 @@ position = Vector2(128, 104)
 
 [node name="Chair1" type="StaticBody2D" parent="Props" unique_id=1670639049 instance=ExtResource("9_thpkm")]
 position = Vector2(92, 74)
-collision_layer = 2
 
 [node name="Chair2" type="StaticBody2D" parent="Props" unique_id=1670639050 instance=ExtResource("9_thpkm")]
 position = Vector2(128, 74)
-collision_layer = 2
 
 [node name="Chair3" type="StaticBody2D" parent="Props" unique_id=1670639051 instance=ExtResource("9_thpkm")]
 position = Vector2(164, 74)
-collision_layer = 2
 
 [node name="Chair4" type="StaticBody2D" parent="Props" unique_id=1670639052 instance=ExtResource("9_thpkm")]
 position = Vector2(92, 116)
-collision_layer = 2
 
 [node name="Chair5" type="StaticBody2D" parent="Props" unique_id=1670639053 instance=ExtResource("9_thpkm")]
 position = Vector2(128, 116)
-collision_layer = 2
 
 [node name="Chair6" type="StaticBody2D" parent="Props" unique_id=1670639054 instance=ExtResource("9_thpkm")]
 position = Vector2(164, 116)
-collision_layer = 2
 
 [node name="BarCart1" type="StaticBody2D" parent="Props" unique_id=907863713 instance=ExtResource("10_0fh4f")]
 position = Vector2(210, 112)
 
 [node name="Plant1" type="StaticBody2D" parent="Props" unique_id=36664705 instance=ExtResource("11_ihad7")]
 position = Vector2(36, 116)
-collision_layer = 2
 
 [node name="AwardsCabinet1" type="StaticBody2D" parent="Props" unique_id=218740954 instance=ExtResource("12_dvxkm")]
 position = Vector2(214, 66)
@@ -159,7 +152,6 @@ position = Vector2(440, 66)
 
 [node name="Plant2" type="StaticBody2D" parent="Props" unique_id=36664706 instance=ExtResource("11_ihad7")]
 position = Vector2(496, 70)
-collision_layer = 2
 
 [node name="Sofa1" type="StaticBody2D" parent="Props" unique_id=1957039435 instance=ExtResource("13_n54jp")]
 position = Vector2(450, 116)
@@ -175,40 +167,33 @@ position = Vector2(344, 258)
 
 [node name="Plant3" type="StaticBody2D" parent="Props" unique_id=36664707 instance=ExtResource("11_ihad7")]
 position = Vector2(152, 200)
-collision_layer = 2
 
 [node name="Plant4" type="StaticBody2D" parent="Props" unique_id=36664708 instance=ExtResource("11_ihad7")]
 position = Vector2(392, 200)
-collision_layer = 2
 
 [node name="Plant5" type="StaticBody2D" parent="Props" unique_id=36664709 instance=ExtResource("11_ihad7")]
 position = Vector2(410, 168)
-collision_layer = 2
 
 [node name="Desk1" type="StaticBody2D" parent="Props" unique_id=1938905737 instance=ExtResource("15_8aepa")]
 position = Vector2(120, 216)
 
 [node name="Chair7" type="StaticBody2D" parent="Props" unique_id=1670639055 instance=ExtResource("9_thpkm")]
 position = Vector2(120, 230)
-collision_layer = 2
 
 [node name="Cooler1" type="StaticBody2D" parent="Props" unique_id=1734643910 instance=ExtResource("16_rxc3n")]
 position = Vector2(36, 168)
-collision_layer = 2
 
 [node name="Table1" type="StaticBody2D" parent="Props" unique_id=180194410 instance=ExtResource("17_n74vx")]
 position = Vector2(440, 200)
 
 [node name="Chair8" type="StaticBody2D" parent="Props" unique_id=1670639056 instance=ExtResource("9_thpkm")]
 position = Vector2(440, 214)
-collision_layer = 2
 
 [node name="Sofa4" type="StaticBody2D" parent="Props" unique_id=1957039438 instance=ExtResource("13_n54jp")]
 position = Vector2(452, 276)
 
 [node name="DeadPlant1" type="StaticBody2D" parent="Props" unique_id=515706063 instance=ExtResource("18_rn3he")]
 position = Vector2(504, 216)
-collision_layer = 2
 
 [node name="Enemy1" type="CharacterBody2D" parent="Props" unique_id=1756173696 groups=["enemies"] instance=ExtResource("19_i0vl8")]
 position = Vector2(60, 96)
@@ -219,7 +204,17 @@ contact_damage = 0
 speed = 45.0
 sight_radius = 120.0
 
-[node name="Enemy2" type="CharacterBody2D" parent="Props" unique_id=1756173697 groups=["enemies"] instance=ExtResource("19_i0vl8")]
+[node name="Enemy2" type="CharacterBody2D" parent="Props" unique_id=1756173697 groups=["enemies"] instance=ExtResource("21_w4m86")]
+position = Vector2(52, 56)
+motion_mode = 1
+script = ExtResource("22_7r32h")
+
+[node name="Enemy3" type="CharacterBody2D" parent="Props" unique_id=1756173698 groups=["enemies"] instance=ExtResource("21_w4m86")]
+position = Vector2(150, 60)
+motion_mode = 1
+script = ExtResource("22_7r32h")
+
+[node name="Enemy4" type="CharacterBody2D" parent="Props" unique_id=1756173699 groups=["enemies"] instance=ExtResource("19_i0vl8")]
 position = Vector2(486, 98)
 motion_mode = 1
 script = ExtResource("20_8iqwo")
@@ -228,10 +223,15 @@ contact_damage = 0
 speed = 45.0
 sight_radius = 120.0
 
-[node name="Enemy3" type="CharacterBody2D" parent="Props" unique_id=1756173698 groups=["enemies"] instance=ExtResource("21_w4m86")]
-position = Vector2(64, 232)
+[node name="Enemy5" type="CharacterBody2D" parent="Props" unique_id=1756173700 groups=["enemies"] instance=ExtResource("21_w4m86")]
+position = Vector2(400, 96)
 motion_mode = 1
 script = ExtResource("22_7r32h")
+
+[node name="Enemy6" type="CharacterBody2D" parent="Props" unique_id=1756173701 groups=["enemies"] instance=ExtResource("23_bxdhm")]
+position = Vector2(64, 232)
+motion_mode = 1
+script = ExtResource("24_a5aai")
 max_health = 36
 contact_damage = 0
 speed = 50.0
@@ -243,20 +243,40 @@ recover_seconds = 0.6
 stagger_seconds = 0.3
 interrupt_cooldown = 1.5
 
-[node name="Enemy4" type="CharacterBody2D" parent="Props" unique_id=1756173699 groups=["enemies"] instance=ExtResource("23_bxdhm")]
+[node name="Enemy7" type="CharacterBody2D" parent="Props" unique_id=1756173702 groups=["enemies"] instance=ExtResource("21_w4m86")]
 position = Vector2(136, 180)
 motion_mode = 1
-script = ExtResource("24_a5aai")
+script = ExtResource("22_7r32h")
 
-[node name="Enemy5" type="CharacterBody2D" parent="Props" unique_id=1756173700 groups=["enemies"] instance=ExtResource("23_bxdhm")]
+[node name="Enemy8" type="CharacterBody2D" parent="Props" unique_id=1756173703 groups=["enemies"] instance=ExtResource("21_w4m86")]
 position = Vector2(144, 268)
 motion_mode = 1
-script = ExtResource("24_a5aai")
+script = ExtResource("22_7r32h")
 
-[node name="Enemy6" type="CharacterBody2D" parent="Props" unique_id=1756173701 groups=["enemies"] instance=ExtResource("23_bxdhm")]
-position = Vector2(408, 252)
+[node name="Enemy9" type="CharacterBody2D" parent="Props" unique_id=1756173704 groups=["enemies"] instance=ExtResource("23_bxdhm")]
+position = Vector2(470, 200)
 motion_mode = 1
 script = ExtResource("24_a5aai")
+max_health = 36
+contact_damage = 0
+speed = 50.0
+sight_radius = 130.0
+stop_distance = 40.0
+windup_seconds = 2.0
+commit_fraction = 0.75
+recover_seconds = 0.6
+stagger_seconds = 0.3
+interrupt_cooldown = 1.5
+
+[node name="Enemy10" type="CharacterBody2D" parent="Props" unique_id=2119157168 groups=["enemies"] instance=ExtResource("21_w4m86")]
+position = Vector2(408, 252)
+motion_mode = 1
+script = ExtResource("22_7r32h")
+
+[node name="Enemy11" type="CharacterBody2D" parent="Props" unique_id=2119157169 groups=["enemies"] instance=ExtResource("21_w4m86")]
+position = Vector2(492, 252)
+motion_mode = 1
+script = ExtResource("22_7r32h")
 
 [node name="Exit" type="Area2D" parent="Props" unique_id=254036811 groups=["door"] instance=ExtResource("25_4qq01")]
 position = Vector2(272, 8)
@@ -290,6 +310,16 @@ script = ExtResource("29_4hv37")
 waves = [{
 "after_kills": 4,
 "enemies": ["warden", "regular", "regular"],
+"from": "chokepoint",
+"per_head": ["regular"]
+}, {
+"after_kills": 9,
+"enemies": ["regular", "wraith"],
+"from": "start",
+"per_head": ["regular"]
+}, {
+"after_kills": 13,
+"enemies": ["regular", "regular"],
 "from": "chokepoint",
 "per_head": ["regular"]
 }]

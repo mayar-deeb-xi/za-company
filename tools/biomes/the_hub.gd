@@ -164,19 +164,42 @@ const BIOME := {
 	#
 	# Both drains are INSIDE the glass offices, which is what turns each office
 	# from decoration into a decision - the only way in is through its one
-	# 32 px gap, so entering means entering a radius on purpose. They are 158 px
-	# apart against a 120 px reach, so their fields also meet in the corridor
-	# between the two bays.
+	# 32 px gap, so entering means entering a radius on purpose.
+	#
+	# Each side is a TEAM rather than a picket, which is what the breather floor
+	# was missing: three enemies spread across a whole room is a room with three
+	# separate errands in it. West is the slower with two boys and a drain
+	# knotted around her, so being slowed on the call floor happens with company.
+	# East is the two office drains with two boys between them, so the corridor
+	# the offices open onto is covered rather than merely watched.
+	#
+	# It is still the lightest ordinary floor in the building, and the scrubbers
+	# do the rest: a routeless hazard among a crowd is the one thing here that
+	# cannot be learned.
 	"enemies": [
-		{"type": "call_center", "at": Vector2(96, 168)},      # the call floor
+		# West: the call floor.
+		{"type": "call_center", "at": Vector2(96, 168)},
+		{"type": "office_boy", "at": Vector2(52, 140)},
+		{"type": "office_boy", "at": Vector2(140, 196)},
+		{"type": "social_media", "at": Vector2(60, 232)},
+		# East: the glass offices and the corridor between them.
 		{"type": "social_media", "at": Vector2(504, 62)},     # north office
+		{"type": "office_boy", "at": Vector2(490, 150)},
+		{"type": "office_boy", "at": Vector2(430, 180)},
 		{"type": "social_media", "at": Vector2(470, 240)},    # south office
 	],
-	# The breather floor, so the lightest ordinary beat: boys walking in behind
-	# you while you are committed inside one of the offices.
+	# Two beats, and the breather floor still gets the lightest pair in the
+	# building: boys walking in behind you while you are committed inside one of
+	# the offices, then one more pair from the far door once the first team is
+	# down. The second carries a drain because by then the player is usually
+	# standing in the other office, and a field arriving at a doorway they are
+	# already inside is the room's own joke told back at them.
 	"reinforcements": [
 		{"after_kills": 2, "from": "start",
 			"enemies": ["office_boy", "office_boy"],
+			"per_head": ["office_boy"]},
+		{"after_kills": 6, "from": "returned",
+			"enemies": ["social_media", "office_boy"],
 			"per_head": ["office_boy"]},
 	],
 }

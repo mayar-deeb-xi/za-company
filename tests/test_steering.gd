@@ -34,9 +34,10 @@ extends "res://tests/helpers.gd"
 ## wall it is standing against. And the fifth
 ## is the promise the other four are worthless without: a body with nothing in
 ## its way must be unchanged, or every number in game/enemies/CLAUDE.md has
-## quietly moved. The sixth and last is B's half of the same day's work: the
-## small furniture is on its own collision layer, so a chair is something an
-## enemy walks THROUGH rather than something it has to be clever about.
+## quietly moved. The last is the smallest prop in the game getting the same
+## treatment as the biggest, which is the half of the ray the desk cannot show:
+## an 11 px chair opens the way almost at once, so the step ends nowhere near
+## its ceiling. A fixed step length passed the desk and failed here.
 ##
 ## ## Why it is built in the lobby
 ##
@@ -70,9 +71,8 @@ const ABOVE_PEN := Vector2(84, 60)
 const OPEN_FROM := Vector2(400, 120)
 const OPEN_TO := Vector2(400, 170)
 
-## The clutter case: a chair between the two, which the enemy should not so
-## much as notice. Layer 2, and an enemy masks only the world - tools/props.gd
-## has the why.
+## The small-prop case: an 11 x 5 box between the two, which is a quarter of a
+## desk and the least the steering can be asked to notice.
 const CHAIR_AT := Vector2(470, 262)
 const CHAIR_BEHIND := Vector2(470, 290)
 const CHAIR_INFRONT := Vector2(470, 236)
@@ -119,7 +119,7 @@ func _lobby(at: int) -> void:
 		_:
 			_walled(at)
 			_open(at)
-			_clutter(at)
+			_chair(at)
 			# `at` reaches 1 before the room has been arranged at 2, which is
 			# the only frame in this suite with no guard standing in it.
 			if at > 2 and at < 200 and _guard != null:
@@ -191,36 +191,34 @@ func _open(at: int) -> void:
 			_guard.queue_free()
 
 
-func _clutter(at: int) -> void:
+func _chair(at: int) -> void:
 	match at:
 		718:
 			var chair := (load(CHAIR) as PackedScene).instantiate() as StaticBody2D
 			chair.position = CHAIR_AT
 			_level().get_node("Props").add_child(chair)
-			_check("clutter: a chair is on the clutter layer, not the world's (%d)"
-				% chair.collision_layer, chair.collision_layer == 2)
+			# It is on the world layer like everything else standing in a room,
+			# and the player walks into it. Both were briefly not true - see
+			# game/enemies/CLAUDE.md on the collision layer that was tried and
+			# thrown out - so both are checked rather than assumed.
+			_check("chair: a chair is solid, on the one layer the room uses (%d)"
+				% chair.collision_layer, chair.collision_layer == 1)
+			_check("chair: and the player walks into it",
+				_player().test_move(Transform2D(0.0, CHAIR_INFRONT),
+					Vector2(0.0, 24.0)))
 			_guard = _spawn(CHAIR_BEHIND)
 			_player().global_position = CHAIR_INFRONT
 		720, 721, 722:
 			_player().global_position = CHAIR_INFRONT
-		# Straight through it, so the same second a clear walk takes.
+		# An 11 px box, so the way opens almost at once and the step is over
+		# long before its ceiling - which is the half of the ray the desk case
+		# cannot show, and the reason a fixed step length was wrong.
 		806:
 			_player().global_position = CHAIR_INFRONT
-			_check("clutter: an enemy walks through a chair rather than round it (%.0f px)"
+			_check("chair: and the enemy gets round the smallest prop too (%.0f px)"
 				% _guard.global_position.distance_to(CHAIR_INFRONT),
 				_guard.global_position.distance_to(CHAIR_INFRONT)
 					<= _guard.stop_distance + 2.0)
-			_check("clutter: without ever leaving its line (x %.0f, expected 470)"
-				% _guard.global_position.x,
-				absf(_guard.global_position.x - CHAIR_AT.x) < 3.0)
-			# The other half of the promise, and the half that makes it a
-			# choice rather than a deletion: the room is still solid for the
-			# person who can see it. test_move() asks the physics server what
-			# a step would do without taking it, so this needs no input and no
-			# frames - and it is asked of the PLAYER's own body, mask and all.
-			_check("clutter: and the player still walks into it",
-				_player().test_move(Transform2D(0.0, CHAIR_INFRONT),
-					Vector2(0.0, 24.0)))
 		811:
 			_finish()
 

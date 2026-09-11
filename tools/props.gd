@@ -29,9 +29,6 @@ extends RefCounted
 ## hazard_base.gd exactly the way the torch does"), and the studio's ring lights
 ## are the first:
 ##
-##   const CLUTTER := true           this box snags rather than shelters: the
-##                                   player still walks into it, the enemies
-##                                   walk through it. See clutter() below.
 ##   const SCRIPT := "res://..."     a script on the prop ITSELF. The neon sign
 ##                                   uses it to read the studio clock and change
 ##                                   what the wall is worth looking at.
@@ -110,26 +107,6 @@ static func size_of(type: String) -> Vector2i:
 
 static func blocks(type: String) -> Vector2:
 	return _const(type, "BLOCKS", Vector2.ZERO)
-
-
-## Whether that box is CLUTTER - solid to the player, thin air to everything
-## hunting them. The chairs, the pot plants, the water cooler, a tripod: props
-## whose box is no wider than 16 px, which is about one body.
-##
-## The split is not about size for its own sake. A box that narrow is not cover
-## - nobody hides behind a chair from a man with a sword - so all it can be is
-## a snag, and the two sides pay wildly different prices for one. A player
-## snagged on a plant loses a moment and can see exactly why; an enemy snagged
-## on the same plant is steered by arithmetic that cannot see it, and while
-## game/enemies/enemy_base.gd now gets itself back off one, the honest fix for
-## a thing that was never an obstacle is for it not to be an obstacle. The room
-## stays solid for the person who can read it.
-##
-## Where it stops is at 18 px - a server rack, a floor scrubber - because from
-## there up a prop is big enough to walk AROUND, and walking around the
-## furniture is a thing worth watching.
-static func clutter(type: String) -> bool:
-	return _const(type, "CLUTTER", false)
 
 
 ## The box a prop burns in, at its foot, or ZERO for the ones that only stand

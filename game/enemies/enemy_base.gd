@@ -102,11 +102,10 @@ class_name EnemyBase
 ##   looks right and is not: the step has to be long enough to clear the widest
 ##   thing in the room, which makes it far too long for a chair, and a body
 ##   that walks a full second sideways past a pot plant reads worse than the
-##   bug. The ray also gets the CLUTTER rule for free, because it is cast on
-##   this body's own mask - a chair the enemy walks through is not a chair the
-##   enemy walks around. `SIDESTEP_MIN` and `SIDESTEP_MAX` are only the floor
-##   and ceiling on that: the floor so a step cannot end on the frame it began,
-##   the ceiling so one can fail.
+##   bug. Cast on this body's own collision mask, so it asks about exactly the
+##   things that can actually stop it. `SIDESTEP_MIN` and `SIDESTEP_MAX` are
+##   only the floor and ceiling on that: the floor so a step cannot end on the
+##   frame it began, the ceiling so one can fail.
 ## - **`SIDESTEP_LIMIT`** - a step that runs to the ceiling without the way
 ##   opening was the wrong side, and the next one goes the other way round.
 ##   After that many it stops trying, because a heuristic that can be wrong has
@@ -483,9 +482,9 @@ func _steer(target: Vector2, delta: float) -> Vector2:
 
 
 ## Whether anything solid stands between this body and where it is going. One
-## ray, cast on this body's OWN collision mask, which is what makes the clutter
-## layer come out right for free: a chair an enemy walks through is not a chair
-## it needs to walk around, and nobody had to say so twice.
+## ray, cast on this body's OWN collision mask rather than on a layer named
+## here, so it asks about exactly the things that can stop this body and stays
+## right if that ever changes.
 ##
 ## The player is not an obstruction, obviously - they are the target - and the
 ## ray stops on them rather than passing through, so reaching them at all is

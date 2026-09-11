@@ -11,7 +11,6 @@ keep_compressed_buffer = true
 size = Vector2(18, 10)
 
 [node name="Scrubber" type="CharacterBody2D" unique_id=497482962]
-collision_mask = 3
 motion_mode = 1
 wall_min_slide_angle = 3.1415927
 script = ExtResource("1_suunj")

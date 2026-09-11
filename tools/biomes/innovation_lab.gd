@@ -97,25 +97,49 @@ const BIOME := {
 		{"type": "dead_plant", "at": Vector2(500, 250)},
 		{"type": "debris", "at": Vector2(470, 196)},
 	],
-	# THE FIRST ONE-OF-EACH MIX, and one body per quadrant so the room is a lap
-	# rather than a line: two boys north, the drain south-west, the slower
-	# south-east. This floor had no mechanic of its own assigned, and being the
-	# first room that asks the player to hold all three answers at once is the
-	# mechanic - which is also what earns the executive floor for free, since
-	# the exam is this fight one rank bigger with the masks off.
+	# THE FIRST ONE-OF-EACH MIX, and it used to be one body per quadrant so the
+	# room was a lap rather than a line. The lap was the problem: four corners
+	# with one enemy in each is four errands, and the floor whose mechanic is
+	# holding all three answers at once never actually asked for two of them
+	# together. A mix you meet one at a time is not a mix, it is a tour.
+	#
+	# So the quadrants become PAIRS, and the two western ones overlap into the
+	# room's one real knot - boy, boy and drain answering together, on the side
+	# the hazard is on. North-east keeps its guards, south-east its slower with
+	# a drain for company. Being the first room that asks the player to hold all
+	# three answers AT ONCE is the mechanic, and this is the arrangement that
+	# actually asks it - which is also what earns the executive floor for free,
+	# since the exam is this fight one rank bigger with the masks off.
 	"enemies": [
+		# North-west into the middle: the knot, with the hazard under it.
 		{"type": "office_boy", "at": Vector2(144, 104)},
-		{"type": "office_boy", "at": Vector2(424, 84)},
+		{"type": "office_boy", "at": Vector2(56, 88)},
+		{"type": "social_media", "at": Vector2(100, 140)},
+		# South-west.
 		{"type": "social_media", "at": Vector2(76, 236)},
+		{"type": "office_boy", "at": Vector2(150, 230)},
+		# North-east.
+		{"type": "office_boy", "at": Vector2(424, 84)},
+		{"type": "office_boy", "at": Vector2(470, 120)},
+		# South-east: the slower, and a field over the way out of her corner.
+		{"type": "social_media", "at": Vector2(430, 180)},
 		{"type": "call_center", "at": Vector2(456, 236)},
 	],
-	# One of each again, because the beat has to restate the floor's lesson and
-	# the lesson here IS the mix. The only floor whose beat carries a
-	# `call_center`, and it is why `per_head` exists: a party gets more boys to
-	# be slowed among, never a second slower.
+	# One of each again, because a beat has to restate the floor's lesson and the
+	# lesson here IS the mix. The only floor whose beat carries a `call_center`,
+	# and it is why `per_head` exists: a party gets more boys to be slowed among,
+	# never a second slower.
+	#
+	# The second beat drops the slower and comes down the north stairs. By then
+	# the room has usually collapsed onto one knot, and what it needs is not a
+	# fourth answer to hold but two more bodies standing between the player and
+	# the door they were walking to.
 	"reinforcements": [
-		{"after_kills": 2, "from": "start",
+		{"after_kills": 3, "from": "start",
 			"enemies": ["office_boy", "social_media", "call_center"],
+			"per_head": ["office_boy"]},
+		{"after_kills": 7, "from": "returned",
+			"enemies": ["office_boy", "social_media"],
 			"per_head": ["office_boy"]},
 	],
 	# The FOURTH beat, and the one floor that carries it WITHOUT Ivan: the gym

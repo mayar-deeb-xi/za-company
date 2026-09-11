@@ -230,10 +230,10 @@ forever. It presented as an enemy that would not attack, because the attack
 cycle starts on contact. `_steer` commits to ONE side when it stops making
 ground and holds it until a ray says the way is open, and after three fruitless
 tries it gives up and walks home - only a body with a POST does that, which is
-what keeps a boss and a reinforcement out of it without a list. The other half
-is the collision layer: a prop whose box is 16 px or narrower is CLUTTER, solid
-to the player and thin air to everything hunting them, because a box that small
-was never cover and a snag costs the two sides very different amounts.
+what keeps a boss and a reinforcement out of it without a list. Putting the
+small furniture on its own collision layer so the enemies could walk through it
+was tried on the same day and thrown out: the arithmetic works and an enemy
+walking through a chair tells the player the room is a backdrop.
 game/enemies/CLAUDE.md's *Getting round the furniture*.
 
 **Enemy HP (24 / 17 / 36) are exact breakpoints on the player's combo** -
@@ -388,9 +388,12 @@ draining your health and every line is about having no time, and he is a
 warden who takes your speed and every line is a call centre asking you to
 hold. `tools/voice/cut.py <id>` cuts both, the bosses' pipeline unchanged.
 
-**Every floor but the lobby has a second beat** - `reinforcements` in its
-biome, a finite authored group that walks in through a named door at a known
-cue. Floor 1 is the exception for one reason and it is not squeamishness: a beat
+**Every floor but the lobby has at least one later beat, and the ordinary
+floors have two or three** - `reinforcements` in its biome, a finite authored
+list of groups, each walking in through a named door at a known cue. More than
+one is pacing rather than population: a floor with a single beat has one
+surprise in it and the player walks the rest of the room, and beats alternating
+between the two doors are what keep a room from being finished early. Floor 1 is the exception for one reason and it is not squeamishness: a beat
 is cued by kills, and a room deliberately empty of enemies can never reach one,
 so an `after_kills` there would sit in the data forever without firing. The
 lobby staying crossable without a fight and the lobby having no beat are the
@@ -960,7 +963,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     queue, and the subtitle taking itself down. Its own suite because a taunt
     needs a boss who never reaches anybody, which is the exact opposite of the
     fight test_bosses.gd runs.
-  - `test_reinforcements.gd` - a second beat's trigger, its single-file
+  - `test_reinforcements.gd` - a later beat's trigger, its single-file
     arrival, the door it uses, the hold while the player stands in that door,
     that a beat fires once, and the head count. Builds the beat by hand in the
     empty lobby rather than walking nine floors to the one biome that has one.
@@ -1070,7 +1073,8 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     there by going AROUND rather than by some accident of the geometry, that a
     body with no way round stops trying and walks home instead of grinding,
     that an enemy with nothing in its way still walks a dead straight line, and
-    that a chair is something it walks through. Its own suite because it needs
+    that the smallest prop in the game gets the same treatment as the biggest.
+    Its own suite because it needs
     a room arranged WRONG - every floor in the game is dressed so the fight
     works, so none of them can ask this - and it builds the bad case by hand in
     the empty lobby, the way test_reinforcements.gd builds its beat.

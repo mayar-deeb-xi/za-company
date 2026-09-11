@@ -7,10 +7,10 @@
 [ext_resource type="Script" path="res://game/levels/hazard_base.gd" id="5_4auqh"]
 [ext_resource type="PackedScene" path="res://game/enemies/regular/regular.tscn" id="6_1eq4j"]
 [ext_resource type="Script" path="res://game/enemies/enemy_base.gd" id="7_bi3rd"]
-[ext_resource type="PackedScene" path="res://game/enemies/wraith/wraith.tscn" id="8_u2kfv"]
-[ext_resource type="Script" path="res://game/enemies/wraith_base.gd" id="9_bim87"]
-[ext_resource type="PackedScene" path="res://game/enemies/warden/warden.tscn" id="10_705l2"]
-[ext_resource type="Script" path="res://game/enemies/warden_base.gd" id="11_l0dvb"]
+[ext_resource type="PackedScene" path="res://game/enemies/warden/warden.tscn" id="8_u2kfv"]
+[ext_resource type="Script" path="res://game/enemies/warden_base.gd" id="9_bim87"]
+[ext_resource type="PackedScene" path="res://game/enemies/wraith/wraith.tscn" id="10_705l2"]
+[ext_resource type="Script" path="res://game/enemies/wraith_base.gd" id="11_l0dvb"]
 [ext_resource type="PackedScene" path="res://game/levels/hellfire/door.tscn" id="12_u5qtm"]
 [ext_resource type="Script" path="res://game/levels/door_base.gd" id="13_857lp"]
 [ext_resource type="Texture2D" path="res://game/levels/hellfire/doorway_out.tres" id="14_cxa8a"]
@@ -86,37 +86,14 @@ motion_mode = 1
 script = ExtResource("7_bi3rd")
 
 [node name="Enemy3" type="CharacterBody2D" parent="Props" unique_id=1323749362 groups=["enemies"] instance=ExtResource("6_1eq4j")]
-position = Vector2(410, 48)
+position = Vector2(100, 108)
 motion_mode = 1
 script = ExtResource("7_bi3rd")
 
-[node name="Enemy4" type="CharacterBody2D" parent="Props" unique_id=1323749363 groups=["enemies"] instance=ExtResource("6_1eq4j")]
-position = Vector2(496, 48)
-motion_mode = 1
-script = ExtResource("7_bi3rd")
-
-[node name="Enemy5" type="CharacterBody2D" parent="Props" unique_id=1323749364 groups=["enemies"] instance=ExtResource("8_u2kfv")]
-position = Vector2(452, 96)
-motion_mode = 1
-script = ExtResource("9_bim87")
-max_health = 17
-contact_damage = 0
-speed = 45.0
-sight_radius = 120.0
-
-[node name="Enemy6" type="CharacterBody2D" parent="Props" unique_id=1323749365 groups=["enemies"] instance=ExtResource("8_u2kfv")]
-position = Vector2(440, 272)
-motion_mode = 1
-script = ExtResource("9_bim87")
-max_health = 17
-contact_damage = 0
-speed = 45.0
-sight_radius = 120.0
-
-[node name="Enemy7" type="CharacterBody2D" parent="Props" unique_id=1323749366 groups=["enemies"] instance=ExtResource("10_705l2")]
+[node name="Enemy4" type="CharacterBody2D" parent="Props" unique_id=1323749363 groups=["enemies"] instance=ExtResource("8_u2kfv")]
 position = Vector2(64, 152)
 motion_mode = 1
-script = ExtResource("11_l0dvb")
+script = ExtResource("9_bim87")
 max_health = 36
 contact_damage = 0
 speed = 50.0
@@ -127,6 +104,48 @@ commit_fraction = 0.75
 recover_seconds = 0.6
 stagger_seconds = 0.3
 interrupt_cooldown = 1.5
+
+[node name="Enemy5" type="CharacterBody2D" parent="Props" unique_id=1323749364 groups=["enemies"] instance=ExtResource("10_705l2")]
+position = Vector2(60, 220)
+motion_mode = 1
+script = ExtResource("11_l0dvb")
+max_health = 17
+contact_damage = 0
+speed = 45.0
+sight_radius = 120.0
+
+[node name="Enemy6" type="CharacterBody2D" parent="Props" unique_id=1323749365 groups=["enemies"] instance=ExtResource("6_1eq4j")]
+position = Vector2(410, 48)
+motion_mode = 1
+script = ExtResource("7_bi3rd")
+
+[node name="Enemy7" type="CharacterBody2D" parent="Props" unique_id=1323749366 groups=["enemies"] instance=ExtResource("6_1eq4j")]
+position = Vector2(496, 48)
+motion_mode = 1
+script = ExtResource("7_bi3rd")
+
+[node name="Enemy8" type="CharacterBody2D" parent="Props" unique_id=1323749367 groups=["enemies"] instance=ExtResource("10_705l2")]
+position = Vector2(452, 96)
+motion_mode = 1
+script = ExtResource("11_l0dvb")
+max_health = 17
+contact_damage = 0
+speed = 45.0
+sight_radius = 120.0
+
+[node name="Enemy9" type="CharacterBody2D" parent="Props" unique_id=1323749368 groups=["enemies"] instance=ExtResource("6_1eq4j")]
+position = Vector2(452, 160)
+motion_mode = 1
+script = ExtResource("7_bi3rd")
+
+[node name="Enemy10" type="CharacterBody2D" parent="Props" unique_id=734055968 groups=["enemies"] instance=ExtResource("10_705l2")]
+position = Vector2(440, 272)
+motion_mode = 1
+script = ExtResource("11_l0dvb")
+max_health = 17
+contact_damage = 0
+speed = 45.0
+sight_radius = 120.0
 
 [node name="Exit" type="Area2D" parent="Props" unique_id=701278651 groups=["door"] instance=ExtResource("12_u5qtm")]
 position = Vector2(272, 8)
@@ -155,8 +174,18 @@ position = Vector2(272, 80)
 [node name="Reinforcements" type="Node2D" parent="." unique_id=1068726239]
 script = ExtResource("16_k3ypo")
 waves = [{
-"after_kills": 4,
+"after_kills": 3,
 "enemies": ["regular", "regular", "wraith"],
+"from": "returned",
+"per_head": ["regular"]
+}, {
+"after_kills": 7,
+"enemies": ["regular", "warden"],
+"from": "start",
+"per_head": ["regular"]
+}, {
+"after_kills": 11,
+"enemies": ["wraith", "regular"],
 "from": "returned",
 "per_head": ["regular"]
 }]

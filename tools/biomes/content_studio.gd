@@ -132,31 +132,49 @@ const BIOME := {
 		{"type": "cable_spool", "at": Vector2(330, 200)},
 		{"type": "debris", "at": Vector2(400, 240)},
 	],
-	# Three drain fields and the one fight that has to happen inside one.
+	# Four drain fields and the two fights that have to happen inside one.
 	#
-	# The two on the west overlap: 136 px apart against a 120 px radius, so
-	# their fields meet across the west end of the central band - which is
-	# exactly where the fallen ring light stands at (120, 152). Crossing the
-	# west side costs drain AND burn, and that is the routing lesson this floor
-	# is built to teach.
+	# The three on the west overlap into one pocket: their 120 px reaches meet
+	# across the west end of the central band - which is exactly where the
+	# fallen ring light stands at (120, 152), and where the dolly runs its rail.
+	# Crossing the west side costs drain AND burn, and that is the routing
+	# lesson this floor is built to teach. It used to be two fields meeting; a
+	# third turns the pocket from a place you clip into a place you commit to.
 	#
-	# The boy is 75 px from the eastern drain, so fighting him happens inside
-	# her radius. The design asked for him "by the north door", which is not
-	# legal - an 80 px sight anywhere near x 272 owns the door lane - so east
-	# of the exit is the nearest honest reading of it.
+	# The boy standing in among them is why the pocket has to be answered rather
+	# than waited out: a drain you can walk away from is a tax, and a drain with
+	# a sword standing in it is a decision.
+	#
+	# East, the same shape smaller - the green room drain, the boy inside her
+	# field, and a second linking the two. The design asked for one "by the
+	# north door", which is not legal: an 80 px sight anywhere near x 272 owns
+	# the door lane, so east of the exit is the nearest honest reading of it.
 	"enemies": [
+		# The west pocket: three fields over one another, the boy inside them.
 		{"type": "social_media", "at": Vector2(104, 76)},    # the set
-		{"type": "social_media", "at": Vector2(76, 238)},     # off camera
-		{"type": "social_media", "at": Vector2(440, 244)},    # the green room
-		{"type": "office_boy", "at": Vector2(416, 168)},      # inside her field
+		{"type": "social_media", "at": Vector2(48, 108)},
+		{"type": "social_media", "at": Vector2(76, 238)},    # off camera
+		{"type": "office_boy", "at": Vector2(92, 196)},
+		# The green room.
+		{"type": "social_media", "at": Vector2(440, 244)},
+		{"type": "office_boy", "at": Vector2(416, 168)},     # inside her field
+		{"type": "office_boy", "at": Vector2(458, 200)},
 	],
-	# Two dead and two more walk on. Drains rather than a guard: the floor's
-	# lesson is that standing still in the wrong place costs you, and a second
-	# pair of overlapping fields restates it in a room the player has already
-	# half-solved.
+	# Two beats. The first is the old one - two dead and two more walk on,
+	# drains rather than guards, because the floor's lesson is that standing
+	# still in the wrong place costs you, and a second pair of overlapping
+	# fields restates it in a room the player has already half-solved.
+	#
+	# The second comes down the NORTH stairs once the room is nearly answered,
+	# and it brings a sword: the west pocket is usually what is still standing
+	# by then, and a guard arriving behind a player who is busy being drained is
+	# this floor's two halves put together.
 	"reinforcements": [
 		{"after_kills": 2, "from": "start",
 			"enemies": ["social_media", "social_media"],
+			"per_head": ["social_media"]},
+		{"after_kills": 5, "from": "returned",
+			"enemies": ["office_boy", "social_media"],
 			"per_head": ["social_media"]},
 	],
 }

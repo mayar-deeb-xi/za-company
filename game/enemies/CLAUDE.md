@@ -222,35 +222,25 @@ arbitrary. The walk home is steered identically and for a sharper reason - a
 body that can be jammed on the way back can be parked off its mark for the rest
 of the run, which is the one thing the leash exists to prevent.
 
-The ray is cast on the body's **own collision mask**, which is what makes the
-clutter layer below come out right without anybody saying so twice: a chair an
-enemy walks through is not a chair it has to be clever about.
+The ray is cast on the body's **own collision mask** rather than on a list of
+layers written here, so it asks about exactly the things that can stop this
+body and stays right if that ever changes.
 
 `tests/test_steering.gd` builds the bad arrangement by hand in the empty lobby
 - the room with no enemies of its own, so anything standing in it was put there
-by the test.
+by the test - and the smallest prop in the game is one of its cases, because
+`_steer` has to be what gets a body past a chair as well as past a desk.
 
-## The small furniture is not an obstacle
-
-Every prop's box is solid, and below about one body's width that box was never
-cover - nobody hides behind a pot plant from a man with a sword. All it can be
-is a snag, and the two sides pay wildly different prices for one: a player
-snagged on a chair loses a moment and can see exactly why, while an enemy
-snagged on the same chair is steered by arithmetic that cannot see it at all.
-
-So a prop whose `BLOCKS` box is **16 px or narrower** declares `CLUTTER` in
-`tools/props/`, and the generator puts its body on physics layer 2 instead of
-layer 1. The player masks both layers; an enemy masks only the world. The room
-stays solid for the person who can read it.
-
-Eleven props are clutter today - the chairs, both plants, the cooler, the
-coffee table, the heavy bag, the tripods, the PC tower, the cable spool and the
-toolbox. It stops at 18 px, a server rack or a floor scrubber, because from
-there up a prop is big enough to walk around and watching something walk around
-it is worth having.
-
-This is the smaller half of the fix and not a substitute for the one above: it
-removes the cases that were never interesting, and `_steer` handles the desk.
+**The thing not to reach for is a collision layer.** It was built and thrown
+out the same day: small furniture - a box 16 px or narrower, which is about one
+body - on its own layer that the player masks and the enemies do not, on the
+argument that a box that small was never cover and so can only be a snag. The
+arithmetic is fine and the game is worse. Watching an office boy walk through a
+chair tells the player the room is a backdrop, and it does that every time,
+where the bug it was papering over is already fixed by the steering above. If
+it comes up again: the room being solid is not negotiable, and a prop small
+enough to be annoying is a prop that should be moved or made decor
+(`BLOCKS` of ZERO) in the biome, one at a time, by somebody looking at it.
 
 ## The types
 
@@ -606,10 +596,14 @@ Enemies are the one prop a level does NOT own a copy of - types are shared, and
 **which ones a room gets is per-biome data in `tools/biomes.gd`** (`enemies`:
 type + position), not one constant in the generator. Composition is most of
 what makes one room feel unlike the next: the lobby is empty, asset recovery is
-four office boys one to a quadrant, the marble hall is four guards one to a
-corner rather than a line across the top so they can be taken on one at a
-time, and hellfire is four of those plus two wraiths and a warden - where things
-start following you and taking your legs. Positions are chosen so
+ten office boys in four KNOTS, the marble hall is eight guards in two gangs, and
+hellfire is two mobs of five - where things start following you and taking your
+legs. Note the shape those three share, because it is the rule a new floor
+should follow: bodies stand in groups whose sight radii OVERLAP, so walking into
+one wakes all of it. They used to stand one to a corner, which reads as an
+arrangement and plays as a queue - no point in those rooms was inside two
+radii at once, so every fight was a duel and the heavy was never the right
+answer. An AoE needs a crowd to be an argument. Positions are chosen so
 no enemy's sight reaches the door line, the spawns or the torch and heart stands
 - the straight walk between the two doors stays safe in every biome, and the
 flow and combat tests depend on nothing aggroing until a check deliberately

@@ -36,11 +36,6 @@ extends SceneTree
 ## is lost on the next run. Run it to reset a level or to add a new one to
 ## CHAIN, and prefer moving positions into biomes.gd over nudging them here.
 
-## Where the small furniture goes. Bit 2, matching "clutter" in the project's
-## 2D physics layer names - see tools/setup_project.gd, and Props.clutter() for
-## what it is for.
-const CLUTTER_LAYER := 2
-
 const Biomes := preload("res://tools/biomes.gd")
 const Props := preload("res://tools/props.gd")
 const StableIds := preload("res://tools/stable_ids.gd")
@@ -261,8 +256,6 @@ func _write_column_scene(dir: String, spec: Dictionary) -> bool:
 ##            the neon sign reading the floor's clock.
 ##   BURNS    adds a `Burn` Area2D at the foot carrying BURN_SCRIPT, for a thing
 ##            that hurts - the ring lights going hot during a take.
-##   CLUTTER  puts that solid body on the clutter layer instead of the world's,
-##            which the player collides with and the enemies do not.
 ##
 ## They are separate nodes because they are separate sizes: a lamp BLOCKS with
 ## its tripod and BURNS across a patch of floor several times wider, and one
@@ -295,12 +288,6 @@ func _write_prop_scene(dir: String, type: String, spec: Dictionary) -> bool:
 	sprite.owner = root
 
 	if solid:
-		# Layer 2 rather than 1 for the small stuff, which is the whole of what
-		# CLUTTER buys: the player's mask takes both, an enemy's takes only the
-		# world, so a chair is furniture to the person who can see it and thin
-		# air to the thing that cannot. Props.clutter() has the reasoning.
-		if Props.clutter(type):
-			(root as StaticBody2D).collision_layer = CLUTTER_LAYER
 		var body := CollisionShape2D.new()
 		body.name = "CollisionShape2D"
 		body.position = Vector2(0, -blocks.y / 2.0)
@@ -464,15 +451,10 @@ func _write_scrubber_scene(dir: String, spec: Dictionary) -> bool:
 	# unpredictable is turning at every contact instead.
 	root.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	root.wall_min_slide_angle = PI
-	# World AND clutter, the same pair the player masks. Nothing about where
-	# this machine goes is authored - the furniture decides - so furniture it
-	# could drive straight through would be furniture that had been taken out of
-	# the room. It is the opposite call to the one the enemies get, and for the
-	# reason Props.clutter() gives: a hunting enemy snagged on a pot plant is
-	# steered by arithmetic that cannot see the plant, while a machine with
-	# nowhere in particular to be just turns round, which is what it does at
-	# every other contact anyway.
-	root.collision_mask = 1 | CLUTTER_LAYER
+	# Everything solid, on the one layer the whole game shares. Nothing about
+	# where this machine goes is authored - the furniture decides - so anything
+	# it could drive straight through would be furniture that had been taken
+	# out of the room.
 
 	var sprite := Sprite2D.new()
 	sprite.name = "Sprite2D"
