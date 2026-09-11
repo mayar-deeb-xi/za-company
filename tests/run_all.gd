@@ -9,7 +9,7 @@ extends SceneTree
 ## when run through this.
 
 const SUITES := ["test_menu", "test_flow", "test_combat", "test_bosses",
-	"test_reinforcements"]
+	"test_rage", "test_silverman", "test_reinforcements", "test_dialogue", "test_ivan"]
 
 
 func _initialize() -> void:

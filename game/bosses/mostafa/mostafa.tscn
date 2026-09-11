@@ -1,7 +1,9 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://game/bosses/mostafa/mostafa.gd" id="1_mostafa"]
 [ext_resource type="SpriteFrames" path="res://game/bosses/mostafa/mostafa_frames.tres" id="2_frames"]
+[ext_resource type="Script" path="res://game/bosses/mostafa/bell.gd" id="3_bell"]
+[ext_resource type="Script" path="res://game/bosses/mostafa/rage.gd" id="4_rage"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 6.0
@@ -26,12 +28,39 @@ recover_seconds = 0.21
 stagger_seconds = 0.3
 interrupt_cooldown = 1.2
 
+[node name="RageGround" type="Node2D" parent="."]
+script = ExtResource("4_rage")
+part = "ground"
+
+[node name="BellGround" type="Node2D" parent="."]
+script = ExtResource("3_bell")
+part = "ground"
+
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 scale = Vector2(0.5, 0.5)
 sprite_frames = ExtResource("2_frames")
 animation = &"idle_side"
 autoplay = "idle_side"
 offset = Vector2(0, -48)
+
+[node name="BellBurst" type="Node2D" parent="."]
+script = ExtResource("3_bell")
+part = "burst"
+
+[node name="RageBurst" type="Node2D" parent="."]
+script = ExtResource("4_rage")
+part = "burst"
+
+[node name="Bell" type="CanvasLayer" parent="."]
+layer = 1
+
+[node name="RageScreen" type="Node2D" parent="Bell"]
+script = ExtResource("4_rage")
+part = "screen"
+
+[node name="BellScreen" type="Node2D" parent="Bell"]
+script = ExtResource("3_bell")
+part = "screen"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, -4)

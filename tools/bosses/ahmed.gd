@@ -32,9 +32,14 @@ static func paint() -> Image:
 
 
 ## One frame as a dictionary of body-space pixel -> palette key, outlined.
+## `dy` lowers the BODY onto its legs; the legs themselves stand on row 34
+## whatever it is, so a leg variant's row count is the drop it pairs with
+## (dy = 7 - rows) and the two always meet. `lift` is the other thing - both
+## feet leaving the ground - and moves body and legs together.
 static func _frame(f: Dictionary) -> Dictionary:
 	var L := {}
-	var off := Vector2i(f.get("dx", 0), f.get("dy", 0))
+	var lift: int = f.get("lift", 0)
+	var off := Vector2i(f.get("dx", 0), f.get("dy", 0) + lift)
 	var axe: Dictionary = f.get("axe", {})
 	var arms: Array = f.get("arms", [])
 	if not axe.is_empty() and axe.get("behind", false):
@@ -44,7 +49,7 @@ static func _frame(f: Dictionary) -> Dictionary:
 			_arm(L, _shoulder(a, off), a["hand"], a["bend"])
 	_stamp(L, Poses.TOP, off)
 	var legs: Array = Poses.LEGS[f.get("legs", "stand")]
-	_stamp(L, legs, off + Vector2i(0, 35 - legs.size()))
+	_stamp(L, legs, Vector2i(off.x, 35 - legs.size() + lift))
 	for a in arms:
 		if not a.get("behind", false):
 			_arm(L, _shoulder(a, off), a["hand"], a["bend"])

@@ -63,6 +63,35 @@ extends RefCounted
 ## arena from the first frame, which is what "one fight is enough to read at a
 ## time" was protecting. So a boss floor's adds go here, not there.
 ##
+## `relief` is the floor's THIRD beat, and the only one that is not a fight:
+## `{npc, from, at, say}` - who walks in once the room is finally clear, through
+## which spawn marker, to which spot, carrying which lines. It is Ivan, on the
+## six floors that have earned him, and from floor 2 up he is the only healing
+## in the game.
+##
+## It is an arrival rather than a placement for the same reason a reinforcement
+## is: standing him in the room from the first frame puts a solid 64px body in
+## an arrangement whose positions were chosen against sight radii and clear
+## lanes, and puts a heart on offer while the fight the floor is FOR is still
+## standing. His healing is a lifeline because it arrives after the cost is
+## paid. So he has an authored DESTINATION and no authored position, and the
+## furniture rule applies to `at` alone - the room is empty by the time he
+## reaches it, so the only thing that spot has to clear is the scenery and the
+## door line.
+##
+## He hands out one heart per HEAD, which is the other half of `per_head`'s
+## rule read in the other direction: a party of four meeting four times the
+## bodies and sharing one heart is the same unfairness twice. Both numbers come
+## out of game/heads.gd. The cue and the rest of the reasoning are in
+## game/levels/relief.gd.
+##
+## `npcs` places the friendly faces: `[{id, at, facing, face_left, conversation,
+## greets}]`, where `id` is a folder under game/npcs/ and `conversation` a .gd
+## holding the lines (game/dialogue/dialogue_director.gd has the format). An NPC
+## is a solid body like any other, so it obeys the furniture rule twice over:
+## off the door line, and off the line an enemy walks from its post to the
+## middle of the room, or the enemy grinds along it forever.
+##
 ## `spawns` is `{name: position}` and exists only to serve the above: a beat
 ## names a marker rather than carrying a position, so a beat arriving anywhere
 ## but the two doors needs a name to arrive at. The executive floor's

@@ -13,6 +13,8 @@ checklist. This file says HOW things work; DESIGN.md says WHAT to build.
 - `game/` - gameplay; `game/<entity>/` owns its scene, script, art, frames
 - `game/bosses/` - the bosses; each owns its scene, script, poses, sheet and
   effects and shares NOTHING with the others but the rules (`boss_base.gd`)
+- `game/npcs/` - the friendly faces; each owns its scene and sheet, and they
+  share one script (`npc_base.gd`) because none of them fights
 - `assets/` - ONLY files shared across features (fonts, tilesets, audio), plus
   source art no feature owns yet; it moves into the feature that claims it
 - `autoload/` - global singletons registered in project.godot
@@ -34,7 +36,11 @@ camera, room anatomy, doors and spawns), `game/enemies/CLAUDE.md` (the attack
 cycle, the types, the enemy art pipeline), `game/bosses/CLAUDE.md` (multiple
 attacks on that cycle, conceding, the poses-painter-fire contract, boss
 floors), `game/player/CLAUDE.md` (characters,
-health, the combo and the heavy) and `tools/CLAUDE.md` (furnishing rooms from
+health, the combo and the heavy), `game/npcs/CLAUDE.md` (why an NPC is twice
+the player's height, the robe, the 64px cell and the ground line),
+`game/dialogue/CLAUDE.md` (the beat format, why the runner holds no variables,
+the escort, and where audio plugs in) and
+`tools/CLAUDE.md` (furnishing rooms from
 data, the prop catalogue, adding a floor). This file keeps what must be known
 BEFORE touching anything: the maps, the invariants and the gotchas.
 
@@ -46,6 +52,15 @@ its own tiles, props and spawn markers, and answers three questions -
 `bounds()` for how much world there is, `spawn_position(name)` for where to
 stand, and `title()` for what to call itself. Nothing in game.gd names a
 specific map beyond `START_LEVEL`.
+
+Its **CanvasLayer stack is now stated rather than defaulted**, because things
+below the HUD have started arriving: -1 background, 0 the world, **1 a boss's
+own screen effects**, 2 HUD, 5 transition fade, 6 level title. Anything
+full-screen a fight draws goes in at 1 - above the room, under the bars, since
+a flash that washes out the health bar hides the number the player is reading
+while it lands. game.gd also owns **camera shake**, applied as an offset so
+`_camera_target()` stays the only thing framing a room; a boss asks for it by
+emitting `shook` (see game/bosses/CLAUDE.md).
 
 **A level owns everything in it**: its own tileset, doorway art, `door.tscn`
 and its own copy of every prop it places, palette baked in - no level borrows
@@ -112,8 +127,65 @@ scene.
 Bosses (`game/bosses/`) run the same cycle with several attacks and concede
 instead of dying; a floor names its boss in `tools/biomes/<level>.gd` under
 `boss`, which also shuts that floor's north door until he concedes
-(game/levels/boss_door.gd). A boss floor is an arena: his sight reaching the
-spawn is the one deliberate exception to the rule below.
+(game/levels/boss_door.gd) - except on the last floor, which has no north door
+to shut, because build_levels.gd only cuts one where the chain continues. Every boss also gets a HUD bar
+(`ui/hud/boss_bar.gd`) without asking for one: game.gd finds him by the
+`bosses` group when it builds the room, so a new boss needs no HUD work - and
+the same wiring hands him a **camera shake** if he emits `shook`, which is why
+`boss_base` declares it and no boss has to implement it. It hands him his
+**theme** on those same terms: a boss names a track in `music` on his scene
+root and game.gd plays it where it raises his bar and fades it where it clears
+it, so a boss floor is the only floor with music and every other floor is
+silent without saying so. A boss floor is an
+arena: his sight reaching the spawn is the one deliberate exception to the rule
+below.
+
+Bosses draw their own effects live from their poses rather than baking them
+into a sheet - Ahmed's fire, Mostafa's **Bell** (his punches) and **Rage** (he
+catches fire at half health, once, and never comes back down), Silverman's
+**Smear**, **Glare**, **Chill** and the **copy** his split casts. Four things
+generalize out of them:
+
+- A boss effect that goes full-screen draws at TWO scales and confusing them is
+  the trap: a piece of the FRAME (a vignette, a chevron) must be sized as a
+  fraction of the viewport, or it is invisible at 640 px wide and changes size
+  with the zoom; a thing in the ROOM is world pixels.
+- An effect keyed to fixed seconds and an animation keyed to frames agree only
+  while every beat is a **frame boundary**. Mostafa's rage has a test that says
+  so, because nothing else would notice a retimed `dur` sliding the fire off
+  the picture.
+- **Fire is per boss on purpose.** The shapes are shared so the game has one
+  fire; the RAMP is what says whose it is - Ahmed yellow and amber, Mostafa
+  crimson and white. Nobody should have to check which boss they are fighting.
+- **A boss's wind-up tint is the base's, until his palette says otherwise.**
+  enemy_base fades a winding enemy towards amber, which is free legibility for
+  anything with hue in it and wrong for anything without: Silverman is six exact
+  greyscale values, so a multiply lands between two rungs of the only thing he
+  is made of. He overrides `_windup_tint()` to white and draws his telegraph on
+  the SHEET instead, in `dull` steps. His idle already rests at the brightest
+  rung, so a wind-up can only ever dim him - worth knowing before designing an
+  attack for a boss whose ramp runs one way.
+
+**A boss makes noise the way he gets a health bar: by owning the files.**
+`game/bosses/boss_audio.gd` is an `Audio` child holding id -> stream, and
+boss_base fires `hurt`, `stagger` and `concede` on whichever of them exist -
+Ahmed adds his burning axe and his beaten breath himself. Sound is the first
+thing in this project that is NOT generated from data, so it brings back the
+one thing everything else was built to avoid: **a `.wav` needs an import pass,
+and an import pass needs the editor CLOSED.** Every miss is therefore legal by
+design - a missing sound plays nothing and the fight is unaffected - so a
+fresh checkout and the headless suites both work before anyone has imported
+anything. Levels are baked into the files themselves; there is no bus layout
+and no volume setting yet, so a file's own level IS the mix.
+
+His sounds are positional and live in his scene because they are HIS; the
+tracks are neither, and live on the `Music` autoload - see Music below for the
+half of the audio that is not standing anywhere in particular.
+
+game/bosses/CLAUDE.md has all of it, and the three fights are three different
+SHAPES on the one cycle: Ahmed a menu (the attack suits the range), Mostafa a
+rhythm (jab, jab, hook), Silverman a ladder (three phases, each adding a
+mechanic, interrupts narrowing to none).
 
 Which enemies a room gets is per-biome data (type + position), and positions
 keep every sight radius clear of the door line, spawns and both stands - the
@@ -138,7 +210,12 @@ same decision. It is
 deliberately not waves: **a room is an ARRANGEMENT, not a population**, and
 respawns flatten every floor's fight into the same one because a room's shape
 only matters while its enemies are placed. A beat fires ONCE, and once the room
-is clear it stays clear.
+is clear it stays clear. **What happens once it is clear is the THIRD
+beat** - `relief`, the only one that is not a fight: Ivan walks in with a heart
+per head (see NPCs). It is a separate node beside the second because the two ask
+opposite questions of the same room - is the fight far enough along, and is it
+over - and "over" has to skip a conceded boss, who is in the `enemies` group and
+is never freed.
 
 Reinforcements are the only enemies in the game with no authored position -
 they name a spawn marker instead - and three things follow that are worth
@@ -164,12 +241,82 @@ knowing before touching a beat:
 
 game/levels/CLAUDE.md has the rest.
 
+## NPCs
+
+Three friendly faces - **Dominique** (guide, front desk), **Ivan** (healer,
+cafeteria) and **HR** (unplaced), who is deliberately the only one without a
+first name. An NPC is in the `npcs` group and in NEITHER `player` nor
+`enemies`, which is the whole of what makes it friendly: nothing in this game
+reaches anything by type, so an NPC is invisible to both sides by construction
+rather than by a flag anyone has to remember to set. It is still a solid body,
+so the furniture rule applies to a person too - never stand one on the line an
+enemy walks from its post to the middle of the room.
+
+**All of them are twice the player's height in a robe no wider than the
+player**, and that one brief is why NPCs have an art pipeline instead of a row
+in the cast's roster. Doubling a 14px cast body does not fit a 32px cell, so NPC sheets are
+cut at **64px**, the size the bosses already slice at. The feet keep their
+clearance from the bottom of the cell, so a 64px NPC stands on the same ground
+line as a 32px enemy, and the only thing that knows the cell grew is the
+scene's sprite offset (`-24` against an enemy's `-8`).
+
+HR's white dress is the one garment in the game that can lose its silhouette
+to the floor - the lobby is blue-grey marble, the marble hall tops out at pure
+white - so her 1px outline does the work the other two get from a saturated
+robe. Worth a look at the floor before she is placed on one.
+
+Each NPC owns its sheet on the enemies' exact terms - seeded once from
+`game/npcs/roster.gd`'s recipe by way of `tools/npc_art.gd`, sliced from disk
+forever after - so the doubled head's 2px outline, which is a known and
+accepted debt, gets fixed by redrawing the head into that PNG rather than by
+changing any code. `npc_base.gd`'s speed is 45, half the player's 90, written
+as a plain number like every enemy's. All three stand still; `walk_to()` is
+there for the day one doesn't. Dialogue and the thrown hearts are still to build.
+
+**All three can talk, and none of them knows how.** An NPC carries a
+`conversation` - a path to a .gd holding `const BEATS` - notices the player is
+in range, puts a prompt over its head and emits `talk_requested`. game.gd wires
+that to the director in game.tscn exactly as it wires a door's `travelled`, so
+an NPC never learns that a subtitle box exists. HR stands in the lobby and her
+induction is the first one built: a tour she walks and tows the player through,
+ending in a contract that cannot be refused. Dialogue: game/dialogue/CLAUDE.md.
+
+**Ivan heals, and he is the only healing in the game from floor 2 up.** He is
+also the only person in it who ARRIVES: a floor with `relief` in its biome walks
+him in through the door the player came by once the room is finally clear, and
+he crosses to an authored spot and waits there (`game/levels/relief.gd`, the
+third beat - see Enemies). At the end of his lines he throws **one heart per
+head**, once per visit, and the count is `game/heads.gd` - the same function a
+second beat's `per_head` reads, which is why that function is a file rather than
+a line in either of them. Six floors have him: call_center, ahmed_office,
+conflict_resolution, asset_recovery, executive_floor and khaled_office - the
+floor before the first boss, and then after every big fight to the roof.
+Everything else about him is npc_base, and `ivan.gd` is the only NPC script in
+the folder. Dominique still has no lines and stands on no floor.
+
+The rest - the pipeline's three steps, why the robe goes down before the head,
+and what a third NPC would need: game/npcs/CLAUDE.md.
+
 ## Generated resources - regenerate, don't hand-edit
 
 - `ui/theme/menu_theme.tres`        <- tools/build_ui_theme.gd
 - `game/player/characters/*_frames.tres`
                                     <- tools/build_characters.gd
 - `game/enemies/*/*_frames.tres`    <- tools/build_enemies.gd, see below
+- `game/npcs/*/*_frames.tres`      <- tools/build_npcs.gd: seeds
+                                       game/npcs/<id>/src/<id>.png ONCE from
+                                       the roster recipe by way of
+                                       tools/npc_art.gd (double height, robe),
+                                       then slices whatever is on disk, 64px
+                                       cells
+- `game/npcs/ivan/heart.tscn`       <- tools/build_npcs.gd, and it is the one
+                                       thing that generator writes which is not
+                                       an NPC: the heart Ivan throws, his and
+                                       not a level's, because a room's heart
+                                       takes the room's palette and his is the
+                                       same red on every floor
+- the NPCs' looks & robes           <- game/npcs/roster.gd (data, edited by
+                                       hand)
 - `game/bosses/*/*_frames.tres`     <- tools/build_bosses.gd: seeds
                                        game/bosses/<id>/src/<id>.png ONCE from
                                        the painter tools/bosses/<id>.gd (which
@@ -270,9 +417,50 @@ rooms, so there is no mid-fight rescaling and deliberately no `changed` signal.
 MEDIUM is the tuned baseline; every number in enemy scenes and in these docs is
 a MEDIUM number.
 
+## Music
+
+`autoload/music.gd` (`Music`) is an autoload for one reason: the front end is
+THREE scenes - main menu, character select, and back out of a finished run -
+and `change_scene_to_file` frees the old one. A player living in main_menu.tscn
+would restart the track the moment PLAY is pressed, which is the one seam a
+menu loop exists to hide. Above the tree, it simply keeps playing.
+
+`play(path)` is **idempotent on the track**, and that is the whole trick: every
+front-end screen asks for the same track in its `_ready` without knowing which
+screen ran before it, and only the first ask starts anything. No screen has to
+know whether music is already playing. The no-op is decided on the path Music
+itself holds and **never on `AudioStreamPlayer.playing`** - under a dummy audio
+driver, which is every headless run and every test, `playing` is false even
+while a stream is assigned and looping, so a guard that trusted it would
+restart the track on every scene change in exactly the situation nobody can
+hear. `track()` is the readout, for callers and tests alike. game.gd calls
+`fade_out()` in `_ready`, so the menu carries over the load and goes out under
+the first room's fade-in.
+
+The loop flag is set on the stream in code, not trusted to the `.import`, for
+the same reason `game/bosses/boss_audio.gd` sets it - and unlike a boss's
+sounds, which are HIS and live in his scene, the track paths are a short
+catalogue of constants on Music, because a path spelled out in three screens is
+the one that goes stale when a file moves.
+
+**Audio lives in `assets/music/`** - the one folder, on the `assets/` rule that
+names audio outright as a thing shared across features. A track that needed
+work before it could loop keeps its untouched export beside it in
+`assets/music/src/`, on the enemies' and bosses' exact terms: `src/` is the
+hand-owned original, the file above it is what the game plays.
+
+**A generated loop does not loop.** An ElevenLabs export ends mid-waveform, so
+the last sample steps straight to the first and clicks once per pass - on
+`menu_loop.wav` that step was 22376 of 32768, and every 30 seconds. The fix is
+a 12 ms equal-power crossfade of the tail over the head, which costs 12 ms of
+length (0.04% across a 30 s loop, well under a 32nd note) and takes the step to
+33. Check the seam on any new music before wiring it up; the click is obvious
+once heard and invisible in a waveform view.
+
 ## Settings
 
-Three autoloads, split by responsibility:
+Three autoloads, split by responsibility - `Music` above is a fourth, and is
+here rather than there because it owns no setting:
 
 - `autoload/settings.gd` (`Settings`) owns `user://settings.cfg` and nothing
   else - sections, keys, write-through on change. A future audio or controls
@@ -282,8 +470,10 @@ Three autoloads, split by responsibility:
   so a hotkey press is remembered exactly like a menu choice.
 - `autoload/difficulty.gd` (`Difficulty`) owns the game modes - see Difficulty.
 
-`Settings` must stay registered **before** the other two - both read their
-saved values during `_ready`. tools/setup_project.gd clears their entries
+`Settings` must stay registered **before** `Display` and `Difficulty` - both
+read their saved values during `_ready`. `Music` is appended after all three;
+it reads nothing saved today, and a future volume row is one more reader of
+Settings, not a new rule. tools/setup_project.gd clears their entries
 before re-adding them, which is what enforces that order.
 
 **A default is applied but never saved.** Nothing is written until the player
@@ -364,11 +554,13 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Five suites,
+  They drive the real game with synthesized input and exit 0/1. Nine suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
-    select, the settings panel from the main menu. Never enters the game.
+    select, the settings panel from the main menu, and the menu music holding
+    ONE player across all three front-end scenes (checked by object id, since
+    a headless run has no audio device to ask). Never enters the game.
   - `test_flow.gd` - select -> game -> movement -> pause -> zoom -> blow ->
     heart -> death -> wall -> doors (a hazard en route) -> lives -> game over.
     It walks the whole chain on foot, so inserting a floor means renumbering
@@ -377,10 +569,39 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   - `test_combat.gd` - guard telegraph and interrupts, wraith, warden, heavy.
   - `test_bosses.gd` - Ahmed's attacks, the order he picks them in, the
     interrupt and the concede.
+  - `test_rage.gd` - Mostafa going up at 72 and staying up: that it fires at
+    half health and not before, fires once, roots and silences him without
+    letting him be staggered, never comes back down, and that every beat of
+    the fire still lands on a frame boundary. Its own suite because it needs
+    him FIGHTING and then taken across the line on a chosen frame, which
+    threaded through the three-boss file made one boss's timing decide
+    another's.
+  - `test_silverman.gd` - his whole ladder: the glare opening at range with no
+    contact, the crossing that passes THROUGH the player for one blow, the
+    split's copy walking you down, the cold room draining outside the grace
+    window, and the third phase refusing to be staggered. Its own suite because
+    the fight walks him down three phases, so every check after the first
+    depends on how much health he has left - a file that does that cannot also
+    hand the room to a next section unchanged. test_bosses.gd keeps the art
+    invariants that hold at any health. It isolates by GEOMETRY rather than by
+    frame number: his band is a 20 px lane and his crossing only moves along x,
+    so a player parked 30 px off his line is untouchable by both while the copy,
+    which homes in two dimensions, still reaches them.
   - `test_reinforcements.gd` - a second beat's trigger, its single-file
     arrival, the door it uses, the hold while the player stands in that door,
     that a beat fires once, and the head count. Builds the beat by hand in the
     empty lobby rather than walking nine floors to the one biome that has one.
+  - `test_ivan.gd` - the third beat: that he waits for a fight and not
+    merely for a quiet room, that he comes in by the door and crosses to his
+    spot, that a late arrival can still be talked to (game.gd wires NPCs as
+    they arrive, which is the failure that would be silent on six floors),
+    that the hearts land on the last word and heal, one per head, once. Builds
+    the beat by hand in the empty lobby, then checks the six floors off disk.
+  - `test_dialogue.gd` - HR's whole induction: the prompt, the typewriter, a
+    dead stick while she talks, the choices and the branch one takes, the
+    escorted tour, the contract, and the wheel coming back. Driven by what is
+    on screen rather than by frame numbers - a line's LENGTH is its duration,
+    so numbered frames would need re-timing every time one is reworded.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).
@@ -393,6 +614,17 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   file's sections depend on each other.
 - When synthesizing key events set BOTH `keycode` and `physical_keycode`
   (custom actions match physical, built-in ui_* match keycode).
+- **A looping sound proves nothing by having `loop_mode` set.** `AudioStreamWAV`
+  seals a loop with `loop_begin`/`loop_end` in FRAMES, and `loop_end` 0 does
+  NOT mean "to the end" - a forward loop ending on frame 0 wraps before it has
+  played anything, so the playback position stays pinned at 0.000s and the bus
+  receives exact silence. Every track and every looping effect in the game
+  shipped mute that way while a green check watched `loop_mode`, which was set
+  the whole time. The real end is `get_length() * mix_rate` (not `data.size()`
+  - these import as QOA, so `data` is compressed bytes rather than frames), and
+  the check with teeth is that `get_playback_position()` has MOVED between two
+  frames. That works headless: the dummy driver still mixes, so audio is
+  testable here rather than something only ears can confirm.
 - Level checks read the swapped-in child through `has_method("spawn_position")`
   rather than by class, for the same class-cache reason as game.gd. Leave slack
   around a door transition: two fades plus travel is ~40 frames.

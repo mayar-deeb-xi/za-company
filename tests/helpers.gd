@@ -121,6 +121,25 @@ func _hearts() -> HBoxContainer:
 	return current_scene.get_node("HUD/Hud").get_node("%Hearts")
 
 
+## The boss bar. Its own `visible` is the readout of whether there is a boss
+## in the room; %Fill's width is how much of him is left, out of 240.
+func _boss_bar() -> Control:
+	return current_scene.get_node("HUD/Hud").get_node("%BossBar")
+
+
+func _boss_name() -> String:
+	return (_boss_bar().get_node("%BossName") as Label).text
+
+
+func _boss_fill() -> ColorRect:
+	return _boss_bar().get_node("%Fill")
+
+
+## The pale block trailing the fill, standing where a blow just landed.
+func _boss_chip() -> ColorRect:
+	return _boss_bar().get_node("%Chip")
+
+
 ## The level-name card. Its own alpha is what shows and hides it, so a check
 ## reads `modulate.a` rather than `visible`.
 func _title() -> Control:
@@ -144,6 +163,48 @@ func _view_size() -> Vector2:
 ## An autoload's constants are not properties, so get() cannot reach them.
 func _zooms() -> Array:
 	return _autoload("Display").get_script().get_script_constant_map()["ZOOMS"]
+
+
+## The conversation runner, and the box it drives. Both are reached by node
+## path rather than by group, because game.tscn owns exactly one of each.
+func _dialogue() -> Node:
+	return current_scene.get_node("Dialogue")
+
+
+func _box() -> Control:
+	return current_scene.get_node("Dialogue/Layer/DialogueBox")
+
+
+## Where a beat's `show` scene is parented; empty unless one is up.
+func _overlay() -> Control:
+	return current_scene.get_node("Dialogue/Layer/Overlay")
+
+
+func _line() -> Label:
+	return _box().get_node("%Line")
+
+
+func _speaker() -> String:
+	return (_box().get_node("%Speaker") as Label).text
+
+
+func _choices() -> VBoxContainer:
+	return _box().get_node("%Options")
+
+
+## The music autoload's one player. Reached through /root like every autoload -
+## Music is not an identifier in a --script file.
+func _music() -> AudioStreamPlayer:
+	var m := _autoload("Music")
+	return null if m == null else m.get_node_or_null("Player") as AudioStreamPlayer
+
+
+## What Music says it is playing. Deliberately its own readout rather than
+## AudioStreamPlayer.playing: a headless run has a dummy audio driver, under
+## which `playing` is false even while a stream is assigned and looping.
+func _music_track() -> String:
+	var m := _autoload("Music")
+	return "" if m == null else String(m.call("track"))
 
 
 func _pause_menu() -> CanvasLayer:

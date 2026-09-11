@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://ui/hud/hud.gd" id="1_hud"]
+[ext_resource type="PackedScene" path="res://ui/hud/boss_bar.tscn" id="3_boss_bar"]
 [ext_resource type="FontFile" path="res://assets/fonts/KenneyPixel.ttf" id="2_font"]
 
 [node name="Hud" type="Control"]
@@ -68,3 +69,6 @@ offset_top = 21.0
 offset_right = 41.0
 offset_bottom = 29.0
 theme_override_constants/separation = 2
+
+[node name="BossBar" parent="." instance=ExtResource("3_boss_bar")]
+unique_name_in_owner = true

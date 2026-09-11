@@ -69,4 +69,12 @@ const BIOME := {
 			"enemies": ["social_media", "social_media"],
 			"per_head": ["social_media"]},
 	],
+	# After Ahmed concedes, and not a moment before it - the cue skips a boss
+	# who has given up, which is the one thing that lets a boss floor reach it
+	# at all (he is in the `enemies` group and is never freed). He walks the
+	# length of the arena you just won it in and stands west of centre, between
+	# the two colonnade rows, well off the walk to the north door - which has
+	# just unlocked and is the only reason anybody is still standing here.
+	"relief": {"npc": "ivan", "from": "start", "at": Vector2(180, 160),
+		"say": "res://game/npcs/ivan/after_the_fight.gd"},
 }

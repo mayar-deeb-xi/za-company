@@ -183,4 +183,10 @@ const BIOME := {
 	# floor below this has litter on it because every floor below this is used;
 	# the executive floor is cleaned nightly, and the absence is the loudest
 	# thing the room says about who works on it.
+	# The exam floor, and the last stop before the roof. He comes up behind the
+	# partition wall and stands in the south half, east of the rug and clear of
+	# the chokepoint at (272, 168) that the last warden arrived through - the
+	# one 64px gap in the room is not somewhere to leave a 64px man standing.
+	"relief": {"npc": "ivan", "from": "start", "at": Vector2(324, 196),
+		"say": "res://game/npcs/ivan/after_the_fight.gd"},
 }

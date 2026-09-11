@@ -1,0 +1,81 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://game/npcs/npc_base.gd" id="1_npc"]
+[ext_resource type="SpriteFrames" path="res://game/npcs/hr_lady/hr_lady_frames.tres" id="2_frames"]
+[ext_resource type="FontFile" path="res://assets/fonts/KenneyPixel.ttf" id="3_font"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 5.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_talk"]
+radius = 30.0
+
+[node name="HrLady" type="CharacterBody2D" groups=["npcs"]]
+motion_mode = 1
+script = ExtResource("1_npc")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("2_frames")
+animation = &"idle_down"
+autoplay = "idle_down"
+offset = Vector2(0, -24)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_body")
+
+[node name="TalkArea" type="Area2D" parent="."]
+collision_layer = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TalkArea"]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_talk")
+
+[node name="Nameplate" type="Label" parent="."]
+offset_left = -48.0
+offset_top = -52.0
+offset_right = 48.0
+offset_bottom = -29.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94902, 0.831373, 0.474510, 1)
+theme_override_colors/font_outline_color = Color(0.0784314, 0.0862745, 0.12549, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "HR"
+
+[node name="Prompt" type="Control" parent="."]
+visible = false
+position = Vector2(0, -60)
+mouse_filter = 2
+
+[node name="Border" type="ColorRect" parent="Prompt"]
+offset_left = -7.0
+offset_top = -7.0
+offset_right = 7.0
+offset_bottom = 7.0
+mouse_filter = 2
+color = Color(0.0784314, 0.0862745, 0.12549, 1)
+
+[node name="Cap" type="ColorRect" parent="Prompt"]
+offset_left = -6.0
+offset_top = -6.0
+offset_right = 6.0
+offset_bottom = 6.0
+mouse_filter = 2
+color = Color(0.94902, 0.831373, 0.474510, 1)
+
+[node name="Key" type="Label" parent="Prompt"]
+offset_left = -6.0
+offset_top = -8.0
+offset_right = 6.0
+offset_bottom = 8.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.0784314, 0.0862745, 0.12549, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "E"

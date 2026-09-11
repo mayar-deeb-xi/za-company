@@ -1,8 +1,15 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://game/bosses/ahmed/ahmed.gd" id="1_ahmed"]
 [ext_resource type="SpriteFrames" path="res://game/bosses/ahmed/ahmed_frames.tres" id="2_frames"]
 [ext_resource type="Script" path="res://game/bosses/ahmed/axe_fire.gd" id="3_fire"]
+[ext_resource type="Script" path="res://game/bosses/boss_audio.gd" id="4_audio"]
+[ext_resource type="Script" path="res://game/bosses/boss_lines.gd" id="10_lines"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/axe_idle_loop.wav" id="5_axe"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/ahmed_hurt.wav" id="6_hurt"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/ahmed_stagger.wav" id="7_stagger"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/ahmed_concede.wav" id="8_concede"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/ahmed_breath_loop.wav" id="9_breath"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 6.0
@@ -29,6 +36,7 @@ commit_fraction = 0.6
 recover_seconds = 0.48
 stagger_seconds = 0.3
 interrupt_cooldown = 1.2
+music = "res://assets/music/ahmed_theme_loop.wav"
 
 [node name="FloorFire" type="Node2D" parent="."]
 script = ExtResource("3_fire")
@@ -68,3 +76,17 @@ monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Lane"]
 shape = SubResource("RectangleShape2D_lane")
+
+[node name="Audio" type="Node2D" parent="."]
+script = ExtResource("4_audio")
+sounds = {
+"axe": ExtResource("5_axe"),
+"breath": ExtResource("9_breath"),
+"concede": ExtResource("8_concede"),
+"hurt": ExtResource("6_hurt"),
+"stagger": ExtResource("7_stagger")
+}
+
+[node name="Lines" type="Node2D" parent="."]
+script = ExtResource("10_lines")
+lines = "res://game/bosses/ahmed/taunts.gd"

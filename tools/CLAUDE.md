@@ -201,3 +201,39 @@ from `game/bosses/<id>/poses.gd`, into a 64 px sheet, once - then sliced
 from disk every run. A boss floor places him through the biome's `boss` key,
 which build_levels.gd instances as `Props/Boss` and answers by giving the
 north door the lock script. The rest is game/bosses/CLAUDE.md.
+
+## NPCs
+
+A floor's `npcs` key places the friendly faces the same way `enemies` places
+the hostile ones - `{id, at}`, the id a folder under `game/npcs/` - and carries
+three things that are placement rather than identity: which way she faces, WHICH
+CONVERSATION she is holding (a .gd of beats), and whether she starts it herself
+or waits to be spoken to.
+
+That the conversation is placement is the useful part: the same person can
+greet you on floor 1 and warn you on floor 7 without a second scene, and
+rewriting what she says never touches a scene at all. The format is documented
+in game/dialogue/dialogue_director.gd and the reasoning in
+game/dialogue/CLAUDE.md.
+
+An NPC is a solid body, so it obeys the furniture rule twice: off the door line,
+and off the line an enemy walks from its post to the middle of the room - an
+enemy has no pathfinding and will grind along her forever. Her tour's `walk`
+points are positions in the same biome file, so moving a prop and leaving the
+route alone is how a line stops landing on the thing it is about.
+
+`relief` is the other way an NPC gets into a room, and the only one that is not
+a placement: `{npc, from, at, say}` - who walks in once the floor is CLEAR,
+through which spawn marker, to which spot, carrying which lines. It is Ivan, on
+the six floors that have earned him, and from floor 2 up he is the only healing
+in the game. Because he arrives rather than stands, the furniture rule applies
+to `at` alone - the room is empty by the time he reaches it, so that spot only
+has to clear the scenery and the door line. Why it is an arrival, what counts as
+"clear" on a boss floor, and why he does not greet: game/levels/CLAUDE.md.
+
+`build_npcs.gd` also writes ONE thing that is not an NPC -
+`game/npcs/ivan/heart.tscn`, the pickup he throws - and that is the single place
+this generator crosses into build_levels.gd's territory. The reason is the rule
+the hearts follow: a room's own heart is dressing and takes the room's palette
+with it, while his is the same red on every floor he walks onto. One file, not
+six identical ones in six level folders.

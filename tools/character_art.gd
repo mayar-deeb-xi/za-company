@@ -187,6 +187,58 @@ static func _expand(img: Image, ox: int, oy: int, serrate: bool) -> void:
 	_reoutline(img, ox, oy)
 
 
+## Hair falling past the jaw, for a `long` recipe. The side columns of the hair
+## mass grow downward; a frame with no eyes is a BACK view, so there the whole
+## mass grows and the head reads as a curtain rather than a cap with two
+## sideburns. Growth stops at skin so a face is never painted over, and runs on
+## over shirt so hair lies on the shoulders instead of ending at the collar.
+static func _lengthen(img: Image, ox: int, oy: int, side_len: int, back_len: int) -> void:
+	var hair := _pixels_of(img, ox, oy, SRC_HAIR)
+	if hair.is_empty():
+		return
+	var box := _bbox(hair)
+	var back := _pixels_of(img, ox, oy, SRC_EYE).is_empty()
+
+	var lowest := {}
+	for p in hair:
+		if not lowest.has(p.x) or p.y > lowest[p.x]:
+			lowest[p.x] = p.y
+
+	var over := [SRC_OUTLINE, SRC_SHIRT, SRC_SHIRT_DARK]
+	if back:
+		over.append(SRC_SKIN)  # no face to protect; the nape is hair too
+	for x in lowest:
+		var side: bool = x <= box.position.x + 1 or x >= box.end.x - 2
+		if not back and not side:
+			continue
+		var n: int = back_len if back else side_len
+		var y: int = lowest[x]
+		for i in n:
+			y += 1
+			var ok := _clear(img, x, y)
+			for hex in over:
+				if _is(img, x, y, hex):
+					ok = true
+			if not ok:
+				break
+			img.set_pixel(x, y, _c(SRC_HAIR))
+	_reoutline(img, ox, oy)
+
+
+## A cropped cut, for a `crop` recipe: hair below `keep` rows of the mass
+## becomes skin. Exactly what "bald" already does, only partially - so the head
+## keeps its silhouette and simply has less hair on it, and no re-outlining is
+## needed because nothing left the shape.
+static func _shorten(img: Image, ox: int, oy: int, keep: int) -> void:
+	var hair := _pixels_of(img, ox, oy, SRC_HAIR)
+	if hair.is_empty():
+		return
+	var cut := _bbox(hair).position.y + keep
+	for p in hair:
+		if p.y >= cut:
+			img.set_pixel(p.x, p.y, _c(SRC_SKIN))
+
+
 static func _texture_curls(img: Image, ox: int, oy: int, hair_hex: String,
 		light_hex: String) -> void:
 	var hair := _pixels_of(img, ox, oy, hair_hex)
@@ -329,6 +381,21 @@ static func restyle(src_path: String, recipe: Dictionary) -> Image:
 		return null
 	img.convert(Image.FORMAT_RGBA8)
 	var rows := img.get_height() / FRAME
+
+	# 0. Hair LENGTH first, and as its own pass over the whole sheet rather than
+	# folded into the loop below. Growing a hair mass re-outlines it, and an
+	# outline pixel can land one column outside its own cell - so doing every
+	# frame's length before any frame's curls is what keeps a frame's result
+	# from depending on the order frames happen to be visited in.
+	var crop: int = recipe.get("crop", 0)
+	var long: Array = recipe.get("long", [])
+	if crop > 0 or not long.is_empty():
+		for row in rows:
+			for col in COLS:
+				if crop > 0:
+					_shorten(img, col * FRAME, row * FRAME, crop)
+				if not long.is_empty():
+					_lengthen(img, col * FRAME, row * FRAME, long[0], long[1])
 
 	# 1. Silhouette work per frame, while everything is still source colours.
 	for row in rows:

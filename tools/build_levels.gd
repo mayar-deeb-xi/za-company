@@ -88,6 +88,10 @@ const HEALTH_POS := Vector2(424, 152)
 ## from game/enemies/<type>/, and which ones a room gets is per-biome data in
 ## tools/biomes.gd. A level that wants a variant swaps the instance by hand.
 const ENEMY_SCENE := "res://game/enemies/%s/%s.tscn"
+## The friendly faces, placed from a biome's `npcs` key. Same shape as an
+## enemy's scene path because an NPC is the same kind of thing standing in the
+## same kind of room - it just happens to be pleased to see you.
+const NPC_SCENE := "res://game/npcs/%s/%s.tscn"
 ## A boss floor names its boss the same way - a type under game/bosses/ and a
 ## position - under `boss`. The instance is called "Boss", which is the name
 ## the floor's north door looks for: having a boss swaps that door's script for
@@ -99,6 +103,11 @@ const BOSS_DOOR := "res://game/levels/boss_door.gd"
 ## list travels into the scene as one export on one node, and a floor without
 ## the key gets no node at all.
 const REINFORCEMENTS_SCRIPT := "res://game/levels/reinforcements.gd"
+## A floor's THIRD beat, under `relief`: the healer who walks in once the room
+## is clear. Carries a destination rather than a position for the same reason a
+## reinforcement carries neither - you cannot walk in at a spot - so it travels
+## into the scene as one node beside the second beat, not as a placed instance.
+const RELIEF_SCRIPT := "res://game/levels/relief.gd"
 
 
 ## Names passed after `--` build only those levels. Since a re-run overwrites
@@ -417,6 +426,24 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 		props.add_child(enemy)
 		enemy.owner = root
 
+	# The NPCs. After the enemies so the two lists read in the order the room
+	# is populated, and carrying their dialogue with them: which conversation
+	# an NPC has is placement, exactly as which way it faces is - the same
+	# person greets you on one floor and warns you on another.
+	var people: Array = Biomes.BIOMES[level].get("npcs", [])
+	for i in people.size():
+		var spec: Dictionary = people[i]
+		var npc_id: String = spec["id"]
+		var npc := _reload(NPC_SCENE % [npc_id, npc_id]).instantiate()
+		npc.name = npc_id.to_pascal_case()
+		npc.position = spec["at"]
+		npc.set("facing", spec.get("facing", "down"))
+		npc.set("face_left", spec.get("face_left", false))
+		npc.set("conversation", spec.get("conversation", ""))
+		npc.set("greets", spec.get("greets", false))
+		props.add_child(npc)
+		npc.owner = root
+
 	var boss: Dictionary = Biomes.BIOMES[level].get("boss", {})
 	if not boss.is_empty():
 		var boss_type: String = boss["type"]
@@ -468,6 +495,23 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 		reinforcements.set("waves", beats)
 		root.add_child(reinforcements)
 		reinforcements.owner = root
+
+	# The third beat, which is not a fight: Ivan walking in with a heart per
+	# head once the room is finally empty. Written after the second because he
+	# WAITS on it - a room between two arrivals is quiet rather than clear - and
+	# beside it rather than inside it because the two ask opposite questions of
+	# the same room. See game/levels/relief.gd.
+	var relief: Dictionary = Biomes.BIOMES[level].get("relief", {})
+	if not relief.is_empty():
+		var arrival := Node2D.new()
+		arrival.name = "Relief"
+		arrival.set_script(load(RELIEF_SCRIPT))
+		arrival.set("npc", relief.get("npc", "ivan"))
+		arrival.set("from", StringName(relief.get("from", "start")))
+		arrival.set("at", relief["at"])
+		arrival.set("say", relief.get("say", ""))
+		root.add_child(arrival)
+		arrival.owner = root
 
 	return _pack(root, "%s/%s.tscn" % [dir, level])
 

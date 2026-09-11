@@ -175,3 +175,29 @@ character's fire matches their sparks - violet for the black-haired, gold for
 the bald. One test-side consequence: a synthesized Space left held is no longer
 inert - a test's mash window must end on a release, or the player stands in
 the charge stance for every later movement check.
+
+## Scripted control - when the world has the wheel
+
+`take_control()` / `release_control()` / `lead_to()` are how a cutscene moves
+the player, and the split from the door transition's
+`set_physics_process(false)` is the whole point of them. A frozen body cannot
+be walked anywhere, and the first thing a conversation wanted was to walk the
+player across a room behind somebody.
+
+So scripted control keeps physics running and cuts the INPUT instead: the stick
+is not read, the attack button is not read, and any swing, thrust, charge or
+heavy in flight is dropped on the way in - a conversation that opens on frame
+two of a combo must not play out over the top of it, hitbox and all. What
+remains is `_scripted_step()`, which is the ordinary walk with its direction
+coming from `_lead` instead of the keyboard: same SPEED, same ACCELERATION,
+same animation, so being led looks exactly like walking because it is.
+
+`_lead` is a point, not a target node, re-set every frame by whoever is leading.
+That is what lets one mechanism serve both "walk to this mark" and "follow her",
+and `LEAD_STOP` is a ring rather than a pixel because an escort's destination
+MOVES - a tighter test makes the walk stutter every time the guide slows down.
+
+Health, grace and slows are all untouched by it. **Being talked at is not a
+safe room**: the tree is not paused during a conversation (the guide has to
+walk while she talks), so the protection is where an NPC is placed. See
+game/dialogue/CLAUDE.md.

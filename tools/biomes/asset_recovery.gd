@@ -150,4 +150,13 @@ const BIOME := {
 			# heavy does not care how many there are.
 			"per_head": ["office_boy", "office_boy"]},
 	],
+	# The west wall, which is where DESIGN.md always wanted him, and this is the
+	# floor with the heaviest `per_head` in the game - two more boys per head.
+	# A room that scales the hardest is the room that most needs the heal to
+	# scale too, and it does: one heart per head, out of the same count
+	# (game/heads.gd). North of the scrap pile at (44, 176) and well clear of
+	# the power strip at (120, 152), which is still live after the last body
+	# falls.
+	"relief": {"npc": "ivan", "from": "start", "at": Vector2(80, 180),
+		"say": "res://game/npcs/ivan/after_the_fight.gd"},
 }

@@ -152,6 +152,13 @@ func _tick(frame: int) -> void:
 		114:
 			_check("attack: animation plays (got %s)" % _sprite().animation,
 				String(_sprite().animation).begins_with("attack"))
+			# The menu track carried over the scene load and faded out under the
+			# lobby's fade-in. 88 frames after entering at 26, comfortably past
+			# Music.FADE_SECONDS - a fade that never completed would leave the
+			# track set here.
+			_check("music: the menu track is gone in the game (%s)"
+				% ("<silent>" if _music_track() == "" else _music_track()),
+				_music_track() == "")
 		153:
 			_check("attack: releases back to idle (got %s)" % _sprite().animation,
 				String(_sprite().animation).begins_with("idle"))
@@ -358,11 +365,44 @@ func _tick(frame: int) -> void:
 			_check("door: the way up while Ahmed stands is %s"
 				% ("shut" if BossDoor.LOCKED else "open - the lock is off for dev"),
 				way_up.call("can_travel") != BossDoor.LOCKED)
+			# The bar is game.gd's doing, not the boss's: it finds him by group
+			# on arrival and feeds the HUD the way it feeds the player's own.
+			_check("hud: the boss bar is up and names him (got '%s')"
+				% _boss_name(), _boss_bar().visible and _boss_name() == "AHMED")
+			# His theme rides in on the same wiring as his bar, and the whole
+			# reason it is checked HERE is that nine floors of silence came
+			# first: a boss floor is the only floor that plays anything.
+			_check("music: Ahmed's floor brings his theme up (%s)"
+				% ("<silent>" if _music_track() == "" else _music_track()),
+				_music_track() == "res://assets/music/ahmed_theme_loop.wav")
+			# Sealed to a real end, not frame 0 - see test_menu.gd. A theme
+			# that loops at frame 0 is a silent fight with every other check
+			# in this suite still green.
+			var theme := null if _music() == null else _music().stream as AudioStreamWAV
+			_check("music: his stream is sealed as a loop with a real end (%d)"
+				% (0 if theme == null else theme.loop_end),
+				theme != null and theme.loop_mode == AudioStreamWAV.LOOP_FORWARD
+					and theme.loop_end > 0)
+			_check("hud: it opens full - 240 px of channel for 96 HP (%s)"
+				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 240.0))
 			if boss != null:
-				boss.call("take_damage", 96)
+				# One heavy's worth, to prove the width is his health arriving by
+				# signal and not a number read once on the way in. 24 of 96 is a
+				# quarter of the bar, and the chip is that quarter standing pale
+				# where the fill was.
+				boss.call("take_damage", 24)
+			_check("hud: a heavy takes a quarter off the bar (%s)"
+				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 180.0))
+			_check("hud: the chip stands in the 60 px it just lost (%s wide, %s)"
+				% [_boss_chip().size.x, _boss_chip().visible],
+				_boss_chip().visible and is_equal_approx(_boss_chip().size.x, 60.0))
+			if boss != null:
+				boss.call("take_damage", 72)
 			_check("boss: at zero he concedes rather than dying (%s)"
 				% ("gone" if boss == null else str(boss.get("has_conceded"))),
 				boss != null and boss.get("has_conceded") == true)
+			_check("hud: the bar goes with him when he kneels",
+				not _boss_bar().visible)
 			_check("door: the way up opens once he has", way_up.call("can_travel"))
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
@@ -373,6 +413,16 @@ func _tick(frame: int) -> void:
 				_level() != null and _level().name == "TheHub")
 			_check("title: the hub announces itself (got '%s')"
 				% _title_text(), _title_text() == "THE HUB")
+			# Cleared on entry, not left behind by the floor below: a room
+			# with no boss in it clears the bar whether or not one ever hid it.
+			_check("hud: no boss bar on the floor above his",
+				not _boss_bar().visible)
+			# And no theme either. It went out on `conceded` rather than on
+			# the door, which is why the fade is long over by the time the
+			# next room is standing - the fight ended, not the floor.
+			_check("music: his theme went out with him (%s)"
+				% ("<silent>" if _music_track() == "" else _music_track()),
+				_music_track() == "")
 			# The floor's split, fought: the slower holds the call side and both
 			# drains are INSIDE the glass offices - which is what makes each
 			# office a decision rather than dressing, since the only way in is
@@ -517,6 +567,13 @@ func _tick(frame: int) -> void:
 			_check("level: no adds in the gym - Mostafa alone (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").size() == 1)
+			# The SECOND boss, and the point of checking him too: nothing about
+			# the bar is per boss. He is named off his own scene, not his node,
+			# which build_levels.gd calls Boss on every floor alike.
+			_check("hud: the gym's boss gets the same bar, named for him (got '%s')"
+				% _boss_name(), _boss_bar().visible and _boss_name() == "MOSTAFA")
+			_check("hud: full channel for his 144 as much as for Ahmed's 96 (%s)"
+				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 240.0))
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		1001:
@@ -704,9 +761,48 @@ func _tick(frame: int) -> void:
 				% columns.size(), columns.is_empty()
 					and _level().get_node_or_null("Props/Torch") == null
 					and _level().get_node_or_null("Props/Health") == null)
-			_check("level: Khaled's office is empty until Khaled exists (%d)"
+			# THE LAST FIGHT, standing in it. game.gd finds him by group when it
+			# builds the room, which makes this the only suite that can prove he
+			# gets a bar at all - test_silverman.gd places him by hand into a
+			# room that is already up, so nothing there ever wires one.
+			var last := _level().get_node_or_null("Props/Boss")
+			_check("boss: Silverman is standing in the penthouse (%s)"
+				% ("<none>" if last == null else str(last.get("health"))),
+				last != null and last.get("health") == 192)
+			_check("boss: and he is in both groups, like every boss",
+				last != null and last.is_in_group("bosses")
+					and last.is_in_group("enemies"))
+			# Near, not AT: he has been hovering since the room came up and has
+			# already started closing on the player, so this is a check that he
+			# was placed on the centre line - not that he stayed nailed to it.
+			_check("boss: he is on the centre line, off the rug's north edge (%s)"
+				% ("<none>" if last == null else str(last.position)),
+				last != null and last.position.distance_to(Vector2(272, 140)) < 8.0)
+			_check("hud: the boss bar is up and names him (got '%s')"
+				% _boss_name(), _boss_bar().visible and _boss_name() == "SILVERMAN")
+			_check("hud: it opens full - 240 px of channel for 192 HP (%s)"
+				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 240.0))
+			# NO WAY UP, AND NO DOOR TO LOCK. Every other boss floor shuts its
+			# north door until the boss concedes; the penthouse is the end of the
+			# chain, so build_levels.gd cuts nothing through that wall and the
+			# boss-door swap has nothing to swap. Beating him opens no floor -
+			# what comes after him is the ending, not a room.
+			_check("door: the penthouse has no way up to shut",
+				_level().get_node_or_null("Props/Exit") == null)
+			# Conceded the short way, exactly as Ahmed's floor does it: the fight
+			# is tests/test_silverman.gd's, and a live boss glaring across the
+			# room while the player walks back out makes the rest of this
+			# section a coin toss.
+			if last != null:
+				last.call("take_damage", 500)
+			_check("boss: at zero he concedes rather than dying (%s)"
+				% ("gone" if last == null else str(last.get("has_conceded"))),
+				last != null and last.get("has_conceded") == true)
+			_check("hud: the bar goes with him when he settles",
+				not _boss_bar().visible)
+			_check("boss: and the room is clear with him still standing in it (%d)"
 				% get_nodes_in_group("enemies").size(),
-				get_nodes_in_group("enemies").is_empty())
+				get_nodes_in_group("enemies").is_empty() and last.is_inside_tree())
 			# The end of the chain, so there is nothing north of here to walk
 			# to: turn round instead and prove the way back down still works.
 			_key(KEY_S, true)

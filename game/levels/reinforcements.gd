@@ -34,8 +34,11 @@ extends Node2D
 ## (`from`, defaulting to "start", the south door you walked in by) and asks the
 ## level for it, so the only thing it needs to know is which way people arrive.
 ##
-## That is what makes this the right place - and the ONLY place - for the game
-## to scale with how many players are in it. See `_head_count()`.
+## That is what makes this the right place for the game to scale with how many
+## players are in it. The count itself is game/heads.gd, shared with the one
+## other thing that reads it - Ivan hands out a heart per head - because two
+## definitions of how big the party is would drift the day there are two of
+## them.
 ##
 ## ## No signals, for the reason boss_door.gd has none
 ##
@@ -65,6 +68,8 @@ const RELEASE_INTERVAL := 0.6
 const SAFE_RADIUS := 64.0
 
 const ENEMY_SCENE := "res://game/enemies/%s/%s.tscn"
+
+const Heads := preload("res://game/heads.gd")
 
 ## Authored per floor as `reinforcements` in tools/biomes/<level>.gd and written
 ## in by build_levels.gd. One dictionary per beat, in the order they fire:
@@ -127,7 +132,7 @@ func _process(delta: float) -> void:
 	# are not one list multiplied.
 	for type in wave.get("enemies", []):
 		_queue.append(String(type))
-	for _extra in _head_count() - 1:
+	for _extra in Heads.count(get_tree()) - 1:
 		for type in wave.get("per_head", []):
 			_queue.append(String(type))
 
@@ -161,29 +166,12 @@ func _spawn(type: String, at: Vector2) -> void:
 	enemy.global_position = at
 
 
-## How many heads this room is populated for. ONE today - the game has one
-## player and game.tscn owns it as a single child.
-##
-## The day a second player exists this counts them and the reinforcement budget
-## follows, and nothing else in this file changes. It is written now, returning
-## 1, because it costs nothing and because the alternative - a hardcoded count
-## here and a multiplayer flag threaded through the biome data later - is the
-## expensive version of the same line.
-##
-## The rule it obeys is the one Difficulty already obeys: scale what the world
-## sends, never what it is made of. Enemy HP are exact breakpoints on the
-## player's combo (24 / 17 / 36), so more players means more BODIES and never a
-## tougher one, for the same reason no difficulty mode touches health.
-##
-## **A BOSS's health does not scale either, and it is the strongest case for the
-## rule rather than an exception to it.** Ahmed's 96 is exactly four heavies and
-## Mostafa's 144 exactly six, so a fractional head multiplier would land a boss
-## on a last swing that does nothing visible. His adds are the only honest dial,
-## which is why the boss floors put every body they have in a beat - and why
-## `per_head` exists, so that dial can turn without also multiplying the one
-## `call_center` a threshold is allowed.
-func _head_count() -> int:
-	return maxi(1, get_tree().get_nodes_in_group("player").size())
+## Whether every beat this floor has is spent: all of them fired and the last
+## arrival already through the door. Asked rather than announced, like
+## everything else here - game/levels/relief.gd needs to know the fight is over
+## and not merely quiet, and a room in the gap between two beats is quiet.
+func spent() -> bool:
+	return _next >= waves.size() and _queue.is_empty()
 
 
 ## Where this beat walks in. Asked of the level by name through has_method, the

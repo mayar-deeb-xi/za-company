@@ -9,8 +9,16 @@ extends Control
 ##
 ## Sized in design pixels against the 640x360 viewport: 66px of fill inside a
 ## 1px border, tucked into the top-left corner.
+##
+## The boss bar is its own scene under the same folder and this script only
+## forwards to it, so game.gd still has one thing to talk to and neither bar
+## has to know the other exists.
 
 const FILL_WIDTH := 66.0
+
+## Preloaded rather than reached for by class_name, like every other typed
+## node in the game: global class names live in an editor-written cache.
+const BossBarType := preload("res://ui/hud/boss_bar.gd")
 
 ## Same 9x8 mask as the heal pickup in tools/build_biomes.gd, kept in step by
 ## hand. Drawn at runtime rather than generated to a .tres: the HUD is not
@@ -29,6 +37,7 @@ const HEART := [
 @onready var _fill: ColorRect = %Fill
 @onready var _percent: Label = %Percent
 @onready var _hearts: HBoxContainer = %Hearts
+@onready var _boss_bar: BossBarType = %BossBar
 
 @onready var _heart_full := _heart_texture(true)
 @onready var _heart_empty := _heart_texture(false)
@@ -51,6 +60,21 @@ func set_lives(lives: int, max_lives: int) -> void:
 		var icon := _hearts.get_child(i) as TextureRect
 		icon.visible = i < max_lives
 		icon.texture = _heart_full if i < lives else _heart_empty
+
+
+## The boss bar, up only on a floor that has one. Three calls rather than
+## one that means different things: game.gd names him once on arrival, then
+## his own health_changed drives set_boss_health straight through.
+func set_boss(title: String, health: int, max_health: int) -> void:
+	_boss_bar.show_boss(title, health, max_health)
+
+
+func set_boss_health(health: int, max_health: int) -> void:
+	_boss_bar.set_health(health, max_health)
+
+
+func clear_boss() -> void:
+	_boss_bar.hide_boss()
 
 
 func _heart_texture(full: bool) -> Texture2D:

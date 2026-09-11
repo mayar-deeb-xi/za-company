@@ -88,15 +88,42 @@ const BIOME := {
 	# thing in the middle of the room. The beat below is how this floor gets
 	# bodies without a placement - an arrival carries no `at`.
 	"enemies": [],
-	# **AUTHORED NOW, INERT UNTIL KHALED EXISTS.** He is build step 6, and
-	# `_due()` returns false while `Props/Boss` is null, so this list costs
-	# nothing standing here and switches on the day he lands.
+	# SILVERMAN, on the centre line, 100 px north of where you walk in.
 	#
-	# THE THRESHOLDS ASSUME 192 HP - eight heavies, the next breakpoint up from
-	# Mostafa's six - and are quarters of it. If his health lands anywhere else
-	# these three numbers are wrong and nothing will complain: the beat will
-	# simply fire at the wrong moments, or, if he opens below 144, all three at
-	# once. Set them from his real `max_health` when the scene exists.
+	# x is `DOOR_CENTRE_X` and that is the load-bearing half of it: his glare
+	# sweeps 140 px along x and his crossing travels 72 along x, so he is the
+	# one boss in the game whose attacks need the room's WIDTH - and centred is
+	# the only placement that gives him all of it in both directions. Off to one
+	# side, half his fight runs out of floor.
+	#
+	# y 140 puts him 100 px from the south spawn, inside his 130 sight, so he
+	# has seen you before you have taken a step: a boss floor is an arena and
+	# the walk through it goes through him. It is also clear of everything -
+	# the desk, chair and sticky note all sit at x <= 174, the console at 430,
+	# the plants at 36 and 508 - and it stands him just off the north edge of
+	# the rug, which is what the rug is for.
+	#
+	# **There is no door for him to lock.** Every other boss floor shuts its
+	# north door until he concedes; this one has no north door at all, because
+	# the penthouse is the end of the chain and build_levels.gd only cuts one
+	# where there is a next level. Beating him opens nothing - he is the last
+	# thing in the building, and what happens after is the ending, not a floor.
+	"boss": {"type": "silverman", "at": Vector2(272, 140)},
+	# **LIVE.** Authored before the boss existed and inert while `Props/Boss`
+	# was null; Silverman is standing there now, so these three beats fire.
+	#
+	# THE THRESHOLDS ARE QUARTERS OF 192 - eight heavies, the next breakpoint up
+	# from Mostafa's six - and 192 is what he really opens at, so the three
+	# numbers below are now confirmed against the scene rather than assumed.
+	# They are also deliberately OFF his phase boundaries: his ladder turns at
+	# 128 and 64 (two thirds and a third), and the beat lands at 144, 96 and 48,
+	# so a phase change and an arrival never coincide. One thing to read at a
+	# time was the whole argument for the arena being empty; it applies just as
+	# much to the two clocks running on his health.
+	#
+	# Retune them from `max_health` if his health ever moves: nothing will
+	# complain, the beat will simply fire at the wrong moments - or, if he ever
+	# opens below 144, all three at once.
 	#
 	# In by the SOUTH door, which is the door that seals behind you - so the
 	# bodies come through the one way out, and the seal is the reason they can.
@@ -118,4 +145,11 @@ const BIOME := {
 			"enemies": ["social_media", "social_media", "office_boy"],
 			"per_head": ["social_media"]},
 	],
+	# The penthouse, and the last time anybody is kind to you. He comes up by the
+	# south door - the one that is meant to seal behind you, which is a
+	# `can_travel()` override this level does not have yet, and the day it does
+	# he is on the inside of it with you. East of the desk and off the rug, in
+	# the open floor the fight is fought across.
+	"relief": {"npc": "ivan", "from": "start", "at": Vector2(400, 176),
+		"say": "res://game/npcs/ivan/after_the_fight.gd"},
 }

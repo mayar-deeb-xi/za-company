@@ -1,10 +1,12 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://game/game.gd" id="1_game"]
 [ext_resource type="PackedScene" path="res://game/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://ui/pause_menu/pause_menu.tscn" id="3_pause"]
 [ext_resource type="PackedScene" path="res://ui/hud/hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" path="res://ui/level_title/level_title.tscn" id="5_title"]
+[ext_resource type="PackedScene" path="res://game/dialogue/dialogue_director.tscn" id="6_dialogue"]
+[ext_resource type="PackedScene" path="res://ui/subtitle/subtitle.tscn" id="7_subtitle"]
 
 [node name="Game" type="Node2D"]
 y_sort_enabled = true
@@ -29,6 +31,7 @@ position_smoothing_enabled = true
 position_smoothing_speed = 8.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
+layer = 2
 
 [node name="Hud" parent="HUD" instance=ExtResource("4_hud")]
 
@@ -44,9 +47,16 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0)
 
+[node name="Subtitle" type="CanvasLayer" parent="."]
+layer = 4
+
+[node name="BossSubtitle" parent="Subtitle" instance=ExtResource("7_subtitle")]
+
 [node name="Title" type="CanvasLayer" parent="."]
 layer = 6
 
 [node name="LevelTitle" parent="Title" instance=ExtResource("5_title")]
+
+[node name="Dialogue" parent="." instance=ExtResource("6_dialogue")]
 
 [node name="PauseMenu" parent="." instance=ExtResource("3_pause")]

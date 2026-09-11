@@ -26,6 +26,48 @@ extends "res://game/enemies/enemy_base.gd"
 ## is the shared RULES, the way enemy_base.gd is for the enemy types.
 
 signal conceded
+## Every boss floor puts his health on the HUD. Shaped exactly like the
+## player's own health_changed rather than inventing a second shape for the
+## same job: game.gd wires both to the HUD the same way, and neither the
+## boss nor the bar learns anything about the other.
+signal health_changed(health: int, max_health: int)
+## A boss may shake the room. Shaped like health_changed above and wired the
+## same way: he says a blow landed hard and does not learn who is listening -
+## game.gd is, because game.gd is what owns a camera. `strength` is in world
+## pixels of throw and decays to nothing over `seconds`. A boss that never
+## emits it simply never shakes anything.
+signal shook(strength: float, seconds: float)
+## A boss may also talk, and this is the third signal in that shape and wired
+## the same way for the third time: he shouts, and never learns that a subtitle
+## exists. game.gd listens, because game.gd is what owns the screen. `seconds`
+## is how long the line was written to stay up, decided where the line was
+## chosen - the only place that can know whether it has a clip whose length
+## should set it (see boss_lines.gd). A boss with no `Lines` child never emits
+## it and fights in silence.
+signal said(speaker: String, text: String, seconds: float)
+
+## The three moments every boss has a sound for, if he owns the files: a hit
+## that hurt, a hit that STOPPED something, and the end. A boss with an
+## `Audio` child gets them by existing - the same deal as the HUD bar - and a
+## boss without one is silent with no branch anywhere but `_sfx`.
+const BossAudio := preload("res://game/bosses/boss_audio.gd")
+
+## And the things he shouts, on exactly those terms: a `Lines` child naming a
+## file of them, four cues wired by the base for free - `spot`, `hurt`,
+## `stagger` and `concede` - plus `taunt`, plus one named after each attack as
+## it begins. A boss without the child says nothing, with no branch anywhere
+## but `_say`.
+const BossLines := preload("res://game/bosses/boss_lines.gd")
+
+## His theme, and it is his the way his grunts are: game.gd starts it when it
+## finds him in the `bosses` group and takes it back down when he concedes,
+## on exactly the moments it raises and clears his HUD bar. It is declared
+## HERE rather than added to Music's catalogue because that catalogue exists
+## for the one track THREE front-end screens ask for by name; a boss theme is
+## asked for by one thing in the game - the boss - so it belongs on him. A
+## boss who names no track fights to whatever the floor was already playing,
+## which today is silence, with no branch anywhere but game.gd's one `if`.
+@export_file("*.wav") var music := ""
 
 ## The attack in progress, "" between attacks. Public for tests and for the
 ## effects that follow a swing.
@@ -33,6 +75,17 @@ var attack := ""
 var has_conceded := false
 
 var _damage_scale := 1.0
+## How long the player must stay out of his reach before he complains about it.
+## Long enough that closing the ground normally never trips it - at Ahmed's
+## speed 40 the walk in is about a second and a half - so it only ever fires on
+## someone who is deliberately keeping away.
+const TAUNT_SECONDS := 3.5
+
+var _spotted := false
+var _out_of_reach := 0.0
+
+@onready var _audio: BossAudio = get_node_or_null("Audio")
+@onready var _lines: BossLines = get_node_or_null("Lines")
 
 
 func _ready() -> void:
@@ -48,6 +101,50 @@ func _physics_process(delta: float) -> void:
 		_sprite.modulate = Color.WHITE
 		return
 	super(delta)
+	_watch_player(delta)
+
+
+## The two things worth saying that no step of the cycle is in a position to
+## notice: the frame he first lays eyes on the player, and the player refusing
+## to come near him. Everything else he says hangs off a moment that already
+## exists - an attack beginning, a hit landing, the end.
+##
+## The taunt is measured from his REACH and not from his sight, and that is the
+## whole of what makes it read as a taunt: at the far edge of his sight radius
+## he is walking towards you, and a man walking towards you has nothing to
+## complain about yet. It is standing just outside his swing and staying there
+## that earns "come here".
+func _watch_player(delta: float) -> void:
+	# Group + method, like everything else that reaches across: nothing here
+	# names the player's script.
+	var player := get_tree().get_first_node_in_group("player") as Node2D
+	if player == null:
+		return
+	if global_position.distance_to(player.global_position) > sight_radius:
+		_out_of_reach = 0.0
+		return
+	if not _spotted:
+		_spotted = true
+		_say("spot")
+		return
+	# Mid-attack does not count as being kept away - he is busy, and the attack
+	# has its own line.
+	if touching_player or attack != "":
+		_out_of_reach = 0.0
+		return
+	_out_of_reach += delta
+	if _out_of_reach >= TAUNT_SECONDS:
+		_out_of_reach = 0.0
+		_say("taunt")
+
+
+## The name the HUD's boss bar announces him by. Read off his own SCENE and
+## not his node name, which build_levels.gd overwrites with "Boss" so the
+## floor's north door can find him - a bar reading BOSS is the one thing it
+## must not say. A boss built from script rather than instanced has no scene
+## path and gets an empty name, which is a blank bar rather than a crash.
+func title() -> String:
+	return scene_file_path.get_file().get_basename().to_upper()
 
 
 ## Which attack to open with when the player is in reach. A boss returns one of
@@ -68,6 +165,11 @@ func _begin_attack(id: String) -> void:
 	windup_seconds = spec["windup"]
 	recover_seconds = spec["recover"]
 	contact_damage = roundi(spec["damage"] * _damage_scale)
+	# Said on the wind-up rather than on the blow, so the shout is part of the
+	# telegraph instead of a note on what already happened. The cue IS the
+	# attack id, which is what gets a new boss lines for a new attack without
+	# either file learning the other's vocabulary.
+	_say(id)
 	_enter(Phase.WINDUP)
 
 
@@ -129,12 +231,25 @@ func take_damage(amount: int) -> void:
 		return
 	health = maxi(health - amount, 0)
 	_flash = HURT_FLASH_SECONDS
+	# Before the concede below: the bar must show him reaching zero, not stop
+	# at whatever he had left on the second-to-last blow.
+	health_changed.emit(health, max_health)
 	if health == 0:
 		_concede()
 		return
 	if _interruptible():
 		_interrupt_locked = interrupt_cooldown
 		_enter(Phase.STAGGER)
+		# The stagger REPLACES the grunt rather than layering over it: the one
+		# thing the player needs to hear off this hit is that the swing died,
+		# and two sounds on one frame is the fastest way to hear neither. What
+		# he SAYS splits on the same line and for the same reason - being hurt
+		# and being interrupted are two different insults.
+		_sfx("stagger")
+		_say("stagger")
+	else:
+		_sfx("hurt")
+		_say("hurt")
 
 
 ## Defeat. Rooted, harmless, still in the room; the door hears about it.
@@ -146,4 +261,41 @@ func _concede() -> void:
 	_touch_area.set_deferred("monitoring", false)
 	_sprite.flip_h = _facing_left
 	_sprite.play("concede_side")
+	_sfx("concede")
+	_say("concede")
 	conceded.emit()
+
+
+## One sound, if this boss has one by that name and an `Audio` child at all.
+## Every miss is legal: a boss with no sounds yet, an id he was never given,
+## and a checkout whose WAVs have not been imported all arrive here.
+func _sfx(id: String) -> void:
+	if _audio != null:
+		_audio.play(id)
+
+
+## One line, if this boss has any for that cue and a `Lines` child at all -
+## `_sfx` above for the mouth rather than the throat, and every miss is legal
+## for the same reasons. Most calls come back with nothing to say: the cue is
+## still cooling down, or he is already mid-sentence, and the fight carries on
+## either way (see boss_lines.gd).
+func _say(cue: String) -> void:
+	if _lines == null:
+		return
+	var line := _lines.say(cue)
+	if line.is_empty():
+		return
+	said.emit(title(), String(line["text"]), float(line["seconds"]))
+
+
+## The same deal for a sound that keeps going - a fire, a breath - and for
+## taking one back down. Here rather than in each boss so that no boss ever
+## writes the null check above twice.
+func _sfx_loop(id: String) -> void:
+	if _audio != null:
+		_audio.loop(id)
+
+
+func _sfx_fade(id: String, seconds: float) -> void:
+	if _audio != null:
+		_audio.fade_out(id, seconds)

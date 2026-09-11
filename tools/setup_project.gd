@@ -35,6 +35,11 @@ func _initialize() -> void:
 	ProjectSettings.set_setting("input/move_left", _action([_key(KEY_A), _key(KEY_LEFT)]))
 	ProjectSettings.set_setting("input/move_right", _action([_key(KEY_D), _key(KEY_RIGHT)]))
 	ProjectSettings.set_setting("input/attack", _action([_key(KEY_SPACE), _key(KEY_J)]))
+	# Talking to people. E is where a hand on WASD already is; Enter is for the
+	# hand that is not. Space and J advance a line too (the subtitle box takes
+	# `attack` as well), but only `interact` can START a conversation - walking
+	# past someone mid-combo must never open one.
+	ProjectSettings.set_setting("input/interact", _action([_key(KEY_E), _key(KEY_ENTER)]))
 	ProjectSettings.set_setting("input/toggle_fullscreen", _action([_key(KEY_F11)]))
 
 	# Order matters: autoloads are readied in the order they appear here, and
@@ -43,9 +48,11 @@ func _initialize() -> void:
 	# ahead on a project that already had them registered.
 	ProjectSettings.clear("autoload/Display")
 	ProjectSettings.clear("autoload/Difficulty")
+	ProjectSettings.clear("autoload/Music")
 	ProjectSettings.set_setting("autoload/Settings", "*res://autoload/settings.gd")
 	ProjectSettings.set_setting("autoload/Display", "*res://autoload/display.gd")
 	ProjectSettings.set_setting("autoload/Difficulty", "*res://autoload/difficulty.gd")
+	ProjectSettings.set_setting("autoload/Music", "*res://autoload/music.gd")
 
 	var err := ProjectSettings.save()
 	print("ProjectSettings.save() -> ", error_string(err))

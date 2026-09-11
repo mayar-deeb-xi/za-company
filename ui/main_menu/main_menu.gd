@@ -23,6 +23,10 @@ func _ready() -> void:
 	_quit_confirm.confirmed.connect(_on_quit_confirmed)
 	_show_mode()
 
+	# Idempotent on the track: coming back from the character select or out of
+	# a finished run finds it already playing and leaves it alone.
+	Music.play(Music.MENU)
+
 	# Route the window's X button through the same confirmation.
 	get_tree().auto_accept_quit = false
 

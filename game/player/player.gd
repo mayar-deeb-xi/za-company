@@ -52,6 +52,12 @@ const MIN_SLOW_FACTOR := 0.2
 ## blink the grace window owns, so being hurt and being slowed never look alike.
 const SLOW_TINT := Color(0.6, 0.75, 1.0)
 
+## How close the player has to get to a scripted destination before it counts
+## as arrived. Six pixels rather than one: the escort's destination MOVES (it
+## trails whoever is being followed), and a tighter ring makes the walk stutter
+## between walking and idle every time the guide slows down.
+const LEAD_STOP := 6.0
+
 signal health_changed(health: int, max_health: int)
 signal lives_changed(lives: int, max_lives: int)
 signal died
@@ -73,6 +79,17 @@ var lives := MAX_LIVES
 var slow_factor := 1.0
 var slow_seconds := 0.0
 
+## Cutscene control. While the world has the wheel the stick and the attack
+## button are ignored outright - not merely unread: an attack in progress is
+## cancelled on the way in, so a conversation cannot start with a sword already
+## swinging through it. Deliberately NOT `set_physics_process(false)`, which is
+## what a door transition uses: a frozen body cannot walk, and being led on a
+## tour is the one time the player moves without touching the keyboard.
+var _scripted := false
+## Where the world is currently walking the player to, or null to stand still.
+## Re-set every frame by whoever is leading, so following a moving guide is the
+## same mechanism as walking to a fixed mark.
+var _lead = null
 var _facing: Facing = Facing.DOWN
 var _facing_left := false
 ## The attack animation currently playing ("" when none), the one buffered to
@@ -128,6 +145,13 @@ func _physics_process(delta: float) -> void:
 	if _combo_grace > 0.0:
 		_combo_grace = maxf(_combo_grace - delta, 0.0)
 
+	# Scripted movement short-circuits everything below: no stick, no attack,
+	# no combo. The timers above still run, because a blow landed during a
+	# conversation still has its grace window to spend.
+	if _scripted:
+		_scripted_step(delta)
+		return
+
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 
 	if not _charging and Input.is_action_just_pressed("attack"):
@@ -169,6 +193,72 @@ func _physics_process(delta: float) -> void:
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
 		_apply_animation("idle")
 
+	move_and_slide()
+
+
+## The world takes the wheel. Any swing, thrust, charge or heavy in flight is
+## dropped here rather than allowed to finish: a cutscene that begins on frame
+## two of a combo would otherwise play out over the top of it, hitbox and all.
+##
+## Health, grace and slows are untouched - being talked at is not a safe room.
+func take_control() -> void:
+	_scripted = true
+	_lead = null
+	_attack = ""
+	_buffered = ""
+	_combo_grace = 0.0
+	_charging = false
+	_charge = 0.0
+	_swing_hits.clear()
+	_sprite.speed_scale = 1.0
+	velocity = Vector2.ZERO
+	_apply_animation("idle", true)
+
+
+func release_control() -> void:
+	_scripted = false
+	_lead = null
+
+
+func scripted() -> bool:
+	return _scripted
+
+
+## Walk here, under the player's own legs and at the player's own speed. Only
+## obeyed while the world has the wheel, so nothing can drag a player who is
+## still playing. Call again to redirect - an escort re-calls it every frame
+## with a point that trails the guide - and `null` to stand still.
+func lead_to(point) -> void:
+	_lead = point
+
+
+## Turn to look at something without moving. Used at the start of a
+## conversation, so the player is not delivering their half of it to a wall.
+func face_towards(point: Vector2) -> void:
+	var to_point := point - global_position
+	if to_point == Vector2.ZERO:
+		return
+	_face(to_point)
+	_apply_animation("idle")
+
+
+## One frame of being led. The same walk the stick produces - same speed, same
+## acceleration, same animation - with the direction coming from a destination
+## instead of the keyboard, so being escorted looks exactly like walking.
+func _scripted_step(delta: float) -> void:
+	var direction := Vector2.ZERO
+	if _lead != null:
+		var to_lead: Vector2 = _lead - global_position
+		if to_lead.length() > LEAD_STOP:
+			direction = to_lead.normalized()
+	if direction != Vector2.ZERO:
+		_face(direction)
+		velocity = velocity.move_toward(direction * SPEED * slow_factor,
+			ACCELERATION * delta)
+		_apply_animation("walk")
+	else:
+		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
+		_apply_animation("idle")
 	move_and_slide()
 
 

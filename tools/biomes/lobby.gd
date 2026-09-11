@@ -65,6 +65,29 @@ const BIOME := {
 		{"type": "desk", "at": Vector2(180, 250)},
 		{"type": "chair", "at": Vector2(180, 262)},
 	],
+	# HR, and floor 1 is the only floor she is on. She stands to the right of
+	# where you arrive - in the waiting area, short of the sofa - so the first
+	# thing a new player sees after the level card is a person looking at them,
+	# without anything being in the way of the walk north.
+	#
+	# Three lanes decided this spot and all three are the lobby's own: the door
+	# line (x 246-300), the central band the colonnade flanks (y 122-200), and
+	# the furniture. She is clear of all of them, which also keeps her out of
+	# the arena test_combat.gd fights across.
+	#
+	# `greets` is off on purpose. A tour that starts itself would take the wheel
+	# off a player who has not pressed anything yet - and off test_flow.gd,
+	# which walks out of this room on foot. The prompt over her head is the
+	# invitation; taking it is the player's.
+	"npcs": [
+		{
+			"id": "hr_lady",
+			"at": Vector2(356, 226),
+			"facing": "side",
+			"face_left": true,
+			"conversation": "res://game/npcs/hr_lady/welcome.gd",
+		},
+	],
 	# DELIBERATELY EMPTY, and the only floor that is. The first thing a new
 	# player does is walk, and this is where they learn that safely - so floor 1
 	# stays crossable without a fight. It is also where they find out what a

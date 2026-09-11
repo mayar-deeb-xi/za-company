@@ -4,6 +4,14 @@ extends "res://tests/helpers.gd"
 ## as hosted by the main menu. Never enters the game - the pause-menu host and
 ## zoom live in test_flow.gd, which owns a running world.
 
+## The music player's object id, taken on the menu and compared after each
+## scene change: the autoload exists to keep ONE of them across all three
+## front-end scenes, and a restart would show up here as a new object.
+var _music_id := 0
+## Playback position when the menu came up, so a later frame can prove the
+## track moved. A loop sealed to frame 0 plays silence forever at 0.000s.
+var _music_at := 0.0
+
 
 func _tick(frame: int) -> void:
 	match frame:
@@ -16,6 +24,27 @@ func _tick(frame: int) -> void:
 			_check("menu: themed stylebox applied",
 				(current_scene.get_node("%PlayButton") as Button)
 					.get_theme_stylebox("normal") is StyleBoxFlat)
+			# Music is an autoload because the front end is three scenes; the
+			# first thing to be sure of is that the file actually loaded.
+			_check("music: the menu track is playing (%s)" % _music_track(),
+				_music() != null
+					and _music_track() == "res://assets/music/menu_loop.wav")
+			_music_id = _music().get_instance_id()
+			# Sealed as a loop, and sealed to a REAL end. `loop_end` is in
+			# frames and 0 does not mean "to the end": a forward loop ending on
+			# frame 0 wraps before it has played anything, so the track is
+			# pinned at 0.000s and the bus gets exact silence. Every track in
+			# the game shipped mute that way, under a green check that only
+			# looked at `loop_mode` - which was set. So both halves are checked
+			# here, and the position below is checked because neither half
+			# proves a sound was made.
+			var wav := _music().stream as AudioStreamWAV
+			_check("music: the loop flag is set on the stream",
+				wav != null and wav.loop_mode == AudioStreamWAV.LOOP_FORWARD)
+			_check("music: and sealed to a real end, not frame 0 (loop_end %d)"
+				% (0 if wav == null else wav.loop_end),
+				wav != null and wav.loop_end > 0)
+			_music_at = _music().get_playback_position()
 			(current_scene.get_node("%QuitButton") as Button).pressed.emit()
 		8:
 			_check("menu: Quit opens the confirmation dialog",
@@ -71,12 +100,33 @@ func _tick(frame: int) -> void:
 				"get_value", &"player", &"character", "mayar")
 			_check("select: focus starts on the remembered character (%s)" % expected,
 				(row.get_node(expected) as Button).has_focus())
+			# The seam the autoload exists for: PLAY freed the menu scene, and
+			# the same player is still going. A restart would show as a
+			# playback position back at the top.
+			_check("music: survives the change to character select (%s)"
+				% _music_track(),
+				_music_track() == "res://assets/music/menu_loop.wav")
+			# The seam itself: the same player object, never rebuilt and never
+			# re-played. A restart would be a new instance or a cleared track.
+			_check("music: the same player, not a restart",
+				_music().get_instance_id() == _music_id)
+			# The one check here that a silent track cannot pass. Everything
+			# above is satisfied by a stream that is loaded, flagged and
+			# playing nothing; a position that has MOVED since the menu came up
+			# is the only evidence in reach of a headless run that audio is
+			# actually being mixed.
+			_check("music: it is actually advancing, not pinned (%.3fs -> %.3fs)"
+				% [_music_at, _music().get_playback_position()],
+				_music().get_playback_position() > _music_at)
 			_key(KEY_ESCAPE, true)
 			_key(KEY_ESCAPE, false)
 		26:
 			_check("select: Escape backs out to the main menu (got %s)"
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path == "res://ui/main_menu/main_menu.tscn")
+			_check("music: still the same player back on the menu",
+				_music_track() == "res://assets/music/menu_loop.wav"
+					and _music().get_instance_id() == _music_id)
 			(current_scene.get_node("%SettingsButton") as Button).pressed.emit()
 		32:
 			_check("settings: opens from the main menu",

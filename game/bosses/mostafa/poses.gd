@@ -42,6 +42,27 @@ const LEG := 4
 const LEG_W := 13
 const BOOTS := 6
 
+## The vertical stack those measurements add up to, from the soles upward. The
+## painter draws off these and the live effects read them, so there is one
+## shoulder line rather than two that can drift apart - the reason his poses
+## are the single source of truth for his shape in the first place.
+const BOOT_TOP := FOOT - BOOTS + 1
+const LEG_TOP := BOOT_TOP - LEG
+const SHORTS_BOT := LEG_TOP - 1
+const SHORTS_TOP := SHORTS_BOT - SHORTS + 1
+const BAND_TOP := SHORTS_TOP - 2
+const BAND_BOT := SHORTS_TOP - 1
+const TORSO_BOT := BAND_TOP - 1
+const TORSO_TOP := TORSO_BOT - TORSO + 1
+const NECK_TOP := TORSO_TOP - NECK
+const HEAD_BOT := NECK_TOP - 1
+const HEAD_TOP := HEAD_BOT - HEAD_H + 1
+
+## The row every pose's `ey` and `gy` below are measured DOWN from: where an
+## arm leaves the torso. Anything drawing a glove from pose data - the painter,
+## bell.gd - starts here.
+const SHOULDER := TORSO_TOP + 3
+
 const PAL := {
 	"A": "0d0b0d",                    # outline, the cast's own
 	"K": "1a1418", "k": "302832",     # hair and beard, crown sheen
@@ -59,8 +80,9 @@ const PAL := {
 const GUARD_L := {"ex": -17, "ey": 12, "gx": -15, "gy": -6}
 const GUARD_R := {"ex": 17, "ey": 12, "gx": 15, "gy": -6}
 
-## Sheet order: one row per animation.
-const ORDER := ["idle", "walk", "jab", "hook", "rush", "concede"]
+## Sheet order: one row per animation. `rage` sits with the fight rather than
+## with the ending - it is something he DOES at 72, not how he stops.
+const ORDER := ["idle", "walk", "jab", "hook", "rush", "rage", "concede"]
 
 ## A frame carries:
 ##   dur     seconds it holds
@@ -150,6 +172,36 @@ const ANIMS := {
 			"R": {"ex": 17, "ey": 12, "gx": 12, "gy": -7}},
 		{"dur": 0.18, "phase": "r", "dy": 1, "legs": [1, 1], "stance": 1,
 			"L": GUARD_L, "R": GUARD_R},
+	],
+	# RAGE - 0.95 s, played ONCE at 72 HP and never again. He does not attack
+	# through it and cannot be staggered out of it.
+	#
+	# The frame boundaries are the fire's beats, so the picture and the
+	# eruption cannot drift: rage.gd's three pulses land on the starts of
+	# frames 1, 2 and 4, and the blast on the start of frame 3. He loads, sinks
+	# TWICE - the second one deeper than the first, which is what sells the
+	# third as the one that gives - blows the ring out of the crouch, and comes
+	# up through his own fire with his arms flung open. He settles into a
+	# wider, heavier guard than the one he started the fight in.
+	"rage": [
+		{"dur": 0.16, "dy": 1, "legs": [1, 1], "stance": 1,
+			"L": {"ex": -18, "ey": 12, "gx": -16, "gy": -3},
+			"R": {"ex": 18, "ey": 12, "gx": 16, "gy": -3}},
+		{"dur": 0.24, "dy": 2, "hdy": 1, "legs": [1, 1], "stance": 2, "blink": true,
+			"L": {"ex": -19, "ey": 13, "gx": -18, "gy": 1},
+			"R": {"ex": 19, "ey": 13, "gx": 18, "gy": 1}},
+		{"dur": 0.11, "dy": 1, "stance": 2,
+			"L": {"ex": -19, "ey": 9, "gx": -20, "gy": -4},
+			"R": {"ex": 19, "ey": 9, "gx": 20, "gy": -4}},
+		{"dur": 0.11, "dy": 2, "hdy": 1, "legs": [1, 1], "stance": 3, "blink": true,
+			"L": {"ex": -20, "ey": 12, "gx": -19, "gy": 2},
+			"R": {"ex": 20, "ey": 12, "gx": 19, "gy": 2}},
+		{"dur": 0.18, "dy": -1, "hdy": -2, "stance": 2,
+			"L": {"ex": -19, "ey": -2, "gx": -21, "gy": -13, "gs": 6},
+			"R": {"ex": 19, "ey": -2, "gx": 21, "gy": -13, "gs": 6}},
+		{"dur": 0.15, "stance": 1,
+			"L": {"ex": -18, "ey": 11, "gx": -16, "gy": -5},
+			"R": {"ex": 18, "ey": 11, "gx": 16, "gy": -5}},
 	],
 	# CONCEDE - one frame, deliberately. boss_base plays `concede_side` at zero
 	# health and the row has to exist, but the animation that went with it was

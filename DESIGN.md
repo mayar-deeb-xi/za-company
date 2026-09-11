@@ -14,7 +14,7 @@ changes weekly and only Khaled (top floor, calendar booked until 2031) knows
 it. You climb the building floor by floor. Tone is affectionate workplace
 comedy — these are real colleagues; jokes stay warm, never mean.
 
-Story is delivered as one-line quips by Dominic at doors. No cutscenes until
+Story is delivered as one-line quips by Dominique at doors. No cutscenes until
 the ending.
 
 ## Enemies — reskins of the three existing archetypes
@@ -54,7 +54,7 @@ are counted in):
 | 9 | asset_recovery | 4 | 4 `office_boy` |
 | 10 | hellfire | 7 | 4 `regular` + 2 `wraith` + 1 `warden` (placed) |
 | 11 | executive_floor | 6 | 3 `regular` + 2 `wraith` + 1 `warden` (placed) |
-| 12 | khaled_office | 0 | final boss arena |
+| 12 | khaled_office | 0 | final boss arena - SILVERMAN placed, beat live |
 
 Two of those are decisions rather than transcriptions of the floor list above.
 **The innovation lab, which had no mechanic assigned, becomes the first
@@ -159,20 +159,64 @@ The staggered single-file walk-in through a known door carries it for now.
 
 ## NPCs — two new small systems
 
-- **Dominic** (guide, front desk): a talking signpost. New `npc_base.gd` +
+- **Dominique** (guide, front desk): a talking signpost. New `npc_base.gd` +
   one-line dialogue box (`ui/dialogue/`): proximity trigger, one line per
   visit, advance with the attack key. No branching, no quest log. Placed on
   floors 1, 4, 7, 10 - the tutorial, and then one before each boss.
-- **Ivan** (healer, cafeteria): stands in a safe corner, lobs a heart in a
-  short tween arc every ~10s. Spawns the existing `pickup_base.gd` heart;
-  max ONE of his hearts on the floor at a time (lifeline, not fountain). Heart
-  is live when it lands. Only line: "Eat." Present on floors 3, 4, 7, 8, 9, 10.
-  From floor 2 up he is the ONLY healing in the game: the floors themselves no
-  longer carry a heart, so the lobby's is the last one handed out for free.
-  Until he is built, floors 2-9 have no heal at all - which is deliberate, and
-  is the pressure his build step is meant to relieve.
+  **The box was built with branching after all**, because HR's induction needed
+  it and a box that can ask a question can also just not ask one. Dominique's
+  signpost lines cost a data file and nothing else now.
+- **Ivan** (healer, cafeteria): **built, and the cooldown became a cue.** The
+  plan was a heart lobbed every ~10s from a safe corner; what shipped is a heart
+  per HEAD thrown once, when the room is clear, by a man who walks in to do it.
+  A timer would have had him standing in the fight with healing on offer, which
+  is the one thing that stops a heal reading as relief - so he is a beat
+  (`relief` in biome data, `game/levels/relief.gd`) rather than furniture, and
+  the "max one on the floor" rule became "once per visit". The arc, the
+  `pickup_base.gd` heart and "Eat." as his last word all survived intact.
+  Present on floors 3, 4, 7, 8, 9, 10. From floor 2 up he is the ONLY healing in
+  the game: the floors themselves carry no heart, so the lobby's is the last one
+  handed out for free.
 
 Both are friendly: no `player`-group targeting of them, enemies ignore them.
+They are in the `npcs` group and in neither `player` nor `enemies`, which is
+all it takes — nothing in this game reaches anything by type.
+
+**Both are twice the player's height, in a robe no wider than the player.**
+Settled after a preview round; the picks were Dominique's long blonde hair over
+a teal robe and Ivan's cropped black curls over a red one, both with a hemp
+waist cord and a floor-length hem. It is the one deliberately uncanny thing
+about the only two people in the building who are kind to you: a colleague you
+have to look up at. It also does a job the writing cannot — from floor 2 up
+Ivan is the only healing in the game, and at double height he is the tallest
+thing in any room he is in, which finds him in a crowd without a marker.
+
+Mechanically it costs a 64 px cell (the bosses' size, already supported) and
+buys nothing else: same ground line, same collision footprint, same everything.
+They walk at **45**, half the player's 90 — though both stand still, so that
+number only matters the day one of them is asked to go somewhere.
+
+**Built so far**: `game/npcs/` with all three NPCs' art, scenes, roster and
+`npc_base.gd`, plus the whole dialogue system (`game/dialogue/`,
+`ui/dialogue/`), HR standing in the lobby with an induction to deliver, and Ivan
+arriving on six floors with a heart per head. Still to come: lines for Dominique
+and a floor for her to stand on.
+
+## HR's induction — the first conversation in the game
+
+She is in the lobby, off the door line and out of the fight lanes, with a
+prompt over her head rather than a cutscene that starts itself. Press E and she
+welcomes you, then walks the room — sign-in, the front desk, the water cooler —
+towing you along behind her, one stop per thing she has an opinion about, and
+returns to her post.
+
+Then the contract. **It cannot be refused**, and that is the joke rather than a
+limitation: REFUSE does not end the conversation, it gets "Oh, it's so simple.
+Just sign it." and a fresh offer, and the third offer loops to itself forever.
+Asking to READ it raises the agreement — an English header, an English
+signature line, and five clauses of randomly generated consonants. She is not
+hiding the terms. There are no terms. Signing is the only way out of the room,
+which is the first thing the building teaches you about itself.
 
 ## Floors — 10 levels
 
@@ -210,7 +254,7 @@ names the room, and the fiction carries which floor it is.
   heart, and
   the room deliberately empty of enemies - floor 1 is where a new player learns
   to walk, safely, and test_flow asserts it stays empty. **Dressed**: reception
-  counter (Dominic's spot, and Y-sorting already puts him behind it), the dead
+  counter (Dominique's spot, and Y-sorting already puts them behind it), the dead
   plant at the end of it, water cooler and a living plant on the far wall, a
   waiting area of sofa and coffee table, two sign-in workstations with chairs,
   the "WELCOME NEW HIRES" banner hanging crooked off one corner, a carpet
@@ -219,7 +263,7 @@ names the room, and the fiction carries which floor it is.
   cut, because the one thing a room where a new player learns to walk must not
   have is a way to lose health by walking into the scenery. All of it is
   per-biome data in `tools/biomes.gd` drawn by `tools/props.gd`, so it survives
-  a regeneration and floors 2-9 can reuse the catalogue. Dominic + the 2 office
+  a regeneration and floors 2-9 can reuse the catalogue. Dominique + the 2 office
   boys land with steps 2-3.
   Two lanes are kept deliberately clear of furniture and must stay that way:
   the door line (x 246-300) and the central band (y 122-200, x 86-352).
@@ -278,7 +322,7 @@ names the room, and the fiction carries which floor it is.
   **Still to add**: its people, being placed by hand - 2 call_center at the
   chokepoints, 3 office boys between them.
 - [ ] **F4 Ahmed's Corner Office** (BOSS): oversized office, golf putter,
-  framed family photo. Small arena, no adds at rest. Ivan + Dominic.
+  framed family photo. Small arena, no adds at rest. Ivan + Dominique.
   **Built**: the room, and it is the marble hall's room - the same stone and
   the same classical colonnade, because this is the floor where the building
   stops pretending to be an office - taken down out of the white. Every stop
@@ -387,7 +431,7 @@ names the room, and the fiction carries which floor it is.
   No hazard, for the same reason Ahmed's office has none: one fight is enough
   to read at a time, and a boss room that also burns you is a boss room where
   the death was the floor's fault.
-  **Still to add**: Ivan. Mostafa stands in the middle of the ring at
+  **Still to add**: Mostafa stands in the middle of the ring at
   (272, 138), and naming him in the biome is also what swapped the north
   door for boss_door.gd. His adds are a beat rather than placements - one
   office boy at 96 HP and again at 48 - which is also what keeps the ring
@@ -411,7 +455,9 @@ names the room, and the fiction carries which floor it is.
   straight line an office boy walks to the middle (they slide off obstacles and
   have no pathfinding), and no enemy parked on a divider's x, or the divider's
   48px art hides it completely.
-  **Still to add**: Ivan (west wall) - he needs the NPC system, build step 4.
+  Ivan arrives at the west wall (80, 180) once the room is clear - the
+  heaviest `per_head` in the game is the one that most deserves the heal to
+  scale too.
 - [x] **F9 The Executive Floor** (mix/exam): dark wood, glass walls, awards
   cabinet. 3 office boys + 2 social_media + 1 call_center (center chokepoint).
   Every prize requires stepping into a radius on purpose. Ivan.
@@ -459,10 +505,10 @@ names the room, and the fiction carries which floor it is.
   partitioning grinds along it instead of coming round through the gap. Plus
   the floor's late beat - one more `warden` at 4 kills, arriving at the
   chokepoint, which is the only legal way to put a body there.
-  **Still to add**: Ivan.
+  Ivan arrives at (324, 196) once the room is clear.
 - [x] **F10 Khaled's Office** (FINAL): penthouse, city window, one desk, one
   face-down sticky note. Wide open arena. South door seals behind you.
-  Dominic waits outside ("Whatever happens up there… CC me."). Ivan.
+  Dominique waits outside ("Whatever happens up there… CC me."). Ivan.
   **Built**: the only ramp in the game with no warmth anywhere in it -
   charcoal and glass up to a blue-white - and a platinum accent, which is not
   a colour so much as the absence of one. That is the gym's argument made the
@@ -497,8 +543,10 @@ names the room, and the fiction carries which floor it is.
   The rug and the drinks trolley are the executive floor's, one storey down,
   which is the catalogue working as intended - in a room with no hue in it the
   rug comes out platinum on slate.
-  **Still to add**: Khaled, Ivan, and the south door sealing behind you, which
-  is a `can_travel()` override on this level's own script.
+  Ivan arrives at (400, 176) once the room is clear - though on this floor
+  "clear" waits on a boss who does not exist yet.
+  **Still to add**: Khaled, and the south door sealing behind you, which is a
+  `can_travel()` override on this level's own script.
 
 ## Bosses — overrides on enemy_base.gd's cycle, built in this order
 
@@ -542,11 +590,19 @@ unlocks.
   Commit is per attack (`COMMIT` in mostafa.gd), which is what makes the jabs
   uninterruptible and the hook not — the base has one dial, so he sets it as
   each attack begins.
+  He also **goes up at 72** — half health, once, and never back down. A 0.95 s
+  eruption (two sinks, a blast out of the crouch, a column he stands up
+  through) and then he burns for the rest of the fight: skirt, orbiting flame,
+  both gloves alight, a rim on his silhouette. Crimson and white, deliberately
+  not Ahmed's amber. It lands on the floor's existing `at_boss_health: 72`
+  beat, so the fire and the south door open together. **No number changed** —
+  the rage burns without biting; `breath_seconds` is the lever if it should do
+  both. `rage.gd` + `bell.gd` over the shared `brush.gd`.
   **Still to add**: the concede. The animation described above was drawn and
   rejected in review, so the row is a single placeholder frame — he stops and
   his hands come down. boss_base plays `concede_side` at zero health and the
   row has to exist; replacing it is adding frames to poses.gd and nothing
-  else. Also no boss bar on the HUD, same as Ahmed.
+  else.
 - [ ] **KHALED — 192 HP, F10.** Smooth = never hurries; each phase announced by
   adjusting his cuffs:
   - P1 "The Handshake" (192→128): single strikes, 0.8s telegraph, 20 dmg,
@@ -556,6 +612,28 @@ unlocks.
   - P3 "The Performance Review" (64→0): adds social_media drain while near,
     becomes fully uninterruptible. Ivan's hearts + the heavy are the answer.
   - Defeated: never falls. Straightens his cuffs and concedes.
+  **Built, on SILVERMAN, and unplaced.** The three phases above are implemented
+  verbatim on `game/bosses/silverman/` - 192 HP, a cumulative ladder at 128 and
+  64, a slow pulse in phase two and a drain in phase three, uninterruptible in
+  phase three - with the mechanics chosen from a preview rather than from this
+  list: the glare (the penthouse window turned on you), the split (he divides;
+  the copy walks at you), the cold room (proximity drains, outside the grace
+  window) and the crossing (his dash, which now passes through you). His
+  announcement is not cuffs - he has none - but a rung of his own shine spent on
+  the room. `tests/test_silverman.gd` fights him.
+  **Placed on F12, the penthouse**, at (272, 140) - centred, because his glare
+  and his crossing both run along x and centred is the only spot that gives him
+  the room's full width both ways. His floor's beat (144 / 96 / 48) was authored
+  against an assumed 192 and is now confirmed against the scene, and those
+  thresholds sit off his phase boundaries on purpose so an arrival and a phase
+  change never land together. It is the one boss floor with no door to lock: the
+  penthouse ends the chain, so there is no north wall to cut and beating him
+  opens nothing.
+  **Still open: is Silverman Khaled?** The floor is still called
+  `khaled_office` and announces itself as KHALED'S OFFICE, while the man
+  standing in it is Silverman and his HUD bar says SILVERMAN. A rename, a boss
+  above him, or what Khaled turns into - the decision changes a biome entry, a
+  title and the ending, not a pixel of the art or the fight.
 
 ## Ending — two codes, two jobs
 
@@ -570,7 +648,7 @@ Khaled's concession speech, then:
    can rotate it without touching anything else.
 
 Smash cut: desk, laptop connected, notification "Welcome to the team 🎉 —
-Khaled". Dominic: "Password changes Monday. The discount doesn't." Credits.
+Khaled". Dominique: "Password changes Monday. The discount doesn't." Credits.
 
 ## Multiplayer — a known future, not a current one
 
@@ -651,11 +729,24 @@ never tougher ones**, because 24/17/36 are exact combo breakpoints.
         single-file walk-in through a known door carries it for now. See
         "Reinforcements - the second beat" above for why this is not waves, and
         why almost no floor gets one.
-- [ ] 3. Dialogue + Dominic: npc_base.gd, ui/dialogue/, lines as instance data.
-- [ ] 4. Ivan: heart-throwing NPC on cooldown.
-- [ ] 5. Boss plumbing: locked north door (done: game/levels/boss_door.gd),
+- [x] 3. Dialogue. **Built**, and built past what this step asked for: the
+        subtitle box (`ui/dialogue/`), the proximity trigger and prompt on
+        npc_base, and a conversation runner that also branches, walks the NPC
+        and tows the player along behind her (`game/dialogue/`). Conversations
+        are data - a .gd of beats, named per NPC in biome data - and every beat
+        already carries a `voice` path for the day there is audio. Covered by
+        `tests/test_dialogue.gd`. **Dominique and Ivan still have no lines and
+        are still not on a floor**; HR is, and hers is the first induction.
+- [x] 4. Ivan. **Built**, and the cooldown turned into a cue: he is a floor's
+        THIRD beat (`relief`, game/levels/relief.gd), walking in through the
+        door the player came by once the room is clear, crossing to an authored
+        spot, and throwing one heart per head at the end of his three lines -
+        once per visit. The head count is game/heads.gd, shared with a second
+        beat's `per_head`. His heart is his own scene (tools/build_npcs.gd), so
+        no floor but the lobby carries one. Covered by `tests/test_ivan.gd`.
+- [x] 5. Boss plumbing: locked north door (done: game/levels/boss_door.gd),
         defeat -> concede -> unlock (done: boss_base.gd), boss HP bar on HUD
-        (to do).
+        (done: ui/hud/boss_bar.gd, found by group so every boss gets one).
 - [ ] 6. Bosses in order Ahmed -> Mostafa -> Khaled (each adds one idea:
         summons; multi-hit rhythm; phases). Ahmed is built, less his summon.
 - [ ] 7. Ending: sticky-note screen, discount code constant, credits.

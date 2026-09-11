@@ -112,4 +112,13 @@ const BIOME := {
 			"enemies": ["office_boy", "office_boy"],
 			"per_head": ["office_boy"]},
 	],
+	# THE FIRST TIME ANYBODY IN THIS BUILDING IS KIND TO YOU. Floor 3 is where a
+	# slow near two guards stops being a lesson and starts being a death, and it
+	# is the last floor before Ahmed - so it is where the game has to admit that
+	# healing exists at all, the lobby's free heart being two floors behind.
+	# He comes in by the south door and stands east of the copier, in the gap
+	# between the middle desks: clear of the hazard at (120, 152), clear of the
+	# door line, and on the side of the room the fight tends to end on.
+	"relief": {"npc": "ivan", "from": "start", "at": Vector2(208, 168),
+		"say": "res://game/npcs/ivan/after_the_fight.gd"},
 }

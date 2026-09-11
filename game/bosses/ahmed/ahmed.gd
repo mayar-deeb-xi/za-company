@@ -55,6 +55,35 @@ var _wave_timer := 0.0
 var _wave_hit := {}
 
 
+## The concede ends him kneeling but not dead, so it hands off to a looping
+## row: he is still breathing when you walk back out. It has to be a second
+## row because one animation cannot loop only its last two frames.
+func _ready() -> void:
+	super()
+	_sprite.animation_finished.connect(_on_animation_finished)
+	# The axe burns for as long as he holds it, so its fire is not an event -
+	# it starts with him and is only ever taken away. hurt, stagger and
+	# concede are the base's; these two are his, for the same reason the fire
+	# on the blade is.
+	_sfx_loop("axe")
+
+
+func _on_animation_finished() -> void:
+	if has_conceded and _sprite.animation == &"concede_side":
+		_sprite.play("beaten_side")
+		_sfx_loop("breath")
+
+
+## The fire goes out the moment the axe leaves his hand, and `glow` says how
+## long that takes: 0.6, 0.45, 0.2, 0.05 over the concede's first four frames.
+## Fading across exactly that span is what keeps the sound on the picture -
+## cutting it on frame one would put the room in silence while the blade is
+## still lit - so it is read off the poses rather than typed here.
+func _concede() -> void:
+	super()
+	_sfx_fade("axe", Poses.glow_out_of("concede"))
+
+
 func _physics_process(delta: float) -> void:
 	_wave_timer = maxf(_wave_timer - delta, 0.0)
 	_hit_window = maxf(_hit_window - delta, 0.0)

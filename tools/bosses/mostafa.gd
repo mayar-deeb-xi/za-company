@@ -27,17 +27,21 @@ const HH := (Poses.HEAD_W - 1) / 2
 const WAIST := SH - Poses.TAPER
 const LW := (Poses.LEG_W - 1) / 2
 
-const BOOT_TOP := Poses.FOOT - Poses.BOOTS + 1
-const LEG_TOP := BOOT_TOP - Poses.LEG
-const SHORTS_BOT := LEG_TOP - 1
-const SHORTS_TOP := SHORTS_BOT - Poses.SHORTS + 1
-const BAND_TOP := SHORTS_TOP - 2
-const BAND_BOT := SHORTS_TOP - 1
-const TORSO_BOT := BAND_TOP - 1
-const TORSO_TOP := TORSO_BOT - Poses.TORSO + 1
-const NECK_TOP := TORSO_TOP - Poses.NECK
-const HEAD_BOT := NECK_TOP - 1
-const HEAD_TOP := HEAD_BOT - Poses.HEAD_H + 1
+## The vertical stack now lives in the poses beside the measurements it comes
+## from, so the shoulder line the arms hang off is one number the painter and
+## the live effect both read. Aliased here only to keep the drawing below
+## readable.
+const BOOT_TOP := Poses.BOOT_TOP
+const LEG_TOP := Poses.LEG_TOP
+const SHORTS_BOT := Poses.SHORTS_BOT
+const SHORTS_TOP := Poses.SHORTS_TOP
+const BAND_TOP := Poses.BAND_TOP
+const BAND_BOT := Poses.BAND_BOT
+const TORSO_BOT := Poses.TORSO_BOT
+const TORSO_TOP := Poses.TORSO_TOP
+const NECK_TOP := Poses.NECK_TOP
+const HEAD_BOT := Poses.HEAD_BOT
+const HEAD_TOP := Poses.HEAD_TOP
 
 
 static func paint() -> Image:
@@ -233,7 +237,7 @@ static func _head(L: Dictionary, layer: Dictionary, f: Dictionary, hx: int, hy: 
 
 
 static func _arms(L: Dictionary, layer: Dictionary, f: Dictionary, bx: int, by: int) -> void:
-	var sh_y := TORSO_TOP + 3 + by
+	var sh_y := Poses.SHOULDER + by
 	for side: int in [-1, 1]:
 		var a: Dictionary = f.get("R" if side > 0 else "L", {})
 		if a.is_empty():

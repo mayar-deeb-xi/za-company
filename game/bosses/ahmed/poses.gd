@@ -15,7 +15,11 @@ extends RefCounted
 ##           script derives windup_seconds and recover_seconds from these, so
 ##           the telegraph and the animation cannot drift apart
 ##   impact  true on the one frame the blow lands
-##   legs    which LEGS variant; dx/dy nudge the whole body
+##   legs    which LEGS variant (see below - its ROW COUNT is the drop)
+##   dx/dy   dx slides him; dy lowers the BODY onto its legs, which stay on
+##           the floor. dy must equal 7 - the leg variant's rows, or he
+##           splits at the hips.
+##   lift    both feet off the ground - moves body AND legs together
 ##   arms    [{sh: "front"|"back", hand: Vector2i, bend, behind}]
 ##   axe     {hand: Vector2i, ang: degrees, len, blade: 1|-1, behind}
 ##   glow    how big the fire on the blade is (0 = out)
@@ -64,8 +68,11 @@ const TOP := [
 	"..#WwWWWW#......",
 ]
 
-## Rows 28-34 (a variant's last row is always row 34, so a shorter one - the
-## kneel - starts lower down).
+## A variant's last row is ALWAYS row 34, the floor - the painter anchors it
+## there and `dy` never moves it. So a block's row count is the body drop it
+## pairs with: 7 rows standing (dy 0), 3 rows kneeling (dy 4), and in general
+## dy = 7 - rows. Pair them wrong and the torso floats off the legs, which is
+## exactly what the shipped kneel did before the anchor was fixed.
 const LEGS := {
 	"stand": [
 		"..#PPPPPP#....",
@@ -103,9 +110,33 @@ const LEGS := {
 		"#KKK#....#KKKK#",
 		"#####....######",
 	],
+	# 6 rows, dy 1: the stance widens as the legs start to go.
+	"crouch": [
+		"..#PPPPPP#....",
+		".#pPPPPPPP#...",
+		".#pPP#.#PPP#..",
+		"#pPP#...#PPP#.",
+		"#KKK#...#KKKK#",
+		"#####...######",
+	],
+	# 5 rows, dy 2: down on one knee, the other foot still flat.
+	"knee_one": [
+		"..#PPPPPP#.....",
+		".#pPPPPPPP#....",
+		".#pPP#.#PPP#...",
+		"#pPP#...#PPPP#.",
+		"#KKK#....#KKK#.",
+	],
+	# 3 rows, dy 4: both knees.
 	"kneel": [
 		".#PPPPPPPPPP#..",
 		"#pPPP#PPPPPPP#.",
+		"#KK###KKK#####.",
+	],
+	# 2 rows, dy 5: the same kneel with the weight settled onto it - one pixel
+	# lower, which is the whole of the breath in `beaten`.
+	"kneel_low": [
+		"#pPPPPPPPPPPP#.",
 		"#KK###KKK#####.",
 	],
 }
@@ -114,7 +145,7 @@ const FRONT_SHOULDER := Vector2i(8, 19)
 const BACK_SHOULDER := Vector2i(3, 19)
 
 ## Sheet order: one row per animation, in this order.
-const ORDER := ["idle", "walk", "chop", "sweep", "slam", "wave", "concede"]
+const ORDER := ["idle", "walk", "chop", "sweep", "slam", "wave", "concede", "beaten"]
 
 const ANIMS := {
 	"idle": [
@@ -124,11 +155,11 @@ const ANIMS := {
 	"walk": [
 		{"dur": 0.1, "legs": "stride_a", "arms": [{"sh": "front", "hand": Vector2i(12, 24), "bend": 2}],
 			"axe": {"hand": Vector2i(12, 24), "ang": 55.0, "len": 8, "blade": -1}},
-		{"dur": 0.1, "dy": -1, "arms": [{"sh": "front", "hand": Vector2i(11, 23), "bend": 2}],
+		{"dur": 0.1, "lift": -1, "arms": [{"sh": "front", "hand": Vector2i(11, 23), "bend": 2}],
 			"axe": {"hand": Vector2i(11, 23), "ang": 55.0, "len": 8, "blade": -1}},
 		{"dur": 0.1, "legs": "stride_b", "arms": [{"sh": "front", "hand": Vector2i(10, 24), "bend": 2}],
 			"axe": {"hand": Vector2i(10, 24), "ang": 55.0, "len": 8, "blade": -1}},
-		{"dur": 0.1, "dy": -1, "arms": [{"sh": "front", "hand": Vector2i(11, 23), "bend": 2}],
+		{"dur": 0.1, "lift": -1, "arms": [{"sh": "front", "hand": Vector2i(11, 23), "bend": 2}],
 			"axe": {"hand": Vector2i(11, 23), "ang": 55.0, "len": 8, "blade": -1}},
 	],
 	# Overhead. Sparks off the raised blade, fire down the haft, then a column
@@ -196,12 +227,12 @@ const ANIMS := {
 			"arms": [{"sh": "back", "hand": Vector2i(10, 12), "bend": -3, "behind": true}, {"sh": "front", "hand": Vector2i(10, 12), "bend": -4}],
 			"axe": {"hand": Vector2i(10, 12), "ang": -95.0, "len": 12},
 			"floor": [["ring", 0, -1, 12.0, 1.2, "ember", "ember_fill"]]},
-		{"dur": 0.33, "phase": "w", "glow": 1.6, "dy": -1,
+		{"dur": 0.33, "phase": "w", "glow": 1.6, "lift": -1,
 			"arms": [{"sh": "back", "hand": Vector2i(9, 6), "bend": -3, "behind": true}, {"sh": "front", "hand": Vector2i(9, 6), "bend": -4}],
 			"axe": {"hand": Vector2i(9, 6), "ang": -90.0, "len": 12},
 			"floor": [["ring", 0, -1, 24.8, 1.2, "ember", "ember_fill"]],
 			"fx": [["embers", 0, -1, 6, 22]]},
-		{"dur": 0.33, "phase": "w", "glow": 2.0, "dy": -3, "dx": 1, "legs": "brace",
+		{"dur": 0.33, "phase": "w", "glow": 2.0, "lift": -3, "dx": 1, "legs": "brace",
 			"arms": [{"sh": "back", "hand": Vector2i(9, 2), "bend": -3, "behind": true}, {"sh": "front", "hand": Vector2i(9, 2), "bend": -4}],
 			"axe": {"hand": Vector2i(9, 2), "ang": -88.0, "len": 12},
 			"floor": [["ring", 0, -1, 38.0, 1.4, "hot", "ember_fill"]],
@@ -264,21 +295,55 @@ const ANIMS := {
 			"axe": {"hand": Vector2i(12, 24), "ang": 55.0, "len": 9, "blade": -1},
 			"fx": [["wave_scorch", 13, 60, 0.4]]},
 	],
-	# Bosses concede rather than die: to his knees, axe to the floor, fire out.
+	# Bosses concede rather than die, and Ahmed lets go of the axe to do it:
+	# he straightens up one last time, his fingers open, the axe drops and
+	# lands flat, and the fire goes out the moment it leaves his hand. The
+	# axe is drawn wherever its descriptor says regardless of where the arm
+	# is, so a dropped axe costs nothing - it is just a hand that stopped
+	# following it. With nothing left to hold, the far arm comes into view
+	# and both hands end up on his thighs.
 	"concede": [
-		{"dur": 0.25, "legs": "brace", "glow": 0.7, "arms": [{"sh": "front", "hand": Vector2i(11, 26), "bend": 2}],
-			"axe": {"hand": Vector2i(11, 26), "ang": 40.0, "len": 9, "blade": -1}},
-		{"dur": 0.25, "dy": 2, "legs": "brace", "glow": 0.4, "arms": [{"sh": "front", "hand": Vector2i(12, 28), "bend": 2}],
-			"axe": {"hand": Vector2i(12, 28), "ang": 25.0, "len": 9, "blade": -1}},
-		{"dur": 2.5, "dy": 4, "legs": "kneel", "glow": 0.0, "arms": [{"sh": "front", "hand": Vector2i(10, 30), "bend": 1}],
-			"axe": {"hand": Vector2i(16, 31), "ang": 8.0, "len": 9, "blade": -1},
-			"fx": [["smoke", 21, -4]]},
+		{"dur": 0.16, "legs": "brace", "glow": 0.6, "arms": [{"sh": "front", "hand": Vector2i(11, 23), "bend": 2}],
+			"axe": {"hand": Vector2i(11, 23), "ang": 55.0, "len": 9, "blade": -1}},
+		{"dur": 0.1, "legs": "brace", "glow": 0.45, "arms": [{"sh": "front", "hand": Vector2i(11, 25), "bend": 1}],
+			"axe": {"hand": Vector2i(11, 25), "ang": 35.0, "len": 9, "blade": -1},
+			"fx": [["embers", 7, -9, 3, 3]]},
+		{"dur": 0.08, "dy": 1, "legs": "crouch", "glow": 0.2, "arms": [{"sh": "front", "hand": Vector2i(10, 27), "bend": 0}],
+			"axe": {"hand": Vector2i(13, 29), "ang": 10.0, "len": 9, "blade": -1},
+			"fx": [["embers", 8, -6, 4, 4]]},
+		{"dur": 0.08, "dy": 1, "legs": "crouch", "glow": 0.05, "arms": [{"sh": "front", "hand": Vector2i(10, 28), "bend": 0}],
+			"axe": {"hand": Vector2i(15, 32), "ang": -4.0, "len": 9, "blade": -1},
+			"fx": [["sparks", 11, -1, 6, 4]]},
+		{"dur": 0.14, "dy": 2, "legs": "knee_one", "glow": 0.0, "arms": [{"sh": "front", "hand": Vector2i(10, 30), "bend": 1}],
+			"axe": {"hand": Vector2i(16, 32), "ang": 0.0, "len": 9, "blade": -1},
+			"fx": [["scorch", 16, 0, 5, 0.5], ["embers", 16, -2, 3, 3]]},
+		{"dur": 0.16, "dy": 4, "legs": "kneel", "glow": 0.0, "arms": [{"sh": "front", "hand": Vector2i(9, 31), "bend": 2}],
+			"axe": {"hand": Vector2i(16, 32), "ang": 0.0, "len": 9, "blade": -1},
+			"fx": [["scorch", 16, 0, 5, 0.45]]},
+		{"dur": 0.35, "dy": 4, "legs": "kneel", "glow": 0.0,
+			"arms": [{"sh": "back", "hand": Vector2i(2, 32), "bend": 2}, {"sh": "front", "hand": Vector2i(9, 31), "bend": 2}],
+			"axe": {"hand": Vector2i(16, 32), "ang": 0.0, "len": 9, "blade": -1},
+			"fx": [["scorch", 16, 0, 5, 0.4], ["smoke", 19, -3]]},
+	],
+	# What he does for the rest of the run: breathe. One row cannot loop only
+	# its last two frames, so the breath is a row of its own that ahmed.gd
+	# plays when the concede finishes. One pixel of rise and fall - the whole
+	# difference is kneel (dy 4) against kneel_low (dy 5).
+	"beaten": [
+		{"dur": 0.7, "dy": 4, "legs": "kneel", "glow": 0.0,
+			"arms": [{"sh": "back", "hand": Vector2i(2, 32), "bend": 2}, {"sh": "front", "hand": Vector2i(9, 31), "bend": 2}],
+			"axe": {"hand": Vector2i(16, 32), "ang": 0.0, "len": 9, "blade": -1},
+			"fx": [["scorch", 16, 0, 5, 0.4], ["smoke", 19, -4]]},
+		{"dur": 0.7, "dy": 5, "legs": "kneel_low", "glow": 0.0,
+			"arms": [{"sh": "back", "hand": Vector2i(2, 33), "bend": 2}, {"sh": "front", "hand": Vector2i(9, 32), "bend": 2}],
+			"axe": {"hand": Vector2i(16, 32), "ang": 0.0, "len": 9, "blade": -1},
+			"fx": [["scorch", 16, 0, 5, 0.4], ["smoke", 20, -6]]},
 	],
 }
 
 ## Which animations loop. Every attack plays once and holds its last frame;
-## the concede holds too.
-const LOOPS := {"idle": true, "walk": true}
+## so does the concede - but it hands off to `beaten`, which loops for good.
+const LOOPS := {"idle": true, "walk": true, "beaten": true}
 
 ## Base speed the sheet is sliced at; each frame's `dur` becomes a duration
 ## multiplier on it, so the sheet carries the attack's own timing.
@@ -304,6 +369,19 @@ static func windup_of(anim: String) -> float:
 ## Everything after the blow: the recover the boss script runs.
 static func recover_of(anim: String) -> float:
 	return length_of(anim) - windup_of(anim)
+
+
+## Seconds an animation still has fire on the blade: everything before the
+## first frame whose `glow` is out. Derived here beside the wind-up and the
+## recover, and for the same reason - the fire's sound fades over exactly the
+## span the fire is drawn for, so retiming the concede takes both with it.
+static func glow_out_of(anim: String) -> float:
+	var total := 0.0
+	for frame in ANIMS[anim]:
+		if frame.get("glow", 0.0) <= 0.0:
+			return total
+		total += frame["dur"]
+	return total
 
 
 static func length_of(anim: String) -> float:

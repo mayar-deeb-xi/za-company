@@ -26,6 +26,17 @@ var _m_prev := ""
 var _m_anim_mismatch := ""
 var _m_gap_before := 0.0
 var _m_health_at_concede := -1
+var _m_shakes := 0
+var _m_throw_max := 0.0
+
+# Silverman, third. His FIGHT is tests/test_silverman.gd's: it walks him down
+# a three-phase ladder, and a file that does that cannot also hand the room to
+# a next section unchanged. What is under test HERE is the art that is true of
+# him at any health - 1x, the feet on the origin, one picture per crossing, the
+# dulled row the smear stamps, and the concede - so he is placed out of his own
+# sight and never throws anything.
+var _sv: Node2D
+var _sv_conceded := false
 
 
 func _tick(frame: int) -> void:
@@ -100,6 +111,17 @@ func _tick(frame: int) -> void:
 			# that roots him - comes at ~29 px, before stop_distance ever would.
 			_check("bosses: he stops at the axe's reach, not in your face (%.1f px)" % gap,
 				gap > 24.0 and gap < 33.0)
+			# His two sounds, mid-fight. The axe burns for as long as he holds
+			# it, so its loop is running from his first frame; the breath he
+			# is left with has not been asked for. Checked the other way round
+			# at 568, which is the pair that makes either one mean anything.
+			var snd: Node = _boss.get_node_or_null("Audio")
+			_check("bosses: the axe is alight from his first frame (%s)"
+				% _loop_mode_of(snd, "axe"),
+				_loop_mode_of(snd, "axe") == AudioStreamWAV.LOOP_FORWARD)
+			_check("bosses: the breath he ends on has not started (%s)"
+				% _loop_mode_of(snd, "breath"),
+				_loop_mode_of(snd, "breath") == AudioStreamWAV.LOOP_DISABLED)
 		150:
 			_check("bosses: the chop lands 16 (%s)" % _player().get("health"),
 				_player().get("health") == 84)
@@ -137,6 +159,53 @@ func _tick(frame: int) -> void:
 			_check("bosses: nothing more lands on the player (%s -> %s)"
 				% [_health_at_concede, _player().get("health")],
 				_player().get("health") == _health_at_concede)
+			# The concede runs 1.07 s and he is freed at 570, so it is wound on
+			# rather than waited out - what is under test is the hand-off, not
+			# how long the kneel takes.
+			_sprite_of(_boss).speed_scale = 100.0
+		568:
+			_check("bosses: the concede hands off to the breath (%s)"
+				% _sprite_of(_boss).animation, _sprite_of(_boss).animation == &"beaten_side")
+			_check("bosses: and the breath loops, so he never freezes",
+				_sprite_of(_boss).sprite_frames.get_animation_loop(&"beaten_side")
+				and _sprite_of(_boss).is_playing())
+			# The noise. Ahmed is the boss who has sounds, so his are what
+			# hold the contract in boss_audio.gd: the base's three ids plus
+			# the two that are his. A boss without an Audio child is legal
+			# and silent, which is why this asks HIM and not the base.
+			var audio: Node = _boss.get_node_or_null("Audio")
+			_check("bosses: he carries his own sounds (%s)" % audio, audio != null)
+			var sounds: Dictionary = audio.get("sounds") if audio != null else {}
+			_check("bosses: the base's three ids and his own two (%s)"
+				% str(sounds.keys()),
+				sounds.has("hurt") and sounds.has("stagger")
+				and sounds.has("concede") and sounds.has("axe")
+				and sounds.has("breath"))
+			# Null here is the un-imported checkout the header warns about -
+			# the fight above all passed either way, which is the point, but
+			# a developer who HAS imported should be told if one went missing.
+			var missing: Array = []
+			for id in sounds:
+				if sounds[id] == null:
+					missing.append(id)
+			_check("bosses: every declared sound resolves (missing %s)" % str(missing),
+				missing.is_empty())
+			_check("bosses: one player built per sound (%d of %d)"
+				% [audio.get_child_count(), sounds.size()],
+				audio.get_child_count() == sounds.size())
+			# The functional half, and it cannot be `playing`: headless runs
+			# the Dummy audio driver, under which even a plain
+			# AudioStreamPlayer with a good stream reports playing == false
+			# forever. What IS observable is the loop flag, and it happens to
+			# be the better check anyway - the importer writes
+			# `edit/loop_mode=0` on every WAV it has not been told otherwise
+			# about, so a loop only ever loops because `boss_audio.loop()`
+			# set the flag, and seeing it set is seeing that call happen.
+			# Paired with the frame-110 check above: the axe burns from his
+			# first frame, the breath waits for his last.
+			_check("bosses: the concede hands the breath its loop (%s)"
+				% _loop_mode_of(audio, "breath"),
+				_loop_mode_of(audio, "breath") == AudioStreamWAV.LOOP_FORWARD)
 
 		# ---- Mostafa. Same room, cleared: his fight is a RHYTHM, so what is
 		# checked here is the ORDER he throws in, not the frame each punch
@@ -167,6 +236,16 @@ func _tick(frame: int) -> void:
 			# this is what keeps him the same height in the room as Ahmed.
 			_check("bosses: 2x density is halved in the scene (scale %s)"
 				% _sprite_of(_m).scale, is_equal_approx(_sprite_of(_m).scale.x, 0.5))
+			# THE BELL - his punches announced at the scale of the room. Three
+			# parts because they draw in three different spaces; see bell.gd.
+			_m.connect("shook", _on_shook)
+			_check("bosses: the Bell is on him in all three spaces (%s)"
+				% str(_bell_parts(_m)),
+				_bell_parts(_m) == ["ground", "burst", "screen"])
+			# A flash that washed out his own health bar would hide the one
+			# number the player is watching while it lands.
+			_check("bosses: his screen layer sits under the HUD (%d < %d)"
+				% [_bell_layer(_m), _hud_layer()], _bell_layer(_m) < _hud_layer())
 			_player().global_position = Vector2(272, 140)
 			_m.global_position = Vector2(272, 196)
 		700:
@@ -180,6 +259,10 @@ func _tick(frame: int) -> void:
 				_mseq.size() >= 3 and _mseq.slice(0, 3) == ["jab", "jab", "hook"])
 			_check("bosses: the combination has hurt the player (%s)"
 				% _player().get("health"), _player().get("health") < 100)
+			_check("bosses: every blow he finishes shakes the room (%d, %d thrown)"
+				% [_m_shakes, _mseq.size()], _m_shakes >= 3)
+			_check("bosses: and the hook throws the camera hardest (%.2f px)"
+				% _m_throw_max, is_equal_approx(_m_throw_max, 4.65))
 			_check("bosses: the hook is the long telegraph, the jab the short one "
 				+ "(%.2fs vs %.2fs)" % [_MPoses.windup_of("hook"), _MPoses.windup_of("jab")],
 				is_equal_approx(_MPoses.windup_of("jab"), 0.25)
@@ -207,8 +290,118 @@ func _tick(frame: int) -> void:
 			_check("bosses: nothing more lands after he concedes (%s -> %s)"
 				% [_m_health_at_concede, _player().get("health")],
 				_player().get("health") == _m_health_at_concede)
+			# Hit-stop pauses his sprite for 0.08 s on the frame a blow lands.
+			# It must always let go: the animation it would otherwise freeze
+			# forever is the concede the locked door is waiting to see.
+			_check("bosses: hit-stop always lets go of the sprite (speed %.1f)"
+				% _sprite_of(_m).speed_scale,
+				is_equal_approx(_sprite_of(_m).speed_scale, 1.0))
+		1130:
+			# ---- SILVERMAN, third, in the same cleared room ----------------
+			if is_instance_valid(_m):
+				_m.queue_free()
+			_m = null
+			_player().call("heal", 100)
+			_sv = (load("res://game/bosses/silverman/silverman.tscn") as PackedScene).instantiate() as Node2D
+			_level().get_node("Props").add_child(_sv)
+			_sv.connect("conceded", func() -> void: _sv_conceded = true)
+			_check("bosses: Silverman opens at 192 - eight heavies (%s)" % _sv.get("health"),
+				_sv.get("health") == 192)
+			_check("bosses: he is a boss and an enemy",
+				_sv.is_in_group("bosses") and _sv.is_in_group("enemies"))
+			# 1x density, unlike Mostafa: he was drawn, shown and picked at 35
+			# rows, and the approved picture is the spec. A scale here that is
+			# not 1 means someone redrew him at double density.
+			_check("bosses: he ships at 1x, unscaled like Ahmed (scale %s)"
+				% _sprite_of(_sv).scale, is_equal_approx(_sprite_of(_sv).scale.x, 1.0))
+			_check("bosses: his feet sit on the origin (offset %s)"
+				% _sprite_of(_sv).offset, _sprite_of(_sv).offset == Vector2(0, -24))
+			# THE RULE HIS ART TURNS ON. He never deforms, so the crossing has
+			# one picture in it - and the sheet carries a second, dulled copy
+			# on a row he never plays, which is what smear.gd stamps.
+			var sheet := _sprite_of(_sv).sprite_frames
+			_check("bosses: the dash is ONE frame - the body never changes shape (%d)"
+				% sheet.get_frame_count("dash_side"),
+				sheet.get_frame_count("dash_side") == 1)
+			_check("bosses: the sheet carries the dulled copy the smear stamps",
+				sheet.has_animation("ghost_side") and sheet.get_frame_count("ghost_side") == 1)
+			_check("bosses: the smear is on him, under the body (%s)"
+				% str(_sv.get_children().map(func(n: Node) -> String: return n.name)),
+				_sv.get_child(0).name == "Smear")
+			# Both attack rows are on the sheet, and both are six frames of the
+			# same body at a different height - two attacks for two rows of
+			# nothing, which is what his one rule buys.
+			for row in ["glare_side", "split_side"]:
+				_check("bosses: %s is on the sheet, six frames of it (%d)"
+					% [row, sheet.get_frame_count(row)],
+					sheet.has_animation(row) and sheet.get_frame_count(row) == 6)
+			# Out of his own sight (130), so the only thing this section moves
+			# is his art. The fight is test_silverman.gd's.
+			_player().global_position = Vector2(250, 140)
+			_sv.global_position = Vector2(392, 140)
+		1200:
+			_check("bosses: left alone outside his sight he does nothing (phase %s, '%s')"
+				% [_sv.get("phase"), _sv.get("attack")],
+				_sv.get("phase") == 0 and _sv.get("attack") == "")
+			_check("bosses: and nothing reaches the player (%s)"
+				% _player().get("health"), _player().get("health") == 100)
+			_sv.call("take_damage", 500)
+			_check("bosses: at zero he concedes (%s)" % _sv.get("has_conceded"),
+				_sv.get("has_conceded") == true)
+			_check("bosses: conceding is a signal the door can hear", _sv_conceded)
+			_check("bosses: a conceded boss is out of the fight but still in the room",
+				not _sv.is_in_group("enemies") and _sv.is_inside_tree()
+				and _sv.is_in_group("bosses"))
+			_check("bosses: losing flight is the defeat (%s)" % _sprite_of(_sv).animation,
+				_sprite_of(_sv).animation == &"concede_side")
+		1300:
+			# The concede runs 1.2 s and then hands off, or he is a statue: the
+			# row that loops for the rest of the run is `beaten`.
+			_check("bosses: he settles, then keeps cooling (%s)"
+				% _sprite_of(_sv).animation, _sprite_of(_sv).animation == &"beaten_side")
+			_check("bosses: a conceded boss stops crossing the room",
+				_sv.get("dashing") == false and _sv.get("dash_moving") == false)
 			_finish()
 
 
 func _sprite_of(enemy: Node2D) -> AnimatedSprite2D:
 	return enemy.get_node("AnimatedSprite2D") as AnimatedSprite2D
+
+
+func _on_shook(strength: float, _seconds: float) -> void:
+	_m_shakes += 1
+	_m_throw_max = maxf(_m_throw_max, strength)
+
+
+## The Bell's parts, in the order they draw: under the body, over it, then the
+## screen itself.
+func _bell_parts(boss: Node2D) -> Array:
+	var parts := []
+	for path in ["BellGround", "BellBurst", "Bell/BellScreen"]:
+		var node := boss.get_node_or_null(path)
+		if node != null:
+			parts.append(str(node.get("part")))
+	return parts
+
+
+func _bell_layer(boss: Node2D) -> int:
+	var layer := boss.get_node_or_null("Bell") as CanvasLayer
+	return layer.layer if layer != null else -999
+
+
+func _hud_layer() -> int:
+	return (current_scene.get_node("HUD") as CanvasLayer).layer
+
+
+## The loop flag on one of a boss's sounds, or -1 where he has no such player.
+## It is the only part of playback that survives headless: the Dummy audio
+## driver reports `playing` false forever, so a sound is shown to have STARTED
+## by the flag `boss_audio.loop()` sets on its way to `play()`.
+func _loop_mode_of(audio: Node, id: String) -> int:
+	if audio == null:
+		return -1
+	var player := audio.get_node_or_null("Sfx_%s" % id) as AudioStreamPlayer2D
+	if player == null:
+		return -1
+	var wav := player.stream as AudioStreamWAV
+	return wav.loop_mode if wav != null else -1

@@ -26,6 +26,11 @@ var _walk_frame := 0
 func _ready() -> void:
 	_back_button.pressed.connect(_go_back)
 
+	# The menu is already playing this; asking again is a no-op and keeps the
+	# track unbroken across the scene change. It only actually starts anything
+	# when this screen is entered directly, which is what the tests do.
+	Music.play(Music.MENU)
+
 	var saved: String = Settings.get_value(&"player", &"character", Roster.DEFAULT_ID)
 	var first: Button = null
 	var focus_target: Button = null

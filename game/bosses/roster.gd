@@ -41,6 +41,20 @@ const BOSSES := [
 		# exactly this reason: nothing about the art is shared.
 		"cell": 128,
 	},
+	{
+		"id": "silverman",
+		"src": "res://game/bosses/silverman/src/silverman.png",
+		"frames": "res://game/bosses/silverman/silverman_frames.tres",
+		"painter": "res://tools/bosses/silverman.gd",
+		"poses": preload("res://game/bosses/silverman/poses.gd"),
+		# Ahmed's, not Mostafa's. He was drawn, shown and picked at 1x - 35 rows
+		# across 35 world px - so 1x is what ships: the approved picture is the
+		# spec, and redrawing it at double density to gain ramp headroom would be
+		# shipping a different character. He needs the headroom least of the three
+		# anyway, since his body never changes shape and every frame of every row
+		# is the same block of pixels at a different height.
+		"cell": 64,
+	},
 ]
 
 

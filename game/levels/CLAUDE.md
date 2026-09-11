@@ -229,6 +229,70 @@ It also makes head count matter MORE: a beat can hand a solo player the
 arrangement it was tuned for and still answer a party of four, instead of every
 number being a multiple of the solo one.
 
+## Relief - a room's third beat
+
+A floor with `relief` in its biome gets one more node, `Relief`
+(`game/levels/relief.gd`), and it is the only beat that is not a fight: when the
+room is finally clear, **Ivan walks in through the door the player came by**,
+crosses to an authored spot, and waits there with a heart per head. Six floors
+have one:
+
+| floor | he stands at | why that floor |
+|-------|--------------|----------------|
+| F3 call_center | (208, 168) | first floor where a slow near two guards kills; last before Ahmed |
+| F4 ahmed_office | (180, 160) | after Ahmed concedes |
+| F8 conflict_resolution | (412, 144) | ringside, after Mostafa |
+| F9 asset_recovery | (80, 180) | the heaviest `per_head` in the game deserves the matching heal |
+| F11 executive_floor | (324, 196) | the exam floor, last stop before the roof |
+| F12 khaled_office | (400, 176) | the finale |
+
+**He is an arrival, not a placement, and that is the whole design.** Standing him
+in the room from the first frame would put a solid 64px body inside an
+arrangement whose positions were picked against sight radii and clear lanes, and
+put a heart on offer while the fight the floor is FOR is still standing. His
+healing reads as a lifeline because it arrives after the cost has been paid. So
+he has an authored DESTINATION and no authored position, exactly as a
+reinforcement has neither - you cannot walk in at a spot. The furniture rule
+applies to that destination alone: by the time he reaches it the room is empty,
+so all it has to clear is the scenery and the door line.
+
+He lives beside reinforcements.gd rather than inside it because the two ask
+opposite questions of the same room - is the fight far enough along, and is it
+over - and threading a friendly body through a script that spawns enemies would
+cost both of them their one sentence.
+
+"Over" has to mean over on both kinds of floor, and each of these was a way of
+getting it wrong:
+
+- **A conceded boss is not a hostile.** `_hostiles()` counts the `enemies` group
+  and skips anybody who has given up, which is the one line that lets a boss
+  floor reach this cue at all: a boss is in that group and is never freed, so
+  counting the group alone can never reach zero on the four floors that have
+  one.
+- **He waits until he has seen a fight.** A room is clear on its first frame
+  too, and an Ivan who walks in before anything has happened is a vending
+  machine in a doorway. The cue is a room that has been EMPTIED.
+- **He waits for the second beat to be spent.** A floor with reinforcements is
+  quiet between the last kill of the opening arrangement and the group it cues,
+  and quiet is not clear. He asks the sibling node (`spent()`), the same
+  ask-don't-listen shape the boss door and the beats themselves use.
+
+Two more things follow from him arriving late:
+
+- **He does not greet.** `greets` fires on the talk radius being ENTERED, and a
+  man walking across a room drags that radius over the player on the way, so a
+  greeting would land mid-stride. The deeper reason is the lobby's: a
+  conversation that starts itself takes the wheel off a player who has pressed
+  nothing, and this one has just finished a fight.
+- **game.gd wires NPCs as they arrive, not as a room is built.** Doors can be
+  swept once, because a room has all the doors it will ever have; people it does
+  not. `_on_node_added` is what keeps a late Ivan's prompt from being a key that
+  does nothing - a failure that would be silent on all six floors.
+
+The gift itself is `game/npcs/ivan/ivan.gd`: one heart per head from
+`game/heads.gd`, thrown on the falling edge of the conversation, once per visit.
+See game/npcs/CLAUDE.md.
+
 ## The pair that makes a boss fight annoying
 
 Boss floors field `social_media` and `call_center` rather than boys, and the
