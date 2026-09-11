@@ -201,3 +201,96 @@ Health, grace and slows are all untouched by it. **Being talked at is not a
 safe room**: the tree is not paused during a conversation (the guide has to
 walk while she talks), so the protection is where an NPC is placed. See
 game/dialogue/CLAUDE.md.
+
+## The noise
+
+The player's sounds work exactly the way an enemy's do and for the same
+reason: `player.tscn` carries an `Audio` child (`player_audio.gd`) holding
+id -> stream, player.gd fires names at it through `_sfx` / `_sfx_loop` /
+`_sfx_fade` / `_sfx_stop`, and a name with no file behind it is silence with
+no branch anywhere. Eight cues - `swing`, `swing2`, `charge`, `heavy`,
+`wildfire`, `hit`, `hurt`, `die` - and a cue arrives by having the WAV.
+
+**One set for all seven characters.** That is the sheet rule from Characters
+above applied to the other sense, and it is permanent for the identical
+reason: they play the same game with the same moves, so a swing cut once
+should land on all seven at no cost. It has one consequence that had to be
+designed for rather than discovered - **the hurt cue cannot commit to a
+gender.** Six of the seven are not whoever the clip sounds like, and a plainly
+male grunt out of a character who is not male is the animation telling the
+truth while the audio lies. So `hurt` and `die` are carried by air rather than
+by tone: breathy, one syllable, neutral in pitch.
+
+### Why this is not `enemy_audio.gd`
+
+The placement rule would bubble a file shared by two features up to `game/`,
+and this one is not shared - it does a neighbouring job with a different first
+line. An enemy is SOMEWHERE. A room holds up to seven of them and which corner
+a wind-up came from is the whole of what panning is for, so `enemy_audio.gd`
+is an `AudioStreamPlayer2D` with a flattened attenuation curve. The player is
+never anywhere: the camera is on them, so their pan is 0 on every frame of
+every room, and a positional node here buys a distance calculation to produce
+silence's exact twin.
+
+So `player_audio.gd` is a plain `Node` of plain `AudioStreamPlayer`s, and it
+is SMALLER than its counterpart rather than a copy of it. It drops
+`play_detached` outright - that exists because an enemy plays `die` on the
+frame it is `queue_free`d and takes its own speakers down with it, and the
+player is revived rather than freed, so a death here outlives itself for free.
+What it keeps is the `loop_end` fix, which is the third copy of that one in
+the project (`enemy_audio.loop`, `music._seal`) and is worth having three
+times: a forward loop sealed to frame 0 plays exact silence with its flag set.
+
+The four wrapper names on player.gd are `enemy_base`'s verbatim on purpose.
+They are not the same code, but nobody reading both should have to learn two
+vocabularies for one idea.
+
+### Three splits, and two are the enemies' rules from the other side
+
+**A swing is air; `hit` is a blow that landed.** The two lights announce
+themselves in `_start_attack` - the frame the swing STARTS, when nothing has
+been struck - and `hit` fires from `_strike()` only on a frame something was
+actually reached. That is game/enemies/CLAUDE.md's rule pointed back at the
+player: an impact over empty air teaches you that the sound does not mean you
+connected. It fires once for the FRAME rather than once per enemy, because a
+heavy landing on four bodies is one impact, and four copies of one clip
+started on one frame is a click rather than four hits.
+
+**`drain()` is deliberately silent**, and it is the one absence somebody will
+file as a bug. A drain runs every physics frame and already knows its own rate
+(see Health above); a gasp on each of those is sixty a second, and routing it
+through the grace window to thin them out is precisely the mistake `drain()`
+exists to not make. The thing draining you is already making the noise - the
+wraith's own `drain` loop - so the information is on the bus already, coming
+from the right direction. A DEATH is a different matter and is not a drain
+tick, so `die` lives in `_lose_health()` rather than in `take_damage()`: a
+drain that kills you has to kill you as audibly as a blow does.
+
+`hurt` is metered for free, because `take_damage()` already is - the grace
+window stops a crowd stacking gasps without a line of audio code. It fires
+only on a blow that was SURVIVED, since `_lose_health` plays `die` at zero and
+a gasp laid over the death breath in one frame is one muddy sound rather than
+two clear ones.
+
+**The charge is the one loop here.** The stance is held for as long as the
+button is, so it has no length of its own to end at. It was first specced as a
+one-shot capped at `CHARGE_SECONDS` so that the clip running out would be the
+ready cue, and that was wrong on its own terms - a sound that stops 0.35s
+before the heavy is available actively misinforms. The ready cue stays where it
+already was, on the eyes: the charge animation doubles speed. The hum is faded
+on release (an early release loses nothing, so it must not sound like something
+broke) and CUT by `take_control()` and `revive()`, where the move itself was
+cancelled and a hum trailing into the first line of a conversation would be the
+cutscene starting on top of the combat it just dropped.
+
+### Making them
+
+`python tools/sfx/make.py player`, off `tools/sfx/player.py` - the bestiary's
+pipeline with a second recipe, which is why the engine's dict is `CAST` rather
+than `ENEMIES`. The levels sit ABOVE the bosses and the enemies rather than
+under them, on the same arithmetic upside down: a room holds seven enemies and
+one player, so the sound that says YOU are losing must never be won by a crowd.
+`--relevel` re-shapes from `game/player/src/sfx/` and costs nothing; only a new
+performance costs credits, and all eight are pinned in `KEEP` so a stray
+`--force` cannot re-bill them. The prompts, the levels and the reasoning behind
+both are in that file.

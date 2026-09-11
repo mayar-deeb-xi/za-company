@@ -1,7 +1,23 @@
 extends Node2D
-## A room's THIRD beat: the one that is not a fight. When the floor is finally
-## clear, Ivan walks in through the door the player came by, crosses to a spot
-## somebody chose, and waits there with a heart per head.
+## A room's beats that are NOT fights, and there are two of them. When the floor
+## is finally clear, somebody walks in through a door somebody chose, crosses to
+## a spot somebody chose, and waits there: Ivan with a heart per head (`relief`),
+## or Dominique with what is standing on the next floor up (`briefing`).
+##
+## ## Two beats, one script, and the script names nobody
+##
+## This file has never mentioned Ivan outside its comments - the NPC, the door
+## and the lines are all data - so the day a second arrival was wanted it cost a
+## key in biome data and a node name, and nothing here. The two are told apart
+## by ROLE the way the prop shelves are: `Relief` heals, `Briefing` warns, and a
+## floor may carry one, the other, or both.
+##
+## Both firing at once is the normal case rather than the edge one - two of the
+## three briefing floors also feed you - which is why a floor that has both
+## sends them through OPPOSITE doors. Two arrivals at one threshold is two solid
+## bodies in the same sixteen pixels, shoving each other out of it; the doors
+## also carry the difference between them, since one has come from where the
+## player has been and the other from where they are going.
 ##
 ## ## Why it is a beat and not a placement
 ##
@@ -53,9 +69,9 @@ extends Node2D
 ## ## He does not start the conversation himself
 ##
 ## `greets` exists on npc_base and is deliberately not used here. It fires on
-## the talk radius being ENTERED, and a man who is walking across the room drags
+## the talk radius being ENTERED, and somebody walking across the room drags
 ## that radius over the player on the way - so a greeting would land mid-stride,
-## halfway to where he was going. The deeper reason is the lobby's: a
+## halfway to where they were going. The deeper reason is the lobby's: a
 ## conversation that starts itself takes the wheel off a player who has not
 ## pressed anything, and the player has just finished a fight. The prompt over
 ## his head is the invitation, and taking it is theirs.
@@ -70,9 +86,10 @@ const WALK_TIMEOUT := 12.0
 ## Authored per floor as `relief` in tools/biomes/<level>.gd and written in by
 ## build_levels.gd:
 ##
-##   npc      a folder under game/npcs/ (only Ivan heals, but nothing here
-##            names him)
-##   from     the spawn marker he walks in through - "start" is the south door
+##   npc      a folder under game/npcs/. Only Ivan heals and only Dominique
+##            briefs, and this file knows neither of those things
+##   from     the spawn marker they walk in through - "start" is the south door,
+##            "returned" the north one a briefing comes down by
 ##   at       where he stands afterwards, in level pixels
 ##   say      the .gd of beats he carries (game/dialogue/dialogue_director.gd)
 @export var npc := "ivan"

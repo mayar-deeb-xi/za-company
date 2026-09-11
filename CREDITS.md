@@ -96,6 +96,32 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   0.48 s against a 0.52 s wind-up - so a swing never lands while its own
   warning is still going.
 
+## The player's sound effects
+- Author: **generated with ElevenLabs** (text-to-sound-effects), then trimmed,
+  summed to mono, levelled and loop-sealed by `tools/sfx/make.py`
+- License: per the ElevenLabs terms in force for the generating account -
+  **not** CC0 like the art, on the same footing as every other sound here
+- Files: `game/player/sfx/*.wav` - eight. `swing` and `swing2` for the two
+  light attacks, `charge` for the stance, `heavy` and `wildfire` for the spin
+  and the ring of fire it erupts into, `hit` for a blow that lands, `hurt` for
+  one taken, and `die`
+- **One set for all seven characters**, which is the cast's sheet rule applied
+  to the other sense: they share one body and one animation set forever, so a
+  swing cut once has to land on all of them. Its one consequence is designed
+  for rather than discovered - `hurt` and `die` are asked for breathy and
+  neutral in pitch, because six of the seven are not whoever a gendered grunt
+  would sound like
+- The recipe is in the repo beside the bestiary's: `tools/sfx/player.py` holds
+  the prompts, durations and levels, `make.py` the mechanism. Both are read by
+  the same engine, which is why its recipe dict is `CAST` rather than `ENEMIES`
+- The untouched exports are kept in `game/player/src/sfx/`, on the same terms
+  as every other `src/` here, so re-shaping costs no credits
+- Levelled ABOVE the bosses and the enemies rather than under them, and it is
+  the same arithmetic upside down: a room holds seven enemies and one player,
+  so the sound that says YOU are losing is the one that must never be won by a
+  crowd. `hurt` and `die` at -19 dBFS RMS, level with a boss's blow; `swing` at
+  -27, because it is the most-heard sound in the game
+
 ## The enemies' sound effects
 - Author: **generated with ElevenLabs** (text-to-sound-effects), then trimmed,
   summed to mono, levelled and loop-sealed by `tools/sfx/make.py`
@@ -258,6 +284,38 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   says no numbers and no names, which is what fills that table for everyone
   else.
 
+## Dominique's voice
+- Author: **generated with ElevenLabs** (text-to-speech, Eleven v3), then
+  trimmed and levelled by `tools/voice/cut.py`, exactly as the other three are
+- License: per the ElevenLabs terms in force for the generating account -
+  **not** CC0, on the same footing as every other generated sound here. The
+  VOICE carries its own terms separately from the audio: this one is
+  `Xh5OictnmgRO4dff7pLm`, from the shared library rather than the account's own
+  list, so its licence wants checking before the game ships.
+- Files: `game/npcs/dominique/sfx/voice/*.wav` - twelve clips for the twelve
+  lines across the three briefings in `game/npcs/dominique/before_<boss>.gd`
+- **One voice, three conversations, one folder**, which is the only thing about
+  this mouth that is not HR's arrangement exactly: `BEATS` in the recipe is a
+  LIST. Nothing dedupes clip names across files, so the names are namespaced by
+  the boss they warn about (`ahmed_`, `mostafa_`, `silverman_`) - two briefings
+  sharing a name would cut once and one floor would quietly play the other
+  floor's warning. `tests/test_dominique.gd` checks that no two floors share a
+  clip, because cut.py would not have said anything.
+- **Bold, Slavic and impatient**, picked off the same four-voice audition Ivan's
+  read came out of and deliberately not his warmth: he is glad to see you, and
+  they have given this speech before to people who did not come back.
+- Four delivery tags across the twelve, shared the way HR's ten are, and the
+  arc inside each briefing is the same three steps - open brisk, state the
+  fight flat, land the tell hard.
+- Levelled to -19 dBFS on the 75th percentile of speech, the same figure as
+  every other mouth in the game.
+- `cut.py --verify` is green on all twelve. Three `SPELLINGS` entries are
+  needed and none of them is a bad take: scribe contracts where the line does
+  not ("you're"), writes the American spelling of a word with one pronunciation
+  ("ax"), and picks its own transliteration of a name ("Mustafa"). Each was
+  listened to before it was written down - a spelling entry is how a take is
+  forgiven, so it must never be how a bad one is hidden.
+
 ## Music
 - Author: **generated with ElevenLabs** (text-to-music)
 - License: per the ElevenLabs terms in force for the generating account -
@@ -292,11 +350,16 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   one read in the fight - at 20.5. He therefore sits 3 dB under Ahmed at
   -16.1 dBFS RMS, peak -5.2, and that is the number doing a job rather than a
   mismatch.
-- **`level_loop.wav` is the bed, and it is levelled as one.** Cyberpunk
-  sequencer ambience at 120 BPM - the same grid as Mostafa's, so it is a beat
-  every 30 frames here too. At source it is the quietest of the four by some
-  way: -19.37 dBFS RMS, which is 4.7 dB under the menu, 6.1 under Ahmed and
-  3.1 under Mostafa. That gap is the point rather than an accident, and it is
+- **`level_loop.wav` is the bed, and it is levelled as one.** Calm cyberpunk
+  ambience at 90 BPM - deliberately NOT Mostafa's grid, because the bed is the
+  one track that is under the player for hours rather than for a fight, and the
+  brief it was regenerated to was "cyberpunk, but calmer". A beat is 40 frames
+  at 60 fps, so it is still a whole number of them. It is levelled to
+  **-19.28 dBFS RMS, which is the level the previous bed sat at**, and that is
+  a target rather than a coincidence: everything below about masking was
+  measured against that number, so matching it is what lets a track be swapped
+  without re-deriving the paragraph. It stays the quietest of the four by some
+  way - 4.7 dB under the menu, 6.2 under Ahmed and 3.2 under Mostafa. That gap is the point rather than an accident, and it is
   doing two jobs. It is the escalation - walking onto a boss floor has to read
   as the music getting bigger - and it is the headroom, because this is the
   track that will still be playing when ordinary floors finally get sound
@@ -311,14 +374,28 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   `src/` here. `menu_loop`, `mostafa_theme_loop` and `level_loop` have one;
   `ahmed_theme_loop` is currently played as it came out of the generator, so
   re-trimming its loop seam means keeping a copy there first.
-- **`level_loop` needed the cut before it could take the crossfade at all.**
-  Its export ends: the last 3.75 s fades away to -83 dBFS while the head starts
-  cold at full level, so as a loop it died once a minute rather than clicking.
-  The music is intact to 56.25 s, so it is cut to **56.000 s - 28 bars at
-  120 BPM**, the last whole bar that fits, and 12 ms of what is left over is
-  crossfaded back over the head. The seam step goes from 2547/1722 to 36/92
-  against a median body step of 33, i.e. from audible to indistinguishable from
-  the music's own motion. 2,688,000 frames, and 3360 at 60 fps.
+- **`level_loop` needed the cut before it could take the crossfade at all,
+  and it needed it TWICE** - the track was regenerated to a calmer brief and
+  the replacement export ends exactly the way the first one did. The last
+  2.6 s fades away to -85 dBFS while the head starts cold at full level, so as
+  a loop it died once a minute rather than clicking. The music is intact to
+  57.35 s and it is cut to **53.322 s, 20 bars**, with 12 ms of what is left
+  over crossfaded back over the head. The seam step goes from 452/271 to 3/3
+  against a largest body step of 571, i.e. from audible to 190x below the
+  music's own motion. 2,559,472 frames.
+- **Cut on the track's OWN grid, not on the one you asked for**, which is what
+  the second cut taught and the first one got away with. This export was asked
+  for at 90 BPM and delivers 90.019 - inaudible as tempo, and 11 ms of drift by
+  the twentieth bar, which is longer than the whole crossfade. Cutting at the
+  nominal 53.333 s took the tail-against-head correlation from 0.875 to -0.12:
+  the match at a loop point is WAVEFORM PHASE, not bar arithmetic, so it is
+  sharp at the millisecond and a cut that is musically right to the ear can
+  still comb-filter against the head. The measurement that finds it is the
+  tail's last second correlated against the head's first, swept at sample
+  resolution near the bar you want; the bar count is how you pick which peak,
+  not where it is. Its cost is that the played period is 11 ms short of 20 whole
+  bars - which nothing can hear and nothing syncs to, since the bed is the one
+  track no fight is timed against.
 - **Mostafa's loop is sealed, Ahmed's is not**, and the numbers say why it
   matters: the step across the loop point was 9139 against a median
   sample-to-sample step of 591 in the body, i.e. a tick once a minute, and a

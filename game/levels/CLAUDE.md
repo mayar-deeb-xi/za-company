@@ -526,7 +526,12 @@ Three things follow from that and are worth knowing before touching it:
   the only legal way to put a body at the floor's own idea. That marker sits
   SOUTH of the glass deliberately - enemies slide off what they hit and have no
   pathfinding, so a warden arriving on the far side of the partitioning would
-  grind along it instead of coming through the gap.
+  grind along it instead of coming through the gap. Having no position also
+  means having no POST, which `_spawn` says out loud with `unleash()`: a placed
+  enemy is held within 2x its sight of its mark and walks back to it
+  (game/enemies/CLAUDE.md, The leash), and the only mark an arrival could be
+  given is the doorway it came through. It still gives up on a player it has
+  lost; it simply has nowhere to go back to.
 - **Which makes it the one place head count can live.** `_head_count()` returns
   1 today and multiplies the group when a second player exists. It obeys the
   rule `Difficulty` already obeys - scale what the world sends, never what it is

@@ -11,10 +11,26 @@ extends RefCounted
 ## A floor is free to name a file of its own instead: `conversation` is
 ## placement, exactly as which way he faces is, which is how the finale gets a
 ## different man at the door without a second Ivan.
+##
+## He is VOICED, so every beat carries its clip. The read is directed per line
+## in tools/voice/ivan.py and the names here are what cut.py writes - reword a
+## line and its clip is stale until it is re-cut, but rename one and the cut is
+## paid for twice. The box holds each line for as long as its recording runs
+## (ui/dialogue/dialogue_box.gd), so the hearts land after he has finished
+## saying the last word rather than while he is still saying it.
 
 const BEATS := [
-	{"name": "Ivan",
-		"text": "There you are. Still standing. I hate this part - I always count you twice."},
-	{"text": "Sit down. No - do not sit down, you will bleed on the chair."},
-	{"text": "I made too much again. I always make too much. Eat."},
+	{
+		"name": "Ivan",
+		"text": "There you are. Still standing. I hate this part - I always count you twice.",
+		"voice": "res://game/npcs/ivan/sfx/voice/still_standing.wav",
+	},
+	{
+		"text": "Sit down. No - do not sit down, you will bleed on the chair.",
+		"voice": "res://game/npcs/ivan/sfx/voice/chair.wav",
+	},
+	{
+		"text": "I made too much again. I always make too much. Eat.",
+		"voice": "res://game/npcs/ivan/sfx/voice/eat.wav",
+	},
 ]

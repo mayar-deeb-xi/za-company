@@ -108,12 +108,13 @@ LEVELS = {
 ## reverb in the file is reverb the game cannot take back out.
 STYLE = "dry, close, mono, no music, no reverb tail, game sound effect"
 
-## enemy id -> cue -> spec.
+## enemy id -> cue -> spec. Named CAST rather than ENEMIES because make.py is
+## the engine for any cast: `player.py` beside this file is a second one.
 ##   prompt   what to generate, minus STYLE
 ##   seconds  what to ask the API for; it is padded and then trimmed
 ##   limit    hard cap on the finished clip, where one is load-bearing
 ##   loop     seam-crossfaded so the game can loop it
-ENEMIES = {
+CAST = {
 	# The guard, and the sword the interrupt rules were tuned against. He is
 	# one of the ORIGINALS, which appear from hellfire up, where the building
 	# stops pretending to be an office - so there is an ember under the steel.

@@ -64,12 +64,28 @@ signal died
 
 ## Preloaded by path rather than via `class_name`, like the rest of the project.
 const Roster := preload("res://game/player/characters/roster.gd")
+const PlayerAudio := preload("res://game/player/player_audio.gd")
+
+## Attack animation -> the cue it opens with. The two lights are named for the
+## MOVEMENT rather than for the animation because that is what they are: air,
+## not impact. Nothing has been struck on the frame a swing starts, so `hit`
+## belongs to `_strike()` and to the frame something is actually reached - the
+## enemies' rule (game/enemies/CLAUDE.md, The noise) pointed the other way.
+const ATTACK_SOUNDS := {
+	"attack": "swing",
+	"attack2": "swing2",
+	"heavy": "heavy",
+}
 
 enum Facing { DOWN, UP, SIDE }
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var _hitbox: Area2D = $Hitbox
 @onready var _spinbox: Area2D = $Spinbox
+## The noise this body makes, or null. Optional on exactly an enemy's terms: a
+## cue with no `Audio` child, or with no file behind it, is silence with no
+## branch anywhere - so a fresh checkout runs before anybody has imported a WAV.
+@onready var _audio: PlayerAudio = get_node_or_null("Audio")
 
 var health := MAX_HEALTH
 var lives := MAX_LIVES
@@ -169,6 +185,10 @@ func _physics_process(delta: float) -> void:
 		if not Input.is_action_pressed("attack"):
 			_charging = false
 			_sprite.speed_scale = 1.0
+			# Faded rather than cut: an early release loses nothing (the
+			# press's swing already happened), so it must not sound like
+			# something broke. A release into the heavy is masked by the swing.
+			_sfx_fade("charge", 0.08)
 			if _charge >= CHARGE_SECONDS:
 				_start_attack("heavy")
 			else:
@@ -213,6 +233,9 @@ func take_control() -> void:
 	_sprite.speed_scale = 1.0
 	velocity = Vector2.ZERO
 	_apply_animation("idle", true)
+	# Cut, not faded: a hum trailing into the first line of a conversation is
+	# the cutscene starting on top of the combat it just cancelled.
+	_sfx_stop("charge")
 
 
 func release_control() -> void:
@@ -320,6 +343,7 @@ func _start_attack(anim: String) -> void:
 	if anim != "heavy":
 		_hitbox.position = _hitbox_offset()
 	_apply_animation(anim, true)
+	_sfx(ATTACK_SOUNDS.get(anim, ""))
 
 
 ## The hitbox sits one step ahead of the body in whatever direction the attack
@@ -349,12 +373,18 @@ func _strike() -> void:
 		power = HEAVY_POWER
 	elif _attack == "attack2":
 		power = THRUST_POWER
+	var landed := false
 	for body in area.get_overlapping_bodies():
 		if _swing_hits.has(body) or not body.is_in_group("enemies"):
 			continue
 		if body.has_method("take_damage"):
 			_swing_hits[body] = true
 			body.call("take_damage", power)
+			landed = true
+	# Once for the frame, not once per enemy: a heavy landing on four bodies is
+	# one impact, and four copies of one clip started together is a click.
+	if landed:
+		_sfx("hit")
 
 
 func _on_animation_finished() -> void:
@@ -366,6 +396,7 @@ func _on_animation_finished() -> void:
 	if finished == "heavy":
 		_attack = "wildfire"
 		_apply_animation("wildfire", true)
+		_sfx("wildfire")
 		return
 	_attack = ""
 	# Still holding when an attack ends (and nothing buffered) flows into the
@@ -375,6 +406,10 @@ func _on_animation_finished() -> void:
 		_charging = true
 		_charge = 0.0
 		_apply_animation("charge", true)
+		# A loop, because the stance is held for as long as the button is and
+		# so has no length of its own. The READY cue stays on the eyes, where
+		# it already was - the animation doubles speed at CHARGE_SECONDS.
+		_sfx_loop("charge")
 		return
 	if _buffered != "":
 		_start_attack(_buffered)
@@ -391,6 +426,12 @@ func take_damage(amount: int) -> void:
 		return
 	_grace = _grace_window
 	_lose_health(amount)
+	# Metered for free by the window above, so a crowd cannot stack gasps. Only
+	# on a blow that was SURVIVED: `_lose_health` plays `die` at zero, and a
+	# gasp laid over the death breath in one frame is one muddy sound rather
+	# than two clear ones.
+	if health > 0:
+		_sfx("hurt")
 
 
 ## Health lost to a continuous effect rather than a blow - an aura, a poison,
@@ -429,6 +470,10 @@ func _lose_health(amount: int) -> void:
 	health = maxi(health - amount, 0)
 	health_changed.emit(health, MAX_HEALTH)
 	if health == 0:
+		# Here rather than in take_damage() so that a drain kills as audibly as
+		# a blow does - `drain()` is otherwise deliberately silent, but a death
+		# is not a drain tick, it is the end of the run.
+		_sfx("die")
 		died.emit()
 
 
@@ -468,8 +513,41 @@ func revive() -> void:
 	_charge = 0.0
 	_combo_grace = 0.0
 	_swing_hits.clear()
+	_sfx_stop("charge")
 	_sprite.speed_scale = 1.0
 	_apply_animation("idle")
 	_sprite.visible = true
 	_sprite.modulate = Color.WHITE
 	health_changed.emit(health, MAX_HEALTH)
+
+
+## One sound, if the scene gave this body an `Audio` child and that child has
+## one by that name. Every miss is legal and silent by design, which is what
+## lets a cue be wired here before its WAV exists - and what makes a fresh
+## checkout playable before an --import pass has ever been run.
+##
+## Deliberately the same four names `enemy_base` uses. They are not the same
+## code (see player_audio.gd for why the player's node is not the enemies'),
+## but somebody reading both should not have to learn two vocabularies for one
+## idea. An empty id is a no-op, so ATTACK_SOUNDS can miss without a branch.
+func _sfx(id: String) -> void:
+	if _audio != null and id != "":
+		_audio.play(id)
+
+
+## The same deal for a sound that keeps going - the charge stance - and for the
+## two ways of taking one back down. Faded where stopping is part of the move,
+## cut where the move itself was cancelled.
+func _sfx_loop(id: String) -> void:
+	if _audio != null:
+		_audio.loop(id)
+
+
+func _sfx_fade(id: String, seconds: float) -> void:
+	if _audio != null:
+		_audio.fade_out(id, seconds)
+
+
+func _sfx_stop(id: String) -> void:
+	if _audio != null:
+		_audio.stop(id)

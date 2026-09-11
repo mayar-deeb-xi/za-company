@@ -2,7 +2,8 @@ extends "res://tests/helpers.gd"
 ## Ivan test: the third beat. That he waits for a fight and not merely for a
 ## quiet room, that he walks in through the door and crosses to his spot, that
 ## the hearts land on the last word of his lines, that they heal, that there is
-## one per HEAD, and that there is only ever one lot of them.
+## one per HEAD, and that there is only ever one lot of them. He is voiced, so
+## it also reads his lines off disk and checks each one has a recording.
 ##
 ## Boots into the empty lobby and builds the beat by hand, the way
 ## test_reinforcements.gd does and for the same reason: what is under test is
@@ -203,8 +204,37 @@ func _tick(frame: int) -> void:
 		440:
 			_check("relief: he gives once, however often he is asked (%d)"
 				% _hearts_thrown().size(), _hearts_thrown().size() == 2)
+			_clips()
 			_baked()
 			_finish()
+
+
+## The other half of a voiced conversation, on test_dialogue.gd's exact terms:
+## every line he speaks names a clip, and every clip named is really there. A
+## mistyped path is SILENT at runtime - the box plays what exists and types on
+## regardless - so nothing else in the game would ever report one. Both halves
+## also need the WAVs imported, which is the one thing a fresh checkout has not
+## done yet; that is the same miss every other sound here is allowed, and this
+## is the one place it is not quiet about it.
+func _clips() -> void:
+	var beats: Array = (load(SAY) as GDScript) \
+		.get_script_constant_map().get("BEATS", [])
+	var silent: Array[String] = []
+	var missing: Array[String] = []
+	for beat in beats:
+		var path := String(beat.get("voice", ""))
+		if path == "":
+			silent.append(String(beat.get("text", "")).substr(0, 24))
+			continue
+		if not ResourceLoader.exists(path):
+			missing.append(path.get_file())
+	_check("voice: every line he says names a clip (%d of them%s)"
+		% [beats.size(),
+			"" if silent.is_empty() else ", missing " + ", ".join(silent)],
+		beats.size() > 0 and silent.is_empty())
+	_check("voice: and every clip is on disk (%s)"
+		% ("all there" if missing.is_empty() else ", ".join(missing)),
+		missing.is_empty())
 
 
 ## The floors that actually carry the beat, read back off disk. Everything above

@@ -282,3 +282,10 @@ waves = [{
 script = ExtResource("30_jp67h")
 at = Vector2(324, 196)
 say = "res://game/npcs/ivan/after_the_fight.gd"
+
+[node name="Briefing" type="Node2D" parent="." unique_id=203000913]
+script = ExtResource("30_jp67h")
+npc = "dominique"
+from = &"returned"
+at = Vector2(310, 97)
+say = "res://game/npcs/dominique/before_silverman.gd"

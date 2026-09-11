@@ -223,12 +223,14 @@ that starts itself takes the wheel off a player who has pressed nothing yet.
 
 ## Still to build
 
-- **Dominique has no lines and is on no floor.** The other two are: HR stands
-  in the lobby (`tools/biomes/lobby.gd`) with `hr_lady/welcome.gd`, and Ivan
-  arrives on six floors with `ivan/after_the_fight.gd`. Placement is biome data
-  like everything else a room is dressed with - see tools/CLAUDE.md. Dominique
-  is a signpost and wants one file of lines per floor she stands on, which the
-  branching box makes cheap.
+- **All three are now placed and all three talk.** HR stands in the lobby
+  (`tools/biomes/lobby.gd`) with `hr_lady/welcome.gd`, Ivan arrives on six
+  floors with `ivan/after_the_fight.gd`, and Dominique arrives on the three
+  under a boss with one file of lines each
+  (`dominique/before_<boss>.gd`) - the signpost the plan asked for, built as a
+  beat rather than a placement so the warning lands while the fight is still
+  ahead. Placement is biome data like everything else a room is dressed with -
+  see tools/CLAUDE.md.
 - **Ivan says the same three lines on all six floors.** `conversation` is
   placement, so a floor that has earned its own greeting is one more file, and
   the finale is the one most obviously owed one.

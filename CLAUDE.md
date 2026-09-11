@@ -141,6 +141,47 @@ that expires on its own, refreshing rather than compounding. Everything reaches
 the player by the `player` group + `has_method`, never by type. Full rationale,
 the HUD, the combo and the heavy: game/player/CLAUDE.md.
 
+**The player makes noise on the bestiary's exact terms: by owning the files.**
+An `Audio` child holds id -> stream and player.gd fires eight names at it -
+`swing`, `swing2`, `charge`, `heavy`, `wildfire`, `hit`, `hurt`, `die` - so a
+cue arrives by having the WAV and nothing else, and a missing one is silent
+with no branch anywhere. One set serves all seven characters, which is the
+cast's SHEET rule applied to the other sense, and it decides the one thing
+about the audio that could not be discovered later: `hurt` and `die` cannot
+commit to a gender, because six of the seven are not whoever a grunt would
+sound like. The node is `game/player/player_audio.gd` and is deliberately NOT
+`game/enemies/enemy_audio.gd` bubbled up - it does a neighbouring job with a
+different first line. An enemy is somewhere, and which corner a wind-up came
+from is the whole of what panning is for; the player is never anywhere, since
+the camera is on them, so their pan is 0 on every frame of every room and the
+positional node buys an attenuation curve to produce silence's exact twin. It
+is smaller than its counterpart rather than a copy of it, and drops
+`play_detached` outright: that exists because an enemy plays `die` on the frame
+it is freed, and the player is REVIVED, never freed.
+
+Three splits are worth keeping straight, and two of them are the enemies' rules
+arriving from the other side:
+
+- **A swing is air; `hit` is a blow that LANDED.** The two lights announce
+  themselves when they START, and `hit` fires from `_strike()` only on a frame
+  something was actually reached - once for the frame, not once per enemy, so a
+  heavy landing on four bodies is one impact rather than four copies of one clip
+  started together, which is a click.
+- **`drain()` is deliberately silent**, and it is the one absence anybody will
+  call a bug. A drain runs every physics frame and already knows its own rate, so
+  a gasp on each is sixty a second - and metering it through the grace window to
+  thin them out is exactly the mistake `drain()` exists to not make. The thing
+  draining you is already making the noise. A DEATH is not a drain tick, so
+  `die` sits with `_lose_health()` and a drain kills as audibly as a blow does.
+- **The charge is the one loop**, because the stance is held for as long as the
+  button is and so has no length of its own to end at. It was specced as a
+  one-shot capped at `CHARGE_SECONDS` so that running out would be the ready
+  cue; that was wrong on its own terms, and the ready cue stays where it already
+  was - on the eyes, where the animation doubles speed.
+
+The sounds are `tools/sfx/make.py player` off `tools/sfx/player.py`, the
+bestiary's pipeline unchanged.
+
 ## Enemies
 
 `game/enemies/enemy_base.gd` runs every type: stand guard, close to
@@ -157,9 +198,10 @@ coming that long after losing sight, `leash_factor` (2.0) stops it following
 further than that multiple of its sight FROM ITS POST, and then it walks back
 and stands on its mark. The second half is the one that matters: an enemy that
 halted wherever it gave up let a player walk one body out of position and
-leave, and a room is an ARRANGEMENT. A boss opts out (`_leashes()` - an arena
-has no arrangement) and so does a reinforcement (`unleash()` - it has no
-authored position to be anchored to). Full rationale:
+leave, and a room is an ARRANGEMENT. A boss opts out of all of it
+(`_leashes()` - an arena has no arrangement); a reinforcement opts out of the
+POST only (`unleash()` - it is the one enemy with no authored position, so it
+still gives up, it just has no mark to be held near or to return to). Full rationale:
 game/enemies/CLAUDE.md's The leash.
 
 **Enemy HP (24 / 17 / 36) are exact breakpoints on the player's combo** -
@@ -474,6 +516,14 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
                                        and re-levels from the untouched exports
                                        in `game/enemies/<id>/src/sfx/`, so only
                                        a new PERFORMANCE costs credits
+- `game/player/sfx/*.wav`           <- tools/sfx/make.py player, on the
+                                       bestiary's pipeline unchanged: the
+                                       recipe (prompts, lengths, levels) is
+                                       `tools/sfx/player.py`, the engine is
+                                       shared, and `--relevel` re-shapes from
+                                       `game/player/src/sfx/` for free. ONE set
+                                       for all seven characters, because they
+                                       share one body
 - `game/enemies/{social_media,call_center}/sfx/voice/*.wav`
                                     <- tools/voice/cut.py <id>, the bosses'
                                        pipeline unchanged. WHAT they mutter is
@@ -665,8 +715,15 @@ crossfade cannot fix that, because there is nothing left at the end to fade.
 The music has to be cut back to the last whole BAR before the fade begins, and
 only then crossfaded. That is the one measurement worth taking on a new track
 before anything else: the tempo, so the cut lands on the grid. The bed is
-120 BPM, so a bar is 2.0 s and 56.000 s is 28 of them - which is also 3360
-frames at 60 fps, on the same frame grid Mostafa's theme is on.
+90 BPM, so a bar is 2.667 s and the loop is 20 of them. Two traps sit in that
+sentence. The BPM is the one the generator was ASKED for and not the one it
+delivered - this export runs at 90.019, which is 11 ms of drift by the
+twentieth bar and therefore longer than the crossfade - and the thing being
+matched at a loop point is waveform PHASE, which is sharp at the millisecond:
+cutting at the nominal 53.333 s rather than the measured 53.322 took the
+tail-against-head correlation from 0.875 to -0.12. So the bar count picks WHICH
+peak to cut at and the measurement says where it is - correlate the tail's last
+second against the head's first, swept at sample resolution.
 
 Check both on any new music before wiring it up: the click is obvious once
 heard and invisible in a waveform view, and the fade is invisible in the
@@ -770,7 +827,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Fourteen suites,
+  They drive the real game with synthesized input and exit 0/1. Fifteen suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -858,6 +915,17 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     loaded and applied, and it does not depend on the wall clock at all. Plus
     the sweep a silent-by-design miss needs: every line she speaks names a
     clip, and every clip named is on disk.
+  - `test_player_sfx.gd` - the player's own noise: that the body declares
+    every cue player.gd can fire and no cue it never will, that each resolves,
+    that the charge stance is a sealed LOOP rather than a one-shot with a flag
+    on it, and - the part that is not test_enemy_sfx.gd over again - that a
+    body with its `Audio` child torn off still swings, still charges and still
+    takes a hit. That last one is the promise the whole design rests on and is
+    destructive, which is why this is its own suite. It measures a loop seam
+    against the clip's WORST internal step where the bestiary's suite uses the
+    mean, because the charge bed is quiet in the export and takes a large
+    make-up gain: its samples land on a coarse quantization grid with a median
+    step of zero, and a mean no actual step is near fails a perfect join.
   - `test_studio.gd` - floor 2's clock and the two things that read it: that a
     lamp with no clock in the room is furniture (checked in the LOBBY, because
     a promise about absence has to be tested where the thing is absent), that

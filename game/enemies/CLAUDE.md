@@ -12,11 +12,12 @@ CLAUDE.md.
 
 `game/enemies/enemy_base.gd` is the base every type builds on: an enemy stands
 guard until the player comes within `sight_radius`, closes the ground to
-`stop_distance` and holds there facing them, and presses its touch on the
+`stop_distance` and holds there facing them, follows them for a while once it
+has seen them and goes back to its post when it loses them (The leash, below), and presses its touch on the
 player every physics frame of contact - no timers of its own, the player's
 grace window meters the pressure, exactly like hazards. Stats (`max_health`,
-`contact_damage`, `speed`, `sight_radius`, `stop_distance`) are @exports, so a
-level can retune the instance it places. Enemies find the player by group +
+`contact_damage`, `speed`, `sight_radius`, `stop_distance`, `patience_seconds`,
+`leash_factor`) are @exports, so a level can retune the instance it places. Enemies find the player by group +
 `has_method`, doors ignore them (door_base.gd filters on the `player` group),
 and each type lives in `game/enemies/<type>/`.
 
@@ -109,6 +110,68 @@ What is NOT shared is the tuning. Each scene repeats the archetype's exports -
 scene and its reskin keeps the old numbers. `tests/test_combat.gd` spawns both
 reskins and asserts their health against the archetype's, which is what catches
 that drift.
+
+## The leash: what an enemy does about a player who walks away
+
+`sight_radius` is how an enemy NOTICES the player and that is now all it is.
+Every authored position in `tools/biomes/` is placed so no sight radius reaches
+the door lane, so **entering the circle has to stay the only way to be seen** -
+widen it and every floor in the game breaks at once, along with the flow and
+combat tests. That half does not move.
+
+What was wrong was everything after it. The chase was gated on the player
+being inside that circle THIS FRAME, so an enemy stopped mid-stride the moment
+they stepped one pixel back over the edge - and at 90 against 45-55 the player
+owns that pixel whenever they want it. Two things followed, and the second is
+the worse one. A guard that halted on an invisible line read as a guard that
+did not care. And it halted *where it happened to be standing*, so a player who
+walked one body out of position and left never had to face that arrangement
+again: the room was permanently a little flatter, on a floor whose shape is
+most of what makes it unlike the last one.
+
+Two numbers, neither of them touching detection:
+
+- **`patience_seconds`** (2.5) - having seen the player, it keeps coming for
+  that long after losing sight. Escape becomes a distance you have to make -
+  137 px for a guard - rather than a line you step over. It walks at the
+  player's CURRENT position through that window rather than their last known
+  one, which is the small lie a game of this kind tells; the honest version is
+  an enemy striding confidently at where you used to be.
+- **`leash_factor`** (2.0) - it will not follow further than that multiple of
+  its sight from its POST, the spot it was placed on. So a guard owns 160 px
+  around its mark, a wraith 240 and a warden 260. **Measured from the post and
+  never from the enemy's own feet**, which is the one thing to get right here:
+  a bound on the distance to the PLAYER travels along with the enemy and so
+  permits a chase across the whole building, which is not a leash at all.
+
+Then it walks home and stands on its mark again, which is the half that
+protects the arrangement. `HOME_SLACK` (2 px) is what keeps it from jittering
+forever on the last half pixel - the same reason `npc_base.gd` has one.
+
+Only a player retreating *while staying in sight* can pull an enemy any real
+distance, because patience alone gives out at 137 px, so the leash is a bound
+on kiting specifically. At the edge of it the body holds station and keeps
+watching a player it can plainly see, which is a legible thing to look at: it
+has not lost you, it is not coming.
+
+**Two bodies opt out, and they opt out of different amounts of it.** A boss
+overrides `_leashes()` to false and loses the lot - no patience, no bound, no
+walk home, which is exactly how every enemy behaved before this: his floor is
+an arena holding one body, so there is no arrangement for a leash to protect,
+and his own scripts read `sight_radius` directly for the dash, the taunt and
+every attack gate, so a base that walked him back to his spawn the moment the
+player stepped out of it would be fighting all three.
+
+A reinforcement gets `unleash()` from `game/levels/reinforcements.gd` on
+arrival, and that takes only the POST - it still hunts, still runs out of
+patience and still gives up, it simply has no mark to be held near and none to
+go back to. That is the right half to remove: they are the only enemies in the
+game with no authored position, the leash is anchored to authored positions,
+and the only thing an arrival could be tied to is the doorway it walked in
+through. A body that came to find you is not defending anything.
+
+`tests/test_combat.gd` ends on it - the pursuit past the circle, the giving up,
+the walk home, and a guard dragged 160 px and not one pixel more.
 
 ## The types
 
@@ -471,6 +534,10 @@ start following you and taking your legs. Positions are chosen so
 no enemy's sight reaches the door line, the spawns or the torch and heart stands
 - the straight walk between the two doors stays safe in every biome, and the
 flow and combat tests depend on nothing aggroing until a check deliberately
-walks into range. The warden's 130 px is the longest look in the
+walks into range. The leash does not loosen that rule and it does not tighten
+it either: **the lane is a promise about being NOTICED, not about being safe**.
+Nothing sees a player who walks it, so nothing follows them into it - but a
+player who has stepped into a sight radius and then retreated into the lane is
+being followed there, which is the point of the thing. The warden's 130 px is the longest look in the
 game and every walkable line in the marble hall falls inside it, which is the
 reason that room has none.

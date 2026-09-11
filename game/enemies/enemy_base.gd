@@ -35,6 +35,45 @@ class_name EnemyBase
 ## a combo by chip damage feels dreadful, and asymmetry in the player's favour is
 ## the right kind of unfair.
 ##
+## ## The leash
+##
+## `sight_radius` is how an enemy NOTICES the player and nothing else, which is
+## the half of this that must not move: every authored position in
+## tools/biomes/ is placed so that no sight radius reaches the door lane, so
+## entering the circle stays the only way to be seen and the straight walk
+## between the doors stays crossable. Widening it would break every floor at
+## once.
+##
+## What used to be wrong was everything after. The chase was gated on the
+## player being inside that circle THIS FRAME, so an enemy halted mid-stride
+## the moment they stepped one pixel back over it - and at 90 against 45-55 the
+## player owns that pixel whenever they want it. It read as an enemy that did
+## not care, and it left the body standing wherever it gave up, so kiting one
+## off its mark deformed the room permanently.
+##
+## Two numbers fix it, and neither touches detection:
+##
+## - **`patience_seconds`** - having seen the player, it keeps coming for that
+##   long after losing sight. Escaping becomes a distance you have to make
+##   rather than a line you step over.
+## - **`leash_factor`** - it will not follow further than that multiple of its
+##   sight from its POST, the spot it was placed on. Measured from the post and
+##   never from where it currently stands, or it is not a leash at all: a bound
+##   on the distance to the PLAYER travels with the enemy and so permits a
+##   chase across the whole building.
+##
+## Then it walks back and stands where it was placed, because a room is an
+## ARRANGEMENT and one that can be pulled apart once is a room whose shape only
+## mattered on the first visit.
+##
+## **A body with no post has no leash**, which is `unleash()` and is exactly the
+## reinforcements: CLAUDE.md already says they are the only enemies in the game
+## with no authored position, and the leash is anchored to authored positions.
+## One that walked in through a door came to find you and has nothing to defend.
+## Bosses opt out of the whole thing through `_leashes()` - an arena holds one
+## body and no arrangement, and a boss's own scripts read `sight_radius`
+## directly for his dash, his taunt and his attack gates.
+##
 ## ## Seams
 ##
 ## What a touch DOES is the seam between enemy types - the base deals damage on
@@ -123,6 +162,16 @@ const MUTTER_POLL := 2.0
 ## shape, or it parks just outside its own effect and nothing ever happens.
 @export var stop_distance := 12.0
 
+@export_group("The leash")
+## How long it keeps coming after losing sight of the player. The escape, in
+## seconds rather than in one pixel across the edge of the sight radius.
+@export var patience_seconds := 2.5
+## How far past its own sight it will follow, as a multiple of `sight_radius`
+## and measured from its POST - so a guard owns 160 px around where it was
+## placed, a wraith 240 and a warden 260. Under 1.0 is a body that will not
+## leave the circle it watches.
+@export var leash_factor := 2.0
+
 @export_group("Attack cycle")
 ## The telegraph. Long enough to read and step out of, short enough that an
 ## enemy standing next to you is a threat rather than a statue.
@@ -139,6 +188,10 @@ const MUTTER_POLL := 2.0
 ## Without this the whole mechanic collapses into mashing.
 @export var interrupt_cooldown := 1.2
 
+## How close to the post counts as home. Without it a body jitters forever on
+## the last half pixel, which is the same reason game/npcs/npc_base.gd has one.
+const HOME_SLACK := 2.0
+
 const HURT_FLASH_SECONDS := 0.15
 const HURT_TINT := Color(1.0, 0.4, 0.4)
 ## Reads hotter the closer the swing is to landing, so a wind-up is legible even
@@ -146,8 +199,9 @@ const HURT_TINT := Color(1.0, 0.4, 0.4)
 const WINDUP_TINT := Color(1.0, 0.72, 0.45)
 
 enum Facing { DOWN, UP, SIDE }
-## CHASE covers standing still as well - it is "not mid-attack", and the base's
-## usual distance rules decide whether that means walking or holding station.
+## CHASE covers standing still and the walk back to the post as well - it is
+## "not mid-attack", and the base's usual distance rules decide whether that
+## means closing on the player, going home or holding station.
 enum Phase { CHASE, WINDUP, RECOVER, STAGGER }
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -163,6 +217,14 @@ var touching_player := false
 ## Where in the attack cycle this enemy is. Public so a type that roots itself
 ## for its own reasons, or a test, can read it without guessing from animations.
 var phase: Phase = Phase.CHASE
+## True while this enemy is coming for the player - in sight, or inside the
+## patience window after losing them. Public for the same reason `phase` is.
+var hunting := false
+## The spot it was placed on, which is what the leash is measured from and
+## where it goes back to. `Vector2.INF` until the first physics frame has taken
+## it, and again forever once `unleash()` says this body was never part of an
+## arrangement.
+var post := Vector2.INF
 
 var _facing: Facing = Facing.DOWN
 var _facing_left := false
@@ -170,6 +232,10 @@ var _flash := 0.0
 ## Time spent in the current phase, and the countdown on being interruptible.
 var _phase_time := 0.0
 var _interrupt_locked := 0.0
+## Seconds of hunting left after losing sight, and whether this body has been
+## told it has no post at all.
+var _patience := 0.0
+var _roaming := false
 ## Seconds until the next mutter is ASKED for. See `_ready` for why the first
 ## one is random.
 var _mutter_in := 0.0
@@ -198,25 +264,34 @@ func _physics_process(delta: float) -> void:
 		_interrupt_locked = maxf(_interrupt_locked - delta, 0.0)
 	_phase_time += delta
 
+	# Taken on the first frame rather than in _ready, because a reinforcement is
+	# positioned by whoever spawned it one line AFTER add_child - so _ready
+	# would pin the post to wherever the scene file happened to sit.
+	if post == Vector2.INF and not _roaming and _leashes():
+		post = global_position
+
 	# Group + method rather than type, like hazards and pickups: nothing here
 	# names the player's script.
 	var player := get_tree().get_first_node_in_group("player") as Node2D
 	var advancing := false
 	velocity = Vector2.ZERO
-	if player != null:
+	if _hunt(player, delta):
 		var to_player := player.global_position - global_position
 		var distance := to_player.length()
-		if distance <= sight_radius:
-			# Keep facing the player whether or not there is still ground to
-			# close: an enemy rooted mid-swing should still turn to watch them.
-			var direction := to_player / maxf(distance, 0.001)
-			_face(direction)
-			# Rooted by anything other than CHASE, so a wind-up cannot also be a
-			# charge across the room.
-			advancing = distance > stop_distance and phase == Phase.CHASE \
-				and _can_advance()
-			if advancing:
-				velocity = direction * speed
+		# Keep facing the player whether or not there is still ground to
+		# close: an enemy rooted mid-swing should still turn to watch them.
+		var direction := to_player / maxf(distance, 0.001)
+		_face(direction)
+		# Rooted by anything other than CHASE, so a wind-up cannot also be a
+		# charge across the room - and bounded by the leash, which is the one
+		# reason an enemy that CAN see the player still holds where it stands.
+		advancing = distance > stop_distance and phase == Phase.CHASE \
+			and _can_advance() and not _leashed()
+		if advancing:
+			velocity = direction * speed
+	elif phase == Phase.CHASE and _can_advance():
+		# Nothing to hunt, so back to the post - if it has one and is off it.
+		advancing = _walk_home()
 	move_and_slide()
 
 	touching_player = false
@@ -238,6 +313,70 @@ func _physics_process(delta: float) -> void:
 		_sprite.modulate = Color.WHITE.lerp(_windup_tint(), _windup_progress())
 	else:
 		_sprite.modulate = _resting_tint()
+
+
+## Whether this enemy is coming for the player this frame, and the whole of when
+## it gives up. See the header: detection is unchanged, and everything after it
+## is what the leash is.
+##
+## It chases the player's CURRENT position through the patience window rather
+## than their last known one, which is the small lie a game of this kind tells
+## - two and a half seconds of it is 137 px for a guard, and the alternative is
+## an enemy that walks confidently at the spot you used to be standing in.
+func _hunt(player: Node2D, delta: float) -> bool:
+	if player == null:
+		hunting = false
+		return false
+	if global_position.distance_to(player.global_position) <= sight_radius:
+		hunting = true
+		_patience = patience_seconds
+		return true
+	# Out of sight. A body that never had a leash also never had the patience
+	# that comes with one, so it stops here exactly as it always did.
+	if not hunting or not _leashes():
+		hunting = false
+		return false
+	_patience -= delta
+	hunting = _patience > 0.0
+	return hunting
+
+
+## Whether the leash is out of slack. An enemy this far from its post holds
+## where it stands and keeps watching, rather than being walked across the room
+## by a player who has worked out that being followed is free.
+func _leashed() -> bool:
+	return post != Vector2.INF \
+		and post.distance_to(global_position) >= sight_radius * leash_factor
+
+
+## One frame of the walk back. Returns whether it is actually walking, which is
+## what the animation reads - so a body already home stands there rather than
+## miming a step over the last half pixel.
+func _walk_home() -> bool:
+	if post == Vector2.INF:
+		return false
+	var home := post - global_position
+	if home.length() <= HOME_SLACK:
+		return false
+	var direction := home.normalized()
+	_face(direction)
+	velocity = direction * speed
+	return true
+
+
+## Whether this body keeps a post at all: the patience, the leash and the walk
+## home. False for a boss - see the header - and for anything else whose
+## position was never authored, which says so through `unleash()` instead.
+func _leashes() -> bool:
+	return true
+
+
+## Said to a body that was never part of an arrangement: it came through a door
+## to find the player, so it has nothing to defend and nowhere to go back to.
+## Called by game/levels/reinforcements.gd on every arrival.
+func unleash() -> void:
+	_roaming = true
+	post = Vector2.INF
 
 
 ## 0..1 through the current wind-up; 0 when not winding up.

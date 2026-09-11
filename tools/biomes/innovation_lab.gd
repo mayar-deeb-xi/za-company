@@ -118,4 +118,15 @@ const BIOME := {
 			"enemies": ["office_boy", "social_media", "call_center"],
 			"per_head": ["office_boy"]},
 	],
+	# The FOURTH beat, and the one floor that carries it WITHOUT Ivan: the gym
+	# is next, and this floor is not one of the six he walks. So she arrives
+	# alone, through the north door like every briefing, and the room has one
+	# arrival rather than two.
+	#
+	# West of the door line in the gap the two west pods leave, clear of the
+	# desks at (204, 58) and (204, 252) and of this floor's only columns, which
+	# are the outer pair at x 72 and 472. The walk from the north door is short
+	# and crosses nothing.
+	"briefing": {"npc": "dominique", "from": "returned", "at": Vector2(232, 120),
+		"say": "res://game/npcs/dominique/before_mostafa.gd"},
 }

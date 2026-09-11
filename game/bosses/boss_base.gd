@@ -148,6 +148,17 @@ func _watch_player(delta: float) -> void:
 		_say("taunt")
 
 
+## No post, no patience and no walk home. An enemy keeps a leash so that a room
+## full of them stays the ARRANGEMENT it was placed as (game/enemies/
+## enemy_base.gd, The leash); a boss floor is an arena holding one body, so
+## there is no arrangement for a leash to protect. His range is his own
+## business besides - the dash, the taunt and every attack gate read
+## `sight_radius` directly, and a base that walked him back to his spawn the
+## moment the player stepped out of it would be fighting all three.
+func _leashes() -> bool:
+	return false
+
+
 ## The name the HUD's boss bar announces him by. Read off his own SCENE and
 ## not his node name, which build_levels.gd overwrites with "Boss" so the
 ## floor's north door can find him - a bar reading BOSS is the one thing it

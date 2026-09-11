@@ -1,7 +1,12 @@
 extends "res://tests/helpers.gd"
 ## Combat test: the guard's telegraphed strike and the interrupt rules, the
-## combo kill, the wraith's drain, the warden's wind-up and slow, and the heavy
-## attack. Boots straight through the menu into the lobby, which is floor 1 and
+## combo kill, the wraith's drain, the warden's wind-up and slow, the heavy
+## attack, and the leash - what an enemy does about a player who walks away.
+##
+## The leash section is last and it is the one that needs the empty room most:
+## it drags a guard a good 160 px off its post, which is the whole width of the
+## lobby's central band, and asks three things a placed enemy could never be
+## asked in a furnished floor without something else wandering into the answer. Boots straight through the menu into the lobby, which is floor 1 and
 ## deliberately empty, and places each enemy under test by hand - so exactly one
 ## fight happens at a time by construction rather than by keeping the room's own
 ## enemies out of each other's sight radius. They are the real scenes either way.
@@ -9,9 +14,23 @@ extends "res://tests/helpers.gd"
 var _enemy: Node2D
 var _wraith: Node2D
 var _warden: Node2D
+## How far the guard was from its post when it gave up, to measure the walk
+## home against.
+var _home_gap := 0.0
+## Frame to keep dragging the player away from the guard until. A kiting player
+## retreats while staying IN SIGHT - that is the only way to pull an enemy
+## across a room, since patience alone runs out at 137 px - so the drag parks
+## the player 50 px ahead of the guard every frame and walks it backwards.
+var _drag_until := 0
 
 
 func _tick(frame: int) -> void:
+	if frame <= _drag_until and is_instance_valid(_enemy):
+		_player().global_position = _enemy.global_position + Vector2(50, 0)
+	_script(frame)
+
+
+func _script(frame: int) -> void:
 	match frame:
 		2:
 			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
@@ -353,4 +372,92 @@ func _tick(frame: int) -> void:
 			_check("call_center: nothing has landed while it charges (%d -> %s)"
 				% [_health_mark, _player().get("health")],
 				int(_player().get("health")) == _health_mark)
+			# THE LEASH. Everything above this line is about an enemy the
+			# player is standing in front of; this is about the player leaving,
+			# which used to stop a chase dead on the frame they crossed the
+			# sight radius - one pixel, at 90 against 55, which is a threat the
+			# player could switch off at will.
+			_warden.queue_free()
+			# West end of the lobby's clear central band, with the whole width
+			# of it to the east to be dragged along. 50 px apart, so the guard
+			# has both seen the player and has ground to close.
+			_player().global_position = Vector2(100, 130)
+			var gs := load("res://game/enemies/regular/regular.tscn") as PackedScene
+			_enemy = gs.instantiate()
+			_level().get_node("Props").add_child(_enemy)
+			_enemy.global_position = Vector2(100, 180)
+		1515:
+			var gap: float = _enemy.global_position.distance_to(_player().global_position)
+			_check("leash: the guard took the spot it was placed on as its post (%s)"
+				% _enemy.get("post"), _enemy.get("post") == Vector2(100, 180))
+			_check("leash: it walked in and is hunting (%.1f px, hunting %s)"
+				% [gap, _enemy.get("hunting")],
+				gap < 20.0 and bool(_enemy.get("hunting")))
+			# Gone - 340 px east, four times its sight radius. Far enough that
+			# the whole patience window cannot bring it back within sight, so
+			# what the check below reads is the patience and nothing else.
+			_player().global_position = Vector2(440, 130)
+			_mark = _enemy.global_position
+		1600:
+			# It was mid-recover when the player vanished and started walking
+			# at ~1529. THIS is the reported bug: it used to plant itself on
+			# the frame the player left the circle and stand there for good.
+			_check("leash: losing sight does not stop it - it keeps coming (%.1f px east, hunting %s)"
+				% [_enemy.global_position.x - _mark.x, _enemy.get("hunting")],
+				_enemy.global_position.x - _mark.x > 20.0
+					and bool(_enemy.get("hunting")))
+		1680:
+			# patience_seconds is 2.5, so it ran out at ~1665.
+			_home_gap = Vector2(_enemy.get("post")).distance_to(_enemy.global_position)
+			_check("leash: it gives up two and a half seconds after losing sight (hunting %s)"
+				% _enemy.get("hunting"), not bool(_enemy.get("hunting")))
+			_check("leash: and giving up leaves it well off its post (%.1f px)"
+				% _home_gap, _home_gap > 100.0)
+		1740:
+			var gap: float = Vector2(_enemy.get("post")).distance_to(_enemy.global_position)
+			_check("leash: it walks back rather than standing where it stopped (%.1f -> %.1f px)"
+				% [_home_gap, gap], gap < _home_gap - 30.0)
+		1870:
+			# ~145 frames of walking to cover 133 px. A room is an
+			# ARRANGEMENT: an enemy that could be walked off its mark and left
+			# there is a room whose shape only mattered on the first visit.
+			var gap: float = Vector2(_enemy.get("post")).distance_to(_enemy.global_position)
+			_check("leash: it stands on its post again, not near it (%.2f px, '%s')"
+				% [gap, _sprite_of(_enemy).animation],
+				gap <= 2.0 and String(_sprite_of(_enemy).animation).begins_with("idle"))
+			# The other half: how far it will be dragged. A player retreating
+			# while staying in sight is the only thing that can pull an enemy
+			# any real distance, and the leash is what stops that being the
+			# whole room. Fresh guard, since the one above is 340 px east of
+			# where this needs to start.
+			_enemy.queue_free()
+			var gs2 := load("res://game/enemies/regular/regular.tscn") as PackedScene
+			_enemy = gs2.instantiate()
+			_level().get_node("Props").add_child(_enemy)
+			_enemy.global_position = Vector2(140, 140)
+			_player().global_position = Vector2(190, 140)
+			_drag_until = 2110
+		2080:
+			# 175 frames to walk the 160 px its leash allows, and it has had
+			# 210. The player is still 50 px away and in plain sight, which is
+			# the point: this is not an enemy that lost you.
+			var gap: float = Vector2(_enemy.get("post")).distance_to(_enemy.global_position)
+			var reach: float = _enemy.global_position.distance_to(_player().global_position)
+			_check("leash: it follows 2x its sight from the post and no further (%.1f px)"
+				% gap, gap > 155.0 and gap < 165.0)
+			_check("leash: and holds there watching a player it can still see (%.1f px, hunting %s, '%s')"
+				% [reach, _enemy.get("hunting"), _sprite_of(_enemy).animation],
+				bool(_enemy.get("hunting")) and reach < 60.0
+					and String(_sprite_of(_enemy).animation).begins_with("idle"))
+		2110:
+			var gap: float = Vector2(_enemy.get("post")).distance_to(_enemy.global_position)
+			_check("leash: half a second more of kiting does not creep it forward (%.1f px)"
+				% gap, gap < 165.0)
+			_drag_until = 0
 			_finish()
+
+
+## An enemy's own sprite, for the two checks that read what it is animated
+## doing rather than what its numbers say.
+func _sprite_of(enemy: Node2D) -> AnimatedSprite2D:
+	return enemy.get_node("AnimatedSprite2D")

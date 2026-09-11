@@ -15,7 +15,7 @@ induction gets lines written into the middle of it, and a numbered name would
 renumber every clip after the insert and re-cut lines nobody touched. See
 cut.py's header.
 
-Only HR is voiced. The contract-reading branch has the player answering back,
+The player is not voiced. The contract-reading branch has them answering back,
 and the player is silent everywhere else in this game - putting HER voice in
 their mouth would be the one line in the induction that is a mistake. Those
 beats carry no `voice` and cut.py skips them.

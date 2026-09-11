@@ -124,14 +124,14 @@ def line(name, s, note=""):
 
 
 def each(r, only):
-	"""The work, filtered by `--only`, which takes an enemy or a single cue.
+	"""The work, filtered by `--only`, which takes a cast member or a single cue.
 
 	Per-cue selection is not a convenience: a sound is judged one at a time
 	and re-rolled one at a time, so `--only warden/hit --force` has to mean
 	that hit and not the four sounds beside it that were already right.
 	"""
-	for who in r.ENEMIES:
-		for cue, spec in r.ENEMIES[who].items():
+	for who in r.CAST:
+		for cue, spec in r.CAST[who].items():
 			if only and who not in only and "%s/%s" % (who, cue) not in only:
 				continue
 			yield who, cue, spec

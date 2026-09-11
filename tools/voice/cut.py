@@ -18,7 +18,9 @@ pick (`taunt_1.wav`). Nothing chooses those names, so they are derived.
 
 An NPC has a CONVERSATION - `welcome.gd` holds `const BEATS`, a flat list said
 once each in order, and every spoken beat already carries the `voice` path the
-game will load. So the clip name there is AUTHORED, read back out of the beat,
+game will load. A recipe may name SEVERAL of them (Dominique briefs a different
+boss on each of three floors), and they cut as one voice into one folder, which
+is why the names in them have to be unique across the set. So the clip name there is AUTHORED, read back out of the beat,
 and that is the important half: a conversation gets lines inserted into the
 middle of it, and a derived name would renumber every clip after the insert and
 re-cut the lot. Text-to-speech is not free and not repeatable, so a name that
@@ -147,13 +149,22 @@ def jobs(r):
 
     `key` is what KEEP and TAGS are looked up by - a cue for a boss, the clip's
     own name for a conversation - so both mouths share one driver below.
+
+    A conversation recipe's `BEATS` may be one path or a list of them. Clip
+    names are authored rather than derived, so nothing dedupes ACROSS files for
+    you: two conversations that name the same clip cut once and the second one
+    silently gets the first one's read.
     """
     if hasattr(r, "BEATS"):
         default = getattr(r, "DEFAULT_TAG", None)
         out = []
-        for name, text in beats_of(r.BEATS):
-            tag, stability = r.TAGS.get(name, default)
-            out.append((name, text, tag, stability, name))
+        # One conversation or several - a guide who says a different thing on
+        # each of three floors is still one mouth with one folder of clips.
+        files = r.BEATS if isinstance(r.BEATS, (list, tuple)) else [r.BEATS]
+        for rel in files:
+            for name, text in beats_of(rel):
+                tag, stability = r.TAGS.get(name, default)
+                out.append((name, text, tag, stability, name))
         return out
     out = []
     for cue, texts in lines_of(r.LINES).items():

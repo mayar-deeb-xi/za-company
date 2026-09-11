@@ -164,6 +164,12 @@ func _spawn(type: String, at: Vector2) -> void:
 	# branch, and an enemy outside it draws through the furniture.
 	get_parent().get_node("Props").add_child(enemy)
 	enemy.global_position = at
+	# And no post. A placed enemy keeps a leash around the spot it was placed
+	# on, so that a cleared room is still the arrangement it was authored as;
+	# this one was never authored anywhere - it came through a door to find the
+	# player, and the only thing it could be leashed to is the doorway.
+	if enemy.has_method("unleash"):
+		enemy.call("unleash")
 
 
 ## Whether every beat this floor has is spent: all of them fired and the last
