@@ -21,11 +21,10 @@ func _initialize() -> void:
 
 	ProjectSettings.set_setting("display/window/size/viewport_width", 640)
 	ProjectSettings.set_setting("display/window/size/viewport_height", 360)
-	# Launch fullscreen - this is how a player sees the game. F11 drops back to a
-	# window for debugging (autoload/display.gd).
-	ProjectSettings.set_setting("display/window/size/mode", 3)
+	# Launch windowed - F11 goes fullscreen (autoload/display.gd).
+	ProjectSettings.set_setting("display/window/size/mode", 0)
 
-	# The windowed fallback is an exact 3x of the 640x360 base, so pixels stay even.
+	# The window is an exact 3x of the 640x360 base, so pixels stay even.
 	ProjectSettings.set_setting("display/window/size/window_width_override", 1920)
 	ProjectSettings.set_setting("display/window/size/window_height_override", 1080)
 

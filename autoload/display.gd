@@ -34,7 +34,10 @@ const DEFAULT_SCALE := 3
 ## the next whole number and it is a big jump. Both are quarters, so a 16 px tile
 ## still lands on a whole 20 or 24 px, which keeps the tile grid itself even.
 const ZOOMS := [1.0, 1.25, 1.5, 2.0, 3.0, 4.0]
-const DEFAULT_ZOOM := 1.0
+## The game opens at 150%: close enough that a room reads as a place rather than
+## a diorama, and still wide enough to see what is walking at you. 1 stays the
+## step a player picks when they want the whole room and a still camera.
+const DEFAULT_ZOOM := 1.5
 
 const FULLSCREEN_MODES := [
 	DisplayServer.WINDOW_MODE_FULLSCREEN,
