@@ -18,8 +18,9 @@ extends Node
 ##               until another one changes it, so a run of lines from one mouth
 ##               names them once
 ## - `text`      the subtitle. A beat with text waits for the player
-## - `voice`     the clip that will play with it (see dialogue_box.gd) - carried
-##               and ignored until there is audio
+## - `voice`     the clip played with it, and what the line is typed out over
+##               (see dialogue_box.gd). A beat without one, or with one that is
+##               not on disk, is silent and types at the flat rate
 ## - `options`   [{"text": ..., "goto": ...}, ...]; needs `text` to ask with
 ## - `walk`      a Vector2 the NPC walks to before speaking
 ## - `escort`    while walking, lead the player along behind them

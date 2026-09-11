@@ -44,6 +44,13 @@ var _contract_body := ""
 var _contract_header := ""
 var _prompt_during := false
 var _moved_while_talking := 0.0
+## Her line, sampled across the twenty frames the stick is held down - which is
+## the one stretch of the induction where a line types with nobody pressing
+## anything. Characters rather than playback position, for the wall-clock
+## reason _report() gives.
+var _chars_from := 0
+var _chars_to := 0
+var _clip_seconds := 0.0
 ## The panel sizes itself to the line it is given, so these two are the whole
 ## of that promise: the tallest it ever got, and whether any line was ever
 ## taller than the rect drawing it.
@@ -102,12 +109,22 @@ func _tick(frame: int) -> void:
 				_prompt_during)
 			_check("player: the world has the wheel",
 				bool(_player().call("scripted")))
+			# Her voice, at the top of the only stretch that types untouched.
+			# `playing` is not asserted: under the dummy driver it is not
+			# reliable evidence either way (see _report).
+			var voice := _voice()
+			_check("voice: the box built a player and gave it her clip",
+				voice != null and voice.stream != null)
+			if voice != null and voice.stream != null:
+				_clip_seconds = voice.stream.get_length()
+			_chars_from = _line().visible_characters
 			# The stick, hard over, for twenty frames. A conversation that can
 			# be walked out of is a conversation the player can strand.
 			_mark = _player().global_position
 			_key(KEY_D, true)
 		78:
 			_key(KEY_D, false)
+			_chars_to = _line().visible_characters
 			_moved_while_talking = _player().global_position.distance_to(_mark)
 			_check("player: the stick is dead while she is talking (%.1f px)"
 				% _moved_while_talking, _moved_while_talking < 1.0)
@@ -191,6 +208,12 @@ func _answer(options: VBoxContainer) -> void:
 	_key(KEY_E, true)
 
 
+## The box's own voice player. By node name rather than by reaching into the
+## script, the same way the choices are read off the caret below.
+func _voice() -> AudioStreamPlayer:
+	return _box().get_node_or_null("Voice") as AudioStreamPlayer
+
+
 ## Which row is lit, read off the caret the box paints rather than off any
 ## private state of it.
 func _selected(options: VBoxContainer) -> int:
@@ -228,6 +251,37 @@ func _watch() -> void:
 	_escorted = maxf(_escorted, _player().global_position.distance_to(_escort_mark))
 	_escort_gap = maxf(_escort_gap,
 		_player().global_position.distance_to(_hr.global_position))
+
+
+## Reads the induction off disk and checks the two halves of the contract a
+## voiced conversation has: every line HR speaks names a clip, and every clip
+## named is actually there. The player's own lines in the contract branch are
+## deliberately unvoiced - she is the only one with a voice - so they are
+## required NOT to name one.
+func _check_clips() -> void:
+	var beats: Array = (load("res://game/npcs/hr_lady/welcome.gd") as GDScript) \
+		.get_script_constant_map().get("BEATS", [])
+	var speaker := ""
+	var voiced := 0
+	var missing: Array[String] = []
+	var silent: Array[String] = []
+	for beat in beats:
+		speaker = String(beat.get("name", speaker))
+		var path := String(beat.get("voice", ""))
+		var text := String(beat.get("text", ""))
+		if path == "":
+			if speaker == "HR" and text != "":
+				silent.append(text.substr(0, 24))
+			continue
+		voiced += 1
+		if not ResourceLoader.exists(path):
+			missing.append(path.get_file())
+	_check("voice: every line she speaks names a clip (%d of them%s)"
+		% [voiced, "" if silent.is_empty() else ", missing " + ", ".join(silent)],
+		voiced > 0 and silent.is_empty())
+	_check("voice: and every clip is on disk (%s)"
+		% ("all there" if missing.is_empty() else ", ".join(missing)),
+		missing.is_empty())
 
 
 func _report() -> void:
@@ -272,6 +326,38 @@ func _report() -> void:
 		_tallest_box > 0.0 and _tallest_box <= 50.0)
 	_check("box: and no line was ever taller than the box drawing it (%s)"
 		% ("none" if _clipped == "" else _clipped), _clipped == "")
+
+	# Her voice. What is deliberately NOT checked here is that the playback
+	# position advanced: the audio thread mixes on the wall clock while
+	# `--fixed-fps` only fixes the delta and never sleeps, so twenty frames
+	# pass in almost no real time and whether anything was mixed is a coin
+	# flip. test_menu.gd wrote that check, watched it flake and took it out,
+	# and this suite is not going to learn it a third time. Advancement is
+	# confirmed by hand with an AudioEffectCapture probe.
+	#
+	# The evidence instead is the same shape test_enemy_sfx.gd settled on -
+	# structure - with one addition that is better than structure, below.
+	_check("voice: her first line has a real clip loaded (%.2fs)"
+		% _clip_seconds, _clip_seconds > 1.0)
+
+	# The line is typed over the clip rather than at the flat rate, so the last
+	# character lands as she stops talking. This is the check worth having: it
+	# is arithmetic the game did on the stream's OWN length, so it can only
+	# pass if the clip was really found, really loaded and really applied - and
+	# unlike a playback position it does not depend on the wall clock at all.
+	# At 84 chars over ~4s that is about 21 chars a second against
+	# CHARS_PER_SECOND's 45, so the two cannot be confused.
+	var typed := float(_chars_to - _chars_from) / (20.0 / 60.0)
+	var want := 84.0 / maxf(_clip_seconds, 0.001)
+	_check("voice: the line is typed over the clip, not at the flat rate "
+		+ "(%.0f chars/s, clip wants %.0f, flat is 45)" % [typed, want],
+		_clip_seconds > 1.0 and typed > 0.0 and absf(typed - want) < 8.0)
+
+	# Every line she has is recorded and on disk. The box treats a missing clip
+	# as silence on purpose - that is what lets an unrecorded conversation still
+	# be read - so nothing at runtime would ever complain about a mistyped path,
+	# and this is the only place that would catch one.
+	_check_clips()
 
 	# And the body comes back.
 	_check("player: the wheel is handed back at the end",

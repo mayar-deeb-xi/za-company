@@ -9,16 +9,23 @@ extends Control
 ##
 ## ## Subtitles first, voice second
 ##
-## There is no audio in the game yet, and this is built so that adding it is a
-## change in ONE place. `say()` already takes a `voice` path and hands it to
-## `_play_voice()`, which is the stub that will one day feed an AudioStreamPlayer
-## - so every line in every conversation is already carrying its clip, and no
-## conversation data has to be rewritten when the clips arrive.
+## A line may carry `voice`, a path to its recording. `_play_voice()` plays it
+## and `_reveal_rate()` types the line out over exactly its length, so the last
+## character lands as the speaker stops rather than a second before or four
+## seconds after - which is the one piece of timing a subtitle can never guess
+## for itself.
 ##
-## The reveal rate is the other half of that bet. Text types out at
-## CHARS_PER_SECOND today; when a line has a clip, the rate that matters is the
-## clip's LENGTH, and `_reveal_rate()` is the one function that has to learn it.
-## Both halves are marked TODO(audio).
+## **Every miss is legal**, on the terms `game/bosses/boss_lines.gd` already
+## uses: a beat with no clip, a clip not recorded yet, and a fresh checkout
+## whose WAVs have not been imported all land in the same check, play nothing,
+## and fall back to CHARS_PER_SECOND. So a conversation is readable before a
+## single line of it has been recorded, which is what every conversation in
+## this game looked like until HR was given a voice.
+##
+## The subtitle is the primary channel and the voice rides along with it - not
+## the other way round. Nothing here waits on audio: a press still completes
+## the line and a second still advances past it, clip or no clip, because a
+## player who reads faster than she talks must never be held at a box.
 ##
 ## ## Sized against the 640x360 design viewport
 ##
@@ -73,13 +80,25 @@ var _choices: Array = []
 var _pick := 0
 var _blink := 0.0
 
+## The line's voice, and how long it runs. Non-positional: a conversation has
+## the player's hands and the box has their eyes, so panning it to where the
+## speaker happens to be standing would only make her quieter at the edge of
+## the room she walked them to. A boss's shouting IS positional, for the
+## opposite reason - he is somewhere, and the fight is about where.
+var _voice: AudioStreamPlayer
+## 0.0 when the line has no clip, which is what makes the miss free.
+var _clip_seconds := 0.0
+
 
 func _ready() -> void:
+	# Before close(), which stops it.
+	_voice = AudioStreamPlayer.new()
+	_voice.name = "Voice"
+	add_child(_voice)
 	close()
 
 
-## Put a line on screen. `voice` is the clip that will one day play with it -
-## see the class docs; today it is carried and ignored.
+## Put a line on screen, and play the clip that goes with it if there is one.
 func say(speaker: String, text: String, voice := "") -> void:
 	_speaker.text = speaker
 	_line.text = text
@@ -93,6 +112,7 @@ func say(speaker: String, text: String, voice := "") -> void:
 	# and snaps to this one's.
 	_fit_panel()
 	visible = true
+	# After _line.text is set: the rate is measured against the line's length.
 	_play_voice(voice)
 	set_process(true)
 	set_process_unhandled_input(true)
@@ -126,9 +146,14 @@ func offer(choices: Array) -> void:
 	_paint_choices()
 
 
+## Takes the voice down with the box. Every way out of a line goes through
+## here or through the next `say()`, so a clip cannot outlive the words it
+## belongs to - a door, a death and the walk between two beats all cut it.
 func close() -> void:
 	visible = false
 	_choices = []
+	_voice.stop()
+	_clip_seconds = 0.0
 	set_process(false)
 	set_process_unhandled_input(false)
 
@@ -228,15 +253,33 @@ func _paint_choices() -> void:
 
 ## Characters per second for the line on screen.
 ##
-## TODO(audio): when the line has a clip, this becomes text length divided by
-## the clip's length, so the subtitle finishes with the voice instead of racing
-## it. Everything that would need to change is here and in _play_voice().
+## With a clip, the line is typed over the clip's own length, so it finishes
+## with the voice instead of racing it - a subtitle that is done talking while
+## the speaker still is reads as a dropped connection. Without one it falls
+## back to the flat rate, which is every line in the game that has not been
+## recorded.
+##
+## Floored at one character a second so a clip that is somehow near-zero length
+## cannot stall a line on screen forever with no way past it but a keypress.
 func _reveal_rate() -> float:
-	return CHARS_PER_SECOND
+	if _clip_seconds <= 0.0:
+		return CHARS_PER_SECOND
+	return maxf(_line.text.length() / _clip_seconds, 1.0)
 
 
-## TODO(audio): feed an AudioStreamPlayer. Deliberately a real parameter on
-## `say()` already, so conversation data can carry its clip paths from today and
-## none of it needs rewriting when the clips exist.
-func _play_voice(_voice: String) -> void:
-	pass
+## Play the line's clip, and remember how long it runs so _reveal_rate() can
+## type against it. A path that is empty, misspelt, not recorded yet or not yet
+## imported all leave `_clip_seconds` at 0 and play nothing - see the class
+## docs; every miss is legal, and `ResourceLoader.exists()` is what keeps a
+## fresh checkout from logging an error per line.
+func _play_voice(voice: String) -> void:
+	_voice.stop()
+	_clip_seconds = 0.0
+	if voice == "" or not ResourceLoader.exists(voice):
+		return
+	var stream := load(voice) as AudioStream
+	if stream == null:
+		return
+	_voice.stream = stream
+	_voice.play()
+	_clip_seconds = stream.get_length()

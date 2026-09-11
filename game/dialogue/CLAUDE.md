@@ -46,21 +46,39 @@ belongs in a save file and in the biome that decides which conversation she is
 carrying, not in a variable here. Rooms are re-instantiated on every entry (see
 the root CLAUDE.md), so there is nothing to hang it on yet.
 
-## Audio is not built, and every seam it needs already exists
+## Audio, and the seams it was built against
 
-There is no sound in the game. Two things are in place so that adding it is one
-change rather than a rewrite:
+**HR is voiced** - twenty-three clips cut by `tools/voice/`, the same pipeline
+Ahmed's barks come out of. Nothing about the runner changed to make that work,
+because the two seams it needed were put in before there was any sound at all:
 
-- **every beat can carry `voice`**, a clip path, and the box's `say()` already
-  takes it and hands it to `_play_voice()`. Conversation data written today can
-  name its clips today.
-- **the reveal rate is one function**, `_reveal_rate()`. Text types at
-  CHARS_PER_SECOND now; with a clip the honest rate is the clip's length over
-  the line's length, and that is the only arithmetic that changes.
+- **every beat can carry `voice`**, a clip path, and `say()` hands it to
+  `_play_voice()`, which loads it and plays it.
+- **the reveal rate is one function**, `_reveal_rate()`, and with a clip it is
+  the line's length over the clip's length - so the last character lands as the
+  speaker stops instead of a second before or four seconds after. That is the
+  one piece of timing a subtitle can never guess for itself.
 
-Both are marked `TODO(audio)`. Subtitles are not a fallback for the voice here -
-they are the primary channel, and the voice will be the thing that arrives
-late.
+Subtitles are not a fallback for the voice here - they are the primary channel,
+and the voice rides along with them. Nothing waits on audio: a press still
+completes the line and a second still advances past it, clip or no clip,
+because a player who reads faster than she talks must never be held at a box.
+
+**Every miss is legal**, on `boss_lines.gd`'s exact terms: a beat with no clip,
+a clip not recorded yet, and a fresh checkout whose WAVs have not been imported
+all land in the same `ResourceLoader.exists()` check, play nothing, and type at
+CHARS_PER_SECOND. So a conversation is readable before a line of it has been
+recorded, which is what this whole file described until HR was given a voice.
+
+That freedom has a cost worth knowing: a mistyped clip path is SILENT, not an
+error, so nothing at runtime would ever report one. `tests/test_dialogue.gd`
+is the only thing that would - it reads the induction off disk and checks that
+every line she speaks names a clip and every clip named is really there.
+
+**Only HR is voiced.** The contract branch has the player answering back, and
+those beats carry no `voice` on purpose: the player is silent everywhere else
+in this game, and her voice in their mouth would be the one line of the
+induction that is a mistake.
 
 ## Taking the wheel
 
