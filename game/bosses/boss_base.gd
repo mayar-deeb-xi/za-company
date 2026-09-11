@@ -50,7 +50,13 @@ signal said(speaker: String, text: String, seconds: float)
 ## that hurt, a hit that STOPPED something, and the end. A boss with an
 ## `Audio` child gets them by existing - the same deal as the HUD bar - and a
 ## boss without one is silent with no branch anywhere but `_sfx`.
-const BossAudio := preload("res://game/bosses/boss_audio.gd")
+##
+## The mechanism itself is no longer here. A boss IS an enemy, and the plain
+## enemies wanted the identical node for the identical job, so it bubbled up
+## to `game/enemies/enemy_audio.gd` beside `enemy_base.gd` - the placement
+## rule in CLAUDE.md, and the same journey `wraith_base.gd` made. `_sfx`,
+## `_sfx_loop` and `_sfx_fade` came with it and are inherited; what stays here
+## is only WHERE a boss fires them.
 
 ## And the things he shouts, on exactly those terms: a `Lines` child naming a
 ## file of them, four cues wired by the base for free - `spot`, `hurt`,
@@ -58,6 +64,12 @@ const BossAudio := preload("res://game/bosses/boss_audio.gd")
 ## it begins. A boss without the child says nothing, with no branch anywhere
 ## but `_say`.
 const BossLines := preload("res://game/bosses/boss_lines.gd")
+
+## How long the player must stay out of his reach before he complains about it.
+## Long enough that closing the ground normally never trips it - at Ahmed's
+## speed 40 the walk in is about a second and a half - so it only ever fires on
+## someone who is deliberately keeping away.
+const TAUNT_SECONDS := 3.5
 
 ## His theme, and it is his the way his grunts are: game.gd starts it when it
 ## finds him in the `bosses` group and takes it back down when he concedes,
@@ -75,16 +87,9 @@ var attack := ""
 var has_conceded := false
 
 var _damage_scale := 1.0
-## How long the player must stay out of his reach before he complains about it.
-## Long enough that closing the ground normally never trips it - at Ahmed's
-## speed 40 the walk in is about a second and a half - so it only ever fires on
-## someone who is deliberately keeping away.
-const TAUNT_SECONDS := 3.5
-
 var _spotted := false
 var _out_of_reach := 0.0
 
-@onready var _audio: BossAudio = get_node_or_null("Audio")
 @onready var _lines: BossLines = get_node_or_null("Lines")
 
 
@@ -170,6 +175,19 @@ func _begin_attack(id: String) -> void:
 	# attack id, which is what gets a new boss lines for a new attack without
 	# either file learning the other's vocabulary.
 	_say(id)
+	# And the noise of it, on the same cue as the shout and by the same trick:
+	# the id IS the attack, so `chop` looks for `chop_windup`. A boss who has
+	# not been given that file is silent here and nothing branches - the deal
+	# every sound in `_sfx` gets. The telegraph is separate from the impact
+	# below on purpose: a wind-up can be interrupted, so one clip covering a
+	# whole swing would play a blow that never landed.
+	#
+	# Unlike the grunts in take_damage, this one does NOT stand down for a
+	# line, and the split is where the sound comes from rather than how loud
+	# the frame is: a grunt and a line are one mouth making two sounds, while
+	# an axe and a line are a man shouting as he swings, which is what he is
+	# supposed to sound like.
+	_sfx(id + "_windup")
 	_enter(Phase.WINDUP)
 
 
@@ -245,11 +263,17 @@ func take_damage(amount: int) -> void:
 		# and two sounds on one frame is the fastest way to hear neither. What
 		# he SAYS splits on the same line and for the same reason - being hurt
 		# and being interrupted are two different insults.
-		_sfx("stagger")
-		_say("stagger")
+		#
+		# And a LINE replaces the grunt in turn, on the same rule carried one
+		# step further: a grunt is his voice and so is a line, so playing both
+		# is one mouth making two sounds at once. Most hits still grunt,
+		# because most hits find the cue cooling down - he grunts, and now and
+		# then he has something to say about it instead.
+		if not _say("stagger"):
+			_sfx("stagger")
 	else:
-		_sfx("hurt")
-		_say("hurt")
+		if not _say("hurt"):
+			_sfx("hurt")
 
 
 ## Defeat. Rooted, harmless, still in the room; the door hears about it.
@@ -261,17 +285,12 @@ func _concede() -> void:
 	_touch_area.set_deferred("monitoring", false)
 	_sprite.flip_h = _facing_left
 	_sprite.play("concede_side")
-	_sfx("concede")
-	_say("concede")
+	# His last line always lands - `concede` jumps every queue in boss_lines -
+	# so on a boss who has the line this grunt never plays, and on one who does
+	# not it is still the sound of him going down.
+	if not _say("concede"):
+		_sfx("concede")
 	conceded.emit()
-
-
-## One sound, if this boss has one by that name and an `Audio` child at all.
-## Every miss is legal: a boss with no sounds yet, an id he was never given,
-## and a checkout whose WAVs have not been imported all arrive here.
-func _sfx(id: String) -> void:
-	if _audio != null:
-		_audio.play(id)
 
 
 ## One line, if this boss has any for that cue and a `Lines` child at all -
@@ -279,23 +298,14 @@ func _sfx(id: String) -> void:
 ## for the same reasons. Most calls come back with nothing to say: the cue is
 ## still cooling down, or he is already mid-sentence, and the fight carries on
 ## either way (see boss_lines.gd).
-func _say(cue: String) -> void:
+## Returns whether he actually spoke, which is what lets a GRUNT stand down for
+## a line - see the three call sites. Most calls return false: the cue is still
+## cooling down, or he is already mid-sentence.
+func _say(cue: String) -> bool:
 	if _lines == null:
-		return
+		return false
 	var line := _lines.say(cue)
 	if line.is_empty():
-		return
+		return false
 	said.emit(title(), String(line["text"]), float(line["seconds"]))
-
-
-## The same deal for a sound that keeps going - a fire, a breath - and for
-## taking one back down. Here rather than in each boss so that no boss ever
-## writes the null check above twice.
-func _sfx_loop(id: String) -> void:
-	if _audio != null:
-		_audio.loop(id)
-
-
-func _sfx_fade(id: String, seconds: float) -> void:
-	if _audio != null:
-		_audio.fade_out(id, seconds)
+	return true

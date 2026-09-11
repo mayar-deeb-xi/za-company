@@ -155,8 +155,22 @@ a quarter of Ahmed, a sixth of Mostafa.
 
 ## The noise
 
-`boss_audio.gd` is to sound what `boss_base.gd` is to the fight: the mechanism
-is shared, the files are not. A boss's scene gets an `Audio` child holding a
+`game/enemies/enemy_audio.gd` is to sound what `enemy_base.gd` is to the
+fight: the mechanism is shared, the files are not.
+
+**It is in `game/enemies/` and it used to be `boss_audio.gd` here.** The plain
+enemies wanted the identical node for the identical job, and a boss IS an
+enemy - `boss_base.gd` extends `enemy_base.gd` - so it bubbled up one level
+above both of them, which is the placement rule in the root CLAUDE.md rather
+than a favour to anybody. `_sfx`, `_sfx_loop` and `_sfx_fade` went with it and
+are inherited; what is still here is only WHERE a boss fires them, which is
+the half that was ever boss-specific. Nothing about a boss's sound changed:
+game/enemies/CLAUDE.md's The noise is the other half of this section now, and
+the two traps listed there - a death that frees its own player, an impact
+fired on a blow that missed - are both things a boss never had, because he
+concedes instead of dying and names his impacts after his attacks.
+
+A boss's scene gets an `Audio` child holding a
 `sounds` dictionary of id -> stream, one `AudioStreamPlayer2D` is built per
 entry at `_ready`, and **three ids are wired by the base for free** - `hurt`,
 `stagger` and `concede`. A boss gets those by owning the files, the same deal
@@ -176,6 +190,14 @@ Four things are load-bearing:
   `stagger` and not `hurt`. The one thing the player needs off that hit is
   that the swing died, and two sounds on one frame is the fastest way to hear
   neither.
+- **And a LINE replaces the grunt in turn**, now that he is voiced: a grunt is
+  his voice and so is a line, so playing both is one mouth making two sounds.
+  `_say()` returns whether he spoke and `hurt`, `stagger` and `concede` fall
+  back to `_sfx` only when he did not - which is most hits, because most hits
+  find the cue cooling down. His AXE does not stand down that way: a wind-up
+  clip plays under a shout, because a man shouting as he swings is what he is
+  supposed to sound like. The split is where the sound comes from, not how
+  busy the frame is.
 - **A loop's flag is set on the stream, not trusted to the .import.** Import
   settings are written by whoever first scanned the file, and a loop that
   quietly does not loop is very hard to notice inside a fight.
@@ -193,6 +215,18 @@ actually draw fire for, derived beside `windup_of` and `recover_of` so a
 retimed concede takes the sound with it rather than leaving the room silent
 with the blade still lit.
 
+**And the breath ENDS, which it did not used to.** The `beaten` row loops for
+good and must - he is still there and still alive when you walk back out - but
+the panting is an event with an end, and left running it was the only sound on
+the floor for as long as the player stayed: his theme fades on the concede and
+Ivan walks in to talk over the top of it. `_settle()` winds both halves down
+together, the sound fading after `BREATH_HARD` and the row slowing to
+`BREATH_CALM` across the whole span, so the picture and the sound tell the same
+story at every moment - the thing the axe fade above already had to get right.
+Fading the sound alone would have read as the audio breaking while his chest
+still heaved. What is left is a man kneeling and breathing slowly, which is
+what the row was drawn for.
+
 His sounds sit in `ahmed/sfx/`, and their untouched exports in `ahmed/src/`
 next to his sheet - the same split `src/` means everywhere else in this repo.
 An ElevenLabs export is padded to a full second whether or not the sound fills
@@ -200,15 +234,37 @@ one, so what lands in `sfx/` is always trimmed, summed to mono and levelled,
 never the file that came out of the generator: his grunt had 0.35 s of silence
 in front of it, which is a hit landing a third of a second late.
 
-Still to make: the eight attack sounds, a telegraph and an impact for each of
-chop, sweep, slam and wave. They are split in two on purpose - a wind-up can
-be interrupted, so a single clip covering the whole swing would play an impact
-that never happened.
+His eight attack sounds are a telegraph and an impact for each of chop, sweep,
+slam and wave, split in two on purpose - a wind-up can be interrupted, so a
+single clip covering the whole swing would play an impact that never happened.
+Neither is wired by hand: the id IS the attack, so `boss_base._begin_attack`
+asks for `<id>_windup` beside the bark it already says, and any boss gets
+telegraphs the day he owns the files. The IMPACT is said in Ahmed's own
+`_strike` rather than the base's, and that asymmetry is the fight's fault
+rather than an oversight - the slam sweeps a ring and the wave walks a lane,
+neither calls `super()`, so the base never sees two of his four blows land.
+
+They are levelled by RMS against the sounds he already had, not by peak.
+Peak-normalising all eight to a flat -4 dBFS left 13 dB of spread in how loud
+they actually sound and inverted the fight: `chop`, the basic alternating
+swing, came out louder than `slam`, which is the blow the camera shakes for. A
+short transient and a dense fire whoosh are not the same loudness at the same
+peak. So the ordinary blows sit with his own one-shots (-19 RMS, beside hurt at
+-18.8 and stagger at -19.8), the wave a shade forward because it travels, and
+the slam alone above the pack at -16. Telegraphs run 7 dB under their own
+impact - clearly over the -34 dB idle fire, never mistakable for the blow they
+are warning about - and each is shorter than the wind-up it plays under, the
+tightest being `sweep_windup` at 0.48 s against a 0.52 s wind-up.
+
+The slam needed a soft limiter (tanh at the ceiling) rather than a gain cut to
+get there: pulling the whole sound down to fit its tallest transient under the
+ceiling is what held it 2 dB under target in the first place, and on an impact
+the harmonics a soft knee adds read as punch.
 
 ### The theme is not one of his sounds
 
 A boss's MUSIC goes through `Music` (autoload/music.gd) and never touches
-`boss_audio.gd`, and the split is the same one that decides everything else in
+`enemy_audio.gd`, and the split is the same one that decides everything else in
 here: his grunts are positional, because a boss crossing the room should pan,
 and a track is not standing anywhere. So a theme is a plain path on
 `boss_base` - `@export_file("*.wav") var music` - which `game.gd._watch_boss()`
@@ -234,6 +290,141 @@ asks for another while it is still going. Ahmed's is
 `assets/music/ahmed_theme_loop.wav`, 60 s at 48 kHz, and the one thing to
 listen for is its seam - a generated track is rendered to a time, not to a
 bar, so the loop point is where it will show.
+
+Mostafa's is `assets/music/mostafa_theme_loop.wav`, and adding it was the
+claim above being tested: one line on his scene root, no code anywhere. Two
+things about it are worth carrying to the third theme. Its **tempo is chosen
+against his cycle** rather than against the room - 120 BPM is a beat every 30
+frames, so his 0.25 s jab is an eighth note and his combo sits on the grid
+instead of drifting through it. And it is **one unbroken loop with no build**,
+because a boss gets exactly one file: the theme starts where his bar goes up
+and fades where it clears, and nothing switches at half health, so a track
+that saves itself for a drop is a track that is quiet for the half of the
+fight he spends on fire.
+
+And the level a theme is mixed at is decided against HIS sounds, never against
+the other theme. Mostafa's was first matched to Ahmed's loudness, which was the
+wrong question - masking is per band, and his rage and his fire both live under
+250 Hz where a techno track keeps its kick, so they were arriving level with
+the bed while every one of his impacts had 16 dB of room. Three more dB off the
+track fixed both without touching a single sound of his, which is the order to
+do it in: `enemy_audio`'s ladder is hand-levelled and internally consistent
+(a telegraph is quieter than the blow it warns about, on purpose), so the music
+is what moves. The numbers are in CREDITS.md.
+
+## The mouth
+
+A boss can also TALK, and it is the third thing in this file built on the same
+shape as the bar: `boss_lines.gd` is the mechanism, his lines are not. A scene
+gets a `Lines` child naming a `.gd` of them, `boss_base` already calls the
+cues, and game.gd hands what comes out to `ui/subtitle/`. So a boss talks by
+owning a file - the exact deal his bar, his theme and his grunts are on - and
+a boss with no `Lines` child says nothing, with no branch anywhere but `_say`.
+
+Ahmed is the one who talks. `ahmed/taunts.gd` is his, beside his poses and his
+sheet, on the placement rule an NPC's own conversation already follows: a line
+is owned by the mouth it comes out of.
+
+### The cues, and where they are fired from
+
+Seven, and the split is between the ones the CYCLE already knows about and the
+two it does not:
+
+- `hurt`, `stagger` and `concede` are fired exactly where the three sounds of
+  the same names are, in `take_damage()` and `_concede()`. Being hurt and
+  being interrupted stay two different things to say for the same reason they
+  are two different sounds.
+- **an attack's cue IS its id.** `_begin_attack()` says the id it was handed,
+  so `chop`, `sweep`, `slam` and `wave` are Ahmed's cues because they are
+  Ahmed's attacks. A boss with different attacks names different cues by
+  having them, and neither file learns the other's vocabulary.
+- `spot` and `taunt` are the two the cycle cannot name, because neither is an
+  event, so `_watch_player()` in the base looks for them: the frame he first
+  lays eyes on the player, and the player refusing to come near him.
+
+**The taunt is measured off his REACH, not his sight**, and that is the whole
+of what makes it read as a taunt rather than as a man muttering. At the far
+edge of his sight radius he is walking towards you, and a man walking towards
+you has nothing to complain about yet; it is standing just outside his swing
+and STAYING there that earns "come here". So the timer runs on
+`not touching_player`, resets on contact and on any attack, and `TAUNT_SECONDS`
+is long enough that an honest walk-in never trips it.
+
+### What the mechanism owns is WHEN, and the tuning is data
+
+The lines are data; `boss_lines.gd` is the policy that stops a man with twenty
+of them from reading all twenty at once. One line at a time, so a subtitle is
+never painted over part-read; a per-cue cooldown, because he has one line for
+being hit and is hit sixteen times; never the same line twice running, so a
+repeat means he has run out rather than that the dice went that way; and
+`ALWAYS` - `spot` and `concede` - jumping the queue, because the two moments
+that must land are the one he looks up on and the one he goes down on.
+
+**The cooldowns are per cue on his scene, and the split in them is a
+judgement rather than a number that fell out**: his swings are on 16 s and his
+reactions on 4-6, because the animation IS the telegraph here (see the top of
+this file) and a line on every swing is garnish that crowds out the lines that
+are actually feedback. An attack cue that hogs the one line-at-a-time budget
+leaves nothing to say about being interrupted, which is the more interesting
+half. Tune by making the garnish rarer, never by letting two lines overlap.
+
+### The subtitle is not the dialogue box, and that is the point
+
+`ui/subtitle/` renders it, and it is dumb in the way the HUD and the level card
+are: a name, a line, and how long to hold them. `ui/dialogue/dialogue_box.gd`
+could not do this job at any price - it types its line out, it WAITS for a
+keypress, and the player is under someone else's control the whole time it is
+up. In a fight that is a bark that eats the attack key and gets you hit. So
+this one types nothing, takes no input at all, goes away on a timer, and
+carries no panel: a box at the bottom of the screen is the shape the player has
+learned means "stop and read".
+
+Two consequences worth knowing:
+
+- **He is named off `title()`**, the same string the HUD bar uses, so the
+  subtitle says AHMED. His node is called `Boss` - build_levels.gd names it
+  that so the north door can find him - and a subtitle reading BOSS is the one
+  thing it must not say.
+- **A bark is dropped, never queued, while an NPC is talking.** game.gd checks
+  `_dialogue.talking()` and throws it away: the dialogue box is at the bottom
+  of the screen too and it holds the player's hands as well as their eyes.
+  Nothing is lost, because a bark is only ever about the moment it was said in.
+
+### He is voiced, and nothing had to change to make him so
+
+Every line carries `voice`, a path to its recording, and all twenty-three are
+cut. `boss_lines.gd` loads the clip, plays it positionally like his grunts, and
+returns its LENGTH as the line's hold - the one piece of arithmetic a subtitle
+can never guess for itself, and the same bet `dialogue_box.gd` made for
+conversations. That bet paid: the clips arrived as data and one key per line,
+with no code written anywhere.
+
+Every miss stayed legal on exactly the terms the rest of his audio is on - a
+line with no clip, and a fresh checkout whose WAVs have not been imported yet,
+both land in the same `ResourceLoader.exists()` check and play nothing while
+the line still reads for as long as it takes to read. `test_barks.gd` asserts
+the contract in that shape deliberately: when a clip IS on disk no line may
+read faster than he says it, and when one is not the suite passes anyway.
+
+Three things about the cutting are worth knowing before a second boss is
+voiced, and they are all in `tools/voice/` (mechanism in `cut.py`, his own
+direction in `ahmed.py`):
+
+- **The read is TAGGED, not tuned.** Eleven v3 takes an inline direction -
+  `[furious, roaring]` for a taunt, `[defeated, bitter, muttering]` for the
+  last line - where the older model can only be made less stable and hoped at.
+  Both were cut and compared before choosing. A cue's character is therefore a
+  piece of direction anybody can read back, not a number nobody can.
+- **An approved take is frozen.** Text-to-speech is not deterministic, so
+  re-running the generator on a line somebody listened to and picked would
+  ship a different performance. `KEEP` in `ahmed.py` names those.
+- **Levelled on speech, not on peaks.** Peak-matching a roar and a mutter
+  leaves them 13 dB apart in the only thing anybody hears, which is how the
+  quietest and most important line in the fight gets buried.
+
+`tests/test_barks.gd` is the suite, and it has its own file for the reason
+every suite here does: the headline cue needs a boss who never reaches anybody,
+which is the exact opposite of the fight test_bosses.gd has to run.
 
 ## Mostafa
 
@@ -411,6 +602,83 @@ back byte-identical and the concede moved down a row intact.
 That is the seed-once contract working as intended rather than being bent: the
 moment anyone hand-draws into that PNG, adding a row costs a redraw instead of
 a rebuild.
+
+### What he sounds like
+
+Eleven sounds, and the shape of the set is the fight rather than a copy of
+Ahmed's. He gets the same free telegraph - his `_begin_attack` calls `super`,
+so `boss_base` asks for `<id>_windup` without him knowing - and says the impact
+in his own `_strike`, before `super()` because that can clear `attack`.
+
+**His timings are why he cannot borrow Ahmed's sound language.** The jab winds
+up in 0.250 s and recovers in 0.280, so every file is truncated to fit under
+the beat it plays on, with a 12 ms fade so the cut does not click. Ahmed swings
+an axe and can ring out; this is a rhythm - jab, jab, hook - and a tail on any
+of these smears the combination into mush. Dry, close, fast decay, no room.
+
+**The punches carry no fire, on purpose.** He catches fire at half health and
+never comes back down, but the same six files play on both sides of that line:
+fire baked into a jab would be wrong for the first half of the fight and
+redundant in the second. So the fire arrives as a LAYER instead - a `rage`
+one-shot and a `fire` loop - which is exactly what the picture does. His
+punches do not change; the man throwing them is on fire.
+
+Two consequences worth keeping:
+
+- **`rage` is cut so its loudest MOMENT lands on `RAGE_BLAST` (0.51 s)**, which
+  is the same frame the blast holds him still and the camera shakes. Aligned by
+  a 30 ms sliding RMS rather than by the peak sample: the peak is a transient
+  0.12 s in, and aligning to it padded almost half a second of dead air in
+  front of the eruption.
+- **Nothing stops the fire.** Ahmed fades his axe on the concede because he
+  drops the axe; Mostafa IS the fire, and he is still burning when he kneels.
+  Its loop is crossfaded over a 0.5 s seam, because a bed that plays from half
+  health to the end of a fight is heard looping many times.
+
+Levels follow `DAMAGE` - 18 / 10 / 6 - so the fight sounds the way it hits:
+`hook_hit` -16 RMS, `rush_hit` -18.5, `jab_hit` -20, each telegraph about 7 dB
+under its own impact, and `hurt`/`stagger`/`concede` on Ahmed's exact numbers so
+the two bosses live in one mix. The fire bed sits at -34, where Ahmed's idle axe
+is.
+
+### What he says
+
+Twenty-two lines across nine cues in `mostafa/taunts.gd`, cut by
+`tools/voice/cut.py mostafa` off `tools/voice/mostafa.py`, exactly as Ahmed's
+are. Three things about the set are decisions rather than transcription:
+
+- **He is the answer to a line the floor below already set up.** Ahmed asks
+  "Do you know who my brother is?" when hurt and goes down saying "I'm telling
+  Mostafa", so the first thing this man says is "So you're the one who upset my
+  brother" and the last is "I'm escalating this. To Khaled." The chain of
+  command IS the boss order, and each concede hands you up it.
+- **He talks like the department he runs, and that is the whole contrast.**
+  Ahmed is entitled and loud - seven of his nine cues are tagged furious or
+  shouting. Mostafa runs CONFLICT RESOLUTION and speaks like it: avoidance is
+  not a resolution, I've booked this room for an hour, meeting you halfway.
+  Seven of HIS nine cues are tagged quiet, and he is cast as Edward against
+  Ahmed's Jack - British both, because they are brothers, dark and low against
+  loud. Two brothers tagged the same way would be one boss fought twice.
+- **`rage` is a cue he added himself**, said by `mostafa.gd` on the frame he
+  catches fire - the base fires seven cues and none of them is "the moment the
+  process stops". It has one line, like `concede`, because there is no second
+  thing to say there; and it is the only cue in his file tagged like one of
+  Ahmed's. The quiet everywhere else is what buys it.
+
+`cut.py` levels the SPEECH to target and soft-limits what pokes through, rather
+than capping the gain - which it used to do, and which let one plosive decide a
+whole line's loudness. That barely showed on a man who shouts; it cost Mostafa
+6.5 dB on his first line and his last, both tagged quiet and both therefore
+holding the widest gap between a consonant and a speaking voice.
+
+Ahmed got it too, and without risking a single take, because there is a third
+thing `cut.py` can do: `--relevel` re-trims and re-levels the PLAYED files from
+the untouched exports in `src/`, spending nothing and asking the API for
+nothing. The performance lives in the export, so trimming and levelling it
+again is not a new read - which is exactly what `src/` has been kept for since
+the first grunt. His spread went from 1.2 dB to 0.3, and `concede_1`, his
+quietest and most important line, stopped being pinned at the ceiling. That is
+the way to carry a boss cut under an older leveller onto a better one.
 
 ## Silverman
 
@@ -631,10 +899,10 @@ time, his fingers open, the axe drops and lands flat, and the fire goes out the
 moment it leaves his hand - the painter draws the axe wherever its descriptor
 says regardless of where the arm is, so a dropped axe costs nothing but a hand
 that stopped following it. With nothing left to hold, the far arm comes into
-view and both hands end on his thighs. Then `beaten` loops the breath for the
-rest of the run, which is the point of the whole thing: every other option on
-the table left a statue in the room. It is a kneel rather than the enormous
-chair.
+view and both hands end on his thighs. Then `beaten` loops for the rest of the
+run, which is the point of the whole thing: every other option on the table
+left a statue in the room. It is a kneel rather than the enormous chair. The
+panting that goes with it does NOT loop for ever - see The noise.
 
 DESIGN.md's Ahmed also yells "SECURITY!" at 64 and 32 HP and summons an office
 boy through the door (cap 2). The slam already knows what to do with them.

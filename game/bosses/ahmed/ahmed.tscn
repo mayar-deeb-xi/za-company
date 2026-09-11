@@ -1,15 +1,23 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://game/bosses/ahmed/ahmed.gd" id="1_ahmed"]
 [ext_resource type="SpriteFrames" path="res://game/bosses/ahmed/ahmed_frames.tres" id="2_frames"]
 [ext_resource type="Script" path="res://game/bosses/ahmed/axe_fire.gd" id="3_fire"]
-[ext_resource type="Script" path="res://game/bosses/boss_audio.gd" id="4_audio"]
+[ext_resource type="Script" path="res://game/enemies/enemy_audio.gd" id="4_audio"]
 [ext_resource type="Script" path="res://game/bosses/boss_lines.gd" id="10_lines"]
 [ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/axe_idle_loop.wav" id="5_axe"]
 [ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/ahmed_hurt.wav" id="6_hurt"]
 [ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/ahmed_stagger.wav" id="7_stagger"]
 [ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/ahmed_concede.wav" id="8_concede"]
 [ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/ahmed_breath_loop.wav" id="9_breath"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/chop_windup.wav" id="11_chop_windup"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/chop_hit.wav" id="12_chop_hit"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/sweep_windup.wav" id="13_sweep_windup"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/sweep_hit.wav" id="14_sweep_hit"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/slam_windup.wav" id="15_slam_windup"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/slam_hit.wav" id="16_slam_hit"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/wave_windup.wav" id="17_wave_windup"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/ahmed/sfx/wave_hit.wav" id="18_wave_hit"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 6.0
@@ -82,11 +90,28 @@ script = ExtResource("4_audio")
 sounds = {
 "axe": ExtResource("5_axe"),
 "breath": ExtResource("9_breath"),
+"chop_hit": ExtResource("12_chop_hit"),
+"chop_windup": ExtResource("11_chop_windup"),
 "concede": ExtResource("8_concede"),
 "hurt": ExtResource("6_hurt"),
-"stagger": ExtResource("7_stagger")
+"slam_hit": ExtResource("16_slam_hit"),
+"slam_windup": ExtResource("15_slam_windup"),
+"stagger": ExtResource("7_stagger"),
+"sweep_hit": ExtResource("14_sweep_hit"),
+"sweep_windup": ExtResource("13_sweep_windup"),
+"wave_hit": ExtResource("18_wave_hit"),
+"wave_windup": ExtResource("17_wave_windup")
 }
 
 [node name="Lines" type="Node2D" parent="."]
 script = ExtResource("10_lines")
 lines = "res://game/bosses/ahmed/taunts.gd"
+cooldowns = {
+"chop": 16.0,
+"hurt": 6.0,
+"slam": 10.0,
+"stagger": 4.0,
+"sweep": 16.0,
+"taunt": 4.0,
+"wave": 10.0
+}

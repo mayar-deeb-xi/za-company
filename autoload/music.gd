@@ -13,13 +13,20 @@ extends Node
 ## character select directly - which the tests do - still gets music.
 ##
 ## Deliberately NOT positional: a room's sounds pan with the room (see
-## game/bosses/boss_audio.gd), but music is not standing anywhere.
+## game/enemies/enemy_audio.gd), but music is not standing anywhere.
 
 ## The tracks. A boss's sounds live in his own scene because they are HIS
-## (game/bosses/boss_audio.gd); a music track is the opposite - one file that
+## (game/enemies/enemy_audio.gd); a music track is the opposite - one file that
 ## three screens ask for by name, and a path spelled out in three places is the
 ## one that goes stale when a file moves. So the catalogue lives here.
 const MENU := "res://assets/music/menu_loop.wav"
+
+## What a floor plays when nobody standing on it has a theme of his own. A boss
+## names his own track on his scene and game.gd plays that instead (see
+## game/bosses/CLAUDE.md); this is the bed under every other floor, and it is a
+## const here for the same reason MENU is - the alternative is the path spelled
+## out in game.gd, which is the one that goes stale when the file moves.
+const DEFAULT := "res://assets/music/level_loop.wav"
 
 ## Trim over the level baked into the file. The menu export peaks at -0.5 dBFS,
 ## which is mastered for headphones and far too hot to sit under a game that
@@ -43,6 +50,12 @@ var _player: AudioStreamPlayer
 ## situation nobody can hear. Everything here loops and `stop()` clears this,
 ## so "a track is set" and "a track is playing" are the same statement.
 var _track := ""
+## A track waiting for the current one to finish leaving, set by `fade_to()`.
+## There is ONE player here, so there is no crossfade to be had: a handoff is a
+## fade out followed by a start, and this is the half that remembers what to
+## start. Cleared by both `play()` and `stop()`, so an explicit ask for music -
+## or for silence - always wins over one that is merely queued.
+var _queued := ""
 var _fade: Tween
 
 
@@ -62,6 +75,7 @@ func _ready() -> void:
 ## caught mid-fade is brought back to full rather than restarted, so bouncing
 ## out of the game and back into the menu picks the loop up where it was.
 func play(path: String) -> void:
+	_queued = ""
 	if _track == path:
 		_cancel_fade()
 		_player.volume_db = VOLUME_DB
@@ -97,7 +111,24 @@ func fade_out(seconds := FADE_SECONDS) -> void:
 		return
 	_fade = create_tween()
 	_fade.tween_property(_player, "volume_db", -60.0, seconds)
-	_fade.tween_callback(stop)
+	_fade.tween_callback(_finished_fade)
+
+
+## Hand over to `path`: take the current track out, and bring that one up behind
+## it. What `play()` cannot do on its own, since a single player cannot fade two
+## things at once - so a handoff here is a fade followed by a start, and it
+## costs the fade's length in silence.
+##
+## Idempotent on the track exactly as `play()` is, and it has to be for the same
+## reason: every room asks for its music as it is built, so walking a door
+## between two floors that share the bed must not restart it. A track caught
+## mid-fade is brought back up rather than handed to itself.
+func fade_to(path: String) -> void:
+	if _track == "" or _track == path:
+		play(path)
+		return
+	_queued = path
+	fade_out()
 
 
 ## What is playing, or "" for silence. The readout callers and tests get,
@@ -111,10 +142,22 @@ func stop() -> void:
 	_player.stop()
 	_player.volume_db = VOLUME_DB
 	_track = ""
+	_queued = ""
+
+
+## The end of a fade, and the one place a queued handoff starts. Split out of
+## `stop()` rather than folded into it, because `stop()` is also what a caller
+## asks for when they want silence and nothing else - a stop that started music
+## would be the surprise.
+func _finished_fade() -> void:
+	var next := _queued
+	stop()
+	if next != "":
+		play(next)
 
 
 ## Loop flag set here rather than trusted to the .import, for the same reason
-## boss_audio.gd sets it: import settings are written by whoever first scanned
+## enemy_audio.gd sets it: import settings are written by whoever first scanned
 ## the file, and a menu track that plays once and leaves silence behind is a
 ## failure nobody notices until they sit on the menu for half a minute.
 ##

@@ -170,7 +170,7 @@ func _tick(frame: int) -> void:
 				_sprite_of(_boss).sprite_frames.get_animation_loop(&"beaten_side")
 				and _sprite_of(_boss).is_playing())
 			# The noise. Ahmed is the boss who has sounds, so his are what
-			# hold the contract in boss_audio.gd: the base's three ids plus
+			# hold the contract in enemy_audio.gd: the base's three ids plus
 			# the two that are his. A boss without an Audio child is legal
 			# and silent, which is why this asks HIM and not the base.
 			var audio: Node = _boss.get_node_or_null("Audio")
@@ -181,6 +181,40 @@ func _tick(frame: int) -> void:
 				sounds.has("hurt") and sounds.has("stagger")
 				and sounds.has("concede") and sounds.has("axe")
 				and sounds.has("breath"))
+			# And a telegraph plus an impact for every attack he has. The ids
+			# are DERIVED from his attacks rather than listed, so a fifth
+			# attack fails this the day it is added instead of shipping the one
+			# swing in the fight that makes no noise. The split is the design:
+			# a wind-up can be interrupted, so the blow is a separate file that
+			# only plays if it actually lands.
+			var unvoiced: Array = []
+			for id in ["chop", "sweep", "slam", "wave"]:
+				for part in ["_windup", "_hit"]:
+					if not sounds.has(id + part):
+						unvoiced.append(id + part)
+			_check("bosses: every attack has a telegraph and an impact (%s)"
+				% ("all eight" if unvoiced.is_empty() else str(unvoiced)),
+				unvoiced.is_empty())
+
+			# Mostafa on the same terms, derived from HIS attacks. He is the
+			# second boss to own sounds, which is what makes this a contract
+			# rather than a note about Ahmed: three attacks, not four, plus the
+			# two the rage brought with it.
+			var maudio: Node = _m.get_node_or_null("Audio")
+			_check("bosses: Mostafa carries his own sounds too (%s)" % maudio,
+				maudio != null)
+			var msounds: Dictionary = maudio.get("sounds") if maudio != null else {}
+			var mquiet: Array = []
+			for id in ["jab", "hook", "rush"]:
+				for part in ["_windup", "_hit"]:
+					if not msounds.has(id + part):
+						mquiet.append(id + part)
+			for id in ["rage", "fire", "hurt", "stagger", "concede"]:
+				if not msounds.has(id):
+					mquiet.append(id)
+			_check("bosses: every punch is voiced, and so is the fire (%s)"
+				% ("all eleven" if mquiet.is_empty() else str(mquiet)),
+				mquiet.is_empty())
 			# Null here is the un-imported checkout the header warns about -
 			# the fight above all passed either way, which is the point, but
 			# a developer who HAS imported should be told if one went missing.
@@ -199,7 +233,7 @@ func _tick(frame: int) -> void:
 			# forever. What IS observable is the loop flag, and it happens to
 			# be the better check anyway - the importer writes
 			# `edit/loop_mode=0` on every WAV it has not been told otherwise
-			# about, so a loop only ever loops because `boss_audio.loop()`
+			# about, so a loop only ever loops because `enemy_audio.loop()`
 			# set the flag, and seeing it set is seeing that call happen.
 			# Paired with the frame-110 check above: the axe burns from his
 			# first frame, the breath waits for his last.
@@ -396,7 +430,7 @@ func _hud_layer() -> int:
 ## The loop flag on one of a boss's sounds, or -1 where he has no such player.
 ## It is the only part of playback that survives headless: the Dummy audio
 ## driver reports `playing` false forever, so a sound is shown to have STARTED
-## by the flag `boss_audio.loop()` sets on its way to `play()`.
+## by the flag `enemy_audio.loop()` sets on its way to `play()`.
 func _loop_mode_of(audio: Node, id: String) -> int:
 	if audio == null:
 		return -1

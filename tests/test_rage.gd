@@ -80,6 +80,21 @@ func _tick(frame: int) -> void:
 				_m.get("health") == 64 and _m.get("is_raging") == true)
 			_check("rage: the eruption takes the sprite (%s)"
 				% _sprite_of(_m).animation, _sprite_of(_m).animation == &"rage_side")
+			# The noise of going up, and the fire he is left carrying. The loop
+			# is checked for a real `loop_end` rather than just the flag: a
+			# forward loop ending on frame 0 plays exact silence with the flag
+			# set, which is how every sound in this game was once mute under a
+			# green check. He never comes back down, so nothing stops this one.
+			var maud: Node = _m.get_node_or_null("Audio")
+			_check("rage: he carries his own sounds (%s)" % maud, maud != null)
+			var fire: AudioStreamPlayer2D = null if maud == null 				else maud.get_node_or_null("Sfx_fire") as AudioStreamPlayer2D
+			var fwav: AudioStreamWAV = null if fire == null 				else fire.stream as AudioStreamWAV
+			_check("rage: the fire he is now wearing is looping (%s)"
+				% ("no stream" if fwav == null else str(fwav.loop_mode)),
+				fwav != null and fwav.loop_mode == AudioStreamWAV.LOOP_FORWARD)
+			_check("rage: and sealed to a real end, not frame 0 (loop_end %d)"
+				% (0 if fwav == null else fwav.loop_end),
+				fwav != null and fwav.loop_end > 0)
 			_check("rage: and it drops whatever he was swinging (%s)"
 				% ("nothing" if str(_m.get("attack")) == "" else str(_m.get("attack"))),
 				str(_m.get("attack")) == "")

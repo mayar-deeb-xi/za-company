@@ -1,5 +1,5 @@
 extends Node2D
-## What one boss SAYS. `boss_audio.gd` is the same idea for the noises he makes,
+## What one boss SAYS. `enemy_audio.gd` is the same idea for the noises he makes,
 ## and the split is the same one: the mechanism is shared, the lines are not.
 ##
 ## A boss's scene gets a `Lines` child naming a `.gd`; that file holds
@@ -105,6 +105,14 @@ func _process(delta: float) -> void:
 	_held = maxf(_held - delta, 0.0)
 	for cue in _cooldown:
 		_cooldown[cue] = maxf(_cooldown[cue] - delta, 0.0)
+
+
+## Whether a line is still on screen, and so whether anything said now would
+## have to wait. Nothing in the game asks - the fight neither knows nor cares -
+## but a test that wants to interrupt him at a moment he can be heard at does,
+## the same way `Music.track()` is a readout for callers and tests alike.
+func holding() -> bool:
+	return _held > 0.0
 
 
 ## A line for `cue`, as {"text", "seconds"} - or {} for nothing to say, which

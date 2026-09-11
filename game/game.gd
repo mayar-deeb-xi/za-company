@@ -269,16 +269,26 @@ func _watch_boss() -> void:
 		var declared: Variant = node.get("music")
 		theme = declared if declared is String else ""
 		if theme != "":
-			node.connect(&"conceded", Callable(Music, "fade_out"))
+			# And back to the bed when he gives in. Not silence: the floor is an
+			# ordinary floor the moment he concedes - Ivan walks in on half of
+			# them - and the theme leaving is the fight ending, not the music
+			# ending.
+			node.connect(&"conceded", Callable(Music, "fade_to").bind(Music.DEFAULT))
 		break
 
-	# After the loop, not inside it: a floor with no boss AND a boss floor
-	# whose boss has already conceded both land here, and both want silence.
-	# The menu track is still fading as the first room is built (_ready), and
-	# re-asking for a fade it is already running is a no-op, so the lobby does
-	# not cut it short.
+	# After the loop, not inside it: a floor with no boss AND a boss floor whose
+	# boss has already conceded both land here, and both want the bed rather
+	# than a theme of anyone's.
+	#
+	# `fade_to` and not `play`, because the menu track is still going as the
+	# first room is built (_ready has just asked it to leave) and a straight
+	# `play` would cut it dead - this queues the bed behind the fade it is
+	# already taking. It is idempotent on the track for the other nine floors,
+	# so a door between two ordinary rooms does not restart the bed underneath
+	# it: the music crosses the building with the player, and only a boss
+	# interrupts it.
 	if theme == "":
-		Music.fade_out()
+		Music.fade_to(Music.DEFAULT)
 	else:
 		Music.play(theme)
 

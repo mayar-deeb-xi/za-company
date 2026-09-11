@@ -18,6 +18,20 @@ extends Control
 ## It also carries no panel. A box at the bottom of the screen is the shape the
 ## player has already learned means "stop and read"; a shout over the room is
 ## read the way the level card is, off its own outline.
+##
+## ## It sits above the boss bar, not on the bottom edge
+##
+## The dialogue box is pinned 10 px off the bottom because nothing else is down
+## there while it is up. This one is up during a FIGHT, and the bottom of the
+## screen in a fight belongs to the boss's health bar and the name over it - so
+## the block is pinned clear of both, 46 px up. It is the one measurement in
+## here that is not a taste: `tests/test_barks.gd` reads the bar's own name
+## label and checks this block ends above it, so moving either cannot quietly
+## put a line the player is reading on top of the number they are watching.
+##
+## The speaker row survives that crowding for one reason, and it is the LAST
+## line: conceding clears the bar and says his final line in the same breath,
+## so that one line is on screen with nothing else to say who is talking.
 
 ## Long enough to read as a voice trailing off rather than a cut.
 const FADE_SECONDS := 0.3

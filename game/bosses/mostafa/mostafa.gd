@@ -172,6 +172,12 @@ func _begin_attack(id: String) -> void:
 ## the effect drawing it keys off the animation, which does not know either.
 func _strike() -> void:
 	var id := attack
+	# The blow, before `super()` - which can clear `attack` - and paired with
+	# the telegraph boss_base already fires on the wind-up. Said here rather
+	# than in the base for the same reason as Ahmed's: a boss lands a blow his
+	# own way. It plays whether or not the punch found anybody, exactly like
+	# the shake below, because a punch that misses still landed somewhere.
+	_sfx(id + "_hit")
 	super()
 	_stop = HIT_STOP * (HIT_STOP_HOOK if id == "hook" else 1.0)
 	var throw: float = SHAKE.get(id, 0.0)
@@ -205,6 +211,20 @@ func take_damage(amount: int) -> void:
 ## He drops whatever he was swinging. Being interrupted by your own temper is
 ## the point: the combination stops mid-count and starts again from the top.
 func _begin_rage() -> void:
+	# Both halves of the noise, on the one frame he goes up. The eruption is a
+	# one-shot cut to land its loudest moment on RAGE_BLAST, so the blast, the
+	# camera shake and the sound are one event rather than three. The fire
+	# underneath it is a LOOP with no stop anywhere - he catches fire once and
+	# never comes back down, and he is still burning when he kneels, which is
+	# why nothing fades it on concede the way Ahmed's axe fades: Ahmed drops
+	# the axe, and Mostafa is the fire.
+	_sfx("rage")
+	_sfx_loop("fire")
+	# And the line. His alone - the base fires spot/taunt/hurt/stagger/concede
+	# and one cue per attack, and none of those is "the moment the process
+	# stops". It is said BEFORE `is_raging` goes true only for readability;
+	# `_say` neither reads nor cares about that flag.
+	_say("rage")
 	is_raging = true
 	_rage_time = 0.0
 	_blown = false

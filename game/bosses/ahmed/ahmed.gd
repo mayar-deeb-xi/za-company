@@ -38,6 +38,14 @@ const WAVE_START := 20.0
 ## Slack past the drawn front, so a body on the edge of the fire is in it.
 const WAVE_SLACK := 6.0
 
+## Beaten, and getting his breath back - see `_settle()`. Long enough to read
+## as a man who has just lost a fight (the loop is 1.57 s, so it is about six
+## gasps), short enough that it is over before the floor's own quiet is his
+## panting. The row keeps looping at BREATH_CALM afterwards, silently.
+const BREATH_HARD := 9.0
+const BREATH_FADE := 6.0
+const BREATH_CALM := 0.45
+
 @export var wave_cooldown := 3.0
 ## Closer than this and the axe would do; the wave is for the gap.
 @export var wave_min_distance := 34.0
@@ -72,6 +80,31 @@ func _on_animation_finished() -> void:
 	if has_conceded and _sprite.animation == &"concede_side":
 		_sprite.play("beaten_side")
 		_sfx_loop("breath")
+		_settle()
+
+
+## He gets his breath back. The `beaten` row loops for good - that is the whole
+## point of it, he is still there and still alive when you walk back out - but
+## the PANTING is an event with an end, and left running it was the only sound
+## in the room for as long as the player stayed on the floor. His floor is
+## quiet by then: the theme fades on his concede, and Ivan walks in to talk
+## over the top of it.
+##
+## So both halves of it wind down together rather than one of them being cut.
+## The sound fades out over `BREATH_FADE` after `BREATH_HARD` seconds of
+## actually gasping, and the row slows to `BREATH_CALM` across the same span,
+## so the picture and the sound are telling the same story at every moment -
+## the one thing his fire already taught (see `_concede`). What is left is a
+## man kneeling and breathing slowly, which is what the row was drawn for.
+func _settle() -> void:
+	# Parallel, not sequential: the sound going quiet while the chest was still
+	# heaving would read as the audio having broken rather than as him calming
+	# down. The slowing runs the whole span; the fade joins it at BREATH_HARD.
+	var settle := create_tween().set_parallel()
+	settle.tween_property(_sprite, "speed_scale", BREATH_CALM,
+		BREATH_HARD + BREATH_FADE).set_trans(Tween.TRANS_SINE)
+	settle.tween_callback(
+		func() -> void: _sfx_fade("breath", BREATH_FADE)).set_delay(BREATH_HARD)
 
 
 ## The fire goes out the moment the axe leaves his hand, and `glow` says how
@@ -140,6 +173,12 @@ func _forward_of(body: Node2D) -> float:
 ## The blow, per attack. The base's own strike is the axe on whoever is in
 ## Touch; the slam and the wave read their own shapes.
 func _strike() -> void:
+	# The blow landing, paired with the telegraph boss_base fires on the
+	# wind-up. It is said HERE rather than in the base, unlike the telegraph,
+	# because a boss applies damage his own way per attack - the slam sweeps a
+	# ring and the wave walks a lane, and neither calls `super()` - so the base
+	# never sees two of Ahmed's four blows land.
+	_sfx(attack + "_hit")
 	match attack:
 		"slam":
 			for body in _ring.get_overlapping_bodies():

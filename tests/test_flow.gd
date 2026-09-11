@@ -11,6 +11,14 @@ extends "res://tests/helpers.gd"
 ## floor's leg asks it whether the lock is currently on.
 const BossDoor := preload("res://game/levels/boss_door.gd")
 
+## Every floor without a boss on it plays this one, and the same copy of it:
+## the bed is handed from room to room rather than restarted at each door.
+const BED := "res://assets/music/level_loop.wav"
+
+## How far into the bed the studio was, read at its door and checked again at
+## the next one. A restart would put this back to nearly nothing.
+var _bed_position := 0.0
+
 
 func _tick(frame: int) -> void:
 	match frame:
@@ -62,13 +70,14 @@ func _tick(frame: int) -> void:
 			_check("level: player spawned on the level's start marker (%s)"
 				% _player().global_position,
 				_player().global_position == Vector2(272, 240))
-			_check("camera: the whole level is on screen (view %s vs level %s)"
+			# A fresh install opens at 150%, so the default framing is a part of
+			# the room with the camera following - the whole-room case is proved
+			# below, where the player picks 100% back.
+			_check("camera: a clean install opens at the default 150%% (got %s)"
+				% _camera().zoom, _camera().zoom == Vector2(1.5, 1.5))
+			_check("camera: the level is wider than the view at that zoom (%s vs %s)"
 				% [_view_size(), _level().bounds().size],
-				_view_size().x >= _level().bounds().size.x
-					and _view_size().y >= _level().bounds().size.y)
-			_check("camera: centred on the level, since it fits (%s)"
-				% _camera().global_position,
-				_camera().global_position == _level().bounds().get_center())
+				_view_size().x < _level().bounds().size.x)
 			_check("level: doorway is a real gap in the wall ring, sealed by the door",
 				(_level().get_node("Walls") as TileMapLayer)
 					.get_cell_source_id(Vector2i(16, 0)) == -1
@@ -152,13 +161,22 @@ func _tick(frame: int) -> void:
 		114:
 			_check("attack: animation plays (got %s)" % _sprite().animation,
 				String(_sprite().animation).begins_with("attack"))
-			# The menu track carried over the scene load and faded out under the
-			# lobby's fade-in. 88 frames after entering at 26, comfortably past
-			# Music.FADE_SECONDS - a fade that never completed would leave the
-			# track set here.
-			_check("music: the menu track is gone in the game (%s)"
+			# The menu track carried over the scene load, faded out under the
+			# lobby's fade-in, and handed the floor the bed it asked for. 88
+			# frames after entering at 26, comfortably past Music.FADE_SECONDS -
+			# a fade that never completed, or a handoff that never fired, would
+			# leave the menu track sitting here instead.
+			_check("music: the menu hands the lobby its bed (%s)"
 				% ("<silent>" if _music_track() == "" else _music_track()),
-				_music_track() == "")
+				_music_track() == BED)
+			# Sealed to a real end, not to frame 0 - see test_menu.gd. The bed
+			# plays on nine of the twelve floors, so it is the track with the
+			# most to lose from a loop that wraps before it has played anything.
+			var bed := null if _music() == null else _music().stream as AudioStreamWAV
+			_check("music: the bed is sealed as a loop with a real end (%d)"
+				% (0 if bed == null else bed.loop_end),
+				bed != null and bed.loop_mode == AudioStreamWAV.LOOP_FORWARD
+					and bed.loop_end > 0)
 		153:
 			_check("attack: releases back to idle (got %s)" % _sprite().animation,
 				String(_sprite().animation).begins_with("idle"))
@@ -247,6 +265,9 @@ func _tick(frame: int) -> void:
 			_check("title: walking through a door announces the new room (got '%s' at %.2f)"
 				% [_title_text(), _title().modulate.a],
 				_title_text() == "THE CONTENT STUDIO" and _title().modulate.a == 1.0)
+			# Noted here, tested at the next door: two ordinary floors share one
+			# bed, and asking for the track already playing is a no-op.
+			_bed_position = _music().get_playback_position()
 			# The studio's furniture IS its lighting, which is why the count is
 			# checked rather than one instance: five stands is the difference
 			# between a lit room and a dark one with a lamp in it.
@@ -294,6 +315,20 @@ func _tick(frame: int) -> void:
 				_level() != null and _level().name == "CallCenter")
 			_check("title: the call center announces itself (got '%s')"
 				% _title_text(), _title_text() == "THE CALL CENTER")
+			# The bed crossed the door rather than starting again behind it.
+			# Read off the playback position and not off the track name, which
+			# a restart would leave looking identical - and it moves under the
+			# dummy driver, which is the only reason this is checkable headless.
+			_check("music: the same bed plays on into the call center (%s)"
+				% ("<silent>" if _music_track() == "" else _music_track()),
+				_music_track() == BED)
+			# `>=` rather than `>`: the dummy driver advances the playhead by
+			# whole mix buffers, so 80 frames of a fast headless run may not
+			# move it at all. What a restart cannot do is send it BACKWARDS,
+			# and that is the whole of what is being asked here.
+			_check("music: and it was not started over at the door (%.2fs, was %.2fs)"
+				% [_music().get_playback_position(), _bed_position],
+				_music().get_playback_position() >= _bed_position)
 			# DESIGN.md's densest floor, and the density IS the room: eighteen
 			# dividers in three rows rather than asset recovery's twelve in two.
 			# Counted, because a maze that lost a row is not a maze.
@@ -370,8 +405,8 @@ func _tick(frame: int) -> void:
 			_check("hud: the boss bar is up and names him (got '%s')"
 				% _boss_name(), _boss_bar().visible and _boss_name() == "AHMED")
 			# His theme rides in on the same wiring as his bar, and the whole
-			# reason it is checked HERE is that nine floors of silence came
-			# first: a boss floor is the only floor that plays anything.
+			# reason it is checked HERE is that three floors of the bed came
+			# first: a boss is the only thing that interrupts it.
 			_check("music: Ahmed's floor brings his theme up (%s)"
 				% ("<silent>" if _music_track() == "" else _music_track()),
 				_music_track() == "res://assets/music/ahmed_theme_loop.wav")
@@ -417,12 +452,13 @@ func _tick(frame: int) -> void:
 			# with no boss in it clears the bar whether or not one ever hid it.
 			_check("hud: no boss bar on the floor above his",
 				not _boss_bar().visible)
-			# And no theme either. It went out on `conceded` rather than on
-			# the door, which is why the fade is long over by the time the
-			# next room is standing - the fight ended, not the floor.
-			_check("music: his theme went out with him (%s)"
+			# And no theme either: the bed is back. It took over on `conceded`
+			# rather than at the door, which is why the handoff is long over by
+			# the time the next room is standing - the fight ended, not the
+			# floor.
+			_check("music: his theme gave way to the bed (%s)"
 				% ("<silent>" if _music_track() == "" else _music_track()),
-				_music_track() == "")
+				_music_track() == BED)
 			# The floor's split, fought: the slower holds the call side and both
 			# drains are INSIDE the glass offices - which is what makes each
 			# office a decision rather than dressing, since the only way in is
@@ -574,6 +610,18 @@ func _tick(frame: int) -> void:
 				% _boss_name(), _boss_bar().visible and _boss_name() == "MOSTAFA")
 			_check("hud: full channel for his 144 as much as for Ahmed's 96 (%s)"
 				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 240.0))
+			# And the theme on the same terms as the bar: HIS file, named on his
+			# scene root, not Ahmed's carried up three floors. Three rooms of
+			# the bed stand between the two fights, so what this actually
+			# catches is a second theme that never replaced the first.
+			_check("music: the gym plays Mostafa's theme, not Ahmed's (%s)"
+				% ("<silent>" if _music_track() == "" else _music_track()),
+				_music_track() == "res://assets/music/mostafa_theme_loop.wav")
+			var gym_theme := null if _music() == null else _music().stream as AudioStreamWAV
+			_check("music: his stream is sealed as a loop with a real end (%d)"
+				% (0 if gym_theme == null else gym_theme.loop_end),
+				gym_theme != null and gym_theme.loop_mode == AudioStreamWAV.LOOP_FORWARD
+					and gym_theme.loop_end > 0)
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		1001:

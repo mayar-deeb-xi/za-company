@@ -140,6 +140,20 @@ func _boss_chip() -> ColorRect:
 	return _boss_bar().get_node("%Chip")
 
 
+## What a boss is shouting. Its own alpha shows and hides it, like the level
+## card below, so a check reads showing() rather than `visible`.
+func _subtitle() -> Control:
+	return current_scene.get_node("Subtitle/BossSubtitle")
+
+
+func _subtitle_line() -> String:
+	return (_subtitle().get_node("%Line") as Label).text
+
+
+func _subtitle_speaker() -> String:
+	return (_subtitle().get_node("%Speaker") as Label).text
+
+
 ## The level-name card. Its own alpha is what shows and hides it, so a check
 ## reads `modulate.a` rather than `visible`.
 func _title() -> Control:

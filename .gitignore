@@ -13,3 +13,10 @@ desktop.ini
 Thumbs.db
 .DS_Store
 .env
+
+# python bytecode from tools/voice and tools/sfx
+__pycache__/
+*.pyc
+
+# Python bytecode from the tools that talk to a web API
+__pycache__/

@@ -1,9 +1,22 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://game/bosses/mostafa/mostafa.gd" id="1_mostafa"]
 [ext_resource type="SpriteFrames" path="res://game/bosses/mostafa/mostafa_frames.tres" id="2_frames"]
 [ext_resource type="Script" path="res://game/bosses/mostafa/bell.gd" id="3_bell"]
 [ext_resource type="Script" path="res://game/bosses/mostafa/rage.gd" id="4_rage"]
+[ext_resource type="Script" path="res://game/enemies/enemy_audio.gd" id="5_audio"]
+[ext_resource type="Script" path="res://game/bosses/boss_lines.gd" id="17_lines"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/jab_windup.wav" id="6_jab_windup"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/jab_hit.wav" id="7_jab_hit"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/hook_windup.wav" id="8_hook_windup"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/hook_hit.wav" id="9_hook_hit"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/rush_windup.wav" id="10_rush_windup"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/rush_hit.wav" id="11_rush_hit"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/rage.wav" id="12_rage"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/fire.wav" id="13_fire"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/hurt.wav" id="14_hurt"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/stagger.wav" id="15_stagger"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/mostafa/sfx/concede.wav" id="16_concede"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 6.0
@@ -27,6 +40,27 @@ commit_fraction = 1.0
 recover_seconds = 0.21
 stagger_seconds = 0.3
 interrupt_cooldown = 1.2
+music = "res://assets/music/mostafa_theme_loop.wav"
+
+[node name="Audio" type="Node2D" parent="."]
+script = ExtResource("5_audio")
+sounds = {
+"concede": ExtResource("16_concede"),
+"fire": ExtResource("13_fire"),
+"hook_hit": ExtResource("9_hook_hit"),
+"hook_windup": ExtResource("8_hook_windup"),
+"hurt": ExtResource("14_hurt"),
+"jab_hit": ExtResource("7_jab_hit"),
+"jab_windup": ExtResource("6_jab_windup"),
+"rage": ExtResource("12_rage"),
+"rush_hit": ExtResource("11_rush_hit"),
+"rush_windup": ExtResource("10_rush_windup"),
+"stagger": ExtResource("15_stagger")
+}
+
+[node name="Lines" type="Node2D" parent="."]
+script = ExtResource("17_lines")
+lines = "res://game/bosses/mostafa/taunts.gd"
 
 [node name="RageGround" type="Node2D" parent="."]
 script = ExtResource("4_rage")

@@ -571,8 +571,16 @@ unlocks.
   boy at 64 and again at 32, in by the south door. One at a time rather than a
   cap of two alive: a duel with a crowd in it is neither, and the slam still
   knows what to do with whoever is standing in the ring.
-  **Still to add**: the enormous chair and the line "I'm telling Mostafa."
-  He kneels.
+  **Built since**: his mouth. He shouts through the fight - a hello, a taunt
+  when you keep out of his reach ("Get over here!", "Come here, coward!"), a
+  line on the wind-up of a swing, one for being hit and a different one for
+  being interrupted, and "I'm telling Mostafa." as he kneels. Subtitles AND voice:
+  all twenty-three lines are cut with ElevenLabs v3, the read tagged per cue
+  rather than tuned on a slider, and the subtitle holds for as long as the
+  recording runs. `ahmed/taunts.gd` is the
+  whole of what he says; `game/bosses/boss_lines.gd` decides when, and no
+  other boss has lines yet.
+  **Still to add**: the enormous chair.
 - [x] **MOSTAFA — 144 HP, F7.** Boxing rhythm fight; his attack is the cycle
   run 3x back-to-back:
   - Jab, jab: 0.25s wind-ups, 6 dmg each, commit_fraction ~1.0
