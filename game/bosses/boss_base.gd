@@ -42,7 +42,7 @@ signal shook(strength: float, seconds: float)
 ## exists. game.gd listens, because game.gd is what owns the screen. `seconds`
 ## is how long the line was written to stay up, decided where the line was
 ## chosen - the only place that can know whether it has a clip whose length
-## should set it (see boss_lines.gd). A boss with no `Lines` child never emits
+## should set it (see enemy_lines.gd). A boss with no `Lines` child never emits
 ## it and fights in silence.
 signal said(speaker: String, text: String, seconds: float)
 
@@ -63,7 +63,15 @@ signal said(speaker: String, text: String, seconds: float)
 ## `stagger` and `concede` - plus `taunt`, plus one named after each attack as
 ## it begins. A boss without the child says nothing, with no branch anywhere
 ## but `_say`.
-const BossLines := preload("res://game/bosses/boss_lines.gd")
+##
+## This one made the same journey as the sounds, and on the same day: a plain
+## enemy mutters to itself while it works, which wanted the identical node -
+## one line at a time, a cooldown per cue, never the same line twice running,
+## the clip played positionally. So it is `game/enemies/enemy_lines.gd` now,
+## and `_lines` and `_say` are inherited. What a boss adds is the SUBTITLE, in
+## the override at the bottom of this file, and that is the only part of
+## talking that was ever his: an enemy muttering is overheard, a boss is
+## addressing you.
 
 ## How long the player must stay out of his reach before he complains about it.
 ## Long enough that closing the ground normally never trips it - at Ahmed's
@@ -89,9 +97,6 @@ var has_conceded := false
 var _damage_scale := 1.0
 var _spotted := false
 var _out_of_reach := 0.0
-
-@onready var _lines: BossLines = get_node_or_null("Lines")
-
 
 func _ready() -> void:
 	super()
@@ -285,7 +290,7 @@ func _concede() -> void:
 	_touch_area.set_deferred("monitoring", false)
 	_sprite.flip_h = _facing_left
 	_sprite.play("concede_side")
-	# His last line always lands - `concede` jumps every queue in boss_lines -
+	# His last line always lands - `concede` jumps every queue in enemy_lines -
 	# so on a boss who has the line this grunt never plays, and on one who does
 	# not it is still the sound of him going down.
 	if not _say("concede"):
@@ -293,14 +298,14 @@ func _concede() -> void:
 	conceded.emit()
 
 
-## One line, if this boss has any for that cue and a `Lines` child at all -
-## `_sfx` above for the mouth rather than the throat, and every miss is legal
-## for the same reasons. Most calls come back with nothing to say: the cue is
-## still cooling down, or he is already mid-sentence, and the fight carries on
-## either way (see boss_lines.gd).
-## Returns whether he actually spoke, which is what lets a GRUNT stand down for
-## a line - see the three call sites. Most calls return false: the cue is still
-## cooling down, or he is already mid-sentence.
+## A boss's line also goes on SCREEN, which is the whole of what he adds to
+## the base's version. Everything else - whether there is anything to say, the
+## cooldown, the clip, the length - is settled in `enemy_lines.say()` and is
+## the same for a man with an axe and a woman muttering about a deadline.
+##
+## `said` is emitted rather than a subtitle being poked, for the third time in
+## this file and for the third identical reason: he shouts, and never learns
+## who is listening. game.gd is.
 func _say(cue: String) -> bool:
 	if _lines == null:
 		return false

@@ -15,7 +15,7 @@ extends Control
 ## seconds after - which is the one piece of timing a subtitle can never guess
 ## for itself.
 ##
-## **Every miss is legal**, on the terms `game/bosses/boss_lines.gd` already
+## **Every miss is legal**, on the terms `game/enemies/enemy_lines.gd` already
 ## uses: a beat with no clip, a clip not recorded yet, and a fresh checkout
 ## whose WAVs have not been imported all land in the same check, play nothing,
 ## and fall back to CHARS_PER_SECOND. So a conversation is readable before a

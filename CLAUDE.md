@@ -247,6 +247,28 @@ Three things generalize out of it, and two are traps the bosses never hit:
 Enemies are levelled UNDER the bosses and that is arithmetic, not deference: a
 boss floor holds one boss, hellfire holds seven bodies.
 
+**And two of them TALK, on the third pass of the same deal.** `social_media`
+and `call_center` carry a `Lines` child naming a file of mutters, and
+`game/bosses/boss_lines.gd` moved to `game/enemies/enemy_lines.gd` to serve
+them - unchanged, because the second user needed exactly the node the first
+one had. `_lines` and `_say` are enemy_base's now; a boss's override adds only
+the SUBTITLE, which is the one part of talking that was ever his. **A boss is
+addressing you; an enemy is being overheard**, so a mutter deliberately never
+reaches the subtitle box - four of them would fight over one box, and putting
+a grumble on screen turns eavesdropping into being spoken to.
+
+The cue is POLLED rather than fired, which no other line in the game is: it
+answers to no moment, so enemy_base asks every 2 s and is refused most times,
+and the `Lines` child's own `cue_seconds` does the real pacing. The first ask
+is scattered across a whole cooldown or a room speaks in chorus. Both mutter
+at -31 dBFS - under the warden's own telegraph at -29, because a wind-up is
+information and this is decoration.
+
+The joke is that the line and the mechanic are the same thing: she is a wraith
+draining your health and every line is about having no time, and he is a
+warden who takes your speed and every line is a call centre asking you to
+hold. `tools/voice/cut.py <id>` cuts both, the bosses' pipeline unchanged.
+
 **Every floor but the lobby has a second beat** - `reinforcements` in its
 biome, a finite authored group that walks in through a named door at a known
 cue. Floor 1 is the exception for one reason and it is not squeamishness: a beat
@@ -348,7 +370,12 @@ a line in either of them. Six floors have him: call_center, ahmed_office,
 conflict_resolution, asset_recovery, executive_floor and khaled_office - the
 floor before the first boss, and then after every big fight to the roof.
 Everything else about him is npc_base, and `ivan.gd` is the only NPC script in
-the folder. Dominique still has no lines and stands on no floor.
+the folder. **He is VOICED too** - three clips out of the same `tools/voice/`,
+in English with an Eastern-European accent, which is the only direction his
+lines needed: he is the one man in the building who is glad to see you, and he
+is heard over a room the player has just finished fighting in, so an accent
+that ever costs a word would cost the moment it was written for.
+Dominique still has no lines and stands on no floor.
 
 The rest - the pipeline's three steps, why the robe goes down before the head,
 and what a third NPC would need: game/npcs/CLAUDE.md.
@@ -388,8 +415,15 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
                                        and re-levels from the untouched exports
                                        in `game/enemies/<id>/src/sfx/`, so only
                                        a new PERFORMANCE costs credits
+- `game/enemies/{social_media,call_center}/sfx/voice/*.wav`
+                                    <- tools/voice/cut.py <id>, the bosses'
+                                       pipeline unchanged. WHAT they mutter is
+                                       game/enemies/<id>/mutters.gd and is read
+                                       from there; how it is delivered is
+                                       tools/voice/<id>.py
 - `game/bosses/ahmed/sfx/voice/*.wav`
   `game/npcs/hr_lady/sfx/voice/*.wav`
+  `game/npcs/ivan/sfx/voice/*.wav`
                                     <- tools/voice/cut.py, the only generator
                                        here that COSTS something to run and the
                                        only one that is not deterministic: a
@@ -734,7 +768,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     deliberately does NOT check is that a one-shot is audible: headless has no
     `playing` and `--fixed-fps` makes `get_playback_position()` a coin flip
     (see test_menu.gd's note), so the evidence is structure plus the two calls
-    that leave a visible mark - the loop flag, and the detached player.
+    that leave a visible mark - the loop flag, and the detached player. It
+    also keeps the two mutterers: that each names its OWN lines file, that
+    every line has a clip that really resolves (a missing one is legal and
+    silent, so a typo is an enemy who moves their lips), that the poll gets a
+    line out, that six spawned together do not share one countdown, and that
+    none of it reaches the subtitle.
   - `test_dialogue.gd` - HR's whole induction: the prompt, the typewriter, a
     dead stick while she talks, the choices and the branch one takes, the
     escorted tour, the contract, and the wheel coming back. Driven by what is

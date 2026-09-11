@@ -1,5 +1,5 @@
 extends RefCounted
-## What Mostafa says, and the whole file is data - `game/bosses/boss_lines.gd`
+## What Mostafa says, and the whole file is data - `game/enemies/enemy_lines.gd`
 ## is the only thing that reads it, and the only thing that decides when.
 ##
 ## He is Ahmed's brother, which the floor below already told you: Ahmed asks

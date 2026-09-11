@@ -315,7 +315,20 @@ is what moves. The numbers are in CREDITS.md.
 ## The mouth
 
 A boss can also TALK, and it is the third thing in this file built on the same
-shape as the bar: `boss_lines.gd` is the mechanism, his lines are not. A scene
+**It is in `game/enemies/` and it used to be `boss_lines.gd` here**, the same
+move `enemy_audio.gd` made and on the same rule - except that this time the
+second user needed the node completely unchanged. Two enemies mutter to
+themselves while they work (game/enemies/CLAUDE.md, The mutters) and wanted
+exactly what a boss already had: one line at a time, a cooldown per cue, never
+the same line twice running, the clip loaded by path and played positionally.
+`_lines` and `_say` are on `enemy_base` now.
+
+What a boss still owns is the SUBTITLE. `_say` is overridden here to emit
+`said` on top of the base's behaviour, and that split is worth stating: **a
+boss is addressing the player, an enemy is being overheard.** An enemy's line
+deliberately never reaches the box.
+
+shape as the bar: `enemy_lines.gd` is the mechanism, his lines are not. A scene
 gets a `Lines` child naming a `.gd` of them, `boss_base` already calls the
 cues, and game.gd hands what comes out to `ui/subtitle/`. So a boss talks by
 owning a file - the exact deal his bar, his theme and his grunts are on - and
@@ -352,7 +365,7 @@ is long enough that an honest walk-in never trips it.
 
 ### What the mechanism owns is WHEN, and the tuning is data
 
-The lines are data; `boss_lines.gd` is the policy that stops a man with twenty
+The lines are data; `enemy_lines.gd` is the policy that stops a man with twenty
 of them from reading all twenty at once. One line at a time, so a subtitle is
 never painted over part-read; a per-cue cooldown, because he has one line for
 being hit and is hit sixteen times; never the same line twice running, so a
@@ -393,7 +406,7 @@ Two consequences worth knowing:
 ### He is voiced, and nothing had to change to make him so
 
 Every line carries `voice`, a path to its recording, and all twenty-three are
-cut. `boss_lines.gd` loads the clip, plays it positionally like his grunts, and
+cut. `enemy_lines.gd` loads the clip, plays it positionally like his grunts, and
 returns its LENGTH as the line's hold - the one piece of arithmetic a subtitle
 can never guess for itself, and the same bet `dialogue_box.gd` made for
 conversations. That bet paid: the clips arrived as data and one key per line,

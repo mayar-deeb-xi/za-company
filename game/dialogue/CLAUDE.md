@@ -48,8 +48,8 @@ the root CLAUDE.md), so there is nothing to hang it on yet.
 
 ## Audio, and the seams it was built against
 
-**HR is voiced** - twenty-three clips cut by `tools/voice/`, the same pipeline
-Ahmed's barks come out of. Nothing about the runner changed to make that work,
+**HR and Ivan are voiced** - twenty-three clips and three, cut by
+`tools/voice/`, the same pipeline Ahmed's barks come out of. Nothing about the runner changed to make that work,
 because the two seams it needed were put in before there was any sound at all:
 
 - **every beat can carry `voice`**, a clip path, and `say()` hands it to
@@ -64,7 +64,7 @@ and the voice rides along with them. Nothing waits on audio: a press still
 completes the line and a second still advances past it, clip or no clip,
 because a player who reads faster than she talks must never be held at a box.
 
-**Every miss is legal**, on `boss_lines.gd`'s exact terms: a beat with no clip,
+**Every miss is legal**, on `enemy_lines.gd`'s exact terms: a beat with no clip,
 a clip not recorded yet, and a fresh checkout whose WAVs have not been imported
 all land in the same `ResourceLoader.exists()` check, play nothing, and type at
 CHARS_PER_SECOND. So a conversation is readable before a line of it has been
@@ -74,11 +74,13 @@ That freedom has a cost worth knowing: a mistyped clip path is SILENT, not an
 error, so nothing at runtime would ever report one. `tests/test_dialogue.gd`
 is the only thing that would - it reads the induction off disk and checks that
 every line she speaks names a clip and every clip named is really there.
+`tests/test_ivan.gd` carries the same pair over his three.
 
-**Only HR is voiced.** The contract branch has the player answering back, and
-those beats carry no `voice` on purpose: the player is silent everywhere else
-in this game, and her voice in their mouth would be the one line of the
-induction that is a mistake.
+**What stays unvoiced is the PLAYER.** The contract branch has them answering
+back, and those beats carry no `voice` on purpose: the player is silent
+everywhere else in this game, and HR's voice in their mouth would be the one
+line of the induction that is a mistake. Ivan asks nothing and branches
+nowhere, so every line in him is his own and every one of them is recorded.
 
 ## Taking the wheel
 

@@ -44,8 +44,15 @@ const CAST := {
 ## Enemy scenes carry `<id>` as both folder and file name.
 const SCENE := "res://game/enemies/%s/%s.tscn"
 
+## The two who talk to themselves, and the one cue they have. Nobody else in
+## the bestiary has a `Lines` child; a boss has one with nine cues and none of
+## them is this.
+const MUTTERERS := ["social_media", "call_center"]
+const MUTTER := "mutter"
+
 var _wraith: Node2D
 var _victim: Node2D
+var _mutterer: Node2D
 var _players_before := 0
 
 
@@ -120,7 +127,62 @@ func _tick(frame: int) -> void:
 			_check("sfx: playing the stream the enemy owned (%s)"
 				% _newest_detached_name(),
 				_newest_detached_stream() != null)
+
+		# ---- The mutters. Two enemies talk to themselves while they work, and
+		# the thing that would ship silently here is a `voice` path that does not
+		# resolve: a missing clip is LEGAL by design, so a typo plays nothing,
+		# holds the line for as long as it takes to READ instead, and looks
+		# exactly like an enemy who has not been recorded yet.
 		82:
+			for id in MUTTERERS:
+				_audit_lines(id)
+		86:
+			# Scattered starts. Four of these spawn on one frame with their
+			# cooldowns at zero, so a fixed first poll would have the whole room
+			# speak at once and then settle into a rhythm - which sounds like a bug
+			# and cannot be heard as an office. Six fresh ones should not share a
+			# countdown.
+			var starts: Array = []
+			var crowd: Array[Node2D] = []
+			for _i in 6:
+				var one := _spawn("social_media", Vector2(560, 300))
+				one.set("sight_radius", 0.0)
+				crowd.append(one)
+				starts.append(snappedf(float(one.get("_mutter_in")), 0.001))
+			var distinct: Array = []
+			for s in starts:
+				if not distinct.has(s):
+					distinct.append(s)
+			_check("sfx: mutters start scattered, not in chorus (%d of 6 distinct)"
+				% distinct.size(), distinct.size() > 1)
+			var ceiling: float = _lines_of(crowd[0]).cue_seconds
+			var outside: Array = starts.filter(func(s: float) -> bool:
+				return s < 0.0 or s > ceiling)
+			_check("sfx: and inside one cooldown of spawning (%s)"
+				% ("all 6" if outside.is_empty() else str(outside)), outside.is_empty())
+			for one in crowd:
+				one.queue_free()
+
+			_mutterer = _spawn("social_media", Vector2(120, 280))
+			_mutterer.set("sight_radius", 0.0)
+			# Forced rather than waited out: the first ask is up to a whole
+			# cue_seconds away by design, which is 660 frames of watching nothing.
+			# What is under test is that the poll SPEAKS, not when it first does.
+			_mutterer.set("_mutter_in", 0.0)
+		90:
+			_check("sfx: the poll gets a line out (holding %s)"
+				% _lines_of(_mutterer).holding(), _lines_of(_mutterer).holding())
+			# And it stays off the screen. A boss overrides `_say` to emit `said`
+			# and game.gd puts that on the subtitle; an enemy must not, because a
+			# subtitle turns overhearing somebody into being addressed by them -
+			# and four of these would fight each other for one box.
+			# Reported as showing/hidden rather than by printing the label: the
+			# subtitle scene carries Ahmed's "Get over here!" as editor placeholder
+			# text, so the TEXT of a box nobody has written to is a line no one said.
+			_check("sfx: and nothing of it reaches the subtitle (%s)"
+				% ("showing" if _subtitle().call("showing") else "hidden"),
+				not _subtitle().call("showing"))
+		94:
 			_finish()
 
 
@@ -156,6 +218,46 @@ func _audit(id: String, expected: Array) -> void:
 		% [id, 0 if audio == null else audio.get_child_count(), sounds.size()],
 		audio != null and audio.get_child_count() == sounds.size())
 	enemy.queue_free()
+
+
+## One mutterer's lines: that it carries a `Lines` child at all, that the file
+## it names is its OWN (a copy-pasted scene pointing at the other one's mutters
+## is silent-running and would take a long time to notice), and that every line
+## in it has a clip that actually resolves to audio.
+##
+## That last one is the reason this section exists. `enemy_lines._play_voice()`
+## treats a missing clip as legal - it returns 0.0 and the line is held for as
+## long as it takes to read - so a mistyped path is not an error anywhere. It
+## is an enemy who moves their lips.
+func _audit_lines(id: String) -> void:
+	var enemy := _spawn(id, Vector2(560, 300))
+	enemy.set("sight_radius", 0.0)
+	var lines := _lines_of(enemy)
+	_check("sfx: %s carries a Lines child (%s)" % [id, lines], lines != null)
+	var path: String = lines.lines if lines != null else ""
+	_check("sfx: %s names its own mutters (%s)" % [id, path],
+		path == "res://game/enemies/%s/mutters.gd" % id)
+
+	var script := load(path) as GDScript if path != "" else null
+	var all: Dictionary = script.get_script_constant_map().get("LINES", {}) 		if script != null else {}
+	var spoken: Array = all.get(MUTTER, [])
+	_check("sfx: %s has something to say (%d lines)" % [id, spoken.size()],
+		spoken.size() >= 4)
+
+	var silent: Array = []
+	for line in spoken:
+		var clip := String((line as Dictionary).get("voice", ""))
+		var stream := load(clip) as AudioStream if ResourceLoader.exists(clip) 			else null
+		if stream == null or stream.get_length() <= 0.0:
+			silent.append(clip.get_file())
+	_check("sfx: %s - every line has a clip behind it (%s)"
+		% [id, "all %d" % spoken.size() if silent.is_empty() else str(silent)],
+		silent.is_empty())
+	enemy.queue_free()
+
+
+func _lines_of(enemy: Node2D) -> Node:
+	return enemy.get_node_or_null("Lines")
 
 
 func _spawn(id: String, at: Vector2) -> Node2D:

@@ -136,6 +136,39 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   visible without the other: the model writes a beginning and an end even when
   asked not to, and a raw export ends mid-waveform and clicks once per pass
 
+## The enemies' mutters
+- Author: **generated with ElevenLabs** (text-to-speech, Eleven v3), then
+  trimmed and levelled by `tools/voice/cut.py`
+- License: per the ElevenLabs terms in force for the generating account -
+  **not** CC0, on the same footing as every other generated sound here. A
+  synthetic voice also carries the terms of the VOICE used, which is a
+  separate question from the audio; check both before the game ships
+- Files: `game/enemies/social_media/sfx/voice/*.wav` (8) and
+  `game/enemies/call_center/sfx/voice/*.wav` (8) - one cue, `mutter`, named
+  `mutter_<n>.wav`, one per line in that enemy's own `mutters.gd`
+- Voices: **Laura** (`FGY2WhTYpPnrIDTdsKH5`, female) for the Content Studio,
+  **Eric** (`cjVigY5qzO86Huf0OWal`, male) for the phone team. Neither is a
+  voice on the account's own list. Ahmed is Jack and Mostafa is Edward; no two
+  characters in this game may share a voice, which is the whole point of a
+  bestiary that talks
+- **The recipe is in the repo**: `tools/voice/` holds the mechanism (`cut.py`,
+  unchanged - it never cared whether the mouth had a health bar) and each
+  one's direction (`social_media.py`, `call_center.py`). WHAT they say lives
+  with them in `game/enemies/<id>/mutters.gd` and is read from there, so no
+  line is written down twice
+- The untouched exports are kept in `game/enemies/<id>/src/voice/`, beside but
+  never inside `src/sfx/`, so a re-cut of a voice can never overwrite a sound
+  effect. Re-trimming costs no credits
+- Levelled to **-31 dBFS RMS**, twelve under the bosses' -19 and below the
+  warden's own telegraph at -29: a wind-up is information the player needs and
+  a mutter is decoration, so it must never be the louder of the two. Voice
+  carries at a lower RMS than a noise effect because it occupies a band
+  nothing else here does
+- Every clip was transcribed back with `cut.py <id> --verify` and compared to
+  the line it was cut from, which is the check that catches Eleven v3 READING
+  a delivery tag aloud instead of acting on it - inaudible in a waveform,
+  obvious in a fight. All sixteen say their line
+
 ## Ahmed's voice
 - Author: **generated with ElevenLabs** (text-to-speech, Eleven v3), then
   trimmed and levelled by `tools/voice/cut.py`
@@ -179,9 +212,9 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   derived from the fight. Hers are read back out of the `voice` path each beat
   already carries for the game to load, so writing a new line into the middle
   of the induction does not renumber - or re-bill - the twenty after it.
-- Only HR is voiced. The contract branch has the player answering her, and
-  those beats carry no clip on purpose: the player is silent everywhere else in
-  this game.
+- What stays unvoiced is the player. The contract branch has them answering
+  her, and those beats carry no clip on purpose: the player is silent
+  everywhere else in this game.
 - Ten delivery tags across the twenty-three, shared the way Ahmed's swings
   share one read, and the arc is the content: bright through the tour, sweetly
   insistent through the first refusals, and flat by the third. Her whole joke is
@@ -195,6 +228,35 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   either - the same clip read back clean on one pass and showed a homophone
   ("council" for "counsel") on the next. Transcribing a take twice and getting
   two answers is the give-away that the difference is in the listener.
+
+## Ivan's voice
+- Author: **generated with ElevenLabs** (text-to-speech, Eleven v3), then
+  trimmed and levelled by `tools/voice/cut.py`, exactly as Ahmed's and HR's are
+- License: per the ElevenLabs terms in force for the generating account -
+  **not** CC0, on the same footing as every other generated sound here. The
+  VOICE carries its own terms separately from the audio: this one is
+  `XaEUesE01wKIKaa0xI0h`, and it comes from the shared library rather than the
+  account's own list, so its licence wants checking before the game ships.
+- Files: `game/npcs/ivan/sfx/voice/*.wav` - three clips for the three lines he
+  speaks in `game/npcs/ivan/after_the_fight.gd`, named by the beat the way HR's
+  are (`still_standing`, `chair`, `eat`) rather than numbered
+- **An English read with an Eastern-European accent**, which is the whole of the
+  brief and the one thing worth auditioning rather than picking: four voices
+  were cut on his last line and compared side by side before this one was
+  chosen. The pick is pinned in `tools/voice/ivan.py`'s KEEP, so no re-run can
+  quietly replace the only take anybody actually listened to.
+- That take is also the one clip in the game with no untouched export beside it
+  in `src/` - it was cut during the audition, before there was a recipe to
+  write one for. `cut.py --relevel` says so and skips it; the other two
+  re-level normally.
+- Three delivery tags for three lines: there is nothing to share across a
+  conversation this short, and the arc is one man relaxing - braced for the
+  count, fussing about the chair, warm only by the line the hearts land on.
+- Levelled to -19 dBFS on the 75th percentile of speech, the same figure as
+  every other mouth in the game.
+- `cut.py --verify` is green on all three and needs no `SPELLINGS` entries: he
+  says no numbers and no names, which is what fills that table for everyone
+  else.
 
 ## Music
 - Author: **generated with ElevenLabs** (text-to-music)

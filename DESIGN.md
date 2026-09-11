@@ -578,7 +578,7 @@ unlocks.
   all twenty-three lines are cut with ElevenLabs v3, the read tagged per cue
   rather than tuned on a slider, and the subtitle holds for as long as the
   recording runs. `ahmed/taunts.gd` is the
-  whole of what he says; `game/bosses/boss_lines.gd` decides when, and no
+  whole of what he says; `game/enemies/enemy_lines.gd` decides when, and no
   other boss has lines yet.
   **Still to add**: the enormous chair.
 - [x] **MOSTAFA — 144 HP, F7.** Boxing rhythm fight; his attack is the cycle

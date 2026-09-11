@@ -261,6 +261,25 @@ second time before adding a rule for it.
 The audio rules themselves - 48 kHz mono, no ffmpeg, levelled on speech rather
 than on peaks - are in cut.py's own header and in CREDITS.md.
 
+### It is not just bosses any more
+
+`cut.py social_media` and `cut.py call_center` cut the two enemies who mutter
+to themselves, and **not one line of cut.py changed to make that work**. A
+recipe names a voice, an output folder and a `.gd` holding `const LINES`; none
+of those ever cared whether the mouth had a health bar. That is the test the
+split was built to pass, and it passed the first time it was asked.
+
+Two things about those recipes are worth copying rather than re-deriving:
+
+- **Stability runs the opposite way to a boss's.** Ahmed's roars are at 0.0,
+  which lets the model off its leash and gives nine cues nine characters. A
+  mutterer has ONE cue and eight lines that must sound like the same person on
+  the same bad afternoon, so stability is 0.65-0.70. At a boss's setting one
+  line came back screamed and one shrugged.
+- **They are levelled at -31, not -19.** A boss is the loudest thing in his
+  room; a mutter must sit under the telegraph of the wind-up it is muttering
+  through. See game/enemies/CLAUDE.md's The mutters.
+
 ### tools/sfx - the same shape, for things that are not a voice
 
 `make.py enemies` cuts the bestiary's sounds: the mechanism in `make.py`, the

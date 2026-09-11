@@ -18,7 +18,7 @@ extends "res://tests/helpers.gd"
 ## DESIGN.md wrote for him, and the last thing anybody hears him say.
 
 const Taunts := preload("res://game/bosses/ahmed/taunts.gd")
-## The two cues that are allowed to speak over anything - see boss_lines.gd.
+## The two cues that are allowed to speak over anything - see enemy_lines.gd.
 const FORCED := ["spot", "concede"]
 
 var _boss: Node2D

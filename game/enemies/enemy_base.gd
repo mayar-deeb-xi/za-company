@@ -80,6 +80,28 @@ class_name EnemyBase
 ## this script does.
 const EnemyAudio := preload("res://game/enemies/enemy_audio.gd")
 
+## And the things it SAYS, which arrived here by the same road on the same day
+## its sounds did: a `Lines` child naming a file of them, one line at a time,
+## a cooldown per cue, never the same line twice running, and the clip played
+## positionally. A body with no `Lines` child says nothing, with no branch
+## anywhere but `_say`.
+const EnemyLines := preload("res://game/enemies/enemy_lines.gd")
+
+## The one cue a plain enemy has, and it is unlike every cue a boss has.
+##
+## A boss's lines are ADDRESSED - he has seen you, he is swinging, he has lost
+## - so each is pinned to a moment the fight makes. This one is pinned to
+## nothing: it is what somebody says to themselves while they work, and the
+## player is overhearing an office rather than being spoken to. There is no
+## moment to fire it on, so it is polled.
+const MUTTER_CUE := "mutter"
+## How often the poll ASKS, which is not how often anything is said. The real
+## pacing is the `Lines` child's own `cooldowns`, where every other line timing
+## in the game already lives - asking often and being refused is free, and it
+## keeps this file from growing a second set of dials that would then disagree
+## with the first.
+const MUTTER_POLL := 2.0
+
 @export var max_health := 24
 ## Dealt by a completed strike, not by contact. Higher than it was when merely
 ## touching the player cost them health: a blow the player was shown coming and
@@ -131,6 +153,7 @@ enum Phase { CHASE, WINDUP, RECOVER, STAGGER }
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var _touch_area: Area2D = $Touch
 @onready var _audio: EnemyAudio = get_node_or_null("Audio")
+@onready var _lines: EnemyLines = get_node_or_null("Lines")
 
 var health := 0
 ## True on every frame this enemy is in contact with the player. Settled before
@@ -147,6 +170,9 @@ var _flash := 0.0
 ## Time spent in the current phase, and the countdown on being interruptible.
 var _phase_time := 0.0
 var _interrupt_locked := 0.0
+## Seconds until the next mutter is ASKED for. See `_ready` for why the first
+## one is random.
+var _mutter_in := 0.0
 
 
 func _ready() -> void:
@@ -155,9 +181,17 @@ func _ready() -> void:
 	# deliberately untouched: 24 / 17 / 36 are exact breakpoints on the player's
 	# combo, and a multiplier would shred them on two of the three modes.
 	contact_damage = roundi(contact_damage * Difficulty.damage_scale())
+	# The first ask is scattered across a whole cooldown, and that is the one
+	# line here that matters. Four of these spawn on the same frame with their
+	# cooldowns all at zero, so a fixed first poll makes four people say four
+	# different things simultaneously, once, and then settle into a rhythm -
+	# which sounds like a bug and cannot be heard as an office.
+	if _lines != null:
+		_mutter_in = randf_range(0.0, maxf(_lines.cue_seconds, MUTTER_POLL))
 
 
 func _physics_process(delta: float) -> void:
+	_mutter(delta)
 	if _flash > 0.0:
 		_flash = maxf(_flash - delta, 0.0)
 	if _interrupt_locked > 0.0:
@@ -372,6 +406,42 @@ func _interruptible() -> bool:
 	return phase == Phase.WINDUP \
 		and _interrupt_locked <= 0.0 \
 		and _windup_progress() < commit_fraction
+
+
+## What somebody says to themselves while they work. Polled rather than fired,
+## because unlike every other line in this game it answers to nothing that
+## happens - see MUTTER_CUE.
+##
+## It keeps going while the enemy is being hit, winding up and swinging, and
+## that is deliberate on both counts: the mutter is not a reaction, and an
+## office worker who stops complaining the moment a fight starts is an office
+## worker who was only ever scenery. Death ends it by ending the enemy.
+##
+## Most asks are refused - `enemy_lines.say()` returns {} while the cue is
+## cooling down or a line is still running - and being refused is the normal
+## case, not a failure. An enemy with no `Lines` child never asks at all.
+func _mutter(delta: float) -> void:
+	if _lines == null:
+		return
+	_mutter_in -= delta
+	if _mutter_in <= 0.0:
+		_mutter_in = MUTTER_POLL
+		_say(MUTTER_CUE)
+
+
+## One line, if this body has any for that cue and a `Lines` child at all -
+## `_sfx` below for the throat rather than the mouth, and every miss is legal
+## for the same reasons. Returns whether it actually spoke, which is what lets
+## a GRUNT stand down for a line: a grunt is a voice and so is a line, so
+## playing both is one mouth making two sounds.
+##
+## The base only SPEAKS. A boss overrides this to also put the line on screen,
+## because he is the one being listened to - an enemy muttering to itself is
+## overheard, and a subtitle would turn eavesdropping into being addressed.
+func _say(cue: String) -> bool:
+	if _lines == null:
+		return false
+	return not _lines.say(cue).is_empty()
 
 
 ## One sound, if this enemy has one by that name and an `Audio` child at all.

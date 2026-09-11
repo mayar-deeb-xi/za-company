@@ -344,6 +344,67 @@ went with the scratchpad script that made them, this one is in the repo.
 nothing, which is the way to carry a sound onto a better leveller without
 paying for it twice.
 
+## The mutters: two of them talk, and neither is talking to you
+
+`social_media` and `call_center` say things while they are alive. Nothing else
+in the bestiary does, and what makes these two worth voicing is that the line
+and the mechanic are the same joke:
+
+- **She is a wraith.** No attack, no telegraph, and standing near her costs
+  three health a second. Every one of her eight lines is about not having
+  enough time, said by the thing that is taking yours - "I just need five more
+  minutes" is her aura, described. Laura, female, and the first voice in the
+  game that is not a man shouting.
+- **He is a warden.** He deals no damage at all and instead takes four seconds
+  of your speed, and he is drawn as the most ordinary person in the building
+  because everything frightening about him is the field on the floor. So he is
+  Eric - the smooth, trustworthy hold-music voice - and **none of his lines is
+  a threat**. They are the things a call centre actually says, said kindly, by
+  somebody whose whole mechanical purpose is to make you wait. "Relax, you're
+  not going anywhere" is a reassurance and a description of the slow at once,
+  and it only lands because the seven around it are sincere. A line that
+  dropped the mask would turn him into a small boss, which is the one thing
+  this character is built not to be.
+
+**`enemy_lines.gd` moved here from `game/bosses/` on the same day and the same
+rule as `enemy_audio.gd`**, and for once the second user needed the node
+completely unchanged: one line at a time, a cooldown per cue, never the same
+line twice running, the clip loaded by path and played positionally. `_lines`
+and `_say` live on `enemy_base` now; what a boss still owns is the SUBTITLE,
+as an override of `_say` that emits `said`.
+
+That split is the whole design and it is worth stating outright: **a boss is
+addressing you, an enemy is being overheard.** A mutter therefore has no
+subtitle - four of them would fight each other for one box, and putting an
+office worker's grumble on screen turns eavesdropping into being spoken to.
+
+Three smaller things:
+
+- **The cue is polled, not fired.** Every other line in this game hangs off a
+  moment the fight makes - he swung, he was interrupted, he lost. This one
+  answers to nothing, so `enemy_base._mutter()` asks every `MUTTER_POLL`
+  (2 s) and is refused most times. The real pacing is the `Lines` child's own
+  `cue_seconds` (11 for her, 14 for him - she is heard at point blank, he
+  plants at the rim of a 48 px field), which is where every other line timing
+  already lives rather than a second set of dials here.
+- **The FIRST ask is scattered across a whole cooldown.** Four spawn on one
+  frame with their cooldowns at zero, so a fixed first poll makes the whole
+  room speak at once and then settle into a rhythm. That sounds like a bug and
+  cannot be heard as an office.
+- **It keeps going while they are being hit.** The mutter is not a reaction,
+  and an office worker who stops complaining the moment a fight starts is an
+  office worker who was only ever scenery.
+
+The lines live with the mouth that says them - `game/enemies/<id>/mutters.gd`,
+the placement rule a boss's `taunts.gd` and an NPC's conversation already
+follow - and are cut by `tools/voice/cut.py <id>`, the bosses' pipeline
+entirely unchanged. They are levelled at **-31 dBFS RMS**, twelve under a
+boss, and the number is load-bearing rather than timid: a mutter must sit
+under the warden's own telegraph at -29, because a wind-up is information the
+player needs and this is decoration. Voice carries at a lower RMS than a noise
+effect does - it lands in a band nothing else here occupies - so -31 is
+audible rather than buried, checked against the drain loop she stands in.
+
 ## Sheets: every enemy owns its own
 
 **Every enemy owns its sprite sheet**, and this is the one place enemies and the

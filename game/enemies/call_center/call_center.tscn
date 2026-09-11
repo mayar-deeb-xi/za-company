@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://game/enemies/warden_base.gd" id="1_charge"]
 [ext_resource type="SpriteFrames" path="res://game/enemies/call_center/call_center_frames.tres" id="2_frames"]
@@ -9,6 +9,7 @@
 [ext_resource type="AudioStreamWAV" path="res://game/enemies/call_center/sfx/hurt.wav" id="7_hurt"]
 [ext_resource type="AudioStreamWAV" path="res://game/enemies/call_center/sfx/stagger.wav" id="8_stagger"]
 [ext_resource type="AudioStreamWAV" path="res://game/enemies/call_center/sfx/windup.wav" id="9_windup"]
+[ext_resource type="Script" path="res://game/enemies/enemy_lines.gd" id="10_lines"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 5.0
@@ -59,3 +60,8 @@ sounds = {
 "stagger": ExtResource("8_stagger"),
 "windup": ExtResource("9_windup")
 }
+
+[node name="Lines" type="Node2D" parent="."]
+script = ExtResource("10_lines")
+lines = "res://game/enemies/call_center/mutters.gd"
+cue_seconds = 14.0

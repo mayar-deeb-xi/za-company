@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://game/enemies/wraith_base.gd" id="1_drain"]
 [ext_resource type="SpriteFrames" path="res://game/enemies/social_media/social_media_frames.tres" id="2_frames"]
@@ -7,6 +7,7 @@
 [ext_resource type="AudioStreamWAV" path="res://game/enemies/social_media/sfx/die.wav" id="5_die"]
 [ext_resource type="AudioStreamWAV" path="res://game/enemies/social_media/sfx/drain.wav" id="6_drain"]
 [ext_resource type="AudioStreamWAV" path="res://game/enemies/social_media/sfx/hurt.wav" id="7_hurt"]
+[ext_resource type="Script" path="res://game/enemies/enemy_lines.gd" id="8_lines"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 5.0
@@ -51,3 +52,8 @@ sounds = {
 "drain": ExtResource("6_drain"),
 "hurt": ExtResource("7_hurt")
 }
+
+[node name="Lines" type="Node2D" parent="."]
+script = ExtResource("8_lines")
+lines = "res://game/enemies/social_media/mutters.gd"
+cue_seconds = 11.0

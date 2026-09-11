@@ -1,5 +1,5 @@
 extends RefCounted
-## What Ahmed shouts, and the whole file is data - `game/bosses/boss_lines.gd`
+## What Ahmed shouts, and the whole file is data - `game/enemies/enemy_lines.gd`
 ## is the only thing that reads it, and the only thing that decides when.
 ##
 ## Lives with the mouth it comes out of, on the placement rule an NPC's own
@@ -28,7 +28,7 @@ extends RefCounted
 ## tags are not in this file because they are not what he says; they are how
 ## it was said, and they live in the generator beside the rest of the recipe.
 ##
-## Nothing here had to change for the audio to work - `boss_lines.gd` already
+## Nothing here had to change for the audio to work - `enemy_lines.gd` already
 ## played a clip and already fitted the subtitle to its length. A line whose
 ## file is missing, or a checkout before the import pass, still reads on its
 ## own time and plays nothing.
