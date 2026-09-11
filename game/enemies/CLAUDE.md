@@ -244,8 +244,9 @@ enough to be annoying is a prop that should be moved or made decor
 
 ## The types
 
-They deliberately threaten in different ways - damage, drain, and denial - so a
-room is built by mixing them rather than by adding more of the same:
+They deliberately threaten in different ways - damage, drain, denial and
+displacement - so a room is built by mixing them rather than by adding more of
+the same:
 
 - **`regular/`** - 24 HP, 10 damage on a completed strike, speed 55, sight 80,
   0.45s wind-up. Carries no script of its own: its scene runs enemy_base.gd
@@ -391,6 +392,60 @@ room is built by mixing them rather than by adding more of the same:
   proportion to the charge, and a light neutral takes that tint harder than any
   other colour tried, so the two-second warning reads on the body as clearly as
   it does on the ring.
+- **`security/`** - 48 HP, 20 damage, speed 35, sight 90, a 28 px ring, a 0.9s
+  wind-up, and it is the FOURTH archetype: the others take your health, your
+  time and your speed, and this one takes your POSITION. Its blow lands on a
+  ring around its own feet and **shoves** whoever it caught out of it, at the
+  player's `MAX_SHOVE` ceiling of 70 - about 17 px, which is a tile. Its script
+  is `brute_base.gd`.
+
+  **It is the first enemy in the game that is not the size of the cast**: a 64px
+  cell against everyone else's 32, on the terms the bosses and the NPCs already
+  had. See *Sheets* below for what that cost, which was one key.
+
+  **Almost none of it is new machinery, and that is the point the warden already
+  made.** A charge and a swing were the same shape, and so is a slam: wind up,
+  land it if it completes, recover, interruptible early and committed late. So
+  `brute_base.gd` is four things and no clock of its own - the ring is drawn
+  (`slam_ring.gd` + its shader), the blow is `_touch_strike()` doing damage and
+  then `shove()`, `_strike()` tells the floor, and `_ready` copies the Touch
+  shape's radius into the drawing. The area IS the Touch shape tuned wide, the
+  same trick the wraith's aura and the warden's field already are.
+
+  Three overrides it deliberately does NOT take, each considered and rejected:
+
+  - `_windup_needs_contact()` stays false. **A slam lands on air.** Stepping out
+    of the ring is the counterplay and has to cost nothing but timing - the
+    warden returns true because a slow has to HOLD you, which is the opposite
+    bargain, and copying it here would make walking away impossible rather than
+    free.
+  - `_windup_tint()` stays the base's amber. The warden overrides it because
+    violet says *this is not a hit*; this is a hit, so the default is already
+    telling the truth.
+  - `_windup_state()` stays `attack`. The warden must not mime a strike because
+    it never lands one. This one does.
+
+  **Warm, not cold, and the rule it bends is worth stating.** The hub's
+  scrubbers established that warm burns and cold moves you, and this does both.
+  Warm wins because the damage is the headline and the push is its consequence:
+  a cold ring would promise the scrubber's bargain, which is the opposite trade
+  (6 damage, all push, no telegraph). The two now bracket the same mechanic from
+  either end.
+
+  **Everything the ring draws stays inside `radius`, including the landing
+  wave**, which is charge_ring's rule kept rather than a stylistic choice: a
+  shockwave rolling out past the rim would teach the player that standing just
+  outside it is unsafe, and the whole value of a drawn area is that it cannot
+  lie about its reach. `tests/test_slam.gd` checks the radius against the Touch
+  shape for exactly that reason - a retune in the editor that moves the hitbox
+  and leaves the drawing behind is a bug nobody can see.
+
+  Two numbers bite when a body gets bigger, and both are the same one:
+  `stop_distance` is bounded on **both** sides, and a 9 px body moves the lower
+  bound. It must exceed the two radii (9 + the player's 5 = 14, not the usual
+  10) or the enemy never stops short of grinding, and stay under its own Touch
+  reach (28 + 5 = 33) or it parks outside its own ring and nothing happens. 20
+  clears both; the guard's 12 would fail the first.
 
 ## The noise: every enemy owns its sounds, exactly as it owns its sheet
 
@@ -464,7 +519,7 @@ one boss, hellfire holds four guards, two wraiths and a warden, and seven
 bodies at a boss's level is a wall rather than a fight.
 
     boss ordinary blow   -19 RMS      the number everything else is set from
-    enemy hit            -22 RMS      3 under it, and there are six of them
+    enemy hit            -22 RMS      3 under it, and there are seven of them
     enemy telegraph      -29 RMS      7 under its own impact, the boss's ratio
     the drain loop       -30 RMS      continuous, so it lives near the floor
 
@@ -554,6 +609,49 @@ pile every enemy's future moves into one file. So each has
   something to walk around as on day one. It is a starting point, exactly like
   the level scenes build_levels.gd writes.
 - *Slicing* runs every time, on whatever sheet is actually on disk.
+
+**An enemy may be bigger than the cast, and it costs one key.** A roster entry
+carrying `frame` is cut at that cell instead of 32; `security` is the first and
+says 64, the size the bosses and the NPCs already slice at. Nothing in the
+pipeline had to learn anything - `character_art.slice()` has taken a cell size
+since the first boss - so the whole change is that build_enemies.gd passes the
+entry's number instead of the default, and seeds through `tools/enemy_art.gd`
+on the way.
+
+`tools/enemy_art.gd` is a straight 2x of the restyled body, and it is
+deliberately **not** `tools/npc_art.gd` bubbled up. The two do the same
+arithmetic and answer different briefs: an NPC is twice the player's height *in
+a robe no wider than the player*, so npc_art rebuilds the figure - robe first,
+head blended over it, hem swaying. A big enemy has no brief past "bigger": it
+still swings the sword the body came with, so every row including the attack
+rows has to survive, and the only honest operation is a doubling. One file
+serving both would carry a robe parameter the enemy always passes empty and a
+keep-the-attack-rows flag the NPC always passes false.
+
+Two things about it are worth knowing before adding a second big enemy:
+
+- **The ground line is the trick, and it is npc_art's rule.** A 32px enemy
+  draws at sprite offset `-8` and a 64px one at `-24`, which puts the cell's
+  bottom edge in the same place relative to the body origin in both. So a
+  doubled body keeps the feet's ORIGINAL clearance from the bottom of its cell,
+  never a doubled one - and lands on the same floor a guard stands on. Get it
+  wrong and the enemy hovers. `tools/enemy_art.gd` keeps the gap at 8 px on
+  every row of every direction; the seeded `security.png` measures the same 8
+  as `regular.png` does.
+- **Rows are trimmed before the doubling, never after.** `_to_layout()` cuts a
+  seed to the rows its layout names and measures in 32px units, so a sheet
+  enlarged first would be trimmed to less than a third of itself. The order in
+  build_enemies.gd is restyle, trim, enlarge.
+- **The 1px outline arrives 2px thick**, because nearest-neighbour 2x turns
+  every source pixel into a 2x2 block. That is the same accepted debt
+  `npc_art.gd` takes at `head_scale` 2, and on a body this size it reads as
+  weight rather than as a mistake. It is also a SEED: the PNG is hand-owned
+  from the moment it exists, so the fix is to redraw into it, never to change
+  the tool. A 1.5x enemy was the alternative and was dropped here rather than
+  attempted - nearest-neighbour 1.5 puts some source pixels on two destination
+  pixels and their neighbours on one, which destroys the outline that is the
+  whole silhouette. 2x is exact; 1.5x wants a hand-painted sheet on the bosses'
+  model.
 
 **`game/enemies/src/body_cc0.png` is a frozen copy of the pristine CC0 sheet,
 and the copy is the whole point.** The cast's `game/player/src/character_cc0.png`

@@ -21,11 +21,13 @@ extends Node
 ## one that goes stale when a file moves. So the catalogue lives here.
 const MENU := "res://assets/music/menu_loop.wav"
 
-## What a floor plays when nobody standing on it has a theme of his own. A boss
-## names his own track on his scene and game.gd plays that instead (see
-## game/bosses/CLAUDE.md); this is the bed under every other floor, and it is a
-## const here for the same reason MENU is - the alternative is the path spelled
-## out in game.gd, which is the one that goes stale when the file moves.
+## What a floor plays when nobody standing on it has a theme of his own AND the
+## floor names none either. A boss names his own track on his scene and game.gd
+## plays that instead (see game/bosses/CLAUDE.md); a floor names one in its
+## biome and game.gd plays that (the lobby, and the last two); this is what is
+## left, which is nine floors of twelve. It is a const here for the same reason
+## MENU is - the alternative is the path spelled out in game.gd, which is the
+## one that goes stale when the file moves.
 const DEFAULT := "res://assets/music/level_loop.wav"
 
 ## Trim over the level baked into the file. The menu export peaks at -0.5 dBFS,

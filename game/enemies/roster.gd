@@ -180,4 +180,48 @@ const ENEMIES := [
 			"hair_style": "short_curly", "beard": true, "build": "wide",
 		},
 	},
+	{
+		# The FOURTH archetype, and the first enemy in the game that is not the
+		# size of the cast. The other three take your health, your time and your
+		# speed; this one takes your POSITION - a slam that lands as a ring
+		# around its own feet and throws you out of it. Which makes the name the
+		# mechanic again, the way the two mutterers already are: social media
+		# drains your time, the call centre puts you on hold, and security
+		# removes you from the premises.
+		#
+		# **`frame` is the only new key in this file**, and it is why it exists:
+		# 64px cells, the size the bosses and the NPCs already slice at, so
+		# tools/enemy_art.gd doubles the seed and character_art.slice() cuts it
+		# at the size it has taken since the first boss. A 1.5x enemy was the
+		# other option and was dropped for a reason worth keeping written down:
+		# nearest-neighbour 1.5 puts some source pixels on two destination
+		# pixels and their neighbours on one, which wrecks the 1px outline that
+		# is the whole silhouette. 2x is exact.
+		#
+		# He keeps the full nine-row CC0 layout - unlike every other reskin on
+		# this floor band, he really does swing something, so the attack rows
+		# are rows he can reach.
+		#
+		# The look is the company uniform gone DARK. The office boy wears the
+		# teal service polo; this is the same building's night shift, in
+		# charcoal over black, and the colour is chosen against the floor he
+		# debuts on rather than in the abstract: the marble hall is pale and
+		# tops out near white, so the one thing that must never happen is a big
+		# body that reads as a smudge. Dark on pale is the whole of it, and it
+		# is the same argument HR's white dress needs in the other direction.
+		"id": "security",
+		"src": "res://game/enemies/security/src/security.png",
+		"frames": "res://game/enemies/security/security_frames.tres",
+		"frame": 64,
+		"recipe": {
+			"hair": "1e1a18", "hair_light": "332b26",   # black, cropped
+			"skin": "b08258",
+			"eye": "1a1410",
+			"shirt": "2b3340", "shirt_dark": "161b24",  # charcoal uniform
+			"pants": "1b1f28", "pants_dark": "0d1016",  # black trousers
+			# Wide and bearded, like the warden: the widest silhouette in the
+			# bestiary, at twice the height of anything else in the room.
+			"hair_style": "short_curly", "beard": true, "build": "wide",
+		},
+	},
 ]

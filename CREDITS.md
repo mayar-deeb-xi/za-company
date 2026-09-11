@@ -332,8 +332,9 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   half-time, which is the same grid Mostafa's sits on and therefore Silverman's
   0.5 s wind-up on the beat rather than drifting against it),
   `assets/music/menu_loop.wav` (the front end),
-  `assets/music/level_loop.wav` (the bed under every floor without a boss on
-  it - see below), `assets/music/ahmed_theme_loop.wav` (Ahmed's fight, floor 4)
+  `assets/music/level_loop.wav` (the bed under the nine floors that name no
+  track of their own - see below), `assets/music/lobby_loop.wav` (floor 1
+  alone, which was the bed until the building got a faster one), `assets/music/ahmed_theme_loop.wav` (Ahmed's fight, floor 4)
   and `assets/music/mostafa_theme_loop.wav` (Mostafa's, the gym on floor 7 -
   industrial cyberpunk techno at 120 BPM, which is a beat every 30 frames and
   therefore his 0.25 s jab on the grid rather than drifting against it)
@@ -372,16 +373,42 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   one read in the fight - at 20.5. He therefore sits 3 dB under Ahmed at
   -16.1 dBFS RMS, peak -5.2, and that is the number doing a job rather than a
   mismatch.
-- **`level_loop.wav` is the bed, and it is levelled as one.** Calm cyberpunk
-  ambience at 90 BPM - deliberately NOT Mostafa's grid, because the bed is the
-  one track that is under the player for hours rather than for a fight, and the
-  brief it was regenerated to was "cyberpunk, but calmer". A beat is 40 frames
-  at 60 fps, so it is still a whole number of them. It is levelled to
+- **`level_loop.wav` is the bed, and it is the one export that arrived
+  already loopable.** Driving cyberpunk synthwave at **128.00 BPM** - four on
+  the floor, off-beat 16th hats, a detuned saw bassline - and the reason it
+  came back clean is the ASK rather than luck: it was asked for as a single
+  continuous **32-bar** groove at constant intensity, no intro, no build, no
+  drop, no fade, last bar as loud and as busy as the first. 32 bars at 128 BPM
+  is 60.000 s, which is exactly what ElevenLabs exports, so there was nowhere
+  to put an ending. It has neither of the two failures the tracks below have:
+  the last 8 s alternate +2.0 / -2.3 dB about the body, on-beat against
+  off-beat, right to 59.75 s, and a low-band sweep put the grid at 128.00 BPM
+  to within a millisecond over 30 bars. So nothing was cut back to a bar line -
+  the whole file WAS the loop - and only the usual 12 ms equal-power crossfade
+  was needed, taking the seam step from **39526 of 32768 to 706**, which is
+  this track's own mean sample-to-sample step. 59.988 s, 2,879,424 frames.
+- **And then it came down 6.5 dB, which is the part that was not optional.**
+  The export sits at -12.80 dBFS RMS: louder than the menu, louder than
+  Mostafa, louder than Ahmed - i.e. the bed under nine ordinary floors would
+  have been the loudest thing in the game, and walking onto a boss floor would
+  have read as the music getting SMALLER. It is levelled **-6.48 dB to
+  -19.28 dBFS RMS**, peak -7.35, which is the number the previous bed sat at
+  and therefore the number every masking figure below was measured against -
+  including HR's -19 dBFS speech level in the lobby. Excitement here is the
+  tempo and the arrangement, not the fader. Post-gain the seam step is 335
+  against a mean step of 367, so the join stays under the music's own motion.
+- **`lobby_loop.wav` is floor 1's, and was the bed.** Calm cyberpunk ambience
+  at 90 BPM - deliberately NOT Mostafa's grid. It was written as the bed, on
+  the brief "cyberpunk, but calmer", and it is now the tutorial floor's alone:
+  the lobby is where a player is still finding out which key swings, and a
+  track that insists on a pace is a track arguing with the room. A beat is 40
+  frames at 60 fps, so it is still a whole number of them. It is levelled to
   **-19.28 dBFS RMS, which is the level the previous bed sat at**, and that is
   a target rather than a coincidence: everything below about masking was
   measured against that number, so matching it is what lets a track be swapped
   without re-deriving the paragraph. It stays the quietest of the four by some
-  way - 4.7 dB under the menu, 6.2 under Ahmed and 3.2 under Mostafa. That gap is the point rather than an accident, and it is
+  way, and the bed that replaced it is levelled to the same number for the
+  same reason - 4.7 dB under the menu, 6.2 under Ahmed and 3.2 under Mostafa. That gap is the point rather than an accident, and it is
   doing two jobs. It is the escalation - walking onto a boss floor has to read
   as the music getting bigger - and it is the headroom, because this is the
   track that will still be playing when ordinary floors finally get sound
@@ -393,10 +420,11 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   the first place to listen if her induction ever sounds like it is competing
   with the room rather than being said in it.
 - Untouched exports go in `assets/music/src/` on the same terms as every other
-  `src/` here. `menu_loop`, `mostafa_theme_loop` and `level_loop` have one;
+  `src/` here. `menu_loop`, `mostafa_theme_loop`, `lobby_loop` and
+  `level_loop` have one;
   `ahmed_theme_loop` is currently played as it came out of the generator, so
   re-trimming its loop seam means keeping a copy there first.
-- **`level_loop` needed the cut before it could take the crossfade at all,
+- **`lobby_loop` needed the cut before it could take the crossfade at all,
   and it needed it TWICE** - the track was regenerated to a calmer brief and
   the replacement export ends exactly the way the first one did. The last
   2.6 s fades away to -85 dBFS while the head starts cold at full level, so as

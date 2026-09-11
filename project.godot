@@ -21,6 +21,7 @@ Settings="*res://autoload/settings.gd"
 Display="*res://autoload/display.gd"
 Difficulty="*res://autoload/difficulty.gd"
 Music="*res://autoload/music.gd"
+UiSound="*res://autoload/ui_sound.gd"
 
 [display]
 

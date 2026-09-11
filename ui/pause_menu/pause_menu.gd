@@ -46,6 +46,10 @@ func _input(event: InputEvent) -> void:
 	# dismiss the death screen and leave a paused game with no way back in.
 	if _game_over:
 		return
+	# After the guard above, so the one key the death screen swallows is the
+	# one key that stays silent: a chime on a press that did nothing teaches
+	# the player the sound does not mean anything happened.
+	UiSound.back()
 	if is_paused():
 		resume()
 	else:

@@ -14,6 +14,14 @@ const BIOME := {
 	# rather than gold, so the two read apart while both are still stone.
 	"ramp": ["141a24", "2f3a4a", "56637a", "8c99ad", "c6cfdb", "f2f5f9"],
 	"accent": "45c98a",
+	# FLOOR 1 HAS ITS OWN TRACK, and it is the slower of the two beds. The
+	# building above runs on Music.DEFAULT, which is a hard 128 BPM thing; this
+	# room is the tutorial, where a player is finding out which key swings, and
+	# music that insists on a pace is music arguing with the room. The same
+	# mechanism the finale uses two floors from the end (see
+	# executive_floor.gd) - a floor's track rather than a boss's, so it covers
+	# the whole room and hands over at the door.
+	"music": "res://assets/music/lobby_loop.wav",
 	# Below 1.0 lifts the mid-tones: polished stone under too many downlights.
 	"gamma": 0.80,
 	# Bright band, but stopping short of the ramp's pure white - a floor at the

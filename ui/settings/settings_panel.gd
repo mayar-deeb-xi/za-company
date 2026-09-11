@@ -36,6 +36,9 @@ func _input(event: InputEvent) -> void:
 		return
 	# Swallow it, or the pause menu would treat the same press as unpause.
 	get_viewport().set_input_as_handled()
+	# Closing by the Back button is a press and sounds like one; closing by
+	# Escape is a back. The cue is named after what the player did.
+	UiSound.back()
 	close()
 
 

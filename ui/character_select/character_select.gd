@@ -54,6 +54,9 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
+		# Said here rather than in `_go_back()`, which the Back BUTTON also
+		# calls - and a button press already makes its own noise.
+		UiSound.back()
 		_go_back()
 
 

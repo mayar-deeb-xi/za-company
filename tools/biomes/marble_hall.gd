@@ -42,6 +42,29 @@ const BIOME := {
 		{"type": "office_boy", "at": Vector2(472, 168)},
 		{"type": "office_boy", "at": Vector2(408, 236)},
 		{"type": "office_boy", "at": Vector2(476, 240)},
+		# And one `security` standing in the hole the east gang was already
+		# mirrored about - the FOURTH archetype's first appearance in the game.
+		#
+		# The two gangs were the fix for a floor that played as a queue of
+		# duels, and they worked; what they could not fix is that both gangs are
+		# the same gang. Twelve `office_boy` and nothing else was the most
+		# repeated single enemy on any floor in the building, so the west knot
+		# stays exactly as it is and the east one gets an anchor: the player
+		# meets a plain crowd, learns it, and then meets the same crowd with
+		# something in it that the answer to a crowd does not work on.
+		#
+		# It goes in the EAST knot rather than the west because the west is met
+		# first and should stay the plain one, and it goes in the MIDDLE of it
+		# because a slam is an area - out on the edge it is a big man swinging
+		# at nobody, and at the centre its ring overlaps the ground all four
+		# boys are standing on, which is the whole argument for mixing kinds of
+		# threat rather than adding more of one.
+		#
+		# (440, 200) is legal on the one placement rule that binds here: his
+		# sight is 90, the door lane is x 246-300, and 440 - 90 = 350, clear of
+		# the lane's east edge by 50 px. The straight walk between the doors is
+		# still safe, which is what the flow suite checks.
+		{"type": "security", "at": Vector2(440, 200)},
 	],
 	# Two beats rather than one, and they arrive from opposite doors. The first
 	# is the old one: in by the NORTH door, the way OUT, so half the room is

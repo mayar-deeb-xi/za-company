@@ -18,7 +18,7 @@ regular down to the last frame of its wind-up, and it must not sound like it:
 the regular swings a sword, the office boy THRUSTS a wrench (that is drawn
 into his sheet, see his section in game/enemies/CLAUDE.md), and a thrust that
 rings like a blade is the animation telling the truth while the audio lies.
-That is the whole content of this file - six characters, not three.
+That is the whole content of this file - seven characters, not four.
 
 ## The cues are the base's, and they arrive by existing
 
@@ -31,7 +31,9 @@ from the fight rather than from a choice made here:
 - the wraith and its reskin opt out of the attack cycle entirely
   (`_attacks()` false), so they have no wind-up to telegraph, no blow to land
   and - the thing that surprises - nothing to STAGGER. Three cues each.
-- everything else runs the full cycle. Five cues each.
+- everything else runs the full cycle. Five cues each. `security` is the one
+  entry here that is not a reskin of another - the fourth archetype - so its
+  five are written from the fight rather than adapted from a sibling's.
 
 ## Levels are relative, and the whole room is the reason
 
@@ -43,7 +45,7 @@ warden, and seven bodies mixed at a boss's level is a wall rather than a
 fight.
 
     boss ordinary blow   -19 RMS      (game/bosses/CLAUDE.md, The noise)
-    enemy hit            -22 RMS      3 under it, and there are six of them
+    enemy hit            -22 RMS      3 under it, and there are seven of them
     enemy telegraph      -29 RMS      7 under its own impact, the boss's ratio
     the drain loop       -30 RMS      continuous, so it lives near the floor
                                       (Ahmed's idle fire is -34)
@@ -279,6 +281,73 @@ CAST = {
 			"prompt": "a desk phone dragged off a desk, handset clattering "
 				"across the floor and the line going to a flat dead tone",
 			"seconds": 1.6,
+		},
+	},
+	# The night shift, and the only enemy in the bestiary that is not a reskin
+	# of something. He is twice everyone else's height and his blow lands on a
+	# ring of floor rather than in front of him, so the one thing every cue
+	# here has to carry is WEIGHT.
+	#
+	# **Weight is spectrum, not level.** He stays on the shared per-cue levels
+	# in LEVELS above - a bigger enemy mixed louder than the rest is how a
+	# crowd turns into a wall, which is the whole argument of this file's
+	# header, and he debuts standing in the middle of four office boys. So
+	# every prompt below asks for LOW content and long decay instead: a deep
+	# body under the impact, boots rather than shoes, a chest rather than a
+	# throat. At the same -22 RMS that reads as bigger, which is what was
+	# wanted, and it costs the room nothing.
+	#
+	# He is also the one who carries a radio, and it is doing a job rather than
+	# being set dressing: his wind-up and his death are the two moments the
+	# player needs to tell him apart from the crowd he is standing in, and a
+	# squelch is the one sound in the room that belongs to nobody else.
+	"security": {
+		"windup": {
+			# Under the 0.9 s wind-up with the same margin the other two
+			# telegraphs take (0.45 -> 0.40, 2.0 -> 1.90). It rises the whole
+			# way and must not resolve: the impact is the NEXT cue, and a
+			# telegraph that lands its own punch has warned about nothing.
+			"prompt": "a very large man hauling both arms up to slam the "
+				"floor, heavy boots planting wide on tile, a deep chest "
+				"inhale and a low leather creak rising the whole way, one "
+				"short radio squelch, no impact at the end",
+			"seconds": 1.4, "limit": 0.80,
+		},
+		"hit": {
+			# The slam, and the biggest single impact in the bestiary. "On the
+			# very first instant" is the house rule and matters most here: it
+			# fires on the frame the ring lands, and a slow transient on a
+			# sound this long reads as the blow arriving late.
+			"prompt": "an enormous body slamming both fists down onto a hard "
+				"floor, one huge deep concussive boom landing on the very "
+				"first instant with a sharp crack on top of it, a long low "
+				"rumble rolling outward and away, single hit",
+			"seconds": 1.4,
+		},
+		"hurt": {
+			# Chestier and lower than the guard's. Same cue, a bigger man.
+			"prompt": "one short deep winded grunt from a very large man, "
+				"low in the chest, a heavy vest and belt shifting with it, "
+				"one syllable",
+			"seconds": 0.8,
+		},
+		"stagger": {
+			# His slam broken before it lands, which is the counterplay the
+			# interrupt rules exist for - so it has to sound like something
+			# STOPPING, not like something hitting.
+			"prompt": "a huge wind-up broken off, heavy boots skidding and "
+				"scuffing on tile as a big man is knocked off balance, one "
+				"grunt, everything cut short on the very first instant",
+			"seconds": 1.0,
+		},
+		"die": {
+			# The heaviest fall in the game, and the one that should be
+			# audible across the room he was anchoring.
+			"prompt": "a very heavy man going down onto a hard floor, one "
+				"enormous dead-weight thud with a deep low body under it, a "
+				"belt and radio clattering away and a last burst of radio "
+				"static cutting out",
+			"seconds": 1.8,
 		},
 	},
 }

@@ -1,6 +1,8 @@
 extends "res://tests/helpers.gd"
 ## The last two floors share a track, and the door between them does not
-## restart it.
+## restart it. Plus the rule that pair is only an instance of, which floor 1
+## joined the day the lobby got a bed of its own: a floor may name a track, and
+## the ones that do are named here and nowhere else.
 ##
 ## Its own suite because it is the first thing in this project that is checked
 ## ACROSS a door rather than inside a room: the whole claim is that one file
@@ -35,11 +37,18 @@ const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
 const EXEC := "res://game/levels/executive_floor/executive_floor.tscn"
 const PENTHOUSE := "res://game/levels/khaled_office/khaled_office.tscn"
 const FINALE := "res://assets/music/finale_loop.wav"
+const LOBBY := "res://assets/music/lobby_loop.wav"
 
-## The floors that carry a track of their own. The rest of the building runs on
-## Music.DEFAULT, and this pair being exactly the last two is the rule rather
-## than a list - a third floor quietly taking the finale's music fails below.
-const SCORED := ["executive_floor", "khaled_office"]
+## The floors that carry a track of their own, and what each one carries. The
+## rest of the building runs on Music.DEFAULT. Written as a map rather than a
+## list because there are now two answers to "which track": floor 1 has a bed
+## of its own, and the last two share the finale. A third floor quietly taking
+## either of them - or the lobby's leaking upstairs - fails below.
+const SCORED := {
+	"lobby": LOBBY,
+	"executive_floor": FINALE,
+	"khaled_office": FINALE,
+}
 
 ## A door transition is two fades plus travel (~40 frames), and a handoff
 ## between two tracks costs Music.FADE_SECONDS (1.2 s = 72) more on top,
@@ -50,7 +59,11 @@ const SCORED := ["executive_floor", "khaled_office"]
 ## frames this suite spends crossing a door.
 const SEEK_TO := 30.0
 
-var _bed := ""
+## What the floor below the finale was playing, so the change at its door can
+## be shown to be a change. Not named `_bed`: the floor below is the LOBBY in
+## this suite's walk, and the lobby has not played the bed since floor 1 got a
+## track of its own.
+var _below := ""
 var _pos_before := -1.0
 var _pos_after := -1.0
 
@@ -64,19 +77,19 @@ func _tick(frame: int) -> void:
 
 		# --- an ordinary floor, which is ten of the twelve -------------------
 		140:
-			_bed = _music_track()
-			_check("lobby: an ordinary floor plays the building's bed (%s)"
-				% _bed.get_file(), _bed == _default_track())
-			_check("lobby: and names no track of its own",
-				String(_level().get("music")) == "")
+			_below = _music_track()
+			_check("lobby: floor 1 plays the track its biome names (%s)"
+				% _below.get_file(), _below == LOBBY)
+			_check("lobby: which is not the bed the other nine floors run on",
+				_below != _default_track())
 			_travel(EXEC)
 
 		# --- the executive floor, where the finale starts --------------------
 		300:
 			_check("exec: the floor named its own track and got it (%s)"
 				% _music_track().get_file(), _music_track() == FINALE)
-			_check("exec: which is not the bed the floor below was playing",
-				_music_track() != _bed)
+			_check("exec: which is not what the floor below was playing",
+				_music_track() != _below)
 			_seal()
 			# SEEKED rather than merely read, and that is what makes the check
 			# below mean anything. Under the dummy driver a headless run mixes
@@ -157,15 +170,23 @@ func _scored() -> void:
 		room.free()
 	var wrong: Array[String] = []
 	for name in CHAIN:
-		var want: String = FINALE if SCORED.has(name) else ""
+		var want: String = SCORED.get(name, "")
 		if carried[name] != want:
 			wrong.append("%s %s" % [name,
 				"silent" if carried[name] == "" else carried[name].get_file()])
-	_check("chain: the finale is on the last two floors and nowhere else (%s)"
+	_check("chain: three floors name a track and the other nine do not (%s)"
 		% ("the whole chain" if wrong.is_empty() else ", ".join(wrong)),
 		wrong.is_empty())
-	_check("chain: and it is the last two, not merely two (%s)"
-		% ", ".join(SCORED), SCORED == CHAIN.slice(CHAIN.size() - 2))
+	# The finale's two are the LAST two, and the lobby's one is the FIRST. Both
+	# halves matter: a track that is meant to carry the end of the game into
+	# the end of the game has to sit at the end of the chain, and floor 1's is
+	# the tutorial's and belongs nowhere else.
+	var scored: Array = SCORED.keys().filter(func(n: String) -> bool:
+		return SCORED[n] == FINALE)
+	_check("chain: and the finale's two are the last two, not merely two (%s)"
+		% ", ".join(scored), scored == CHAIN.slice(CHAIN.size() - 2))
+	_check("chain: while the lobby's own is floor 1 and nowhere else",
+		SCORED.get(CHAIN[0], "") == LOBBY)
 
 
 ## Music.DEFAULT, read off the autoload rather than spelled out here: the bed's

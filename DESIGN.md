@@ -17,7 +17,7 @@ comedy — these are real colleagues; jokes stay warm, never mean.
 Story is delivered as one-line quips by Dominique at doors. No cutscenes until
 the ending.
 
-## Enemies — reskins of the three existing archetypes
+## Enemies — three reskins, and one new archetype
 
 The three company teams map 1:1 onto the existing enemy types. Mechanics,
 numbers and scripts are UNCHANGED — new sheets, names and telegraph flavor
@@ -31,6 +31,45 @@ only. Each gets its own folder + sheet seeded from the frozen body via
 | `call_center` | warden           | 36 | headset; charge ring reads as a spreading "on hold" circle |
 
 HP stays on combo breakpoints (4 / 3 / 6 hits) — difficulty never scales HP.
+
+### The fourth archetype — `security`
+
+The one enemy in the bestiary that is NOT a reskin of something, and the
+exception is earned rather than allowed: three archetypes threaten with damage,
+drain and denial, and a floor is built by mixing kinds of threat. Adding more of
+any of those three makes rooms longer, not different.
+
+| id         | built on           | HP | flavor |
+|------------|--------------------|----|--------|
+| `security` | *new* — the brute  | 48 | the building's night shift: the company uniform gone dark, charcoal over black, twice everyone else's height. Winds up for the better part of a second and slams the floor — a ring around his own feet that costs 20 and THROWS you out of it |
+
+**He takes your POSITION**, which no enemy did before: the push is `shove()`, the
+fourth way the world reaches the player, built for the hub's floor scrubbers and
+until now used by nothing that fights back. The two now bracket the same
+mechanic from either end — a scrubber is 6 damage and all push with no
+telegraph, and this is a full blow, the same push, and nearly a second of
+warning.
+
+Two numbers carry the design and neither is round:
+
+- **48 HP** is the eighth rung of the combo and *exactly two heavies*. He is the
+  one body in the game the charged spin was built for and still cannot one-shot,
+  which is what makes the heavy the right answer to him rather than the only
+  one. `tests/test_slam.gd` reads both off `player.gd` so retuning either side
+  fails there.
+- **90 px sight**, which buys him his own placement band around the door lane
+  (x ≤ 156 or x ≥ 390) and, more to the point, keeps him slow AND short-sighted.
+  At speed 35 against the player's 90 he is always outrunnable: the threat is
+  that he is standing in the way, not that he catches you.
+
+He is the first enemy drawn at **64px**, the cell the bosses and the NPCs
+already use. That cost one `frame` key in the roster and one seeder
+(`tools/enemy_art.gd`); 1.5× was considered and dropped, because
+nearest-neighbour 1.5 wrecks the 1px outline that is the whole silhouette.
+
+Still to build: his own sheet drawn past the seed (the slam wants an overhead
+raise, not the seed's sword swing), his sounds, and the ORIGINAL he is a reskin
+of — `bailiff`, for hellfire and up, by the rule below.
 
 ### Who stands on which floor
 
@@ -48,7 +87,7 @@ are counted in):
 | 3 | call_center | 9 | 2 `call_center` + 7 `office_boy` |
 | 4 | ahmed_office | 0 | boss arena - his adds are a beat, see below |
 | 5 | the_hub | 8 | 1 `call_center` + 4 `office_boy` + 3 `social_media` |
-| 6 | marble_hall | 8 | 8 `office_boy`, two gangs of four |
+| 6 | marble_hall | 9 | 8 `office_boy`, two gangs of four + 1 `security` at the heart of the east gang |
 | 7 | innovation_lab | 9 | 5 `office_boy` + 3 `social_media` + 1 `call_center` |
 | 8 | conflict_resolution | 0 | boss arena - his adds are a beat, see below |
 | 9 | asset_recovery | 10 | 10 `office_boy`, four knots |

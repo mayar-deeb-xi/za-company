@@ -1,5 +1,5 @@
 extends "res://tests/helpers.gd"
-## What the bestiary sounds like: that all six own the cues their archetype can
+## What the bestiary sounds like: that all seven own the cues their archetype can
 ## actually reach, that every declared stream resolves to a real file, that the
 ## wraith's drain is a sealed LOOP rather than a one-shot with a flag on it,
 ## and that a death sound outlives the body that made it.
@@ -37,6 +37,10 @@ const CAST := {
 	"office_boy": MELEE,
 	"warden": MELEE,
 	"call_center": MELEE,
+	# The fourth archetype. On the melee contract like every other body that
+	# runs the full cycle - being twice their size changes what he sounds like,
+	# not which moments he has to sound at.
+	"security": MELEE,
 	"wraith": DRAINER,
 	"social_media": DRAINER,
 }
@@ -63,7 +67,7 @@ func _tick(frame: int) -> void:
 		17:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
 
-		# ---- The contract, read off the six scenes on disk. Every one of them
+		# ---- The contract, read off the seven scenes on disk. Every one of them
 		# is instanced for real rather than parsed, because what is under test
 		# is what `enemy_audio._ready()` makes of the dictionary, not what the
 		# dictionary says.

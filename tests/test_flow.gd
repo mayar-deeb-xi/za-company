@@ -11,12 +11,18 @@ extends "res://tests/helpers.gd"
 ## floor's leg asks it whether the lock is currently on.
 const BossDoor := preload("res://game/levels/boss_door.gd")
 
-## Every floor without a boss on it plays this one, and the same copy of it:
-## the bed is handed from room to room rather than restarted at each door.
+## Nine floors of twelve play this one, and the same copy of it: the bed is
+## handed from room to room rather than restarted at each door.
 const BED := "res://assets/music/level_loop.wav"
 
-## How far into the bed the studio was, read at its door and checked again at
-## the next one. A restart would put this back to nearly nothing.
+## Floor 1's own, and the only track in the building below the finale that is a
+## FLOOR's rather than a boss's. It is here so the door out of the lobby is a
+## real handoff - two different files, one player - rather than the no-op every
+## other ordinary door is.
+const LOBBY := "res://assets/music/lobby_loop.wav"
+
+## How far into the bed the hub was, read at its door and checked again at the
+## next one. A restart would put this back to nearly nothing.
 var _bed_position := 0.0
 
 
@@ -166,14 +172,15 @@ func _tick(frame: int) -> void:
 			# frames after entering at 26, comfortably past Music.FADE_SECONDS -
 			# a fade that never completed, or a handoff that never fired, would
 			# leave the menu track sitting here instead.
-			_check("music: the menu hands the lobby its bed (%s)"
+			_check("music: the menu hands the lobby its own track (%s)"
 				% ("<silent>" if _music_track() == "" else _music_track()),
-				_music_track() == BED)
-			# Sealed to a real end, not to frame 0 - see test_menu.gd. The bed
-			# plays on nine of the twelve floors, so it is the track with the
-			# most to lose from a loop that wraps before it has played anything.
+				_music_track() == LOBBY)
+			# Sealed to a real end, not to frame 0 - see test_menu.gd. Checked
+			# on whatever is playing rather than on one named file, so both beds
+			# are covered by the one check: this is the lobby's, and the
+			# building's is the same check at the hub.
 			var bed := null if _music() == null else _music().stream as AudioStreamWAV
-			_check("music: the bed is sealed as a loop with a real end (%d)"
+			_check("music: the lobby's track is a loop with a real end (%d)"
 				% (0 if bed == null else bed.loop_end),
 				bed != null and bed.loop_mode == AudioStreamWAV.LOOP_FORWARD
 					and bed.loop_end > 0)
@@ -265,9 +272,11 @@ func _tick(frame: int) -> void:
 			_check("title: walking through a door announces the new room (got '%s' at %.2f)"
 				% [_title_text(), _title().modulate.a],
 				_title_text() == "THE CONTENT STUDIO" and _title().modulate.a == 1.0)
-			# Noted here, tested at the next door: two ordinary floors share one
-			# bed, and asking for the track already playing is a no-op.
-			_bed_position = _music().get_playback_position()
+			# Deliberately NOT read here. The door behind the player was a
+			# handoff - the lobby's track had to finish leaving before the bed
+			# could start - so the bed is still coming up on this frame and the
+			# playhead belongs to the wrong file. The bed's own no-restart check
+			# is the hub's door, where it has been playing since Ahmed conceded.
 			# The studio's furniture IS its lighting, which is why the count is
 			# checked rather than one instance: five stands is the difference
 			# between a lit room and a dark one with a lamp in it.
@@ -344,20 +353,16 @@ func _tick(frame: int) -> void:
 				_level() != null and _level().name == "CallCenter")
 			_check("title: the call center announces itself (got '%s')"
 				% _title_text(), _title_text() == "THE CALL CENTER")
-			# The bed crossed the door rather than starting again behind it.
-			# Read off the playback position and not off the track name, which
-			# a restart would leave looking identical - and it moves under the
-			# dummy driver, which is the only reason this is checkable headless.
-			_check("music: the same bed plays on into the call center (%s)"
+			# TWO FLOORS BACK the lobby was playing its own track, and by here
+			# the building's bed has taken over. That is the handoff finishing:
+			# there is one player, so the lobby's track had to fade out before
+			# the bed could start, and it is the only door in the first half of
+			# the chain that is not a no-op. The bed arriving LATE is the whole
+			# reason it is checked a floor further on than the door that asked
+			# for it.
+			_check("music: the lobby's track gave way to the building's bed (%s)"
 				% ("<silent>" if _music_track() == "" else _music_track()),
 				_music_track() == BED)
-			# `>=` rather than `>`: the dummy driver advances the playhead by
-			# whole mix buffers, so 80 frames of a fast headless run may not
-			# move it at all. What a restart cannot do is send it BACKWARDS,
-			# and that is the whole of what is being asked here.
-			_check("music: and it was not started over at the door (%.2fs, was %.2fs)"
-				% [_music().get_playback_position(), _bed_position],
-				_music().get_playback_position() >= _bed_position)
 			# DESIGN.md's densest floor, and the density IS the room: eighteen
 			# dividers in three rows rather than asset recovery's twelve in two.
 			# Counted, because a maze that lost a row is not a maze.
@@ -490,6 +495,19 @@ func _tick(frame: int) -> void:
 			_check("music: his theme gave way to the bed (%s)"
 				% ("<silent>" if _music_track() == "" else _music_track()),
 				_music_track() == BED)
+			# Noted here, tested at the next door: two ordinary floors share one
+			# bed, and asking for the track already playing is a no-op. This is
+			# the pair rather than the studio's door because the bed has been
+			# playing since Ahmed gave in a floor below, so the number read here
+			# is the bed's own and not a handoff caught halfway.
+			#
+			# SEEKED first, for test_music.gd's reason: headless mixing crawls,
+			# so the playhead is still at 0.00 here and "it did not go
+			# backwards" would be true of a restart as well. A seek is not
+			# mixing - it puts the playhead where no fresh `play()` could leave
+			# it, and the door either keeps it there or does not.
+			_music().seek(20.0)
+			_bed_position = _music().get_playback_position()
 			# The floor's split, fought: the slower holds the call side and both
 			# drains are INSIDE the glass offices - which is what makes each
 			# office a decision rather than dressing, since the only way in is
@@ -540,6 +558,21 @@ func _tick(frame: int) -> void:
 			_check("door: the chain continues on into the marble hall (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "MarbleHall")
+			# The bed crossed the door rather than starting again behind it.
+			# Read off the playback position and not off the track name, which
+			# a restart would leave looking identical - and it moves under the
+			# dummy driver, which is the only reason this is checkable headless.
+			#
+			# `>=` rather than `>`: the dummy driver advances the playhead by
+			# whole mix buffers, so 80 frames of a fast headless run may not
+			# move it at all. What a restart cannot do is send it BACKWARDS,
+			# and that is the whole of what is being asked here.
+			_check("music: the same bed plays on into the marble hall (%s)"
+				% ("<silent>" if _music_track() == "" else _music_track()),
+				_music_track() == BED)
+			_check("music: and it was not started over at the door (%.2fs, was %.2fs)"
+				% [_music().get_playback_position(), _bed_position],
+				_music().get_playback_position() >= _bed_position)
 			# Eight guards in two gangs, and they are the RESKIN. This floor was
 			# the last one
 			# outside hellfire and the exam still fielding an original, and the
@@ -547,10 +580,18 @@ func _tick(frame: int) -> void:
 			# company's staff and hold floors 1-9, the originals appear only
 			# from hellfire up. Mechanically identical - the same 24 HP, the
 			# same cycle - so this check is about the costume and nothing else.
-			_check("enemies: the marble hall fields eight office boys (%s)"
+			#
+			# Plus the one `security`, standing in the middle of the east gang:
+			# the fourth archetype's only appearance in the building, and the
+			# reason this floor is no longer one enemy repeated twelve times.
+			# It is listed LAST because build_levels.gd writes a biome's
+			# `enemies` in the order they are authored, so this assertion is
+			# also quietly checking that the data file still reads west gang,
+			# east gang, anchor - which is how anybody reading it finds him.
+			_check("enemies: the marble hall fields eight office boys and one security (%s)"
 				% [_cast()], _cast() == ["office_boy", "office_boy",
 					"office_boy", "office_boy", "office_boy", "office_boy",
-					"office_boy", "office_boy"])
+					"office_boy", "office_boy", "security"])
 			_player().global_position = Vector2(272, 78)
 			_key(KEY_W, true)
 		841:

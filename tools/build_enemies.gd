@@ -27,6 +27,7 @@ extends SceneTree
 ## Run: godot --headless --path . --script res://tools/build_enemies.gd
 
 const Art := preload("res://tools/character_art.gd")
+const EnemyArt := preload("res://tools/enemy_art.gd")
 const Bestiary := preload("res://game/enemies/roster.gd")
 
 ## The body a new enemy is seeded from: a FROZEN copy of the pristine CC0 sheet,
@@ -71,6 +72,12 @@ func _build(entry: Dictionary) -> bool:
 		# so shipping it rows nothing can play is handing someone three rows of
 		# a lie about what the enemy does.
 		seeded = _to_layout(seeded, entry.get("layout", Art.CC0_LAYOUT))
+		# Rows are trimmed FIRST, while the cells are still 32, so `_to_layout`
+		# never has to know a sheet can be cut at anything else. An enemy that
+		# asks for a bigger cell is then doubled whole - every row it kept,
+		# including its swing.
+		if _cell(entry) > Art.FRAME:
+			seeded = EnemyArt.enlarge(seeded)
 		var wrote := seeded.save_png(ProjectSettings.globalize_path(src))
 		if wrote != OK:
 			printerr("  could not write ", src, " -> ", error_string(wrote))
@@ -89,11 +96,20 @@ func _build(entry: Dictionary) -> bool:
 	# nobody has redrawn holds exactly the rows the frozen body had.
 	var frames := Art.slice(sheet,
 		entry.get("layout", Art.CC0_LAYOUT),
-		entry.get("specs", Art.CC0_SPECS))
+		entry.get("specs", Art.CC0_SPECS),
+		_cell(entry))
 	var out: String = entry["frames"]
 	var err := ResourceSaver.save(frames, out)
 	print("  ", out, " -> ", error_string(err))
 	return err == OK
+
+
+## The cell this enemy's sheet is cut at. 32 unless the entry says otherwise,
+## which is every enemy that is the size of the cast; a big one declares
+## `frame` and gets the same treatment the bosses have always had, since
+## character_art.slice() has taken a cell size since the first boss.
+func _cell(entry: Dictionary) -> int:
+	return int(entry.get("frame", Art.FRAME))
 
 
 ## A freshly seeded sheet cut to the rows `layout` names - the frozen body is

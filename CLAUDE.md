@@ -236,16 +236,31 @@ was tried on the same day and thrown out: the arithmetic works and an enemy
 walking through a chair tells the player the room is a backdrop.
 game/enemies/CLAUDE.md's *Getting round the furniture*.
 
-**Enemy HP (24 / 17 / 36) are exact breakpoints on the player's combo** -
+**Enemy HP (24 / 17 / 36 / 48) are exact breakpoints on the player's combo** -
 "dies in exactly N hits" - and `HEAVY_POWER` equals a guard's health by design.
 Never retune one side without the other, and difficulty must never scale any of
 them. A reskin (`office_boy`, `social_media`, `call_center`) is a new sheet,
 name and folder with the archetype's numbers and no script - nothing else, or
-the interrupt tuning breaks. All six enemies are now three archetypes twice
+the interrupt tuning breaks. Six of the seven enemies are three archetypes twice
 over, so each archetype's script lives at `game/enemies/` beside
-`enemy_base.gd` - `wraith_base.gd` and `warden_base.gd`, plus the two effects
-they draw with - and a type's own folder holds only its sheet, frames and
-scene.
+`enemy_base.gd` - `wraith_base.gd`, `warden_base.gd` and `brute_base.gd`, plus
+the three effects they draw with - and a type's own folder holds only its sheet,
+frames and scene.
+
+**The seventh is the FOURTH archetype and has no reskin yet.** `security` is
+48 HP, 20 damage, speed 35, sight 90, a 0.9s wind-up and a blow that lands as a
+28 px ring around its own feet, damaging everyone in it and **shoving** them
+out. The other three take your health, your time and your speed; this one takes
+your POSITION, which is the fourth way the world reaches the player
+(`shove()`) finally being used by something that fights back rather than only by
+the hub's machines. Two numbers are load-bearing and are the reason it exists at
+that size: 48 is the eighth rung of the combo AND exactly two heavies, so it is
+the one body in the game the charged spin was made for and cannot one-shot; and
+its 90 px sight gives it its own placement band (below). It is also **the first
+enemy that is not the size of the cast** - a 64px cell, which cost one `frame`
+key in the roster and one new seeder, `tools/enemy_art.gd`. All of it, including
+the three overrides it deliberately does not take and why its ring is warm where
+the scrubber's scanner is cold: game/enemies/CLAUDE.md's *The types*.
 
 Bosses (`game/bosses/`) run the same cycle with several attacks and concede
 instead of dying; a floor names its boss in `tools/biomes/<level>.gd` under
@@ -343,8 +358,11 @@ keep every sight radius clear of the door line, spawns and both stands - the
 straight walk between the doors stays safe in every biome, and the flow and
 combat tests depend on it. The lane is x 246-300 at every y, and clearing its
 EDGE by the type's own radius is the rule, which gives a hard band per
-archetype: a guard (80) needs x <= 166 or x >= 380, a wraith (120) x <= 126 or
-x >= 420, a warden (130) x <= 116 or x >= 430.
+archetype: a guard (80) needs x <= 166 or x >= 380, a brute (90) x <= 156 or
+x >= 390, a wraith (120) x <= 126 or x >= 420, a warden (130) x <= 116 or
+x >= 430. `tests/test_slam.gd` enforces the brute's band across the whole chain
+by reading the built level scenes off disk, so a floor that places one badly
+fails there rather than in play.
 
 **The reskins hold floors 1-9 and 12; the originals appear only from hellfire
 up**, where the building stops pretending to be an office and the people in it
@@ -592,6 +610,18 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
                                        `game/player/src/sfx/` for free. ONE set
                                        for all seven characters, because they
                                        share one body
+- `ui/sfx/*.wav`                     <- tools/sfx/ui.py, and it is the ONE sound
+                                       in the game that is generated the way
+                                       the tilesets are: three tones and an
+                                       envelope is DATA, so there is no API, no
+                                       key, no cost and no `src/` beside the
+                                       output - run it twice and get the same
+                                       bytes. The recipe (waves, glides,
+                                       envelopes, per-cue peak) is the whole
+                                       truth about what comes out, and the same
+                                       per-sample loop is written a second time
+                                       in JavaScript so the audition page these
+                                       were picked on makes the identical noise
 - `game/enemies/{social_media,call_center}/sfx/voice/*.wav`
                                     <- tools/voice/cut.py <id>, the bosses'
                                        pipeline unchanged. WHAT they mutter is
@@ -637,6 +667,16 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
                                        one and every clip he has reads back as
                                        a DIFF on a word that was never wrong
 - sheet shaping & slicing engine    <- tools/character_art.gd (shared by both)
+- a BIG enemy's seed                <- tools/enemy_art.gd, the 32 -> 64 doubling
+                                       build_enemies.gd runs when a roster entry
+                                       carries `frame: 64`. Deliberately not
+                                       tools/npc_art.gd bubbled up: that one
+                                       rebuilds the figure into a robe, this one
+                                       doubles it whole so the attack rows
+                                       survive. Both keep the feet's ORIGINAL
+                                       clearance from the bottom of the cell, so
+                                       a 64px body stands on a 32px body's
+                                       ground line
 - playable cast & recipes           <- game/player/characters/roster.gd
                                        (data, edited by hand)
 - bestiary, sheet paths & seed recipes
@@ -781,12 +821,12 @@ work before it could loop keeps its untouched export beside it in
 `assets/music/src/`, on the enemies' and bosses' exact terms: `src/` is the
 hand-owned original, the file above it is what the game plays.
 
-**The last two floors are the one exception to all of that, and it is a
-FLOOR's track rather than a boss's.** A biome may carry a `music` key, which
-the generator writes into the level scene beside its title and game.gd reads
-where it used to say `Music.DEFAULT`; the executive floor and the penthouse
-both name `finale_loop.wav`, so the finale comes up as the lift doors open on
-floor 11 and is still playing through the last fight. It had to hang on the
+**Three floors are the exception to all of that, and a floor's track is not a
+boss's.** A biome may carry a `music` key, which the generator writes into the
+level scene beside its title and game.gd reads where it used to say
+`Music.DEFAULT`. Two of the three are the end: the executive floor and the
+penthouse both name `finale_loop.wav`, so the finale comes up as the lift doors
+open on floor 11 and is still playing through the last fight. It had to hang on the
 floor and not on Silverman for the reason a theme is HIS: a boss's track starts
 where his bar goes up and leaves where it clears, so it can never cover the
 floor below him, and one on him here would interrupt this twice in the last
@@ -796,6 +836,26 @@ absence, because nothing else would notice a line being added to his scene.
 Crossing the door costs nothing because `fade_to` is idempotent on the path,
 which is the same trick the bed already relied on, one level up.
 
+**The third is floor 1, and it is the same mechanism used for the opposite
+reason.** The lobby names `lobby_loop.wav`, which is the slower of the two beds
+- the building above runs on a hard 128 BPM thing, and floor 1 is where a
+player is still finding out which key swings. Music that insists on a pace is
+music arguing with the room. It costs one line in `tools/biomes/lobby.gd` and
+nothing anywhere else, which is the whole point of the key existing.
+
+What it DOES cost is the one door in the first half of the chain that is a real
+handoff: there is one player, so the lobby's track has to finish leaving before
+the bed can start, and the bed is therefore still coming up when the studio is
+already standing. Anything checking the bed at the studio's own door is
+checking it a fade too early - `tests/test_flow.gd` reads it a floor further
+on, and its no-restart pair moved to the hub's door, where the bed has been
+playing since Ahmed gave in. Every other ordinary door in the building is
+still the no-op it always was.
+
+And the RULE is now three floors rather than two: `tests/test_music.gd` reads
+the whole chain off disk and fails if any other floor names a track, if the
+finale's two are not the LAST two, or if the lobby's is not floor 1.
+
 **A generated loop does not loop**, and it fails in THREE different ways. The
 first is the seam: an ElevenLabs export ends mid-waveform, so the last sample
 steps straight to the first and clicks once per pass - on `menu_loop.wav` that
@@ -803,13 +863,14 @@ step was 22376 of 32768, and every 30 seconds. The fix is a 12 ms equal-power
 crossfade of the tail over the head, which costs 12 ms of length (0.04% across
 a 30 s loop, well under a 32nd note) and takes the step to 33.
 
-The second is worse and is what `level_loop.wav` arrived with: **the export
+The second is worse and is what `lobby_loop.wav` arrived with - floor 1's
+track, which was the building's bed when this was written: **the export
 ENDS**, fading out over its last 3.75 s, so the loop dies away to silence and
 then restarts at full level - a hole once a minute rather than a click. A
 crossfade cannot fix that, because there is nothing left at the end to fade.
 The music has to be cut back to the last whole BAR before the fade begins, and
 only then crossfaded. That is the one measurement worth taking on a new track
-before anything else: the tempo, so the cut lands on the grid. The bed is
+before anything else: the tempo, so the cut lands on the grid. That track is
 90 BPM, so a bar is 2.667 s and the loop is 20 of them. Two traps sit in that
 sentence. The BPM is the one the generator was ASKED for and not the one it
 delivered - this export runs at 90.019, which is 11 ms of drift by the
@@ -836,7 +897,7 @@ bar before the off-beats start to move (56.0 s, bar 28, where they part
 at 56.75).
 
 And a measurement that works on a sparse track does not work on a dense one.
-The tail-against-head correlation above is how `level_loop` was placed, and on
+The tail-against-head correlation above is how `lobby_loop` was placed, and on
 this track it is noise: a broadband sweep peaked at +0.20 on a cut 40 ms off
 the grid - a third of a 16th note, an audible stumble - because hats and noise
 are uncorrelated between two passes of the same music and drown the alignment
@@ -850,10 +911,82 @@ heard and invisible in a waveform view, the fade is invisible in the waveform's
 shape until you look at where the last seconds of level went, and the dry-up is
 invisible in both, because the hits never move.
 
+**Two of the three are avoidable in the ASK, and the current bed is the proof.**
+It was asked for at 128 BPM as "a single continuous 32-bar groove at constant
+intensity - no intro, no build, no drop, no fade, and the last bar as loud and
+as busy as the first". 32 bars at 128 BPM is 60.000 s, which is exactly the
+length ElevenLabs exports, so the generator had nowhere to put an ending: it
+came back with no fade and no dry-up (its last 8 s alternate +2.0 / -2.3 dB
+about the body, on-beat against off-beat, right up to 59.75 s) and measured
+128.00 BPM to within a millisecond over 30 bars. Nothing had to be cut back to
+a bar line - the whole file WAS the loop - and only the seam needed the 12 ms
+crossfade, which took the step from 39526 of 32768 to 706, the same size as
+this track's own mean sample-to-sample step. **Pick a tempo whose bar count
+lands on the export length and say the last bar must be as loud as the first,
+and the only failure left is the one that is always there.**
+
+## Menu sound
+
+`autoload/ui_sound.gd` (`UiSound`) is the menu's own noise: `move` when focus
+steps between options, `press` when one is chosen, `back` when you leave. An
+autoload for Music's two reasons, both of which bite - the front end is three
+scenes, so a press started by PLAY would be freed by `change_scene_to_file` in
+the frame it began (`enemy_audio.gd`'s `play_detached` trap, arriving in a
+menu), and the pause menu runs with the tree PAUSED, which stops a player that
+is not `PROCESS_MODE_ALWAYS`. The files live at `ui/sfx/` rather than in
+`assets/`, on the placement rule: four screens under `ui/` share them, so they
+bubble up exactly one level, to where `ui/theme/` already is.
+
+**Nothing wires itself to it, and the reason it can get away with that is a
+fact worth stating outright: nothing outside the four menu screens ever takes
+focus.** The dialogue box draws its choices as Labels and picks them with its
+own index, the HUD is not focusable, and no room holds a Control. So
+`gui_focus_changed` on the root viewport - with no filter on it at all - is
+already exactly the menus, and `node_added` hooking every `BaseButton` on its
+way into the tree covers the presses. A screen added next month makes noise
+without knowing this file exists.
+
+Three splits are the whole design:
+
+- **Focus GRANTED is not focus moved.** Focus also changes when a screen opens
+  and hands it to its first control, when a panel closes and hands it back, and
+  when a dialog pops - none of which the player did, and a menu that chimes at
+  itself on the way in is the first thing anybody reports. So `move` fires only
+  where focus changed on a frame the player pressed a navigation key, which is
+  precise where "had something else been focused?" is a guess.
+- **`back` is the one cue that is NOT automatic**, and it is `hit` firing only
+  on a blow that LANDED, arriving from the other side of the game. A global
+  handler on `ui_cancel` would look right - one key doing one job everywhere -
+  but the death screen swallows Escape, and a chime on a press that did nothing
+  teaches the player the sound does not mean anything happened. Only the screen
+  handling the press knows it was consumed, so the three that handle it say
+  `UiSound.back()` where they act on it.
+- **The cue is named after what the PLAYER did, not what the screen did**,
+  which is why the Back BUTTON plays `press` while Escape plays `back`. Same
+  outcome, different inputs; one sound per key is the version that cannot
+  drift, and the alternative is this file guessing forever which buttons
+  "mean" back, by name.
+
+A dropdown is the one place that needed its own wiring: a `PopupMenu` is not a
+Control and never takes focus, so its `id_focused` and `index_pressed` are
+hooked too, or the settings page goes silent exactly where it has the most
+options. A cue fires at most once per frame (`player.gd`'s rule for `hit`),
+which makes every honest double-up - a panel and the pause menu behind it both
+seeing one Escape - harmless. A missing or unimported WAV is silence with no
+branch anywhere, so a fresh checkout has quiet menus rather than broken ones.
+
+The sounds are `tools/sfx/ui.py` and are the one generator here that costs
+nothing and returns the same bytes twice - see the table above. Levels are
+baked per cue (`move` -22 dBFS, `press` -18, `back` -20) and pitched to sit
+under the menu bed; `VOLUME_DB` stays 0 because there is still no bus layout,
+so a file's own level IS the mix. Too quiet or too loud is ONE number in the
+recipe and a free re-run.
+
 ## Settings
 
-Three autoloads, split by responsibility - `Music` above is a fourth, and is
-here rather than there because it owns no setting:
+Three autoloads, split by responsibility - `Music` above is a fourth and
+`UiSound` a fifth, and both are here rather than there because they own no
+setting:
 
 - `autoload/settings.gd` (`Settings`) owns `user://settings.cfg` and nothing
   else - sections, keys, write-through on change. A future audio or controls
@@ -864,9 +997,12 @@ here rather than there because it owns no setting:
 - `autoload/difficulty.gd` (`Difficulty`) owns the game modes - see Difficulty.
 
 `Settings` must stay registered **before** `Display` and `Difficulty` - both
-read their saved values during `_ready`. `Music` is appended after all three;
-it reads nothing saved today, and a future volume row is one more reader of
-Settings, not a new rule. tools/setup_project.gd clears their entries
+read their saved values during `_ready`. `Music` and `UiSound` are appended
+after all three; neither reads anything saved today, and a future volume row is
+one more reader of Settings, not a new rule. `UiSound` goes last of all, and
+the only thing its position has to satisfy is that it is ready before the first
+SCENE is built - it hooks `node_added`, so a button that entered the tree ahead
+of it would be the one button in the game with no sound. tools/setup_project.gd clears their entries
 before re-adding them, which is what enforces that order.
 
 **A default is applied but never saved.** Nothing is written until the player
@@ -948,7 +1084,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Eighteen suites,
+  They drive the real game with synthesized input and exit 0/1. Twenty suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -964,6 +1100,19 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     and the leash: that losing sight of the player does not stop a chase, that
     it ends 2.5s later, that the body walks back to the spot it was placed on,
     and that kiting drags it exactly 160 px and no further.
+  - `test_slam.gd` - the fourth archetype: that the ring draws the Touch
+    shape's own reach (a retune that moves the hitbox and leaves the drawing
+    behind is a bug nobody can see), that the wind-up telegraphs without
+    hurting, that the blow costs EXACTLY the node's own scaled damage rather
+    than merely something, that it throws the player and that the push then
+    wears off, that a committed slam still lands on air when the ring is empty,
+    and that 48 is a combo breakpoint and exactly two heavies - read off
+    player.gd's own constants, so retuning either side fails here. Its headline
+    check is the placement band swept across the whole chain off disk: a 90 px
+    sight has its own bracket around the door lane, and a brute is found by
+    having `shove_force` rather than by its type, so a second one is covered the
+    day it exists. Its own suite because everything else in combat measures a
+    player who stays put, and this one moves them.
   - `test_bosses.gd` - Ahmed's attacks, the order he picks them in, the
     interrupt and the concede.
   - `test_rage.gd` - Mostafa going up at 72 and staying up: that it fires at
@@ -1094,6 +1243,22 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     frames), so "the position advanced" is a coin flip that would pass a
     restart on a quiet frame, while a playhead parked where no fresh `play()`
     could leave it either survives the door or does not.
+  - `test_ui_sound.gd` - the menu's noise, and mostly the half that is about
+    SILENCE: that opening the menu does not chime at itself, that arrowing
+    between options ticks exactly once, that a panel taking focus is not a
+    move, that a dropdown's own list ticks too (a PopupMenu never takes focus,
+    so nothing else would notice it going quiet), that three plays on one frame
+    are one sound, and - the one that pays for `back` not being a global
+    `ui_cancel` handler - that Escape on the death screen is swallowed AND
+    silent, while the same key in the same screen chimes when it does
+    something. Its own suite because every check is a DELTA on a play count, so
+    it has to own the focus state of the screen for its whole length, which is
+    exactly what test_menu.gd's later sections are busy moving about. It reads
+    a count kept where the sound is really started rather than `playing` or
+    `get_playback_position()`, for that file's stated reasons - and a
+    SUPPRESSED play is invisible in every other way. It builds the death screen
+    by hand rather than by dying, the way test_reinforcements.gd builds its
+    beat.
   - `test_surge.gd` - floor 3's wiring: that a charging line warns without
     hurting, that the head then crosses whoever stood on it, that the drop is
     exactly the node's own scaled damage rather than merely non-zero (one pass
