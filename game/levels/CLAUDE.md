@@ -40,6 +40,66 @@ size is seen entire, and the screen left over around a smaller room is void.
 That void is deliberate - filling it with the level's own rock was tried and
 looked worse than black.
 
+## The shape of a floor
+
+Eleven floors are a 34 x 19 rectangle - 544 x 304 px - and that was true of all
+twelve until the call floor became a DOGLEG: a hall 40 tiles wide with an arm
+off its north-east corner, 640 x 544 with the north-west quarter cut out of it.
+It is the only room in the game you cannot see the exit from.
+
+**The shape is data, and it lives in `tools/plan.gd` rather than in the
+generator.** A biome's `shape` key carries `cols`, `rows`, `doors` and one of
+two ways of saying where the room is not:
+
+| form | what it says | for |
+|------|--------------|-----|
+| *(nothing)* | the 34 x 19 room | eleven floors |
+| `cut` | the room, minus a list of tile rectangles | L, neck, atrium - anything still rectangles |
+| `mask` | the plan drawn out, `#` for masonry | the floor that is not rectangles at all |
+
+Everything else falls out of ONE question - `solid(col, row)`, is this cell the
+building or the room? The wall ring is grown around whatever is left, the
+shadow course hugs it, a doorway is cut where its own column meets the wall,
+and a colonnade skips the pillars that would land in masonry. So a shape nobody
+has drawn yet is one new way of answering that question and no branch anywhere
+else. The two forms differ in one way worth knowing: a `cut` grows its walls,
+because it says where the ROOM is not; a `mask` is literal, because the hand
+that drew a plan drew its walls, and growing a second ring inside theirs would
+eat the drawing.
+
+**The doors need not be in line with each other.** `shape.doors` gives each its
+own tile column, and the spawn markers follow - `start` under the south door,
+`returned` under the north one - so coming back down the stairs on the call
+floor puts the player at the top of the arm rather than over the hall they left
+by. The camera needed nothing: it already followed the player on whichever axis
+does not fit and centred on the one that does, and `bounds()` was always
+measured off the tilemap rather than stored.
+
+### The walk
+
+The oldest rule in the project is that the way between the two doors stays
+clear - no enemy's sight, no hazard, no prop. It was enforced from OUTSIDE the
+game by four suites that each wrote down `x 246-300`, which was true while
+every floor was the same rectangle. A shaped floor's walk has corners in it, so
+the floor carries its own: `lane` in the biome, an export on the level scene
+beside its title, and two questions on level.gd -
+
+- `walk_lane()` - the legs, or the straight band for a floor that names none.
+- `lane_clearance(at)` - how far a point is from the nearest leg, which is what
+  the placement rule is actually measured in: a body clears the walk by its own
+  sight radius.
+
+Nothing in `game/` reads either. They exist because the alternative was four
+test files agreeing with each other by hand about a shape only one floor has,
+and because a rule this old should be answerable by the room it is about.
+
+`tests/test_dogleg.gd` owns the two failures a shape can cause. One is a room
+nobody can cross, swept across the whole chain: every floor's walk is sampled
+against its own masonry, so a cut redrawn a tile lower fails there rather than
+in play. The other is a body that cannot get round a corner - steering has no
+pathfinding, and the thing between the arm and the hall is eight tiles of
+building rather than a desk.
+
 ## A level owns everything in it
 
 Its folder holds its own tileset, its own doorway art, its own `door.tscn` and
@@ -264,8 +324,9 @@ rules bind it, and the third is the one to check before authoring a second:
   arrives; a lane the player can see is a lane they time.
 - **It is slower than a walk** - 78 against the player's 90. Being hit has to be
   a consequence of standing still, never of being run down from behind.
-- **It stops short of the door lane.** Every floor keeps x 246-300 walkable top
-  to bottom, and a rig crossing the room would be the first thing ever to
+- **It stops short of the door lane.** Every floor keeps the walk between its
+  doors clear - on this rectangular one, x 246-300 top to bottom - and a rig
+  crossing the room would be the first thing ever to
   threaten that lane without being PLACED in it. The studio's runs the WEST HALF
   only, which is both the legal answer and the better one: a dolly belongs in
   front of the thing being filmed, and the set is where the two drain fields
@@ -323,10 +384,14 @@ Four things worth keeping:
   under the copier's 10 - the copier is one place you chose to stand in, these
   are four lanes you have to cross.
 - **The lane rule again, and it now protects the arrival.** No run may reach
-  x 246-300. On this floor that is not a compromise but the reason there are
-  four runs instead of two: cutting each aisle in half at the lane DOUBLED them.
-  It also means a player walking in at (272, 240) cannot be hit while the first
-  line is already charging.
+  the walk - which on this floor is three legs with two turns in it, not a band
+  of x. That is not a compromise but the reason there are four runs instead of
+  two: cutting the hall's aisle in half at the walk DOUBLED them. It also means
+  a player walking in at (272, 480) cannot be hit while the first line is
+  already charging. Two of the four run VERTICALLY up the arm, which is the
+  shape answering the hazard - what a player is doing in a corridor is climbing
+  rather than crossing, so those two punish drifting off the route instead of
+  cutting it.
 
 The conduit takes the room's own metal, handed in by the generator as a colour,
 because it is a piece of the building; everything that FIRES is fixed white and
@@ -381,7 +446,8 @@ Five things are load-bearing:
   by construction rather than by a rule about players.
 - **Random, but PENNED.** `within` is the rectangle it may not leave, and it is
   how a routeless hazard keeps the promise the other two keep by geometry: the
-  dolly and the surges are authored to stop short of x 246-300, and a wanderer
+  dolly and the surges are authored to stop short of their floor's walk, and a
+  wanderer
   is fenced out of it. It is also what keeps the hub's two halves two halves.
 - **The turn is the telegraph.** A bump does not snap the heading round; the
   machine stops, swings its scanner to the new one, and only then goes. You
@@ -488,7 +554,7 @@ have one:
 
 | floor | he stands at | why that floor |
 |-------|--------------|----------------|
-| F3 call_center | (208, 168) | first floor where a slow near two guards kills; last before Ahmed |
+| F3 call_center | (208, 400) | first floor where a slow near two guards kills; last before Ahmed |
 | F4 ahmed_office | (180, 160) | after Ahmed concedes |
 | F8 conflict_resolution | (412, 144) | ringside, after Mostafa |
 | F9 asset_recovery | (80, 180) | the heaviest `per_head` in the game deserves the matching heal |
@@ -552,7 +618,7 @@ under a boss:
 
 | floor | they stand at | what is upstairs |
 |-------|---------------|------------------|
-| F3 call_center | (340, 144) | F4 Ahmed - the axe, the slam, and the fire that answers running |
+| F3 call_center | (568, 128) | F4 Ahmed - the axe, the slam, and the fire that answers running |
 | F7 innovation_lab | (232, 120) | F8 Mostafa - two fast, one slow, and the fire at half |
 | F11 executive_floor | (310, 97) | F12 Silverman - three phases, and no interrupts by the last |
 
@@ -570,7 +636,8 @@ without a line of dialogue: he has come from where the player has been, and
 they have come from where the player is going.
 
 Her spot obeys the furniture rule on `at` alone, exactly as Ivan's does - off
-the door line (x 246-300), off the divider xs on the floors that have them, and
+the walk that floor keeps clear, off the divider xs on the floors that have
+them, and
 far enough from Ivan's spot that the two are not standing on each other. The
 lines live in `game/npcs/dominique/before_<boss>.gd`, one file per floor, and
 `conversation` is placement: a floor names the warning it wants.

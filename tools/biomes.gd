@@ -20,6 +20,17 @@ extends RefCounted
 ## end of the hellfire ramp turns into gold flooring the player cannot be seen
 ## against.
 ##
+## `shape` is what the room IS, and a floor without it is the 34 x 19 rectangle
+## eleven of the twelve are: `{cols, rows, cut, mask, doors}`, read by
+## tools/plan.gd, which is where the vocabulary and the reasoning live. The call
+## floor is the one that uses it - a hall with an arm off its corner - and two
+## keys travel with it. `lane` is that floor's own walk between its doors, a
+## list of Rect2 legs overlapping at the corners, written into the level scene
+## as an export beside the title and answered by level.gd to anything that asks;
+## a floor that names none gets the straight band x 246-300 the building keeps.
+## `hazard_at` and `heart_at` move the two stands, which default to where a
+## stand goes in the rectangle - and on a shaped floor that can be masonry.
+##
 ## `title` is the name the room announces itself by on arrival, written into
 ## the level scene as an export. It is authored rather than derived from
 ## `node`, because "THE MARBLE HALL" is not a transformation of "MarbleHall"

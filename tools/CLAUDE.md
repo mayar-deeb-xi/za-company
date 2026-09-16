@@ -199,6 +199,48 @@ The last sign in the building has no `TEXT` at all: the penthouse's
 `sticky_note` is face down, so what it says is four grey smudges of ink coming
 through the back of it, and the ending is where it gets turned over.
 
+## Shaping a floor
+
+A biome's `shape` key decides what the room IS, and eleven of the twelve floors
+decline to have one - saying nothing gets the 34 x 19 rectangle the building
+was designed around. The mechanism is `tools/plan.gd`, which is to a room's
+shape what `props.gd` is to its furniture: the generator asks it and paints
+what it is told, so a shape nobody has drawn yet is a new key THERE and not a
+branch in the middle of the code that places desks.
+
+```gdscript
+"shape": {
+    "cols": 40, "rows": 34,              # the bounding plan, in tiles
+    "cut": [Rect2i(0, 0, 22, 14)],       # and what is NOT room
+    "doors": {"out": 29, "back": 16},    # each doorway's own column
+},
+```
+
+Everything follows from `solid(col, row)`: walls are grown around whatever is
+left, the shadow course hugs them, a doorway is cut where its column meets the
+wall, spawn markers follow their own doors, and a colonnade skips any pillar
+that would land in masonry. A floor that needs a shape rectangles cannot
+describe draws one instead, as `mask` - one string per row, `#` for masonry -
+and that one is taken literally, because somebody drawing a plan has already
+drawn its walls.
+
+Three things a shaped floor owes, and the first is the one that bites:
+
+- **A `lane`.** The walk between the doors is authored per floor once it stops
+  being the straight band x 246-300, and `tests/test_dogleg.gd` sweeps every
+  floor's walk against its own masonry - a room nobody can cross fails there
+  rather than in play. Legs must OVERLAP at the corners or the walk clips a
+  wall on the turn.
+- **Its stands, if it has them.** `hazard_at` and `heart_at` default to where a
+  stand goes in the rectangle, which on a shaped floor can be solid building.
+- **Its own positions, all of them.** Every prop, enemy and NPC spot is absolute
+  pixels, so a reshaped floor is a re-authored floor. That is the cheap half:
+  it is one data file and one `build_levels.gd -- <floor>`.
+
+The 34 x 19 output is byte-identical after all of this, which is the check to
+re-run after touching plan.gd: rebuild two rectangular floors and confirm an
+empty `git diff`, exactly as the stable-ids rule promises.
+
 ## Adding and inserting a biome
 
 Adding a biome: one new data file in `tools/biomes/` plus its name in

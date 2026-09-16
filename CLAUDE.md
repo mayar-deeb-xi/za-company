@@ -67,6 +67,22 @@ while it lands. game.gd also owns **camera shake**, applied as an offset so
 `_camera_target()` stays the only thing framing a room; a boss asks for it by
 emitting `shook` (see game/bosses/CLAUDE.md).
 
+**A floor is a SHAPE now, and eleven of the twelve decline to be one.** The
+34 x 19 room the building was designed around is what a biome gets by saying
+nothing; a `shape` key changes the size, CUTS rectangles out of the result, or
+hands in a floor plan drawn as ASCII, and everything else follows from that one
+predicate - the wall ring is grown around whatever is left, the shadow course
+hugs it, a doorway is cut where its own column meets the wall, and a colonnade
+skips the pillars that would land in masonry. It lives in `tools/plan.gd`
+rather than in the generator, because the generator's job is putting things in
+a room and a floor plan is a subject with its own vocabulary: a shape nobody
+has drawn yet is a new key there and no branch anywhere else. **The call floor
+is the one that is not a rectangle** - a hall with an arm off its north-east
+corner, its two doors out of line with each other, and the only room in the
+game you cannot see the exit from. What that cost, and the two things a shaped
+room can break that a rectangular one cannot, is game/levels/CLAUDE.md's
+*The shape of a floor*.
+
 **A level owns everything in it**: its own tileset, doorway art, `door.tscn`
 and its own copy of every prop it places, palette baked in - no level borrows
 another's. Everything standing in a room lives in its `props/`, on the same
@@ -114,7 +130,7 @@ one end of it, so a warning does not also have to teach a direction; and **one
 pass is exactly one hit**, because the head crosses a player in a tenth of a
 second against a far longer grace window - which is the entire reason four of
 them is fair. The lane rule holds here too and pays for itself: cutting each
-aisle in two at x 246-300 is what made four runs out of two.
+aisle in two at the walk is what made four runs out of two.
 game/levels/CLAUDE.md's *The wiring*.
 
 **And the hub WANDERS.** Its `scrubbers` key buys two floor scrubbers, one per
@@ -354,15 +370,25 @@ rhythm (jab, jab, hook), Silverman a ladder (three phases, each adding a
 mechanic, interrupts narrowing to none).
 
 Which enemies a room gets is per-biome data (type + position), and positions
-keep every sight radius clear of the door line, spawns and both stands - the
-straight walk between the doors stays safe in every biome, and the flow and
-combat tests depend on it. The lane is x 246-300 at every y, and clearing its
-EDGE by the type's own radius is the rule, which gives a hard band per
-archetype: a guard (80) needs x <= 166 or x >= 380, a brute (90) x <= 156 or
-x >= 390, a wraith (120) x <= 126 or x >= 420, a warden (130) x <= 116 or
-x >= 430. `tests/test_slam.gd` enforces the brute's band across the whole chain
-by reading the built level scenes off disk, so a floor that places one badly
-fails there rather than in play.
+keep every sight radius clear of the WALK, spawns and both stands - the way
+between the doors stays safe in every biome, and the flow and combat tests
+depend on it. On the eleven rectangular floors the walk is the straight band
+x 246-300 at every y, and clearing its EDGE by the type's own radius is the
+rule, which gives a hard band per archetype: a guard (80) needs x <= 166 or
+x >= 380, a brute (90) x <= 156 or x >= 390, a wraith (120) x <= 126 or
+x >= 420, a warden (130) x <= 116 or x >= 430.
+
+**The twelfth floor is not a rectangle, so it carries its own walk** - three
+legs with two turns in them, authored as `lane` in its biome and baked into the
+level scene beside its title. The rule is unchanged and the ARITHMETIC is what
+moved: a body clears the walk by its sight radius, and on a shaped floor that is
+a distance from three rectangles rather than a number either side of one. Ask
+the room (`level.lane_clearance(at)`, `level.walk_lane()`) rather than writing
+246 down again - a floor that says nothing still answers with the band every
+floor kept. `tests/test_slam.gd` enforces the brute's band across the whole
+chain by reading the built level scenes off disk, and `tests/test_dogleg.gd`
+enforces the thing underneath it: that every floor's walk is floor end to end,
+so a room nobody can cross fails there rather than in play.
 
 **The reskins hold floors 1-9 and 12; the originals appear only from hellfire
 up**, where the building stops pretending to be an office and the people in it
@@ -687,7 +713,9 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
                                        and the only art that is a file)
 - `game/levels/*/<biome>.tscn`, `door.tscn`, `props/<shelf>/*.tscn` (art
   embedded in each; enemy and prop instances placed in the level scene)
-                                    <- tools/build_levels.gd, see below
+                                    <- tools/build_levels.gd, see below, which
+                                       asks tools/plan.gd what shape the room
+                                       is and paints what it is told
 - every picture of a thing standing in a room
                                     <- tools/props/<shelf>/<type>.gd, one file
                                        per prop shelved by kind (furniture/,
@@ -1133,7 +1161,9 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     and that 48 is a combo breakpoint and exactly two heavies - read off
     player.gd's own constants, so retuning either side fails here. Its headline
     check is the placement band swept across the whole chain off disk: a 90 px
-    sight has its own bracket around the door lane, and a brute is found by
+    sight has its own bracket around each room's OWN walk, asked of the level
+    rather than written down here - so the shaped floor is measured where its
+    walk really is - and a brute is found by
     having `shove_force` rather than by its type, so a second one is covered the
     day it exists. Its own suite because everything else in combat measures a
     player who stays put, and this one moves them.
@@ -1288,9 +1318,11 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     exactly the node's own scaled damage rather than merely non-zero (one pass
     is one hit, which is what makes four runs fair), that the head parks off
     the line between runs, and that the cycle comes round again. Its headline
-    check is the lane swept across all four runs - a surge is the second thing
-    that could threaten x 246-300 without being placed in it, and unlike the
-    dolly there are four.
+    check is the walk swept along all four runs - a surge is the second thing
+    that could threaten the route between the doors without being placed on it,
+    and unlike the dolly there are four. It samples ALONG a run rather than
+    comparing two numbers, because two of this floor's four are vertical and a
+    check that knew the lane was a band of x would pass them without looking.
   - `test_steering.gd` - getting round the furniture: that a guard with two
     desks between it and the player arrives anyway and swings, that it got
     there by going AROUND rather than by some accident of the geometry, that a
@@ -1301,6 +1333,19 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     a room arranged WRONG - every floor in the game is dressed so the fight
     works, so none of them can ask this - and it builds the bad case by hand in
     the empty lobby, the way test_reinforcements.gd builds its beat.
+  - `test_dogleg.gd` - the floor that is not a rectangle, and the two things a
+    shaped room can break that a rectangular one never could. The one that
+    generalizes is swept across the whole chain off disk: every floor's walk is
+    floor END TO END, and it runs between the two DOORS rather than past them -
+    a prop moved twenty pixels or a cut redrawn a tile lower is a floor nobody
+    can finish, and it looks fine in the data. The other is the corner: a body
+    in the arm with the building between it and the player gets round it, which
+    is test_steering.gd's question asked about eight tiles of masonry instead of
+    a desk. What it deliberately does NOT treat as a failure is a beat that
+    arrives and then stands there - a reinforcement has no post and therefore no
+    patience, so it hunts only what it can see, on this floor exactly as on the
+    other eleven. Staging that wrong looks identical to a wedge, which is why
+    the suite measures its own premise before it measures the answer.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

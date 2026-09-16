@@ -2,10 +2,60 @@ extends RefCounted
 ## The call floor - DESIGN.md's denial level, and the densest room in the game.
 ##
 ## Data only, read by tools/biomes.gd; the key reference lives there.
+##
+## ## THE DOGLEG
+##
+## It is the one floor in the building that is not a rectangle, and the shape
+## is the point rather than a decoration on it. A wide hall runs along the
+## bottom of the plan and the way out is up an ARM in the north-east corner, so
+## this is the only room in the game where you cannot see the exit from the
+## entrance, and the only one where crossing the floor is the ROUTE rather than
+## a choice. On the floor whose whole subject is your movement being taken away,
+## being made to cross it is the sentence the room was already trying to say.
+##
+## Three things fall out of that and each one is load-bearing:
+##
+## - **The walk has two turns in it, and it is authored** (`lane`, below). Every
+##   other floor keeps one straight band clear - x 246-300 at every y - and the
+##   rule that band exists for is the oldest one in the project: no enemy's
+##   sight, no hazard and no prop on the walk between the doors. Here it is
+##   three legs meeting at two corners, so the floor carries its own and
+##   game/levels/level.gd hands it to whoever asks.
+## - **The arm holds nobody.** It is 256 px wide with a 54 px lane up the middle
+##   of it, which leaves 100 px either side - and a `call_center` needs 130 px
+##   of clearance for its sight alone. So the corridor is deliberately empty of
+##   placed bodies: what happens in it is the north BEAT, two boys coming down
+##   the stairs the player is climbing. An arrival is the only legal way to put
+##   anybody on a walk, and the room's own shape is what makes that arrival land.
+## - **The maze stays in the hall.** Eighteen dividers, in the hall only, because
+##   a corridor is not a maze and dressing one as a maze is how a route becomes
+##   a chore. The arm gets trunking and litter and nothing to walk round.
+##
+## The cut is one rectangle - cols 0-21, rows 0-13 - and tools/plan.gd grows the
+## walls around whatever is left, which is why nothing here says where a wall is.
 
 const BIOME := {
 	"node": "CallCenter",
 	"title": "THE CALL CENTER",
+	# 40 x 34 tiles against every other floor's 34 x 19, with the north-west
+	# quarter taken out of it. The doors are not in line with each other any
+	# more: the way back is the middle of the south wall as always, and the way
+	# up is at the top of the arm, six tile columns east of it.
+	"shape": {
+		"cols": 40, "rows": 34,
+		"cut": [Rect2i(0, 0, 22, 14)],
+		"doors": {"out": 29, "back": 16},
+	},
+	# The walk, in three legs, meeting at two corners. Up the middle of the hall
+	# from the south door, east along the hall's north wall, then up the arm.
+	# The turn hugs the wall on purpose: it leaves the whole body of the hall
+	# for the fight instead of cutting it in half, and it means the player's
+	# route and the room's furniture want opposite parts of the floor.
+	"lane": [
+		Rect2(246, 294, 54, 234),    # the climb from the south door
+		Rect2(246, 240, 262, 54),    # the run east under the north wall
+		Rect2(454, 16, 54, 278),     # up the arm to the way out
+	],
 	# Fluorescent green-grey: the colour a room gets painted when nobody who
 	# works in it was asked. No other floor is green, which is the point - it
 	# lands between the content studio's near-black and Ahmed's dark marble, so
@@ -21,31 +71,46 @@ const BIOME := {
 	"floor_band": Vector2(0.30, 0.82),
 	# Barely any: worn carpet tile, not carpet.
 	"runner": 0.10,
-	# DESIGN.md's "densest columns" - eighteen dividers in three rows, half
-	# again as many as asset recovery's full colonnade, which is what makes this a
-	# maze rather than an open plan. The xs are the generator's own, and they
-	# are what keeps the room legal: the nearest divider to the door line sits
-	# at x 232 and the next at 312, so the straight walk between the doors
-	# stays clear even at this density.
+	# DESIGN.md's "densest columns" - eighteen dividers in three ranks, half
+	# again as many as asset recovery's full colonnade, which is what makes this
+	# a maze rather than an open plan. All eighteen are in the HALL: the ranks
+	# sit at y 304 / 384 / 464, which is the body of the room, and the arm is
+	# left bare.
 	#
-	# Two things follow from three rows, and the second one bites when this
+	# Two things follow from three ranks, and the second one bites when this
 	# floor gets its people. A divider's panel is waist height with the room
 	# carrying on above it, so it hides less than its 48 px of art suggests -
 	# but an enemy parked ON a divider's x and above its foot is invisible, and
 	# on this floor there are eighteen chances to make that mistake instead of
-	# six. The divider xs are 72 / 152 / 232 / 312 / 392 / 472; keep every
-	# enemy off them.
+	# six. The divider xs are 72 / 152 / 232 / 312 / 392 / 552; keep every
+	# enemy off them, or south of a foot where Y-sorting draws it in front.
+	#
+	# The gap where a seventh column would be - x 472 - is the mouth of the arm,
+	# and it is empty on purpose: a panel drawn across the corner is a panel the
+	# player turns behind.
 	"column": "divider",
-	"columns": {"rows": [4, 9, 14], "xs": [4, 9, 14, 19, 24, 29]},
+	"columns": {"rows": [18, 23, 28], "xs": [4, 9, 14, 19, 24, 34]},
 	# DESIGN.md's hazard: the photocopier, jammed, lid up, fuser still going.
 	# Not the `printer` in the catalogue - that one is a machine nobody can
 	# use, this is a machine nobody should touch.
+	#
+	# It stands at the INSIDE of the turn, a body's width west of the lane's
+	# corner, so cutting that corner tight is the thing it taxes. Nothing else
+	# on this floor asks anything of a player who is walking rather than
+	# fighting.
+	#
+	# South of the north strip rather than in it: a sheet of A4 taped to the wall
+	# above a hazard covers the top half of the hazard, and the one thing on this
+	# floor that must be legible before it is touched is this. And OFF the divider
+	# xs, which is the enemies' rule applying to a machine for the same reason -
+	# x 232 put it four pixels north of a divider's foot, where Y-sorting drew
+	# the panel over the hazard and left a burn nobody could see coming.
 	"hazard": "copier",
+	"hazard_at": Vector2(208, 286),
 	# THE WIRING, and it is what makes this floor move. Four runs of cable
-	# trunking down the aisles, each one dull until it flares end to end and
-	# then puts something very fast down its length. Something in the room is
-	# going off roughly every six tenths of a second, and two of the four are
-	# usually in flight at once.
+	# trunking, each one dull until it flares end to end and then puts something
+	# very fast down its length. Something in the room is going off roughly
+	# every six tenths of a second, and two of the four are usually in flight.
 	#
 	# It is on this floor rather than any other because of what it asks. The
 	# studio's dolly is one slow rig and what it wants is patience; this is the
@@ -61,82 +126,90 @@ const BIOME := {
 	#
 	# Three things about the geometry, and the first is the rule:
 	#
-	# - **Every run stops clear of the door lane.** x 246-300 stays walkable top
-	#   to bottom on every floor, so the aisles are cut in two at the lane
-	#   rather than run across it: the west halves end at 232 and the east
-	#   halves start at 312. Splitting them is not a compromise - it DOUBLED
-	#   the number of runs, which is most of what makes the room feel busy.
-	# - **y 128 and y 224 are the aisles**, between the divider rows whose feet
-	#   are at 80 / 160 / 240. The northern pair sits on the top edge of the
-	#   central band rather than through it, so the 48 px of band the routing
-	#   fight needs is still there - it now has a metronome along one side.
-	#   Both clear Ivan at (208, 168) and Dominique at (340, 144), which matters
-	#   more than it looks: a conversation takes the player's hands, and being
-	#   zapped while somebody is talking to you is the one version of this that
-	#   would read as the game cheating.
+	# - **Every run stops clear of the walk.** The hall's aisle at y 320 is cut
+	#   in two at the lane - the west half ends at 232 and the east half starts
+	#   at 312 - exactly as it always was. Splitting an aisle is not a
+	#   compromise: it is what DOUBLED the number of runs, and it is most of
+	#   what makes the room feel busy.
+	# - **The arm's two runs are VERTICAL, and they are the first in the game.**
+	#   A corridor's trunking goes along the corridor, and what a player is
+	#   doing in the arm is climbing rather than crossing - so these do not cut
+	#   the route, they punish drifting off it. They sit 60 px either side of
+	#   the lane, at x 392 and x 600.
 	# - **`after` is the only per-run number that is not geometry**, and the
-	#   four are spread across the cycle so no two neighbours fire in sequence -
-	#   the sparks appear to jump around the room rather than sweep it. Two of
-	#   the four run east-to-west for the same reason.
+	#   four are spread across the cycle so no two neighbours fire in sequence.
+	#   The hall's pair are half a cycle apart, so crossing the hall and
+	#   climbing the arm never sound like one machine.
 	"surge": {
 		"speed": 260.0, "period": 2.4, "charge": 0.5, "damage": 8,
 		"runs": [
-			{"from": Vector2(24, 128), "to": Vector2(232, 128), "after": 0.0},
-			{"from": Vector2(520, 224), "to": Vector2(312, 224), "after": 0.6},
-			{"from": Vector2(312, 128), "to": Vector2(520, 128), "after": 1.2},
-			{"from": Vector2(232, 224), "to": Vector2(24, 224), "after": 1.8},
+			{"from": Vector2(24, 320), "to": Vector2(232, 320), "after": 0.0},
+			{"from": Vector2(392, 208), "to": Vector2(392, 40), "after": 0.6},
+			{"from": Vector2(616, 320), "to": Vector2(312, 320), "after": 1.2},
+			{"from": Vector2(600, 40), "to": Vector2(600, 208), "after": 1.8},
 		],
 	},
-	# The stations. Three ranks of them in the pockets the dividers leave, at
-	# x 112 / 192 / 352 / 432 with the two outer walls taking one each, so the
-	# room reads as a grid of identical seats - which is the whole of what a
+	# The stations. Ten of them in the pockets the dividers leave - one under the
+	# hall's north wall and the rest in the two bands the wiring crosses - so the
+	# room still reads as a grid of identical seats, which is the whole of what a
 	# call floor looks like and the whole of the joke.
 	#
-	# The middle rank is deliberately the thin one. This floor's lesson is that
-	# a slow near guards is lethal, and being slowed is only a lesson in a room
-	# you were trying to cross: the band at y 128-176 keeps the floor a routing
-	# fight needs, with the jammed copier standing in it at (120, 152).
+	# **The north strip holds almost nothing, and that is the shape deciding it.**
+	# The walk runs east along that wall, which leaves a band barely fifty pixels
+	# deep either side of it - and everything in this game is drawn upwards from
+	# its foot, so a desk standing in that band reaches up into whatever is hung
+	# on the wall above it. Two desks under the wallboard read as one object with
+	# monitors growing out of a scoreboard. What lives up there now is what hangs
+	# (the board, the notice) or what is thin (the cooler, the printer); the
+	# seats live in the body of the room.
 	"props": [
-		{"type": "call_desk", "at": Vector2(112, 104)},
-		{"type": "chair", "at": Vector2(112, 118)},
-		{"type": "call_desk", "at": Vector2(192, 104)},
-		{"type": "chair", "at": Vector2(192, 118)},
-		{"type": "call_desk", "at": Vector2(352, 104)},
-		{"type": "chair", "at": Vector2(352, 118)},
-		{"type": "call_desk", "at": Vector2(432, 104)},
-		{"type": "chair", "at": Vector2(432, 118)},
-		{"type": "call_desk", "at": Vector2(40, 184)},
-		{"type": "chair", "at": Vector2(40, 198)},
-		{"type": "call_desk", "at": Vector2(504, 184)},
-		{"type": "chair", "at": Vector2(504, 198)},
-		{"type": "call_desk", "at": Vector2(112, 264)},
-		{"type": "chair", "at": Vector2(112, 278)},
-		{"type": "call_desk", "at": Vector2(192, 264)},
-		{"type": "chair", "at": Vector2(192, 278)},
-		{"type": "call_desk", "at": Vector2(352, 264)},
-		{"type": "chair", "at": Vector2(352, 278)},
-		{"type": "call_desk", "at": Vector2(432, 264)},
-		{"type": "chair", "at": Vector2(432, 278)},
-		# The board, in the stretch of north wall between the first two
-		# dividers, where the whole floor can see it all day.
-		{"type": "wallboard", "at": Vector2(92, 18)},
-		# And the other thing this company communicates by: a sheet of A4.
-		{"type": "notice", "at": Vector2(176, 20)},
-		{"type": "printer", "at": Vector2(492, 104)},
-		{"type": "cooler", "at": Vector2(40, 60)},
-		{"type": "dead_plant", "at": Vector2(500, 60)},
-		{"type": "table", "at": Vector2(40, 264)},
-		{"type": "sofa", "at": Vector2(496, 264)},
-		{"type": "cable_spool", "at": Vector2(352, 224)},
-		{"type": "debris", "at": Vector2(208, 140)},
-		{"type": "debris", "at": Vector2(368, 216)},
-		{"type": "debris", "at": Vector2(96, 224)},
-		{"type": "debris", "at": Vector2(448, 148)},
-		{"type": "debris", "at": Vector2(192, 224)},
+		{"type": "call_desk", "at": Vector2(576, 264)},
+		{"type": "chair", "at": Vector2(576, 278)},
+		{"type": "call_desk", "at": Vector2(112, 352)},
+		{"type": "chair", "at": Vector2(112, 366)},
+		{"type": "call_desk", "at": Vector2(192, 352)},
+		{"type": "chair", "at": Vector2(192, 366)},
+		{"type": "call_desk", "at": Vector2(352, 352)},
+		{"type": "chair", "at": Vector2(352, 366)},
+		{"type": "call_desk", "at": Vector2(432, 352)},
+		{"type": "chair", "at": Vector2(432, 366)},
+		{"type": "call_desk", "at": Vector2(512, 352)},
+		{"type": "chair", "at": Vector2(512, 366)},
+		{"type": "call_desk", "at": Vector2(112, 504)},
+		{"type": "chair", "at": Vector2(112, 518)},
+		{"type": "call_desk", "at": Vector2(192, 504)},
+		{"type": "chair", "at": Vector2(192, 518)},
+		{"type": "call_desk", "at": Vector2(352, 504)},
+		{"type": "chair", "at": Vector2(352, 518)},
+		{"type": "call_desk", "at": Vector2(432, 504)},
+		{"type": "chair", "at": Vector2(432, 518)},
+		# The board, in the stretch of the hall's north wall the player walks
+		# the whole length of on the way to the arm, where the floor can see it
+		# all day.
+		{"type": "wallboard", "at": Vector2(92, 242)},
+		# And the other thing this company communicates by: a sheet of A4. One
+		# at the turn and one at the top of the arm, which is the last thing
+		# anybody reads before the stairs.
+		{"type": "notice", "at": Vector2(176, 244)},
+		{"type": "notice", "at": Vector2(400, 18)},
+		{"type": "printer", "at": Vector2(604, 264)},
+		{"type": "cooler", "at": Vector2(40, 264)},
+		{"type": "dead_plant", "at": Vector2(608, 320)},
+		{"type": "table", "at": Vector2(40, 504)},
+		{"type": "sofa", "at": Vector2(600, 504)},
+		# The arm, dressed as a corridor: what is stored in one rather than what
+		# is worked at in one.
+		{"type": "cable_spool", "at": Vector2(432, 176)},
+		{"type": "debris", "at": Vector2(560, 160)},
+		{"type": "debris", "at": Vector2(392, 96)},
+		{"type": "debris", "at": Vector2(208, 360)},
+		{"type": "debris", "at": Vector2(368, 416)},
+		{"type": "debris", "at": Vector2(96, 344)},
+		{"type": "debris", "at": Vector2(448, 472)},
 	],
 	# Two slowers in the pockets the dividers make, and seven boys knotted around
 	# them. Every one of the nine is either off the divider xs (72 / 152 / 232 /
-	# 312 / 392 / 472) or SOUTH of a divider's foot, where Y-sorting draws it in
+	# 312 / 392 / 552) or SOUTH of a divider's foot, where Y-sorting draws it in
 	# front of the panel rather than behind it - which is the mistake this floor
 	# offers eighteen chances to make.
 	#
@@ -144,34 +217,39 @@ const BIOME := {
 	# pair is the point and must not be trimmed: DESIGN.md's escape hatch for
 	# this room's weight is one office boy, never a call_center.
 	#
-	# What changed is the SPACING, not the pair. The five used to stand far
-	# enough apart that a slow could be walked off before the next body was
-	# reached, which is the lesson cancelling itself out. Now each slower sits
-	# inside a knot of boys, so the floor's whole sentence - slowed, and then
-	# swung at - happens without the player getting to pick the order. They also
-	# keep off the surge lanes at y 128 and y 224: a hazard that clears the room
-	# for you is a hazard doing the player's job.
+	# What the dogleg changed is WHERE they can be. All nine are in the hall and
+	# all nine are south of the walk, because the three legs of it take the
+	# room's whole northern edge and the middle of the arm - and clearing a leg
+	# by a body's own sight is the rule, which puts a 130 px slower 130 px off
+	# it. Each slower still sits inside a knot of boys, so the floor's sentence -
+	# slowed, and then swung at - happens without the player getting to pick the
+	# order. They also keep off the hall's surge aisle at y 320: a hazard that
+	# clears the room for you is a hazard doing the player's job.
 	"enemies": [
-		# The west knot, around (100, 170).
-		{"type": "call_center", "at": Vector2(96, 192)},
-		{"type": "office_boy", "at": Vector2(96, 136)},
-		{"type": "office_boy", "at": Vector2(152, 200)},    # south of the foot
-		{"type": "office_boy", "at": Vector2(56, 168)},
-		{"type": "office_boy", "at": Vector2(124, 150)},
-		# The east knot, around (445, 170).
-		{"type": "call_center", "at": Vector2(456, 168)},
-		{"type": "office_boy", "at": Vector2(424, 216)},
-		{"type": "office_boy", "at": Vector2(440, 120)},
-		{"type": "office_boy", "at": Vector2(400, 180)},
+		# The west knot, around (110, 430) - the half of the hall the player
+		# walks INTO, and the one the turn puts behind them.
+		{"type": "call_center", "at": Vector2(108, 424)},
+		{"type": "office_boy", "at": Vector2(44, 400)},
+		{"type": "office_boy", "at": Vector2(136, 408)},
+		{"type": "office_boy", "at": Vector2(64, 464)},
+		{"type": "office_boy", "at": Vector2(164, 472)},    # south of the foot
+		# The east knot, under the mouth of the arm, so the climb is made with
+		# this one still standing.
+		{"type": "call_center", "at": Vector2(584, 432)},
+		{"type": "office_boy", "at": Vector2(488, 440)},
+		{"type": "office_boy", "at": Vector2(600, 400)},
+		{"type": "office_boy", "at": Vector2(520, 480)},
 	],
 	# Boys only, and still no third slower: this room already holds two, and a
 	# third arriving would stop being pressure and start being a room the player
 	# cannot move in. What a beat adds is bodies to be slowed AMONG.
 	#
-	# Two of them now, from opposite doors. The first lands while the west knot
-	# is being answered; the second comes down the north stairs once the player
-	# has crossed to the east one, which is the trick the room's own geometry
-	# already plays - there is always a knot behind you.
+	# Two of them, from opposite doors, and the shape is what makes the second
+	# one land. The first arrives behind the player while the west knot is being
+	# answered. The second comes down the NORTH stairs once the room has been
+	# worked through - which on this floor means down the arm, into a corridor
+	# the player is about to climb, from a door they cannot see the room from.
+	# It is the only place in the game where a beat arrives head-on.
 	"reinforcements": [
 		{"after_kills": 3, "from": "start",
 			"enemies": ["office_boy", "office_boy"],
@@ -184,10 +262,12 @@ const BIOME := {
 	# slow near two guards stops being a lesson and starts being a death, and it
 	# is the last floor before Ahmed - so it is where the game has to admit that
 	# healing exists at all, the lobby's free heart being two floors behind.
-	# He comes in by the south door and stands east of the copier, in the gap
-	# between the middle desks: clear of the hazard at (120, 152), clear of the
-	# door line, and on the side of the room the fight tends to end on.
-	"relief": {"npc": "ivan", "from": "start", "at": Vector2(208, 168),
+	# He comes in by the south door and stands in the hall, in the pocket
+	# between the second and third ranks of dividers: clear of the copier at the
+	# turn, clear of the walk, and on the side of the room the fight starts on
+	# rather than the side it ends on - so he is behind the player by the time
+	# the room is quiet, which is a reason to look back at it.
+	"relief": {"npc": "ivan", "from": "start", "at": Vector2(208, 400),
 		"say": "res://game/npcs/ivan/after_call_center.gd"},
 	# The FOURTH beat, and this is the first floor to carry one: Dominique comes
 	# DOWN the north stairs - the ones the player is about to go up - to say what
@@ -197,11 +277,9 @@ const BIOME := {
 	# the same sixteen pixels. Opposite doors also say the two things they are
 	# for - he has come from where you have been, she from where you are going.
 	#
-	# She stands east of the third divider rank, off the divider xs
-	# (72 / 152 / 232 / 312 / 392 / 472) and off the door line on the enemies'
-	# exact terms, in the pocket between the desk at (352, 104) and the one at
-	# (352, 264) - which is on the way to the north door rather than beside it,
-	# so walking past her is a decision rather than an accident.
-	"briefing": {"npc": "dominique", "from": "returned", "at": Vector2(340, 144),
+	# She waits in the ARM, off the lane by sixty pixels, which is the one thing
+	# this floor's shape makes easy: there is a corridor between the player and
+	# the stairs, and somebody standing in it cannot be walked past by accident.
+	"briefing": {"npc": "dominique", "from": "returned", "at": Vector2(568, 128),
 		"say": "res://game/npcs/dominique/before_ahmed.gd"},
 }

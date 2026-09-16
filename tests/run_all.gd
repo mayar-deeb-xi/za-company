@@ -28,7 +28,7 @@ const SUITES := ["test_menu", "test_flow", "test_combat", "test_slam",
 	"test_rage", "test_silverman", "test_barks", "test_reinforcements",
 	"test_dialogue", "test_ivan", "test_dominique", "test_enemy_sfx",
 	"test_player_sfx", "test_studio", "test_surge", "test_scrubber",
-	"test_steering", "test_music", "test_ui_sound"]
+	"test_steering", "test_dogleg", "test_music", "test_ui_sound"]
 
 
 func _initialize() -> void:

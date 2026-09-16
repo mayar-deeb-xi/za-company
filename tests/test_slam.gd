@@ -66,9 +66,6 @@ const BESIDE := Vector2(422, 150)
 ## leftovers, and far enough from the ring that leaving it is unambiguous.
 const AWAY := Vector2(120, 280)
 
-## The door lane, which no authored position's sight radius may reach.
-const LANE_MIN := 246.0
-const LANE_MAX := 300.0
 
 var _brute: CharacterBody2D = null
 var _t0 := 0
@@ -167,6 +164,12 @@ func _ladder() -> void:
 ## The rule the marble hall is only one instance of: every `security` authored
 ## into any biome keeps its whole sight radius off the door lane. Read off disk,
 ## so a floor that places one badly fails here and not in play.
+##
+## The lane is asked of the ROOM rather than written down here, and that is what
+## the call floor's dogleg cost: ten floors keep the straight band both doors
+## are cut into, one has a walk with two turns in it, and a check that knew the
+## number would have passed that floor by measuring the wrong place. A floor
+## that says nothing still answers with the band every floor kept.
 func _lane() -> void:
 	var placed := 0
 	var bad: Array[String] = []
@@ -181,10 +184,12 @@ func _lane() -> void:
 			if not node.is_in_group("enemies") or node.get("shove_force") == null:
 				continue
 			placed += 1
-			var x: float = (node as Node2D).position.x
+			var at: Vector2 = (node as Node2D).position
 			var sight: float = node.get("sight_radius")
-			if x + sight > LANE_MIN and x - sight < LANE_MAX:
-				bad.append("%s at x %.0f (sight %.0f)" % [name, x, sight])
+			var clear: float = room.call("lane_clearance", at)
+			if clear < sight:
+				bad.append("%s at %s (%.0f clear, sight %.0f)"
+					% [name, at, clear, sight])
 		room.free()
 	_check("at least one floor stands a brute on it (%d)" % placed, placed > 0)
 	_check("every one of them clears the door lane by its own sight%s"

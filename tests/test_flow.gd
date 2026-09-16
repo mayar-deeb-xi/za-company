@@ -397,16 +397,25 @@ func _tick(frame: int) -> void:
 					"office_boy", "office_boy", "office_boy"])
 			# Nobody parked behind a divider's 48 px of panel. Eighteen dividers
 			# is eighteen chances to make an enemy invisible rather than merely
-			# unfair, and only the ones NORTH of a foot hide anything.
+			# unfair, and only the ones NORTH of a foot hide anything - within the
+			# panel's own height of it, which is the half of the rule the old
+			# version of this check got for free by every body being in the top
+			# half of a room that no longer exists.
 			var hidden: Array = get_nodes_in_group("enemies").filter(
 				func(n: Node2D) -> bool:
-					for x in [72, 152, 232, 312, 392, 472]:
-						if absf(n.position.x - float(x)) < 24.0 								and n.position.y < 160.0:
-							return true
+					for x in [72, 152, 232, 312, 392, 552]:
+						if absf(n.position.x - float(x)) >= 24.0:
+							continue
+						for foot in [304.0, 384.0, 464.0]:
+							if n.position.y < foot and n.position.y >= foot - 48.0:
+								return true
 					return false)
 			_check("enemies: none of the nine hides behind a divider (%d)"
 				% hidden.size(), hidden.is_empty())
-			_player().global_position = Vector2(272, 78)
+			# THE DOGLEG: the way up is at the top of an arm in the north-east
+			# corner, not over the door the player came in by. Every other floor in
+			# the chain is left by walking straight up the middle.
+			_player().global_position = Vector2(480, 78)
 			_key(KEY_W, true)
 		581:
 			_key(KEY_W, false)

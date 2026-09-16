@@ -39,7 +39,9 @@ const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
 ## it all three biome entries could be empty and every check would still pass.
 const BRIEFINGS := {
 	"call_center": {
-		"at": Vector2(340, 144),
+		# The dogleg: she waits in the ARM, off the walk by sixty pixels, where
+		# the player cannot get to the stairs without passing her.
+		"at": Vector2(568, 128),
 		"say": "res://game/npcs/dominique/before_ahmed.gd",
 	},
 	"innovation_lab": {

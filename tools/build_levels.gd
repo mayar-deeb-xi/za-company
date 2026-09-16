@@ -39,29 +39,18 @@ extends SceneTree
 const Biomes := preload("res://tools/biomes.gd")
 const Props := preload("res://tools/props.gd")
 const StableIds := preload("res://tools/stable_ids.gd")
+## The room's own shape - how big, what is cut out of it, where its doors are
+## and which tile every cell takes. A floor plan is a subject of its own, so
+## it is a file of its own; this one only paints what it is told.
+const Plan := preload("res://tools/plan.gd")
 
 const LEVEL_SCRIPT := "res://game/levels/level.gd"
 const DOOR_SCRIPT := "res://game/levels/door_base.gd"
 const HAZARD_SCRIPT := "res://game/levels/hazard_base.gd"
 const PICKUP_SCRIPT := "res://game/levels/pickup_base.gd"
 
-const TILE := 16
-const COLS := 34                 # 544 px
-const ROWS := 19                 # 304 px - about a quarter less area than 40x22
+const TILE := Plan.TILE
 
-## Atlas coordinates, mirroring the layout in tools/build_biomes.gd.
-const FLOOR := Vector2i(0, 0)
-const FLOOR_ALT := Vector2i(1, 0)
-const FLOOR_WORN := Vector2i(3, 0)
-const WALL := Vector2i(0, 1)
-const WALL_LIT := Vector2i(2, 1)
-const WALL_DARK := Vector2i(3, 1)
-
-## Doors sit in a 2-tile gap cut through the wall ring: north to the next level,
-## south back to the previous one. DOOR_COL is chosen so the gap straddles the
-## map's centre line.
-const DOOR_COL := 16
-const DOOR_CENTRE_X := DOOR_COL * TILE + TILE
 
 ## The colonnade flanks a central runner. Offset so no pillar lands on the
 ## centre line - the straight walk between the two doors has to stay clear.
@@ -69,18 +58,17 @@ const DOOR_CENTRE_X := DOOR_COL * TILE + TILE
 ## that is furnished needs the floor a full colonnade would take up.
 const COLUMN_ROWS := [5, 13]
 const COLUMN_XS := [4, 9, 14, 19, 24, 29]
-const RUNNER_TOP := 8
-const RUNNER_BOTTOM := 10
 
-## Far enough from a threshold that arriving here does not re-trigger the door
-## you just came out of.
-const SPAWN_START_Y := 240       # by the south door: you came from the previous level
-const SPAWN_RETURN_Y := 80       # by the north door: you came back from the next one
 
 ## The starting-point dressing for health: a heart to heal on, and - on the
 ## floors whose biome asks for one - a hazard to hurt on, either side of the
 ## room, both clear of the door line and the colonnade so the straight walk
 ## between the doors stays safe.
+##
+## Both are where a stand goes in the room every floor is by default, so both
+## are overridable per biome (`hazard_at`, `heart_at`): a shaped floor can have
+## no floor at all at the spot a rectangle would have put one, and a copier
+## standing in a wall is the kind of thing only a screenshot finds.
 const TORCH_POS := Vector2(120, 152)
 const HEALTH_POS := Vector2(424, 152)
 
@@ -517,11 +505,20 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	root.set_script(load(LEVEL_SCRIPT))
 	root.set("display_name", Biomes.BIOMES[level].get("title", ""))
 	root.set("music", Biomes.BIOMES[level].get("music", ""))
+	# The walk between the two doors, where it is not the straight one every
+	# rectangular floor has. Written in beside the title for the same reason
+	# that is: it is a fact about the ROOM, and the alternative was four test
+	# suites agreeing with each other by hand about a shape only one floor has.
+	var legs: Array[Rect2] = []
+	for leg: Rect2 in Biomes.BIOMES[level].get("lane", []):
+		legs.append(leg)
+	root.set("lane", legs)
 
+	var plan := Plan.new(Biomes.BIOMES[level].get("shape", {}))
 	var floor_layer := _layer("Floor", tileset, root)
 	var walls := _layer("Walls", tileset, root)
 	walls.y_sort_enabled = true
-	_paint(floor_layer, walls)
+	_paint(floor_layer, walls, plan)
 
 	var props := Node2D.new()
 	props.name = "Props"
@@ -539,6 +536,13 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 		var column_scene := _reload("%s/fixtures/column.tscn" % props_dir)
 		for row in column_rows:
 			for col in column_xs:
+				# A colonnade is a cross product, and on a shaped floor part of
+				# one can land in the building rather than in the room. Skipped
+				# rather than reported: the rows and xs are the rhythm the room
+				# is dressed to, and a rhythm that has to dodge a corner is not
+				# one anybody would want to author by hand.
+				if plan.solid(col, row + 1):
+					continue
 				var column := column_scene.instantiate()
 				column.name = "Column_%d_%d" % [col, row]
 				column.position = Vector2(col * TILE + TILE / 2, (row + 1) * TILE)
@@ -550,7 +554,7 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	if Biomes.has_hazard(level):
 		var torch := _reload("%s/fixtures/torch.tscn" % props_dir).instantiate()
 		torch.name = "Torch"
-		torch.position = TORCH_POS
+		torch.position = Biomes.BIOMES[level].get("hazard_at", TORCH_POS)
 		props.add_child(torch)
 		torch.owner = root
 
@@ -625,7 +629,7 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	if Biomes.has_heart(level):
 		var health := _reload("%s/fixtures/health_item.tscn" % props_dir).instantiate()
 		health.name = "Health"
-		health.position = HEALTH_POS
+		health.position = Biomes.BIOMES[level].get("heart_at", HEALTH_POS)
 		props.add_child(health)
 		health.owner = root
 
@@ -689,22 +693,27 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	var next: String = Biomes.next_of(level)
 	if next != "":
 		# A boss floor's way up is shut until the boss concedes.
-		_add_door(props, root, door_scene, dir, "Exit", "out", 0, 0.0,
+		_add_door(props, root, door_scene, dir, "Exit", "out",
+			plan.door_at(plan.out_col, 0), 0.0,
 			next, &"start", BOSS_DOOR if not boss.is_empty() else "")
 	var previous: String = Biomes.previous_of(level)
 	if previous != "":
 		# Half a turn puts the same scene's art, seal and threshold in the
 		# south wall, facing back into the room.
-		_add_door(props, root, door_scene, dir, "Return", "back", ROWS - 1, PI,
+		_add_door(props, root, door_scene, dir, "Return", "back",
+			plan.door_at(plan.back_col, plan.rows - 1), PI,
 			previous, &"returned")
-	_cut_doorways(walls, next != "", previous != "")
+	_cut_doorways(walls, plan, next != "", previous != "")
 
 	var spawns := Node2D.new()
 	spawns.name = "Spawns"
 	root.add_child(spawns)
 	spawns.owner = root
-	_marker(spawns, root, "start", Vector2(DOOR_CENTRE_X, SPAWN_START_Y))
-	_marker(spawns, root, "returned", Vector2(DOOR_CENTRE_X, SPAWN_RETURN_Y))
+	# Each under its own door, which on a shaped floor are not in line with each
+	# other: the call floor's way up is in an arm off the far end of the room,
+	# so arriving back down it puts you there and not over the room you left by.
+	_marker(spawns, root, "start", plan.start_at())
+	_marker(spawns, root, "returned", plan.returned_at())
 	# A floor may name markers of its own, and there is exactly one thing they
 	# are for: a reinforcement names a marker instead of carrying a position, so
 	# a beat that arrives anywhere but the two doors needs a name to arrive at.
@@ -772,7 +781,7 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 
 
 func _add_door(props: Node2D, root: Node2D, scene: PackedScene, dir: String,
-		node_name: String, art: String, wall_row: int, turn: float,
+		node_name: String, art: String, at: Vector2, turn: float,
 		target: String, spawn: StringName, script_path := "") -> void:
 	var door := scene.instantiate()
 	# Swapped before any property is set: a new script starts from its own
@@ -780,7 +789,7 @@ func _add_door(props: Node2D, root: Node2D, scene: PackedScene, dir: String,
 	if script_path != "":
 		door.set_script(load(script_path))
 	door.name = node_name
-	door.position = Vector2(DOOR_CENTRE_X, wall_row * TILE + TILE / 2)
+	door.position = at
 	door.rotation = turn
 	door.art = load("%s/doorway_%s.tres" % [dir, art]) as Texture2D
 	door.target_level = "%s/%s.tscn" % [Biomes.dir(target), target]
@@ -789,39 +798,35 @@ func _add_door(props: Node2D, root: Node2D, scene: PackedScene, dir: String,
 	door.owner = root
 
 
-## One tile of wall all the way round, with the floor pattern inside it.
-func _paint(floor_layer: TileMapLayer, walls: TileMapLayer) -> void:
-	for row in ROWS:
-		for col in COLS:
+## One tile of wall all the way round whatever shape the room is, with the
+## floor pattern inside it. Which cell is which, and which of the three wall
+## tiles it takes, is tools/plan.gd's - see there for why a room is a predicate
+## rather than a list of cases.
+##
+## Solid cells are FILLED rather than left empty, including the deep ones no
+## floor touches. The camera clamps to the map's bounding box, so on a shaped
+## floor it can frame a piece of the cut; an unpainted cut is a hole in the
+## world with the clear colour showing through it.
+func _paint(floor_layer: TileMapLayer, walls: TileMapLayer, plan: RefCounted) -> void:
+	for row in plan.rows:
+		for col in plan.cols:
 			var at := Vector2i(col, row)
-			var on_edge := col == 0 or row == 0 or col == COLS - 1 or row == ROWS - 1
-			if on_edge:
-				var corner := (col == 0 or col == COLS - 1) \
-					and (row == 0 or row == ROWS - 1)
-				var tile := WALL_DARK if corner else (WALL_LIT if row == 0 else WALL)
-				walls.set_cell(at, 0, tile)
-				continue
-			floor_layer.set_cell(at, 0, _floor_tile(col, row))
+			if plan.solid(col, row):
+				walls.set_cell(at, 0, plan.wall_tile(col, row))
+			else:
+				floor_layer.set_cell(at, 0, plan.floor_tile(col, row))
 
 
 ## Removes the wall tiles a doorway stands in, so the arch reads as a way
 ## through the border rather than something parked in front of it. The door
 ## scene's own Seal body keeps the hole closed.
-func _cut_doorways(walls: TileMapLayer, north: bool, south: bool) -> void:
-	for pair in [[north, 0], [south, ROWS - 1]]:
+func _cut_doorways(walls: TileMapLayer, plan: RefCounted,
+		north: bool, south: bool) -> void:
+	for pair in [[north, 0, plan.out_col], [south, plan.rows - 1, plan.back_col]]:
 		if not pair[0]:
 			continue
-		for col in [DOOR_COL, DOOR_COL + 1]:
+		for col in plan.doorway_cols(pair[2]):
 			walls.erase_cell(Vector2i(col, pair[1]))
-
-
-func _floor_tile(col: int, row: int) -> Vector2i:
-	# A darker course hugging the wall reads as the shadow the wall casts.
-	if col == 1 or row == 1 or col == COLS - 2 or row == ROWS - 2:
-		return FLOOR_WORN
-	if row >= RUNNER_TOP and row <= RUNNER_BOTTOM:
-		return FLOOR_ALT
-	return FLOOR
 
 
 func _layer(name: String, tileset: TileSet, root: Node2D) -> TileMapLayer:

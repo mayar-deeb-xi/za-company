@@ -10,12 +10,19 @@ extends "res://tests/helpers.gd"
 ##
 ## ## What it is actually asking
 ##
-## The headline is the third check below: **no run reaches the door lane.** A
-## surge is the second thing in this game that could threaten x 246-300 without
-## ever being PLACED in it, and unlike the dolly there are four of them, so the
-## rule is checked against every run rather than against a rig. It is also what
-## makes the ARRIVAL safe - a player walks in at (272, 240), on the lane, while
-## the first run is already charging.
+## The headline is the third check below: **no run reaches the walk.** A surge
+## is the second thing in this game that could threaten the route between the
+## doors without ever being PLACED on it, and unlike the dolly there are four of
+## them, so the rule is checked against every run rather than against a rig. It
+## is also what makes the ARRIVAL safe - a player walks in at (272, 480), on the
+## walk, while the first run is already charging.
+##
+## This floor is the DOGLEG, so the walk is three legs with two turns in it
+## rather than one straight band, and the check asks the ROOM for its own rather
+## than holding a number. Two of the four runs are vertical, up the arm, which
+## is also why the check samples along a run instead of comparing x against a
+## pair of numbers: a vertical run has only one x, and the version that compared
+## numbers would have passed it without looking.
 ##
 ## The other one worth naming is "one pass is one hit". The head crosses a
 ## standing player in about a tenth of a second against a grace window six times
@@ -41,13 +48,14 @@ const CHARGE := 30       # 0.5s
 ## 208 px at 260 px/s.
 const TRAVEL := 48
 
-## The lane every floor keeps walkable, top to bottom.
-const LANE := Vector2(246, 300)
+## How finely a run is sampled against the walk, in pixels. Well under the
+## lane's own 54 px width, so nothing can cross between two samples.
+const LANE_STEP := 4.0
 
-## On the first run's line, west of the door lane and clear of the copier at
-## (120, 152), of the dividers' feet at y 80/160 and of every desk. The head
-## reaches it a little over half way along.
-const ON_LINE := Vector2(128, 128)
+## On the first run's line - the hall's aisle, west of the walk - and clear of
+## the copier at the turn, of the dividers' feet at y 304/384/464 and of every
+## desk. The head reaches it a little over half way along.
+const ON_LINE := Vector2(128, 320)
 
 var _t0 := 0
 var _damage := 0
@@ -133,12 +141,17 @@ func _arrive() -> void:
 	_check("wiring: the call floor is wired, in four runs (%d)" % runs.size(),
 		runs.size() == 4)
 
-	# The rule. Every run, both ends, against the lane every floor keeps.
+	# The rule. Every run, along its whole length, against the walk this room
+	# says it keeps - which here has two corners in it.
 	var across: Array = runs.filter(func(n: Node) -> bool:
 		var a: Vector2 = n.get("from")
 		var b: Vector2 = n.get("to")
-		return maxf(a.x, b.x) > LANE.x and minf(a.x, b.x) < LANE.y)
-	_check("wiring: no run reaches the door lane (%d of %d cross it)"
+		var steps := int(a.distance_to(b) / LANE_STEP)
+		for i in steps + 1:
+			if _level().call("lane_clearance", a.lerp(b, float(i) / steps)) <= 0.0:
+				return true
+		return false)
+	_check("wiring: no run reaches the walk between the doors (%d of %d cross it)"
 		% [across.size(), runs.size()], across.is_empty())
 
 	var first := runs[0] as Node2D
