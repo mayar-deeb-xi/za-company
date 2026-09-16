@@ -925,6 +925,30 @@ this track's own mean sample-to-sample step. **Pick a tempo whose bar count
 lands on the export length and say the last bar must be as loud as the first,
 and the only failure left is the one that is always there.**
 
+**A track a MOUTH plays over is levelled in the speech band, not broadband,
+and Ahmed's theme is why that sentence exists.** Every voice in the game is cut
+to -19 dBFS and every track is trimmed by the one number on Music
+(`VOLUME_DB` -8), so a floor's balance is decided entirely by the level baked
+into its track - and his arrived at -12.5 dBFS, 6 dB hotter than the bed and
+the hottest file in `assets/music/`, peaking -0.2. That put his voice 1.1 dB
+over his own theme, which is to say under it. The broadband number is only half
+of what was wrong: measured at 300 Hz - 4 kHz, where intelligibility lives,
+every other track in the building sits 13-15 dB below its own broadband level
+and his sat 7 dB below it - a midrange-heavy fight theme standing exactly where
+he was talking, 9.7 dB hotter in that band than Mostafa's. **The check is the
+75th-percentile window RMS of the track and of a voice clip, both band-limited
+to 300-4000, with the music's -8 applied; the voice wants to clear it by
+something like 8-13 dB, which is where all three bosses now are.** A track that
+measures fine full-band can still bury a boss, so measure the band he speaks in.
+
+He is also the track that proves the seam check is not optional: his was the
+one file in `assets/music/` with no `src/` half, because it had never been
+through any of this. It needed no bar-line cut and had no dry-up - its last 8 s
+alternate about the body right to 59.75 s, the good-ask case above - but it
+stepped 10413 of 32768 across the loop point against a mean step of 554, and
+clicked once a minute for as long as it had been in the game. The 12 ms
+crossfade took that to 184.
+
 ## Menu sound
 
 `autoload/ui_sound.gd` (`UiSound`) is the menu's own noise: `move` when focus
