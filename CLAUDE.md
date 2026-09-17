@@ -67,7 +67,7 @@ while it lands. game.gd also owns **camera shake**, applied as an offset so
 `_camera_target()` stays the only thing framing a room; a boss asks for it by
 emitting `shook` (see game/bosses/CLAUDE.md).
 
-**A floor is a SHAPE now, and eleven of the twelve decline to be one.** The
+**A floor is a SHAPE now, and eight of the twelve decline to be one.** The
 34 x 19 room the building was designed around is what a biome gets by saying
 nothing; a `shape` key changes the size, CUTS rectangles out of the result, or
 hands in a floor plan drawn as ASCII, and everything else follows from that one
@@ -79,12 +79,18 @@ camera leaves around a small room rather than a slab of the level's own rock.
 It lives in `tools/plan.gd`
 rather than in the generator, because the generator's job is putting things in
 a room and a floor plan is a subject with its own vocabulary: a shape nobody
-has drawn yet is a new key there and no branch anywhere else. **The call floor
-is the one that is not a rectangle** - a hall with an arm off its north-east
-corner, its two doors out of line with each other, and the only room in the
-game you cannot see the exit from. What that cost, and the two things a shaped
-room can break that a rectangular one cannot, is game/levels/CLAUDE.md's
-*The shape of a floor*.
+has drawn yet is a new key there and no branch anywhere else. **Two floors are not
+rectangles at all.** The call floor is a hall with an arm off its north-east
+corner, its two doors out of line with each other, and the first room in the
+game you cannot see the exit from. The INNOVATION LAB is the S: three halls
+of 30 x 15 stacked up the building and joined at alternating ends by two
+6-tile links, so the walk crosses each hall in the opposite direction to the
+last and you cannot see out of any of them. It is the biggest floor in the
+game at 512 x 1008, and the reason is arithmetic rather than ambition - a
+crossing spends the hall's DEPTH, so a hall has to hold the 54 px band plus
+the biggest sight radius standing off it. What that cost, and the two things a
+shaped room can break that a rectangular one cannot, is
+game/levels/CLAUDE.md's *The shape of a floor*.
 
 **A level owns everything in it**: its own tileset, doorway art, `door.tscn`
 and its own copy of every prop it places, palette baked in - no level borrows
@@ -178,6 +184,34 @@ would compound it into a launch. Everything reaches
 the player by the `player` group + `has_method`, never by type. Full rationale,
 the HUD, the combo and the heavy: game/player/CLAUDE.md.
 
+**The heavy is a HOLD and nothing else.** `CHARGE_SECONDS` (0.75) counts from
+the PRESS, so the opening swing is inside the charge rather than a tax before
+it, and it fires ITSELF at the end rather than waiting for a release - the two
+together are why the hold stopped being hard to do, since what the player has
+to get right is now only holding the button down. The cue moved off the eyes
+(the animation doubling speed, two pixels on a 32 px body) and onto the floor:
+`game/player/charge_ring.gd` is a ring at the feet that tightens as the charge
+fills and flares as the heavy leaves, dropped rather than flared where the
+player let go early. The number is bounded by a RATIO and not by taste - the
+heavy's single-target rate must stay under the light combo's, which at 0.75 is
+21.9/s against 28/s. game/player/CLAUDE.md's *The heavy is the hold*.
+
+**The combo is three hits and the third is the ARC.** Swing 5, rising slash 7,
+then `attack3` - 12 to whatever the blade reaches, and lightning that jumps to
+the nearest untouched enemy within 40 px and once more from there, 5 each. The
+cycle is 5 + 7 + 12 = 24, which is exactly a guard and exactly the heavy, so
+the breakpoints below still hold: guard 3 hits, wraith 3, warden 5, security 6.
+The jump is a SWING's worth on purpose - a body the bolt reached stays on the
+same lattice as one the blade did - and the arc ends the chain. The bolt is
+`game/player/arc.gd`, drawn live in the character's spark colour, and
+`Roster.spark_hex()` is the one rule the sheet's sparks and the bolt both read,
+because the game must never load a `tools/` script. Its three rows (21-23) are
+the one part of the cast sheet a generator seeded: `tools/arc_pose.gd`, run by
+build_characters.gd only while the sheet was too short to hold them; the PNG is
+the truth from then on. It has no sound of its own yet and opens on `swing`.
+The whole design, and the three candidates it beat: game/player/CLAUDE.md's
+Combat.
+
 **The player makes noise on the bestiary's exact terms: by owning the files.**
 An `Audio` child holds id -> stream and player.gd fires eight names at it -
 `swing`, `swing2`, `charge`, `heavy`, `wildfire`, `hit`, `hurt`, `die` - so a
@@ -210,11 +244,13 @@ arriving from the other side:
   thin them out is exactly the mistake `drain()` exists to not make. The thing
   draining you is already making the noise. A DEATH is not a drain tick, so
   `die` sits with `_lose_health()` and a drain kills as audibly as a blow does.
-- **The charge is the one loop**, because the stance is held for as long as the
-  button is and so has no length of its own to end at. It was specced as a
-  one-shot capped at `CHARGE_SECONDS` so that running out would be the ready
-  cue; that was wrong on its own terms, and the ready cue stays where it already
-  was - on the eyes, where the animation doubles speed.
+- **The charge is the one loop**, and it stayed one after the stance grew an
+  end. It was specced as a one-shot capped at `CHARGE_SECONDS` so that running
+  out would be the ready cue; that was wrong on its own terms, and it is still
+  wrong now that the heavy fires itself, because the stance has an end without
+  having a LENGTH - it runs for `CHARGE_SECONDS` minus whatever part of the
+  opening swing was already held through, and an early release cuts it anywhere.
+  The ready cue is the ring at the player's feet.
 
 The sounds are `tools/sfx/make.py player` off `tools/sfx/player.py`, the
 bestiary's pipeline unchanged.
@@ -273,7 +309,8 @@ out. The other three take your health, your time and your speed; this one takes
 your POSITION, which is the fourth way the world reaches the player
 (`shove()`) finally being used by something that fights back rather than only by
 the hub's machines. Two numbers are load-bearing and are the reason it exists at
-that size: 48 is the eighth rung of the combo AND exactly two heavies, so it is
+that size: 48 is the sixth rung of the combo (two full 5 + 7 + 12 cycles) AND
+exactly two heavies, so it is
 the one body in the game the charged spin was made for and cannot one-shot; and
 its 90 px sight gives it its own placement band (below). It is also **the first
 enemy that is not the size of the cast** - a 64px cell, which cost one `frame`
@@ -375,20 +412,26 @@ mechanic, interrupts narrowing to none).
 Which enemies a room gets is per-biome data (type + position), and positions
 keep every sight radius clear of the WALK, spawns and both stands - the way
 between the doors stays safe in every biome, and the flow and combat tests
-depend on it. On the eleven rectangular floors the walk is the straight band
-x 246-300 at every y, and clearing its EDGE by the type's own radius is the
-rule, which gives a hard band per archetype: a guard (80) needs x <= 166 or
-x >= 380, a brute (90) x <= 156 or x >= 390, a wraith (120) x <= 126 or
-x >= 420, a warden (130) x <= 116 or x >= 430.
+depend on it. On the ten floors that say nothing about their shape the walk is
+the straight band x 246-300 at every y, and clearing its EDGE by the type's own
+radius is the rule, which gives a hard band per archetype: a guard (80) needs
+x <= 166 or x >= 380, a brute (90) x <= 156 or x >= 390, a wraith (120)
+x <= 126 or x >= 420, a warden (130) x <= 116 or x >= 430. The rule never
+changes and those NUMBERS are only its answer for one room: the call floor's
+walk has two turns in it and the marble hall's is 64 px west of every other
+floor's, so both carry their own `lane` and both are asked rather than assumed
+(`level.lane_clearance(at)`).
 
-**The twelfth floor is not a rectangle, so it carries its own walk** - three
+**Four floors carry their own walk.** The call floor is not a rectangle - three
 legs with two turns in them, authored as `lane` in its biome and baked into the
 level scene beside its title. The rule is unchanged and the ARITHMETIC is what
 moved: a body clears the walk by its sight radius, and on a shaped floor that is
 a distance from three rectangles rather than a number either side of one. Ask
 the room (`level.lane_clearance(at)`, `level.walk_lane()`) rather than writing
 246 down again - a floor that says nothing still answers with the band every
-floor kept. `tests/test_slam.gd` enforces the brute's band across the whole
+floor kept. The innovation lab is the one that spends the most on this: six
+legs and five corners, each crossing hugging the wall its link arrives at, so
+the body of every hall is left for the fight rather than cut in half. `tests/test_slam.gd` enforces the brute's band across the whole
 chain by reading the built level scenes off disk, and `tests/test_dogleg.gd`
 enforces the thing underneath it: that every floor's walk is floor end to end,
 so a room nobody can cross fails there rather than in play.
@@ -600,7 +643,14 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
 
 - `ui/theme/menu_theme.tres`        <- tools/build_ui_theme.gd
 - `game/player/characters/*_frames.tres`
-                                    <- tools/build_characters.gd
+                                    <- tools/build_characters.gd, which
+                                       slices whatever is on disk - and
+                                       seeded rows 21-23 (the arc) of
+                                       game/player/src/character_cc0.png
+                                       ONCE by way of tools/arc_pose.gd, on
+                                       the enemies' rule: it paints them only
+                                       while the sheet is too short to hold
+                                       them, and never overwrites a row
 - `game/enemies/*/*_frames.tres`    <- tools/build_enemies.gd, see below
 - `game/npcs/*/*_frames.tres`      <- tools/build_npcs.gd: seeds
                                        game/npcs/<id>/src/<id>.png ONCE from
@@ -786,8 +836,8 @@ says where you are). The choice persists through Settings (section `game`, key
 
 `autoload/difficulty.gd` (`Difficulty`) owns the modes and their numbers.
 **Difficulty scales what the world deals, never enemy health**: the HP numbers
-(24 / 17 / 36) are exact breakpoints on the player's combo - four hits, three,
-six, heavy one-shot - and a multiplier would shred them on two of three modes.
+(24 / 17 / 36) are exact breakpoints on the player's combo - three hits, three,
+five, heavy one-shot - and a multiplier would shred them on two of three modes.
 So a guard dies identically on every mode; the modes change what being slow
 costs you. Two dials per mode:
 

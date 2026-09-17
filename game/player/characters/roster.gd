@@ -120,3 +120,26 @@ static func find(id: String) -> Dictionary:
 ## Empty string for an unknown id; callers keep whatever frames they have.
 static func frames_path(id: String) -> String:
 	return find(id).get("frames", "")
+
+
+## The colour a character's weapon effects are drawn in, derived from the
+## recipe: the hair colour raised to flash intensity, so a near-black head
+## still throws sparks that read on a dark floor, and a fixed gold where there
+## is no hair to take it from. Nudged off an exact match with the hair so the
+## art pipeline's curl-highlight pass can never mistake sparks for hair rim.
+##
+## Here rather than in tools/character_art.gd because two things read it: the
+## generator, which bakes it into every swing on the sheet, and player.gd,
+## which draws the arc's bolt live between enemies - and the game must never
+## load a tools/ script. The sheet and the bolt agree because this is the one
+## place the rule is written.
+const SPARK_BALD := "ffd04d"
+
+static func spark_hex(recipe: Dictionary) -> String:
+	if recipe["hair_style"] == "bald":
+		return SPARK_BALD
+	var c := Color(recipe["hair"])
+	c.v = maxf(c.v, 0.9)
+	if c.to_html(false) == recipe["hair"]:
+		c = c.lightened(0.15)
+	return c.to_html(false)

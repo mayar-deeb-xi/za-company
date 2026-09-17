@@ -1,0 +1,20 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_fhiwe"]
+_data = PackedByteArray("AAADAAUAAAABAAAAFAAAABoAAADIAAAAUklGRsAAAABXRUJQVlA4TLQAAAAvE0AGEL+gIACQZA9xh/8HwO68oSYAkKYEEShFQioQxQJ+e29VE8lW8/+HFhGU+FeCCbqcM/Mf59zvPrVM/3+9TSU37z3BR95HaiyzzlqLWWfOIcTggBEU11DzuqnhaGECUZglIQGMI0lOI2bJZ778UxUb/hH9nwBEhE4sgjKNbhIVE25zDjDG/I1pnALdBdYuMxiICNo2WRsq11rewDcse/mYQjifZi3hvNBaAoid2eDUjQg=")
+size_override = Vector2(20, 26)
+keep_compressed_buffer = true
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_w8ycu"]
+size = Vector2(16, 6)
+
+[node name="Coffee" type="StaticBody2D" unique_id=1130308656]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=171390435]
+position = Vector2(-10, -26)
+texture = SubResource("PortableCompressedTexture2D_fhiwe")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=366838729]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_w8ycu")

@@ -241,23 +241,40 @@ func _script(frame: int) -> void:
 			var freed: float = _player().global_position.distance_to(_mark)
 			_check("warden: full speed is back once it expires (%.1f px)"
 				% freed, freed > 33.0)
-			# Heavy attack: hold to charge, release to unleash on everything
-			# around. The guard is placed BEHIND the swing (the player still
-			# faces right from the walk, the guard comes from the left), so the
-			# press's opening swing misses and the heavy's cost is measured
-			# clean. It walks in and parks at 12 px - inside the spin circle.
+			# Heavy attack: hold, and it goes off by itself. There is no release
+			# in this section at all, which is the point of it - the charge
+			# counts from the PRESS (so the opening swing is inside it) and
+			# fires at CHARGE_SECONDS without being let go of.
+			#
+			# The guard is placed BEHIND the swing (the player still faces right
+			# from the walk, the guard comes from the left), so the press's
+			# opening swing misses and the heavy's cost is measured clean. It
+			# walks in and parks at 12 px - inside the spin circle.
 			_player().global_position = Vector2(272, 140)
 			var guard_scene := load("res://game/enemies/regular/regular.tscn") as PackedScene
 			_enemy = guard_scene.instantiate()
 			_level().get_node("Props").add_child(_enemy)
 			_enemy.global_position = Vector2(250, 140)
 			_key(KEY_SPACE, true)
-		1134:
-			# The press's swing is long over and the button is still down: the
-			# player is in the charge stance, rooted.
+		1090:
+			# The press's swing is over and the button is still down: the player
+			# is in the charge stance, rooted, and the ring is on the floor
+			# under them. It is the only thing in the game that says how much
+			# longer, so a stance without one is a stance held blind.
 			_check("heavy: holding past the swing enters the charge (got %s)"
 				% _sprite().animation,
 				String(_sprite().animation).begins_with("charge"))
+			_check("heavy: and the charge draws its ring (%d)"
+				% get_nodes_in_group("player_charge").size(),
+				get_nodes_in_group("player_charge").size() == 1)
+			# The swing is INSIDE the charge now, so the stance starts partly
+			# full rather than at zero: at 25 frames past the press the count
+			# has to be past the 17 frames the swing itself took.
+			var full: float = _player().get_script() \
+				.get_script_constant_map()["CHARGE_SECONDS"]
+			_check("heavy: the swing counted towards it (%.2f of %.2f)"
+				% [_player().get("_charge"), full],
+				float(_player().get("_charge")) > 0.28)
 			_check("heavy: the swing missed the guard behind the blade (%s)"
 				% str(_enemy.get("health")), _enemy.get("health") == 24)
 			# A warden joins the blast zone, placed late enough that its own
@@ -269,30 +286,76 @@ func _script(frame: int) -> void:
 			_warden = ws.instantiate()
 			_level().get_node("Props").add_child(_warden)
 			_warden.global_position = Vector2(272, 158)
-		1154:
-			# ~70 frames of charge - past CHARGE_SECONDS. Release unleashes.
+		1115:
+			# 50 frames past the press, so CHARGE_SECONDS (45) is behind us and
+			# the button was NEVER released. This is the whole fix: the heavy
+			# fires itself, and a player who simply holds cannot miss it.
+			_check("heavy: it fires itself with the button still down (%s, held %s)"
+				% [_player().get("_attack"), Input.is_action_pressed("attack")],
+				_player().get("_attack") in ["heavy", "wildfire"]
+					and Input.is_action_pressed("attack"))
+			_check("heavy: and the stance is over (%s)"
+				% ("charging" if _player().get("_charging") else "done"),
+				not _player().get("_charging"))
+			# NOW let go - after the fact, and it changes nothing. Holding on
+			# past the heavy must not charge a second one: the wildfire is
+			# excluded from the stance, so this is a player standing on the
+			# button with nothing happening, which is what the later movement
+			# checks need.
 			_key(KEY_SPACE, false)
-		1179:
+		1135:
 			_check("heavy: the spin erupts into the wildfire (got %s)"
 				% _sprite().animation,
 				String(_sprite().animation).begins_with("wildfire"))
+			_check("heavy: the ring flared and cleared (%d)"
+				% get_nodes_in_group("player_charge").size(),
+				get_nodes_in_group("player_charge").is_empty())
 			# HEAVY_POWER is exactly a guard's health, and that equality IS the
 			# design: an AoE that does not kill the basic enemy thins no crowd.
 			_check("heavy: one-shots a guard (%s)"
 				% ("<freed>" if not is_instance_valid(_enemy)
 					else str(_enemy.get("health"))),
 				not is_instance_valid(_enemy))
-		1219:
+		1160:
+			# Held right through and no second charge started: the stance is
+			# reachable only off an attack ending, and the wildfire is not one.
+			_check("heavy: holding on does not charge a second (%s)"
+				% ("charging" if _player().get("_charging") else "idle"),
+				not _player().get("_charging"))
 			_check("heavy: costs HEAVY_POWER once across spin and fire (%s of 36)"
 				% (str(_warden.get("health")) if is_instance_valid(_warden) else "<freed>"),
 				is_instance_valid(_warden) and _warden.get("health") == 12)
+			# Clear the room for the last thing the heavy has to promise, which
+			# is what happens when the player does NOT hold long enough. It is
+			# measured with nothing in reach on purpose: the question is whether
+			# anything fires, and an enemy standing in the answer would have it
+			# take damage either way.
 			if is_instance_valid(_warden):
 				_warden.queue_free()
-			# Last: a warden's charge is interruptible too, now that it runs the
-			# base's cycle rather than a clock of its own. Clear the guard out
-			# first so nothing else is landing hits.
 			if is_instance_valid(_enemy):
 				_enemy.queue_free()
+			_player().global_position = Vector2(272, 140)
+			_key(KEY_SPACE, true)
+		1185:
+			# 25 frames in: past the swing, into the stance, and well short of
+			# the 45 the heavy needs.
+			_check("heavy: a short hold is still only a stance (%s, %.2f)"
+				% [_sprite().animation, _player().get("_charge")],
+				_player().get("_charging") and float(_player().get("_charge")) < 0.75)
+			_key(KEY_SPACE, false)
+		1195:
+			# A tap stays a tap. Nothing fired, and - the part the ring made
+			# possible to get wrong - nothing FLASHED either: a cancelled charge
+			# that flares tells the player something happened when nothing did.
+			_check("heavy: letting go early fires nothing (%s)"
+				% ("'%s'" % _player().get("_attack")),
+				_player().get("_attack") == "" and not _player().get("_charging"))
+			_check("heavy: and the ring is dropped, not flared (%d)"
+				% get_nodes_in_group("player_charge").size(),
+				get_nodes_in_group("player_charge").is_empty())
+		1219:
+			# Last: a warden's charge is interruptible too, now that it runs the
+			# base's cycle rather than a clock of its own.
 			_player().global_position = Vector2(272, 140)
 			# A tap of D fixes the facing, so the swing below reaches a warden
 			# placed to the right rather than wherever the heavy left them aimed.

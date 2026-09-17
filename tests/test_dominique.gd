@@ -45,7 +45,10 @@ const BRIEFINGS := {
 		"say": "res://game/npcs/dominique/before_ahmed.gd",
 	},
 	"innovation_lab": {
-		"at": Vector2(232, 120),
+		# The S: they come down into its TOP hall, which is the only one of the
+		# three the north door opens onto - west of the climb to that door and
+		# north of the crossing, so the walk from the stairs crosses nothing.
+		"at": Vector2(200, 130),
 		"say": "res://game/npcs/dominique/before_mostafa.gd",
 	},
 	"executive_floor": {

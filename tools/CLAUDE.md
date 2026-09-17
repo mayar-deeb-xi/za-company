@@ -201,7 +201,7 @@ through the back of it, and the ending is where it gets turned over.
 
 ## Shaping a floor
 
-A biome's `shape` key decides what the room IS, and eleven of the twelve floors
+A biome's `shape` key decides what the room IS, and eight of the twelve floors
 decline to have one - saying nothing gets the 34 x 19 rectangle the building
 was designed around. The mechanism is `tools/plan.gd`, which is to a room's
 shape what `props.gd` is to its furniture: the generator asks it and paints

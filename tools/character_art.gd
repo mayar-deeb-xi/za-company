@@ -14,6 +14,8 @@ extends RefCounted
 ## and sliced forever after, so hand-drawn frames are never overwritten by a
 ## rebuild.
 
+const Roster := preload("res://game/player/characters/roster.gd")
+
 const FRAME := 32
 const COLS := 4
 
@@ -289,18 +291,13 @@ static func _add_beard(img: Image, ox: int, oy: int) -> void:
 			img.set_pixelv(p, _c(SRC_HAIR))
 
 
-## Spark colour for a recipe: the hair colour raised to flash intensity, so a
-## near-black head still throws sparks that read on a dark floor; SRC_SPARK's
-## gold where there is no hair to take it from. Nudged off an exact match with
-## the hair so the curl-highlight pass can never mistake sparks for hair rim.
+## Spark colour for a recipe. The rule lives on the roster (Roster.spark_hex)
+## because the game draws the arc's bolt in it live and must not load this
+## file; the sheet's sparks and the bolt agree by reading the one rule.
+## SRC_SPARK is that rule's bald-head gold, kept here as the source colour it
+## recolours FROM.
 static func _spark_hex(recipe: Dictionary) -> String:
-	if recipe["hair_style"] == "bald":
-		return SRC_SPARK
-	var c := _c(recipe["hair"])
-	c.v = maxf(c.v, 0.9)
-	if c.to_html(false) == recipe["hair"]:
-		c = c.lightened(0.15)
-	return c.to_html(false)
+	return Roster.spark_hex(recipe)
 
 
 # --- build tweaks: one duplicated or removed pixel column / row ---------------

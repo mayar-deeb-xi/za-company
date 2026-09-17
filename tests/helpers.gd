@@ -28,11 +28,12 @@ var _checks := 0
 var _fails: Array[String] = []
 var _mark := Vector2.ZERO
 var _health_mark := 0
-## Frame to keep mashing attack until. Enemies take a four-hit combo, and
-## pressing every 8 frames is how a player chains one: a press mid-swing is
-## buffered into the thrust. The window must end on a release (press at %8==0,
-## release at %8==4): a Space left held is not inert - the player flows into
-## the heavy attack's charge stance and stands rooted.
+## Frame to keep mashing attack until. Enemies die to a three-hit combo (swing,
+## rising slash, arc), and pressing every 8 frames is how a player chains one: a
+## press mid-attack is buffered into the next link. The window must end on a
+## release (press at %8==0, release at %8==4): a Space left held is not inert -
+## the player flows into the heavy attack's charge stance, which now fires the
+## heavy by itself rather than merely standing there.
 var _mash_until := 0
 var _settings_backup := PackedByteArray()
 var _settings_existed := false

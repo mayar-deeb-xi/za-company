@@ -89,8 +89,8 @@ func _tick(frame: int) -> void:
 		# silence BY DESIGN - which is exactly the promise that hides this.
 		34:
 			var map: Dictionary = _player().get("ATTACK_SOUNDS")
-			_check("sfx: the three attacks each name a cue (%d)" % map.size(),
-				map.size() == 3)
+			_check("sfx: the four attacks each name a cue (%d)" % map.size(),
+				map.size() == 4)
 			var unknown: Array = map.values().filter(func(cue: String) -> bool:
 				return not _sounds.has(cue))
 			_check("sfx: and every one of them is a sound it owns (%s)"
@@ -102,6 +102,11 @@ func _tick(frame: int) -> void:
 			_check("sfx: the combo's two halves sound different (%s / %s)"
 				% [map.get("attack"), map.get("attack2")],
 				map.get("attack") != map.get("attack2"))
+			# The arc has no clip of its own yet and rides on a REAL cue rather
+			# than naming a missing one - the "every one is a sound it owns"
+			# check above is what would catch a `swing3` wired before it is cut.
+			_check("sfx: the arc opens on a cue that exists (%s)" % map.get("attack3"),
+				_sounds.has(map.get("attack3")))
 
 		# ---- The stance. The loop flag is the one thing a headless run can
 		# see a `loop()` call by, and it must not be set before the player has
@@ -112,9 +117,11 @@ func _tick(frame: int) -> void:
 				% _loop_mode(LOOPING),
 				_loop_mode(LOOPING) != AudioStreamWAV.LOOP_FORWARD)
 			# Hold attack. The stance is entered when an attack ENDS with the
-			# button still down, so this has to outlast a whole swing.
+			# button still down, so this has to outlast a whole swing - and it
+			# has to be READ before CHARGE_SECONDS is up, because the heavy now
+			# fires itself rather than waiting for a release.
 			_key(KEY_SPACE, true)
-		90:
+		65:
 			_check("sfx: holding the button reaches the stance (%s)"
 				% ("charging" if _player().get("_charging") else "not charging"),
 				_player().get("_charging"))
@@ -136,6 +143,8 @@ func _tick(frame: int) -> void:
 			# crossfades the tail over the head, so the step across the join
 			# should be no worse than an ordinary step inside the clip.
 			_check_seam("res://game/player/sfx/charge.wav")
+			# Let go short of the ready point: the stance ends with nothing
+			# fired, which keeps the heavy out of the sections below.
 			_key(KEY_SPACE, false)
 
 		# ---- The promise the whole design rests on: a cue with no file, or no
@@ -156,15 +165,15 @@ func _tick(frame: int) -> void:
 		104:
 			_check("sfx: a silent body still swings (%s)"
 				% _player().get("_attack"), _player().get("_attack") != "")
-		150:
+		125:
 			_check("sfx: and still reaches the charge stance (%s)"
 				% ("charging" if _player().get("_charging") else "not charging"),
 				_player().get("_charging"))
 			_key(KEY_SPACE, false)
 			_health_before = _player().health
-		156:
+		131:
 			_player().call("take_damage", 5)
-		160:
+		140:
 			_check("sfx: and still takes a hit without one (%d -> %d)"
 				% [_health_before, _player().health],
 				_player().health == _health_before - 5)

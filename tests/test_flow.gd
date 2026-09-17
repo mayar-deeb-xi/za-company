@@ -606,7 +606,9 @@ func _tick(frame: int) -> void:
 				% [_cast()], _cast() == ["office_boy", "office_boy",
 					"office_boy", "office_boy", "office_boy", "office_boy",
 					"office_boy", "office_boy", "security"])
-			_player().global_position = Vector2(272, 78)
+			# The nave's doors are at col 12, not the building's usual col 16 -
+			# so the walk up and out of this one is x 208 rather than x 272.
+			_player().global_position = Vector2(208, 78)
 			_key(KEY_W, true)
 		841:
 			_key(KEY_W, false)
@@ -615,13 +617,13 @@ func _tick(frame: int) -> void:
 				_level() != null and _level().name == "InnovationLab")
 			_check("title: the innovation lab announces itself (got '%s')"
 				% _title_text(), _title_text() == "THE INNOVATION LAB")
-			# Seven workstations, and the count is the check because the pods
-			# ARE the room: two along the north wall, three across the south,
-			# and one either side of the east.
+			# Ten workstations, and the count is the check because the pods
+			# ARE the room: one in the machine room at the top, six across the
+			# open plan in the middle, three in the pod you walk in on.
 			var pods: Array = _level().get_node("Props").get_children().filter(
 				func(n: Node) -> bool: return n.name.begins_with("DevDesk"))
-			_check("level: seven workstations on the innovation lab (%d)"
-				% pods.size(), pods.size() == 7)
+			_check("level: ten workstations on the innovation lab (%d)"
+				% pods.size(), pods.size() == 10)
 			# The two things written on this floor's walls, and the two things
 			# that make it read as an engineering floor rather than an office
 			# with nice lighting: a diagram nobody may erase, and a build that
@@ -635,10 +637,10 @@ func _tick(frame: int) -> void:
 			_check("level: it has the power strip and no heart",
 				_level().get_node_or_null("Props/Torch") != null
 					and _level().get_node_or_null("Props/Health") == null)
-			# THE FIRST ONE-OF-EACH MIX, and the quadrants are PAIRS now - the lap
-			# check below still holds, which is the point: the room is still a lap,
-			# it just no longer offers to be walked one body at a time. This floor
-			# had
+			# THE FIRST ONE-OF-EACH MIX, and since the floor became an S the
+			# arrangement is per HALL rather than per quadrant: three rooms you
+			# cannot see out of, each of which asks for more than one answer at
+			# a time. This floor had
 			# no mechanic assigned, and being the first room that asks for all
 			# three answers at once IS the mechanic - which is also what earns
 			# the executive floor as its exam, the same fight one rank bigger.
@@ -646,13 +648,21 @@ func _tick(frame: int) -> void:
 				% [_cast()], _cast() == ["call_center", "office_boy",
 					"office_boy", "office_boy", "office_boy", "office_boy",
 					"social_media", "social_media", "social_media"])
-			var quadrants := {}
+			# And none of the three halls is empty. The quadrant check this
+			# replaces asked the same question of a rectangle - is the room an
+			# arrangement or a heap - and on a floor you cannot see across it is
+			# the one that matters: a hall the player walks into empty is a
+			# third of the floor spent on nothing. Two bodies is the floor,
+			# because one is an errand.
+			var halls := [0, 0, 0]
 			for n in get_nodes_in_group("enemies"):
-				var at: Vector2 = (n as Node2D).position
-				quadrants["%d%d" % [int(at.x > 272.0), int(at.y > 152.0)]] = true
-			_check("enemies: one to a quadrant, so the room is a lap (%d of 4)"
-				% quadrants.size(), quadrants.size() == 4)
-			_player().global_position = Vector2(272, 78)
+				var y: float = (n as Node2D).position.y
+				halls[0 if y < 256.0 else (1 if y < 624.0 else 2)] += 1
+			_check("enemies: every hall of the S is arranged, none is a walk (%s)"
+				% [halls], halls.min() >= 2 and halls[0] + halls[1] + halls[2] == 9)
+			# The way out of this one is the TOP hall's east end - col 24, not
+			# the building's usual col 16 - so the climb out is x 400.
+			_player().global_position = Vector2(400, 78)
 			_key(KEY_W, true)
 		921:
 			_key(KEY_W, false)
@@ -778,7 +788,20 @@ func _tick(frame: int) -> void:
 			# Straight on through, and the walk is the check: hellfire keeps
 			# every sight radius off the door line like every other floor, so ten
 			# enemies in the room still let the player cross it.
-			_player().global_position = Vector2(272, 78)
+			#
+			# The x is ASKED FOR rather than written down. This floor is not a
+			# rectangle and has been re-cut once already - the way out was x 320
+			# when its doors were at col 19, and a reshape moved it without
+			# moving anything a check here could see, so the suite walked into
+			# masonry for eighty frames and blamed the door. `walk_lane()` is
+			# the room's own answer to "where may somebody stand", which is the
+			# same question, so a floor re-cut again tomorrow still crosses.
+			var lane: Array[Rect2] = _level().call("walk_lane")
+			var top: Rect2 = lane[0]
+			for leg in lane:
+				if leg.position.y < top.position.y:
+					top = leg
+			_player().global_position = Vector2(top.get_center().x, 78)
 			_key(KEY_W, true)
 		1161:
 			_key(KEY_W, false)

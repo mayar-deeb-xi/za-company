@@ -55,10 +55,12 @@ asymmetry in the player's favour is the right kind of unfair.
 
 The numbers come off the player's combo, which is the clock everything else is
 measured against. Damage lands on an attack's first frame and the chain has no
-gaps, so cumulative damage is 5 / 12 / 17 / 24 / 29 / 36 at 0.29s intervals -
-which is why enemy health is 24, 17 and 36 rather than round numbers. Each is
-"dies in exactly N hits". At the old 10 health every enemy died in 0.29s and no
-telegraph could exist inside that.
+gaps, so cumulative damage is 5 / 12 / 24 / 29 / 36 / 48 at 0.29s intervals
+(the cycle is swing 5, rising slash 7, arc 12) - which is why enemy health is
+24, 17, 36 and 48 rather than round numbers. Each is "dies in exactly N hits":
+a guard in three, a wraith in three (17 falls inside the arc's 12), a warden in
+five, the security guard in six. At the old 10 health every enemy died in 0.29s
+and no telegraph could exist inside that.
 
 **`_touch_strike(player)` is the seam between melee types**, called on the frame
 the wind-up completes for each player still in range. `_touch(player, delta)` is

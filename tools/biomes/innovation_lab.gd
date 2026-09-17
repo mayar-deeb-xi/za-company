@@ -2,6 +2,36 @@ extends RefCounted
 ## The floor where the software gets written - and the brightest room in the
 ## building after the lobby.
 ##
+## It is also the SECOND floor that is not a rectangle, and the first that is
+## not one piece: three halls stacked up the building and joined at alternating
+## ends, so the walk crosses each of them in the opposite direction to the last.
+## The call floor bends once; this one bends three times.
+##
+## ## Why the halls are as big as they are
+##
+## The shape was drawn twice. The first draft was a serpentine of CORRIDORS,
+## and it was wrong for a reason this floor's own enemy comment already says
+## out loud: a mix you meet one at a time is not a mix, it is a tour. Narrow
+## legs hand the player one body at a time, which is the quadrant "lap" that
+## was tried here and thrown out. So the shape is halls joined by short links,
+## never a corridor that bends - each hall is 30 x 15 floor tiles, near enough
+## the whole of the old room, and only the two links between them are tight.
+##
+## The second draft was too SHORT, and the arithmetic is worth writing down
+## because it decides the size of every floor shaped like this one. On a
+## rectangle the walk is a vertical band and a body clears it sideways, across
+## 512 px of room. Here the walk CROSSES each hall, so the clearance budget is
+## vertical and a hall has to hold the 54 px band plus the biggest sight radius
+## standing off it - 130 for the slower. A hall of 13 floor rows leaves 154 px
+## beside a wall-hugging band, which satisfies the rule by 24 px and would
+## break the first time anybody nudged anything. 15 rows leaves 186. That is
+## the whole reason this floor is 512 x 1008 rather than something tidier.
+##
+## The corollary is the one rule to keep when editing this file: **every
+## crossing hugs a wall.** A band down the middle of a hall halves it twice
+## over - once for the clearance either side, once for the fight - and the call
+## floor's north-wall turn is the same decision for the same reason.
+##
 ## Data only, read by tools/biomes.gd; the key reference lives there.
 
 const BIOME := {
@@ -29,73 +59,158 @@ const BIOME := {
 	# lobby's lesson: a floor at the hot end takes the pale half of the cast
 	# with it. Checked with three of them standing on it.
 	"floor_band": Vector2(0.40, 0.88),
-	# A carpet runner down the middle with a little of the blue in it.
+	# A carpet runner down the middle with a little of the blue in it. The band
+	# is derived from the room's own height, so on a 63-row floor it lands in
+	# the MIDDLE hall rather than a third of the way up one of them.
 	"runner": 0.14,
-	# Glazed steel pillars, four of them, and NOT cubicle dividers - the point
-	# of an engineering floor is that it is open plan, and the point of four
-	# rather than twelve is the floor a full colonnade would eat.
+	# 32 x 63, with two bars cut out at alternating ends - the S. The halls are
+	# full width; only the two links are narrow, and each is 6 tiles (96 px),
+	# which is wide enough for a 64 px body and a doorway's worth of room
+	# either side of it.
 	#
-	# The rows are 6 and 12 rather than the usual 5 and 13, and that is a
-	# placement fix rather than a style choice: a pillar's art is 48 px tall
-	# above its foot, so rows 5 and 13 put it across y 48-96, which is exactly
-	# where north-wall furniture stands. Moved down two tiles, the whole north
-	# wall is free for the whiteboard and the first pod.
+	#   rows  1-15   TOP HALL      the machine room, and the way out
+	#   rows 17-22   west link     cols 1-6
+	#   rows 24-38   MIDDLE HALL   the open-plan pod, and the runner
+	#   rows 40-45   east link     cols 25-30
+	#   rows 47-61   BOTTOM HALL   the second pod, and the way in
+	#
+	# The doors are not in line with each other and neither is on the middle
+	# column: the way in is the bottom hall's west end, the way out is the top
+	# hall's east end, and the room between them is the whole S.
+	"shape": {
+		"cols": 32, "rows": 63,
+		"cut": [Rect2i(0, 40, 24, 6),    # the bottom bar, open on the EAST
+				Rect2i(8, 17, 24, 6)],   # the top bar, open on the WEST
+		"doors": {"out": 24, "back": 8},
+	},
+	# The walk, in six legs meeting at five corners. Each crossing hugs the
+	# wall its link arrives at, which leaves the body of every hall for the
+	# fight rather than cutting it in half - the call floor's rule, applied
+	# three times.
+	#
+	# Up out of the south door and east along the bottom hall, up the east
+	# link, west across the middle hall, up the west link, east across the top
+	# hall, out. The vertical legs overlap the crossings at their ends: a turn
+	# has to be inside the lane or the walk clips a wall.
+	"lane": [
+		Rect2(117, 938, 330, 54),    # bottom hall, west to east, on the wall
+		Rect2(413, 570,  54, 422),   # up the east link
+		Rect2( 37, 570, 430, 54),    # middle hall, east to west, on the wall
+		Rect2( 37, 202,  54, 422),   # up the west link
+		Rect2( 37, 202, 390, 54),    # top hall, west to east, on the wall
+		Rect2(373,  16,  54, 240),   # up to the north door
+	],
+	# Glazed steel pillars, and NOT cubicle dividers - the point of an
+	# engineering floor is that it is open plan. Two per hall rather than the
+	# old four in one room, which is the same density over 2.7x the floor.
+	#
+	# The xs are the two columns that clear every vertical leg of the walk in
+	# all three halls at once, which is what a cross product costs on a shaped
+	# floor: col 7 stands 21 px east of the west link's climb, col 22 stands
+	# 5 px west of where the east climb begins. Anything between them is in
+	# somebody's lane on one floor or another.
 	"column": "pillar",
-	"columns": {"rows": [6, 12], "xs": [4, 29]},
+	"columns": {"rows": [6, 28, 52], "xs": [7, 22]},
 	# The same overloaded strip as the floors below, and it needs no excuse
-	# here: seven workstations, each with a laptop, two monitors and a machine
-	# under the desk, all fed from whatever was already plugged in.
+	# here: fifteen workstations now, each with a laptop, two monitors and a
+	# machine under the desk, all fed from whatever was already plugged in.
+	# It stands in the bottom hall, under the knot, where it always did.
 	"hazard": "power_strip",
-	# Two pods on the west side, the service wall and the breakout on the east,
-	# and the two lanes every floor keeps clear: the door line (x 246-300) and
-	# the central band (y 128-176), where the power strip stands at (120, 152).
-	#
-	# Everything here also stays off the pillar columns at x 64-80 and 464-480
-	# in the rows the pillars occupy - a prop parked behind one is a prop drawn
-	# behind 48 px of glazed steel.
+	"hazard_at": Vector2(176, 850),
+	# No `heart_at` beside it, because this floor has never carried a heart:
+	# `heart` is unset, so there is no stand for one to default onto. The lab
+	# is the last floor before the gym and it is meant to be entered hurt.
+	# Three rooms, three jobs. Everything wall-mounted is on a wall the player
+	# actually faces while crossing, and nothing stands in a link: a prop is a
+	# solid body, and the two links are the only places on this floor where one
+	# of them could shut the room.
 	"props": [
-		# ---- North: the whiteboard and the first pod ------------------------
-		# The board comes first because it is the biggest thing on the wall and
-		# everything else on this wall is placed around it.
-		{"type": "diagram", "at": Vector2(22, 18)},
-		{"type": "dev_desk", "at": Vector2(128, 58)},
-		{"type": "chair", "at": Vector2(128, 72)},
-		{"type": "dev_desk", "at": Vector2(204, 58)},
-		{"type": "chair", "at": Vector2(204, 72)},
-		# ---- North-east: what the floor watches and what it runs on --------
-		{"type": "build_board", "at": Vector2(330, 18)},
-		{"type": "cooler", "at": Vector2(316, 58)},
-		{"type": "server_rack", "at": Vector2(410, 56)},
-		{"type": "server_rack", "at": Vector2(436, 56)},
-		{"type": "pc_tower", "at": Vector2(462, 52)},
-		{"type": "coffee", "at": Vector2(500, 58)},
-		{"type": "dev_desk", "at": Vector2(400, 100)},
-		{"type": "chair", "at": Vector2(400, 114)},
-		# ---- South-west: the second pod, three across ----------------------
-		{"type": "dev_desk", "at": Vector2(52, 252)},
-		{"type": "chair", "at": Vector2(52, 266)},
-		{"type": "dev_desk", "at": Vector2(128, 252)},
-		{"type": "chair", "at": Vector2(128, 266)},
-		{"type": "dev_desk", "at": Vector2(204, 252)},
-		{"type": "chair", "at": Vector2(204, 266)},
-		{"type": "cable_spool", "at": Vector2(36, 200)},
-		{"type": "debris", "at": Vector2(100, 208)},
-		{"type": "debris", "at": Vector2(172, 196)},
-		# The printer nobody on this floor has used since they were hired.
-		{"type": "printer", "at": Vector2(120, 196)},
-		# ---- The middle and the south-east: a plant, one more desk, and
-		# somewhere to stand up ---------------------------------------------
-		{"type": "plant", "at": Vector2(330, 120)},
-		{"type": "debris", "at": Vector2(340, 230)},
-		{"type": "dev_desk", "at": Vector2(400, 210)},
-		{"type": "chair", "at": Vector2(400, 224)},
-		{"type": "sofa", "at": Vector2(360, 262)},
-		{"type": "table", "at": Vector2(360, 282)},
-		{"type": "plant", "at": Vector2(420, 258)},
+		# ---- TOP HALL: the machine room -----------------------------------
+		# What the floor runs on, and the last thing you walk past on the way
+		# out. The board comes first because it is the biggest thing on the
+		# north wall and everything else up here is placed around it.
+		# A sign's words are baked into its painter, so borrowing another
+		# floor's sign borrows its joke: `poster` says FIX IT / IN POST and
+		# `whiteboard` says SMILE / THEY CAN / HEAR IT, which are the hub's
+		# and the call floor's. This floor's two signs are its own - a build
+		# that has been failing for nine runs, and a diagram nobody may erase.
+		{"type": "build_board", "at": Vector2(140, 18)},
+		{"type": "server_rack", "at": Vector2(300, 58)},
+		{"type": "server_rack", "at": Vector2(326, 58)},
+		{"type": "pc_tower", "at": Vector2(352, 58)},
+		{"type": "dev_desk", "at": Vector2(250, 60)},
+		{"type": "chair", "at": Vector2(250, 74)},
+		{"type": "plant", "at": Vector2(36, 120)},
+		# East of the climb to the door, in the pocket the walk leaves behind.
+		{"type": "cooler", "at": Vector2(458, 60)},
+		{"type": "coffee", "at": Vector2(462, 96)},
+		{"type": "scrap_pile", "at": Vector2(330, 180)},
+		{"type": "debris", "at": Vector2(150, 150)},
+		# The floor of the machine room, which the first pass left as carpet. A
+		# hall this size needs filling or it reads as a room they ran out of
+		# budget for - which is the one thing this floor is not.
+		{"type": "crt_stack", "at": Vector2(70, 58)},
+		{"type": "crt_stack", "at": Vector2(60, 175)},
+		{"type": "toolbox", "at": Vector2(104, 186)},
+		{"type": "cable_spool", "at": Vector2(250, 170)},
+		{"type": "cable_spool", "at": Vector2(320, 120)},
+		{"type": "crt_stack", "at": Vector2(458, 150)},
+		{"type": "debris", "at": Vector2(460, 200)},
+		# ---- MIDDLE HALL: the open plan -----------------------------------
+		# Five workstations in two rows and the whiteboard they argue at. The
+		# runner goes down the middle of this hall, so the desks flank it.
+		{"type": "diagram", "at": Vector2(160, 386)},
+		{"type": "dev_desk", "at": Vector2(140, 430)},
+		{"type": "chair", "at": Vector2(140, 444)},
+		{"type": "dev_desk", "at": Vector2(216, 430)},
+		{"type": "chair", "at": Vector2(216, 444)},
+		{"type": "dev_desk", "at": Vector2(292, 430)},
+		{"type": "chair", "at": Vector2(292, 444)},
+		{"type": "dev_desk", "at": Vector2(140, 510)},
+		{"type": "chair", "at": Vector2(140, 524)},
+		{"type": "dev_desk", "at": Vector2(216, 510)},
+		{"type": "chair", "at": Vector2(216, 524)},
+		{"type": "plant", "at": Vector2(392, 398)},
+		{"type": "cable_spool", "at": Vector2(452, 480)},
+		{"type": "debris", "at": Vector2(330, 520)},
+		{"type": "cooler", "at": Vector2(340, 412)},
+		{"type": "dev_desk", "at": Vector2(368, 510)},
+		{"type": "chair", "at": Vector2(368, 524)},
+		{"type": "pc_tower", "at": Vector2(420, 470)},
+		{"type": "crt_stack", "at": Vector2(460, 545)},
+		{"type": "plant", "at": Vector2(110, 480)},
+		{"type": "debris", "at": Vector2(250, 550)},
+		# ---- BOTTOM HALL: the second pod and the breakout -----------------
+		# Where the player comes in. Three desks along the west, somewhere to
+		# sit in the east, and the printer nobody on this floor has used since
+		# they were hired.
+		{"type": "dev_desk", "at": Vector2(100, 800)},
+		{"type": "chair", "at": Vector2(100, 814)},
+		{"type": "dev_desk", "at": Vector2(176, 800)},
+		{"type": "chair", "at": Vector2(176, 814)},
+		{"type": "dev_desk", "at": Vector2(252, 800)},
+		{"type": "chair", "at": Vector2(252, 814)},
+		{"type": "printer", "at": Vector2(60, 762)},
+		{"type": "cable_spool", "at": Vector2(36, 862)},
+		{"type": "debris", "at": Vector2(150, 872)},
+		{"type": "debris", "at": Vector2(330, 776)},
+		{"type": "sofa", "at": Vector2(348, 880)},
+		{"type": "table", "at": Vector2(348, 902)},
+		{"type": "plant", "at": Vector2(300, 872)},
 		# The plant nobody on this floor has watered, which is every dev
 		# floor's second plant.
-		{"type": "dead_plant", "at": Vector2(500, 250)},
-		{"type": "debris", "at": Vector2(470, 196)},
+		{"type": "notice", "at": Vector2(300, 754)},
+		{"type": "crt_stack", "at": Vector2(390, 795)},
+		{"type": "toolbox", "at": Vector2(300, 820)},
+		{"type": "scrap_pile", "at": Vector2(390, 820)},
+		# By the sofa rather than against the east wall: the climb to the east
+		# link runs the full height of this hall at x 413-467, which leaves
+		# only 29 px of floor beyond it - a strip too narrow to stand
+		# anything in without standing it on the walk.
+		{"type": "cooler", "at": Vector2(270, 890)},
+		{"type": "coffee", "at": Vector2(240, 890)},
+		{"type": "debris", "at": Vector2(386, 906)},
+		{"type": "dead_plant", "at": Vector2(40, 908)},
 	],
 	# THE FIRST ONE-OF-EACH MIX, and it used to be one body per quadrant so the
 	# room was a lap rather than a line. The lap was the problem: four corners
@@ -103,27 +218,38 @@ const BIOME := {
 	# holding all three answers at once never actually asked for two of them
 	# together. A mix you meet one at a time is not a mix, it is a tour.
 	#
-	# So the quadrants become PAIRS, and the two western ones overlap into the
-	# room's one real knot - boy, boy and drain answering together, on the side
-	# the hazard is on. North-east keeps its guards, south-east its slower with
-	# a drain for company. Being the first room that asks the player to hold all
-	# three answers AT ONCE is the mechanic, and this is the arrangement that
-	# actually asks it - which is also what earns the executive floor for free,
-	# since the exam is this fight one rank bigger with the masks off.
+	# The S is the version of that argument this floor can now lose by accident,
+	# which is why the mix is per HALL rather than spread along the route. Each
+	# hall is its own arrangement and each one asks for more than one answer at
+	# a time; what the shape adds is that you cannot see the next one from the
+	# last, so a room you have finished stays finished and a room you have not
+	# entered tells you nothing.
+	#
+	# Being the first room that asks the player to hold all three answers AT
+	# ONCE is still the mechanic, and the middle hall is where it is asked -
+	# boy, boy, drain and the slower, on 480 x 240 of open floor. That is also
+	# what earns the executive floor for free, since the exam is this fight one
+	# rank bigger with the masks off.
 	"enemies": [
-		# North-west into the middle: the knot, with the hazard under it.
-		{"type": "office_boy", "at": Vector2(144, 104)},
-		{"type": "office_boy", "at": Vector2(56, 88)},
-		{"type": "social_media", "at": Vector2(100, 140)},
-		# South-west.
-		{"type": "social_media", "at": Vector2(76, 236)},
-		{"type": "office_boy", "at": Vector2(150, 230)},
-		# North-east.
-		{"type": "office_boy", "at": Vector2(424, 84)},
-		{"type": "office_boy", "at": Vector2(470, 120)},
-		# South-east: the slower, and a field over the way out of her corner.
-		{"type": "social_media", "at": Vector2(430, 180)},
-		{"type": "call_center", "at": Vector2(456, 236)},
+		# BOTTOM HALL - the knot, with the hazard under it. Two boys and a
+		# drain answering together, the first thing the floor asks.
+		{"type": "office_boy", "at": Vector2(120, 770)},
+		{"type": "office_boy", "at": Vector2(240, 790)},
+		{"type": "social_media", "at": Vector2(60, 780)},
+		# MIDDLE HALL - all three answers at once, on the widest ground. Every
+		# body here sits in the middle of the hall's depth rather than against a
+		# wall, because a hall has a crossing at one end AND the hall above it has
+		# one at the other: sight is a radius, not a line of sight, so a body
+		# tucked against the north wall is looking through eight tiles of masonry
+		# at the walk in the room above. That is the one placement trap this
+		# shape has and no rectangular floor can.
+		{"type": "office_boy", "at": Vector2(200, 455)},
+		{"type": "office_boy", "at": Vector2(355, 450)},
+		{"type": "social_media", "at": Vector2(440, 408)},
+		{"type": "call_center", "at": Vector2(280, 413)},
+		# TOP HALL - the last two, between the player and the stairs.
+		{"type": "office_boy", "at": Vector2(200, 85)},
+		{"type": "social_media", "at": Vector2(120, 50)},
 	],
 	# One of each again, because a beat has to restate the floor's lesson and the
 	# lesson here IS the mix. The only floor whose beat carries a `call_center`,
@@ -134,6 +260,10 @@ const BIOME := {
 	# the room has usually collapsed onto one knot, and what it needs is not a
 	# fourth answer to hold but two more bodies standing between the player and
 	# the door they were walking to.
+	#
+	# The S makes both of these better and neither of them had to change: an
+	# arrival at a door is now an arrival one or two HALLS away, which has to
+	# walk the shape to reach you. That is pacing the flat room could not buy.
 	"reinforcements": [
 		{"after_kills": 3, "from": "start",
 			"enemies": ["office_boy", "social_media", "call_center"],
@@ -147,10 +277,10 @@ const BIOME := {
 	# alone, through the north door like every briefing, and the room has one
 	# arrival rather than two.
 	#
-	# West of the door line in the gap the two west pods leave, clear of the
-	# desks at (204, 58) and (204, 252) and of this floor's only columns, which
-	# are the outer pair at x 72 and 472. The walk from the north door is short
-	# and crosses nothing.
-	"briefing": {"npc": "dominique", "from": "returned", "at": Vector2(232, 120),
+	# In the top hall, which is the one she comes down into - west of the climb
+	# to the door, north of the crossing, and clear of the desk at (250, 60) and
+	# of this hall's two pillars. The walk from the north door is short and
+	# crosses nothing.
+	"briefing": {"npc": "dominique", "from": "returned", "at": Vector2(200, 130),
 		"say": "res://game/npcs/dominique/before_mostafa.gd"},
 }

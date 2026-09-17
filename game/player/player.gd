@@ -21,8 +21,26 @@ const ATTACK_POWER := 5
 ## swing (a press during one, or just after), so it can never be spammed alone,
 ## which is what lets it outhit the swing without upsetting any balance.
 const THRUST_POWER := 7
-## After a swing ends, a press within this window still chains the thrust, so
-## deliberate timing combos as reliably as mashing does.
+## Damage the arc - the combo's third and last hit - deals to everything the
+## blade reaches, and what its lightning then deals to each body it jumps to.
+## 5 + 7 + 12 is 24: one full cycle is exactly a guard and exactly the heavy,
+## so every enemy HP in the game still dies on a whole hit (guard 3, wraith 3,
+## warden 5, security 6). The jump is a SWING's worth so a body the bolt reached
+## stays on the same 5 / 7 / 12 lattice as one the blade did - retune it and
+## the breakpoints walk.
+const ARC_POWER := 12
+const ARC_JUMP_POWER := 5
+## How far the lightning looks for its next body, from the one it just left,
+## and how many times it may jump. World pixels; two jumps is three bodies, and
+## it is the combo's whole answer to a crowd that does not cost the heavy's
+## rooted seconds.
+const ARC_JUMP_RANGE := 40.0
+const ARC_JUMPS := 2
+## Which light attack follows which: swing, rising slash, arc. The arc ends the
+## chain, so the press after it is a fresh swing - see _on_animation_finished.
+const LIGHT_NEXT := {"attack": "attack2", "attack2": "attack3", "attack3": "attack"}
+## After a swing or a rising slash ends, a press within this window still
+## chains the next hit, so deliberate timing combos as reliably as mashing does.
 const COMBO_GRACE_SECONDS := 0.2
 ## Damage the heavy attack - the charged spin plus its wildfire - deals to
 ## EVERY enemy inside the Spinbox circle. Exactly a regular's health on purpose:
@@ -32,9 +50,30 @@ const COMBO_GRACE_SECONDS := 0.2
 ## (~15.6/s counting the entry swing) stays below the light combo's 21, so the
 ## combo is still right against one enemy and the heavy right against a crowd.
 const HEAVY_POWER := 24
-## How long the charge stance must be held before a release unleashes the
-## heavy. The charge loop doubles speed as the ready cue.
-const CHARGE_SECONDS := 1.0
+## How long the attack button must be HELD before the heavy goes off - counted
+## from the press, not from the swing's end, and it fires itself the moment it
+## lands rather than waiting for a release.
+##
+## Both halves of that sentence are fixes for the same complaint: the hold was
+## hard to do. It was 1.0s that only STARTED when the press's swing finished,
+## so the real cost was 1.3s of standing in a room with four enemies in it,
+## and it then asked for a release timed against a cue (the charge animation
+## doubling speed) that nobody watching the enemies could see. Releasing a
+## fraction early threw the whole hold away with no sign it had been close.
+##
+## So the swing is now INSIDE the charge instead of a tax before it, the total
+## is 0.75 rather than 1.0, and the release is gone: hold, and it happens. What
+## a player has to do is hold the button down, which is the one input nobody
+## can get wrong. The cue moved off the eyes and onto the floor - see
+## game/player/charge_ring.gd.
+##
+## The number is bounded by the same arithmetic the heavy has always been
+## bounded by, and it still holds. Press to wildfire is now 0.75 + 0.29 + 0.29
+## = 1.32s, so the heavy's single-target rate with its entry swing is
+## (5 + 24) / 1.32 = 21.9/s against the light combo's (5 + 7 + 12) / 0.86 =
+## 28/s. The combo stays the right answer to one enemy and the heavy to a
+## crowd, which is the invariant - not the 1.0 itself.
+const CHARGE_SECONDS := 0.75
 ## How many times health can hit zero before the run ends. The player node is
 ## built fresh by each new game scene, so a new run starts full again.
 const MAX_LIVES := 3
@@ -78,6 +117,8 @@ signal died
 ## Preloaded by path rather than via `class_name`, like the rest of the project.
 const Roster := preload("res://game/player/characters/roster.gd")
 const PlayerAudio := preload("res://game/player/player_audio.gd")
+const Arc := preload("res://game/player/arc.gd")
+const ChargeRing := preload("res://game/player/charge_ring.gd")
 
 ## Attack animation -> the cue it opens with. The two lights are named for the
 ## MOVEMENT rather than for the animation because that is what they are: air,
@@ -87,6 +128,12 @@ const PlayerAudio := preload("res://game/player/player_audio.gd")
 const ATTACK_SOUNDS := {
 	"attack": "swing",
 	"attack2": "swing2",
+	# The arc opens on the swing's own air until it has a cue of its own: a
+	# `swing3` entry in tools/sfx/player.py, its stream in player.tscn, and
+	# this line. Reusing a real cue rather than naming a missing one, because a
+	# body that declares a cue with no file behind it is what test_player_sfx
+	# exists to catch.
+	"attack3": "swing",
 	"heavy": "heavy",
 }
 
@@ -135,12 +182,28 @@ var _facing_left := false
 var _attack := ""
 var _buffered := ""
 var _combo_grace := 0.0
-## Charge stance: entered by still holding the button when an attack ends,
-## rooted while it lasts. Releasing at CHARGE_SECONDS or more unleashes the
-## heavy; releasing earlier just returns to idle - the press's swing already
-## happened, so an early release loses nothing.
+## Which light attack a press inside the grace window chains into - the next
+## link after whichever one just ended. Only read while _combo_grace > 0.
+var _combo_next := ""
+## The colour this character's weapon effects are drawn in, off the roster
+## recipe at spawn: the bolt the arc throws between enemies has to match the
+## sparks baked into the sheet, and Roster.spark_hex is the one rule both read.
+var _spark := Color(Roster.SPARK_BALD)
+## How long the attack button has been down, counted from the PRESS. It needs
+## no reset of its own: a press can only follow a release, and a release zeroes
+## it, so the frame `just_pressed` fires is already a fresh count. This is what
+## makes the opening swing part of the charge rather than a tax before it.
+var _hold := 0.0
+## Charge stance: entered by still holding the button when an attack ends, and
+## rooted while it lasts. It starts at whatever `_hold` has already reached, so
+## the swing counts; at CHARGE_SECONDS the heavy fires ITSELF. Letting go before
+## then just returns to idle - the press's swing already happened, so an early
+## release loses nothing.
 var _charging := false
 var _charge := 0.0
+## The ring drawn at the feet while charging, or null. Owned here rather than
+## placed in player.tscn because it exists only for the length of a stance.
+var _ring: Node2D = null
 var _grace := 0.0
 ## Enemies already struck by the current swing, so a swing lands once per enemy
 ## rather than once per physics frame it overlaps them.
@@ -163,6 +226,9 @@ func _apply_character() -> void:
 	var path := Roster.frames_path(id)
 	if path != "" and path != _sprite.sprite_frames.resource_path:
 		_sprite.sprite_frames = load(path)
+	var entry := Roster.find(id)
+	if entry.has("recipe"):
+		_spark = Color(Roster.spark_hex(entry["recipe"]))
 
 
 func _physics_process(delta: float) -> void:
@@ -198,31 +264,46 @@ func _physics_process(delta: float) -> void:
 
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 
+	if Input.is_action_pressed("attack"):
+		_hold += delta
+	else:
+		_hold = 0.0
+
 	if not _charging and Input.is_action_just_pressed("attack"):
 		if _attack == "":
-			_start_attack("attack2" if _combo_grace > 0.0 else "attack")
+			_start_attack(_combo_next if _combo_grace > 0.0 else "attack")
 		else:
-			# Mid-swing chains the thrust; mid-thrust queues the next swing.
-			_buffered = "attack2" if _attack == "attack" else "attack"
+			# Mid-attack queues the next link of the chain; mid-heavy queues a
+			# fresh swing.
+			_buffered = LIGHT_NEXT.get(_attack, "attack")
 
 	if _charging:
 		_charge += delta
-		# The ready cue: the charge loop pulses at double speed.
-		_sprite.speed_scale = 2.0 if _charge >= CHARGE_SECONDS else 1.0
+		var filled := clampf(_charge / CHARGE_SECONDS, 0.0, 1.0)
+		# Progress, twice, because a fight gives the player nowhere to look: the
+		# ring on the floor fills, and the stance winds up towards double speed
+		# as it goes. The old cue SNAPPED to double at the ready point and said
+		# nothing before it, which is a cue that only helps somebody already
+		# counting.
+		_sprite.speed_scale = lerpf(1.0, 2.0, filled)
+		if _ring != null:
+			_ring.progress = filled
 		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
-		if not Input.is_action_pressed("attack"):
-			_charging = false
-			_sprite.speed_scale = 1.0
-			# Faded rather than cut: an early release loses nothing (the
-			# press's swing already happened), so it must not sound like
-			# something broke. A release into the heavy is masked by the swing.
-			_sfx_fade("charge", 0.08)
-			if _charge >= CHARGE_SECONDS:
-				_start_attack("heavy")
-			else:
-				_apply_animation("idle")
+		if _charge >= CHARGE_SECONDS:
+			# It fires ITSELF. There is no release to time and no way to hold
+			# past it into nothing - the stance ends the only way it can end
+			# well, and the ring flares on the frame it does.
+			_end_charge(true)
+			_start_attack("heavy")
+		elif not Input.is_action_pressed("attack"):
+			# Let go early and nothing happened, so nothing flashes: the ring
+			# is dropped rather than flared. The hum is faded rather than cut,
+			# because an early release loses nothing (the press's swing already
+			# happened) and so must not sound like something broke.
+			_end_charge(false)
+			_apply_animation("idle")
 	elif _attack != "":
-		if (_attack == "attack" or _attack == "attack2") and direction != Vector2.ZERO:
+		if LIGHT_NEXT.has(_attack) and direction != Vector2.ZERO:
 			# Light attacks steer and slide at a fraction of walking speed.
 			_turn_attack(direction)
 			velocity = velocity.move_toward(
@@ -272,10 +353,11 @@ func take_control() -> void:
 	_attack = ""
 	_buffered = ""
 	_combo_grace = 0.0
-	_charging = false
-	_charge = 0.0
+	_hold = 0.0
+	# Dropped, never fired: a conversation must not open with a heavy going off
+	# in it, however full the charge was on the frame the world took over.
+	_end_charge(false)
 	_swing_hits.clear()
-	_sprite.speed_scale = 1.0
 	velocity = Vector2.ZERO
 	_apply_animation("idle", true)
 	# Cut, not faded: a hum trailing into the first line of a conversation is
@@ -418,18 +500,97 @@ func _strike() -> void:
 		power = HEAVY_POWER
 	elif _attack == "attack2":
 		power = THRUST_POWER
-	var landed := false
+	elif _attack == "attack3":
+		power = ARC_POWER
+	var struck: Array[Node2D] = []
 	for body in area.get_overlapping_bodies():
 		if _swing_hits.has(body) or not body.is_in_group("enemies"):
 			continue
 		if body.has_method("take_damage"):
 			_swing_hits[body] = true
 			body.call("take_damage", power)
-			landed = true
+			struck.append(body)
+	if struck.is_empty():
+		return
+	if _attack == "attack3":
+		_arc(struck)
 	# Once for the frame, not once per enemy: a heavy landing on four bodies is
 	# one impact, and four copies of one clip started together is a click.
-	if landed:
-		_sfx("hit")
+	_sfx("hit")
+
+
+## The arc's lightning. From each body the blade reached it jumps to the
+## nearest enemy within ARC_JUMP_RANGE that nothing in this attack has touched
+## yet, and once more from there, ARC_JUMPS times. The ledger is the same
+## `_swing_hits`, which buys two things at once: the bolt can never double back
+## onto the body it left, and the hitbox cannot land a second 12 on a body the
+## bolt already reached for 5 if that body is standing in it on a later frame.
+## A conceded boss is skipped rather than jumped to - he is in the group and
+## takes nothing, and a jump spent on him is a jump the crowd did not get.
+##
+## The bolt is drawn by game/player/arc.gd in this character's spark colour,
+## the way a boss draws his effects live rather than off a sheet: a line
+## between two bodies has no fixed shape a sheet could hold.
+func _arc(struck: Array[Node2D]) -> void:
+	var chains: Array[PackedVector2Array] = []
+	for primary in struck:
+		var chain := PackedVector2Array([_hitbox.global_position, _chest(primary)])
+		var from := primary
+		for _jump in ARC_JUMPS:
+			var next := _nearest_enemy(from.global_position)
+			if next == null:
+				break
+			_swing_hits[next] = true
+			next.call("take_damage", ARC_JUMP_POWER)
+			chain.append(_chest(next))
+			from = next
+		chains.append(chain)
+	var bolt := Arc.new()
+	bolt.setup(chains, _spark)
+	get_parent().add_child(bolt)
+
+
+## The nearest enemy the arc may still jump to, or null. Group + method, never
+## type, like everything else here that reaches across to the enemies.
+func _nearest_enemy(at: Vector2) -> Node2D:
+	var best: Node2D = null
+	var best_distance := ARC_JUMP_RANGE
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if _swing_hits.has(node) or not node.has_method("take_damage"):
+			continue
+		if node.get("has_conceded") == true:
+			continue
+		var distance: float = (node as Node2D).global_position.distance_to(at)
+		if distance <= best_distance:
+			best_distance = distance
+			best = node
+	return best
+
+
+## Where a bolt lands on a body: chest height above the feet the position marks.
+func _chest(body: Node2D) -> Vector2:
+	return body.global_position + Vector2(0, -10)
+
+
+## Leaves the charge stance, one way or the other. `fired` flares the ring and
+## hands it its own death; anything else drops it on the spot, because a ring
+## that flashes on a cancelled charge tells the player something happened when
+## nothing did. Every exit from the stance goes through here - the auto-fire,
+## an early release, a conversation taking the wheel and a death - so the ring
+## can never outlive the stance that built it.
+func _end_charge(fired: bool) -> void:
+	_charging = false
+	_charge = 0.0
+	_sprite.speed_scale = 1.0
+	if _ring != null:
+		if fired:
+			_ring.fire()
+		else:
+			_ring.queue_free()
+		_ring = null
+	# Faded either way: an early release must not sound like something broke,
+	# and a release into the heavy is masked by the heavy's own swing.
+	_sfx_fade("charge", 0.08)
 
 
 func _on_animation_finished() -> void:
@@ -449,19 +610,29 @@ func _on_animation_finished() -> void:
 	if _buffered == "" and finished != "wildfire" \
 			and Input.is_action_pressed("attack"):
 		_charging = true
-		_charge = 0.0
+		# NOT zero: the button has been down since before this attack started,
+		# and that time is part of the charge. This one line is what stops the
+		# heavy charging the player twice for the same swing.
+		_charge = _hold
 		_apply_animation("charge", true)
-		# A loop, because the stance is held for as long as the button is and
-		# so has no length of its own. The READY cue stays on the eyes, where
-		# it already was - the animation doubles speed at CHARGE_SECONDS.
+		_ring = ChargeRing.new()
+		_ring.setup(_spark)
+		add_child(_ring)
+		# Still a loop rather than a one-shot. The stance now has an end, but
+		# not a LENGTH: it runs for CHARGE_SECONDS minus however much of the
+		# swing the player had already held through, which is different every
+		# time, and an early release can cut it anywhere.
 		_sfx_loop("charge")
 		return
 	if _buffered != "":
 		_start_attack(_buffered)
 		return
-	# A late press can still chain off a swing; the thrust ends the chain.
-	if finished == "attack":
+	# A late press can still chain off a swing or a rising slash; the arc ends
+	# the chain, so the press after it is a fresh swing rather than a fourth
+	# hit - 5 + 7 + 12 is the whole cycle, and it is exactly one guard.
+	if finished == "attack" or finished == "attack2":
 		_combo_grace = COMBO_GRACE_SECONDS
+		_combo_next = LIGHT_NEXT[finished]
 	_apply_animation("idle")
 
 
@@ -583,12 +754,11 @@ func revive() -> void:
 	# spawn - and a death mid-swing carries a live attack across the fade.
 	_attack = ""
 	_buffered = ""
-	_charging = false
-	_charge = 0.0
+	_hold = 0.0
+	_end_charge(false)
 	_combo_grace = 0.0
 	_swing_hits.clear()
 	_sfx_stop("charge")
-	_sprite.speed_scale = 1.0
 	_apply_animation("idle")
 	_sprite.visible = true
 	_sprite.modulate = Color.WHITE

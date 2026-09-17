@@ -42,10 +42,39 @@ looked worse than black.
 
 ## The shape of a floor
 
-Eleven floors are a 34 x 19 rectangle - 544 x 304 px - and that was true of all
+Eight floors are a 34 x 19 rectangle - 544 x 304 px - and that was true of all
 twelve until the call floor became a DOGLEG: a hall 40 tiles wide with an arm
 off its north-east corner, 640 x 592 with the north-west corner cut out of it.
 It is the only room in the game you cannot see the exit from.
+
+The marble hall is the other one, and it is the cheap half of the same idea: no
+cut at all, just the rectangle turned on its end. 26 x 40 - 416 x 640 - with
+both doors at col 12 facing each other down its length, so the walk is one
+straight leg 608 px long and the room is what stands either side of it. A shape
+does not have to be clever to change a floor; this one is four numbers.
+
+The innovation lab is the expensive half, and it is the only floor in the game
+that is not ONE room: an S, 32 x 63 - 512 x 1008 px, the biggest floor there
+is - built as three halls of 30 x 15 stacked up the building and joined at
+alternating ends by two links six tiles wide. Two cuts make it, one per link,
+each taking a 24-tile bar out of the plan and leaving the far end of it open.
+The walk crosses each hall in the opposite direction to the last, so the floor
+bends three times where the call floor bends once, and no hall can see either
+of the others.
+
+**Its size is arithmetic, not ambition, and the sum generalizes to any floor
+shaped this way.** On a rectangle the walk is a vertical band and a body clears
+it sideways, across the whole width of the room. Here the walk CROSSES a hall,
+so the clearance budget is its DEPTH: a hall has to hold the 54 px band plus
+the biggest sight radius standing off it, which is 130. Thirteen floor rows
+leaves 154 px beside a wall-hugging band - inside the rule by 24 px, and one
+nudge from outside it. Fifteen leaves 186. Two corollaries worth keeping:
+every crossing hugs a wall, because a band down the middle of a hall halves it
+twice over; and a body near a hall's north wall is close to the crossing in the
+hall ABOVE, since sight is a radius and not a line of sight, so eight tiles of
+masonry between them count for nothing.
+
+Hellfire is the fourth, and its own shape is documented with its fight.
 
 **The shape is data, and it lives in `tools/plan.gd` rather than in the
 generator.** A biome's `shape` key carries `cols`, `rows`, `doors` and one of
@@ -53,7 +82,7 @@ two ways of saying where the room is not:
 
 | form | what it says | for |
 |------|--------------|-----|
-| *(nothing)* | the 34 x 19 room | eleven floors |
+| *(nothing)* | the 34 x 19 room | eight floors |
 | `cut` | the room, minus a list of tile rectangles | L, neck, atrium - anything still rectangles |
 | `mask` | the plan drawn out, `#` for masonry | the floor that is not rectangles at all |
 
@@ -71,7 +100,7 @@ eat the drawing.
 is `solid()` narrowed to the cells that have a piece of room next to them,
 corners included, and build_levels.gd paints only those - so a cut comes out as
 a HOLE showing the clear colour rather than as a slab of the level's own rock.
-It says nothing about the eleven rectangles, whose every solid cell is that
+It says nothing about the eight rectangles, whose every solid cell is that
 face already; on a shaped floor it is the whole look of the missing corner.
 Filling it was the first version and it was wrong the same way filling the
 screen around a small room was wrong: masonry with nothing happening in it

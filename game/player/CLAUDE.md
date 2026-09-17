@@ -123,19 +123,43 @@ never re-instantiates the player, health and lives carry across door
 transitions for free; and since levels ARE re-instantiated, a consumed heal
 pickup is back on the next visit - rooms keep no state yet.
 
-## Combat - three moves, one button
+## Combat - four moves, one button
 
-The player's side of the fight is three attacks on the one attack button. A
+The player's side of the fight is four attacks on the one attack button. A
 press starts the swing (`ATTACK_POWER` 5); pressing again during it, or within
 `COMBO_GRACE_SECONDS` after, chains the second hit (`attack2` rows 9-11 of the
 cast sheet, `THRUST_POWER` 7 - the name is historical, the move is now a rising
-slash). It shares the swing's hitbox: its arc covers the same reach, and the jump in
-its art is its own movement. **A press mid-attack is buffered, never dropped** -
-mashing alternates swing-thrust cleanly, and a dropped press reads as the game
-eating the button. Getting hit deliberately does NOT break the combo: the game
-has no hitstun, so a silently swallowed buffer would read as dropped input, and
-melee happens inside enemy contact where hits are constant - the second hit's
-cost is commitment (two animations facing one way), not a hidden reset.
+slash); a third press, on the same terms, chains the **arc** (`attack3` rows
+21-23, `ARC_POWER` 12), and the arc ENDS the chain, so the press after it is a
+fresh swing. `LIGHT_NEXT` is the chain written down once, and `_combo_next`
+remembers which link a late press inside the grace window reaches. All three
+share the swing's hitbox: the rising slash's arc covers the same reach, and the
+jump in its art is its own movement. **A press mid-attack is buffered, never
+dropped** - mashing walks swing-slash-arc cleanly, and a dropped press reads as
+the game eating the button. Getting hit deliberately does NOT break the combo:
+the game has no hitstun, so a silently swallowed buffer would read as dropped
+input, and melee happens inside enemy contact where hits are constant - a later
+hit's cost is commitment (animations facing one way), not a hidden reset.
+
+**The arc is the combo's crowd answer, and it is the cycle's arithmetic that
+makes it legal.** 5 + 7 + 12 is 24: one full cycle is exactly a guard and
+exactly the heavy, so every enemy HP in the game still dies on a whole hit -
+guard 3, wraith 3, warden 5, security 6 (two cycles). When the third hit lands,
+lightning jumps from each body the blade reached to the nearest enemy within
+`ARC_JUMP_RANGE` (40 px) that this attack has not touched, and once more from
+there (`ARC_JUMPS` 2), for `ARC_JUMP_POWER` 5 each - a SWING's worth, so a body
+the bolt reached stays on the same 5 / 7 / 12 lattice as one the blade did.
+Retune the jump and the breakpoints walk. The ledger is `_swing_hits`, which is
+what keeps the bolt from doubling back onto the body it left and the hitbox
+from landing a second 12 on a body the bolt already reached for 5. A conceded
+boss is skipped rather than jumped to. The bolt itself is `game/player/arc.gd`,
+drawn live for the reason a boss draws his fire live - a line between two
+bodies has no fixed shape a sheet could hold - and in the character's spark
+colour, which is now `Roster.spark_hex()` so the sheet's sparks and the live
+bolt read one rule. It was picked from four previewed candidates and shipped as
+previewed (`_nearest_enemy`, the 40 px, the two jumps, the 0.3 s flicker); the
+other three - a blink through a lane, a ring slam that shoves enemies, a thrown
+blade with a lockout - were each rejected for bending a rule this file states.
 
 **Light attacks steer and slide, the heavy roots.** While the swing or the
 second hit plays, a held direction moves the body at `ATTACK_SLIDE` (0.35) of
@@ -150,7 +174,7 @@ tuning assume. The charge stance, the heavy and the wildfire brake to a stop as
 before - the heavy's rooted seconds are part of its damage maths. Damage goes through a Hitbox Area2D that `_start_attack()` parks
 one step ahead of the body in the facing direction; it stays live for the whole
 animation but a ledger (`_swing_hits`) lands each attack once per enemy - so a
-24 HP guard dies to one full mash cycle (5+7+5+7). The spark colour every
+24 HP guard dies to one full mash cycle (5+7+12). The spark colour every
 character carries comes from `_spark_hex` in character_art.gd: the hair colour
 raised to flash intensity (near-black hair would vanish on dark floors),
 `SRC_SPARK` gold where a bald head has none; it tints the swing, the charge
@@ -182,23 +206,58 @@ recolours, where it used to rebuild the pixel opaque.
 Both were baked by a script from the pristine CC0 rows rather than drawn by
 hand, so `character.aseprite` no longer matches the PNG; the PNG is the truth.
 
-**The heavy is the hold.** A press always swings first - waiting to see whether
-the press is a hold would lag every basic attack - and a button still held when
-an attack ends (with nothing buffered) flows into the `charge` stance: rooted,
-looping the wind-up while sparks spiral inward. `CHARGE_SECONDS` (1.0) later
-the loop doubles speed as the ready cue; releasing then fires `heavy` - the
-spin - which always erupts into `wildfire`, and the pair deals `HEAVY_POWER`
-(15) through the Spinbox, a 17 px circle on player.tscn, to EVERY enemy inside
-it, once per enemy across both animations (the ledger is not cleared between
-them). Releasing early just returns to idle - the press's swing already
-happened, so a tap stays a tap, mashing stays the combo, and holding is the
-heavy: three moves, one button. `HEAVY_POWER` is **exactly a guard's health, and
-the equality is the design**: an AoE that does not kill the basic enemy thins no
-crowd and never repays its ~1.9 rooted seconds - at its original 15 it was
-strictly the wrong button, 10.8 damage/s single-target against the combo's 21
-with nothing dead at the end. At 24 it one-shots a guard and a wraith while its
-single-target rate (~15.6/s with the entry swing) stays below the combo's, so
-the combo remains correct against one enemy and the heavy against a crowd.
+**The heavy is the hold, and the hold is now just holding.** A press always
+swings first - waiting to see whether the press is a hold would lag every basic
+attack - and a button still held when an attack ends (with nothing buffered)
+flows into the `charge` stance: rooted, looping the wind-up while sparks spiral
+inward. At `CHARGE_SECONDS` (0.75) it fires `heavy` **by itself** - the spin -
+which always erupts into `wildfire`, and the pair deals `HEAVY_POWER` (24)
+through the Spinbox, a 17 px circle on player.tscn, to EVERY enemy inside it,
+once per enemy across both animations (the ledger is not cleared between them).
+Letting go early just returns to idle - the press's swing already happened, so
+a tap stays a tap, mashing stays the combo, and holding is the heavy: four
+moves, one button.
+
+**Three things changed together, and they are one fix for one complaint - the
+hold was hard to do.** Each was a separate way of charging the player for the
+same second:
+
+- **The count starts at the PRESS, not at the swing's end** (`_hold`, which
+  `_charge` is seeded from when the stance opens). It used to be 1.0s that only
+  began once the opening swing had finished, so the real price was 1.3s; now
+  the swing is inside the charge rather than a tax before it. `_hold` needs no
+  reset of its own, because a press can only follow a release and a release
+  zeroes it.
+- **It fires itself.** There is no release to time, which is the whole of what
+  made it hard: the old stance asked for a release judged against a cue nobody
+  could see, and a release a fraction early threw the entire hold away with no
+  sign it had been close. Hold, and it happens.
+- **The cue moved off the eyes and onto the FLOOR.** It used to be the charge
+  animation doubling speed at the ready point - two pixels on a 32 px body, in
+  a room with four enemies in it, which is a cue only for somebody already
+  counting. `game/player/charge_ring.gd` is a ring at the feet that TIGHTENS as
+  the charge fills (20 px to 7), brightens towards white, spins four sparks
+  faster as it goes, and flares outward on the frame the heavy leaves. The
+  stance's animation still winds up towards double speed, but as a ramp rather
+  than a snap, so it is progress rather than an announcement. An early release
+  DROPS the ring rather than flaring it: a flash on a cancelled charge says
+  something happened when nothing did.
+
+The ring takes the character's spark colour, which is `Roster.spark_hex()` for
+the third time - the sheet's sparks, the arc's bolt and this ring are one rule.
+Every exit from the stance goes through `_end_charge()`, including a
+conversation taking the wheel and a death, so a ring can never outlive the
+stance that built it.
+
+`HEAVY_POWER` is **exactly a guard's health, and the equality is the design**:
+an AoE that does not kill the basic enemy thins no crowd and never repays the
+second it costs - at its original 15 it was strictly the wrong button, with
+nothing dead at the end. At 24 it one-shots a guard and a wraith. The bound
+that 0.75 had to respect is the same one 1.0 did, and it is a RATIO rather than
+either number: press to wildfire is 0.75 + 0.29 + 0.29 = 1.32s, so the heavy's
+single-target rate with its entry swing is (5 + 24) / 1.32 = 21.9/s against the
+light combo's (5 + 7 + 12) / 0.86 = 28/s. The combo stays correct against one
+enemy and the heavy against a crowd, which is the invariant - not the seconds.
 Difficulty must never scale either side of that equality. The wildfire's ember
 tone is `SRC_FIRE`, recoloured to the spark colour darkened, so each
 character's fire matches their sparks - violet for the black-haired, gold for
@@ -302,12 +361,15 @@ only on a blow that was SURVIVED, since `_lose_health` plays `die` at zero and
 a gasp laid over the death breath in one frame is one muddy sound rather than
 two clear ones.
 
-**The charge is the one loop here.** The stance is held for as long as the
-button is, so it has no length of its own to end at. It was first specced as a
-one-shot capped at `CHARGE_SECONDS` so that the clip running out would be the
-ready cue, and that was wrong on its own terms - a sound that stops 0.35s
-before the heavy is available actively misinforms. The ready cue stays where it
-already was, on the eyes: the charge animation doubles speed. The hum is faded
+**The charge is the one loop here**, and it stayed one after the stance grew an
+end. It was first specced as a one-shot capped at `CHARGE_SECONDS` so that the
+clip running out would be the ready cue, and that was wrong on its own terms -
+a sound that stops before the heavy is available actively misinforms. It is
+still wrong now that the stance DOES end at a known moment, because the stance
+has an end without having a LENGTH: it runs for `CHARGE_SECONDS` minus however
+much of the opening swing the player had already held through, which differs
+every time, and an early release can cut it anywhere. The ready cue is the ring
+at the feet (see Combat), not the hum and not the eyes. The hum is faded
 on release (an early release loses nothing, so it must not sound like something
 broke) and CUT by `take_control()` and `revive()`, where the move itself was
 cancelled and a hum trailing into the first line of a conversation would be the

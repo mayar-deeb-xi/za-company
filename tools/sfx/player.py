@@ -39,12 +39,14 @@ first two is the one worth keeping straight:
                        (game/enemies/CLAUDE.md, The noise) pointed the other
                        way: an impact over empty air teaches the player that
                        the sound does not mean they connected.
-- `charge`             the stance, and the only LOOP here - it holds for as
-                       long as the button does, so it has no length of its own
-                       to end at. The ready cue stays where it already was,
-                       on the eyes: the charge animation doubles speed. See
-                       its entry below for the spec that was tried first and
-                       why it was wrong.
+- `charge`             the stance, and the only LOOP here. It has an end (the
+                       heavy fires itself at CHARGE_SECONDS) but no LENGTH -
+                       the stance runs for however much of the charge the
+                       opening swing did not already cover, and an early
+                       release cuts it anywhere. The ready cue is neither the
+                       hum nor the eyes: it is the ring at the player's feet.
+                       See its entry below for the spec that was tried first
+                       and why it was wrong.
 - `heavy` / `wildfire` the spin and the ring of fire it erupts into.
 - `hurt`               the player taking a blow. Metered by the grace window
                        for free, because `take_damage()` already is - a
@@ -70,7 +72,7 @@ a crowd.
 
     player hurt          -19 RMS      level with a boss's blow, and for the
     player die           -19          same reason: nothing may bury it
-    heavy                -20          ~1.9 rooted seconds should land like it
+    heavy                -20          its rooted second should land like it
     wildfire             -21
     player hit           -22          level with an enemy's hit - one blow
                                       landing is one blow landing
@@ -166,9 +168,9 @@ CAST = {
 		# ready cue, and that was wrong on its own terms: the stance is held
 		# for as long as the button is, so there is no fixed length for a clip
 		# to run out AT, and a sound that stops 0.35 s before the heavy is
-		# available actively misinforms. The eyes already have the ready cue
-		# (the charge animation doubles speed); the ears get a hum that holds
-		# for as long as you do, and the heavy's own swing is the payoff.
+		# available actively misinforms. The ready cue is the ring at the
+		# player's feet (game/player/charge_ring.gd); the ears get a hum that
+		# holds for as long as you do, and the heavy's own swing is the payoff.
 		#
 		# So it takes the wraith drain's road at the first fork: `steady`
 		# CHOOSES a stretch rather than trimming to one, because trimming asks
@@ -184,7 +186,7 @@ CAST = {
 				"no release at the end",
 			"seconds": 2.0, "steady": 0.5, "loop": True,
 		},
-		# The spin. 24 damage and ~1.9 rooted seconds, so it is the one swing
+		# The spin. 24 damage and a rooted second, so it is the one swing
 		# in the game allowed to be broad and heavy.
 		"heavy": {
 			"prompt": "a heavy sword spun in one full circle, a single broad "

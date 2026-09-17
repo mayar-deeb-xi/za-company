@@ -28,25 +28,37 @@ const SRC := "res://game/player/src/character_cc0.png"
 ## what sharing one constant would have prevented.
 const CAST_LAYOUT := {
 	"down": {"idle": 0, "walk": 1, "attack": 6, "attack2": 9,
-		"charge": 12, "heavy": 15, "wildfire": 18},
+		"charge": 12, "heavy": 15, "wildfire": 18, "attack3": 21},
 	"up": {"idle": 2, "walk": 3, "attack": 7, "attack2": 10,
-		"charge": 13, "heavy": 16, "wildfire": 19},
+		"charge": 13, "heavy": 16, "wildfire": 19, "attack3": 22},
 	"side": {"idle": 4, "walk": 5, "attack": 8, "attack2": 11,
-		"charge": 14, "heavy": 17, "wildfire": 20},
+		"charge": 14, "heavy": 17, "wildfire": 20, "attack3": 23},
 }
 const CAST_SPECS := {
 	"idle": {"frames": 1, "fps": 1.0, "loop": true},
 	"walk": {"frames": 4, "fps": 10.0, "loop": true},
 	"attack": {"frames": 4, "fps": 14.0, "loop": false},
 	"attack2": {"frames": 4, "fps": 14.0, "loop": false},
+	"attack3": {"frames": 4, "fps": 14.0, "loop": false},
 	"charge": {"frames": 2, "fps": 5.0, "loop": true},
 	"heavy": {"frames": 4, "fps": 14.0, "loop": false},
 	"wildfire": {"frames": 4, "fps": 14.0, "loop": false},
 }
 
+## The one row set this generator SEEDS rather than merely reads. The arc's
+## three rows (21-23, `attack3`) were first drawn by tools/arc_pose.gd, and a
+## sheet still too short to hold them gets them painted in and saved back
+## ONCE. After that the PNG is the truth and the branch never runs again - the
+## enemies' rule for their sheets, applied to the one row set of the cast's
+## that was not drawn by hand. Crop the sheet back to 21 rows to re-seed.
+const ArcPose := preload("res://tools/arc_pose.gd")
+
 
 func _initialize() -> void:
 	var failed := false
+	if not _seed_arc():
+		quit(1)
+		return
 	for entry in Roster.CHARACTERS:
 		if not entry.has("recipe"):
 			continue
@@ -62,3 +74,20 @@ func _initialize() -> void:
 		if err != OK:
 			failed = true
 	quit(1 if failed else 0)
+
+
+## Paints the arc rows into the sheet if it does not have them yet. False only
+## when the sheet could not be read or written.
+func _seed_arc() -> bool:
+	var path := ProjectSettings.globalize_path(SRC)
+	var img := Image.load_from_file(path)
+	if img == null:
+		printerr("Could not load ", SRC)
+		return false
+	img.convert(Image.FORMAT_RGBA8)
+	if img.get_height() >= ArcPose.ROWS_NEEDED * Art.FRAME:
+		return true
+	var seeded := ArcPose.seed(img)
+	var err := seeded.save_png(path)
+	print("seeded arc rows into ", SRC, " -> ", error_string(err))
+	return err == OK

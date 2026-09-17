@@ -21,7 +21,7 @@ extends RefCounted
 ## Three ways to answer it today, in the order a floor should reach for them:
 ##
 ## - **nothing at all** - the 34 x 19 room every floor was before a floor plan
-##   was a thing one could have. Eleven of the twelve floors say nothing.
+##   was a thing one could have. Ten of the twelve floors say nothing.
 ## - **`cut`** - the room, minus a list of tile rectangles. One cut off a
 ##   corner is an L (the call floor), two facing cuts are a neck, a cut in the
 ##   middle is an atrium. This covers every shape that is still rectangles, and
@@ -58,7 +58,8 @@ const DOOR_COL := 16
 const SPAWN_START_INSET := 48
 const SPAWN_RETURN_Y := 80
 
-## How many rows either side of the middle one the runner covers. The colonnade
+## How many tiles either side of the middle the runner covers - rows on a room
+## walked across, columns on a hall walked down. The colonnade
 ## flanks it, and on a 19-row floor it is rows 8-10. Derived from the room's own
 ## height rather than written down, so a taller floor's carpet stays in the
 ## middle of it instead of a third of the way up.
@@ -78,6 +79,14 @@ var rows := ROWS
 ## `back` south to the previous one.
 var out_col := DOOR_COL
 var back_col := DOOR_COL
+## Which way the carpet runs, and whether there is one. Ten floors are walked
+## across and say nothing; a HALL is walked down its length, and a band of rows
+## laid across one is a rug in a corridor, so a shape says `"runner": "cols"`
+## and gets the band between its own two doors instead - the same sentence, the
+## carpet is on the route, answered for a room of the other proportion. `"none"`
+## is the third answer and the one a floor that is not an office wants: a carpet
+## is a thing somebody laid, and nobody laid anything in hellfire.
+var runner := "rows"
 
 var _cut: Array[Rect2i] = []
 var _mask := PackedStringArray()
@@ -101,6 +110,7 @@ func _init(shape: Dictionary = {}) -> void:
 			widest = maxi(widest, line.length())
 		cols = maxi(widest, 1)
 	var doors: Dictionary = shape.get("doors", {})
+	runner = shape.get("runner", "rows")
 	out_col = doors.get("out", DOOR_COL)
 	back_col = doors.get("back", DOOR_COL)
 
@@ -189,8 +199,17 @@ func floor_tile(col: int, row: int) -> Vector2i:
 		for y in [-1, 0, 1]:
 			if solid(col + x, row + y):
 				return FLOOR_WORN
-	if absi(row - (rows - 1) / 2) <= RUNNER_BAND:
-		return FLOOR_ALT
+	# And the carpet, which runs the way the room is WALKED. On ten floors that
+	# is across the middle rows; on a hall whose doors face each other down its
+	# length it is a band of columns between them, laid on the doorway rather
+	# than on the room's middle so it arrives under the player's feet.
+	match runner:
+		"cols":
+			if col >= back_col - RUNNER_BAND and col <= back_col + 1 + RUNNER_BAND:
+				return FLOOR_ALT
+		"rows":
+			if absi(row - (rows - 1) / 2) <= RUNNER_BAND:
+				return FLOOR_ALT
 	return FLOOR
 
 

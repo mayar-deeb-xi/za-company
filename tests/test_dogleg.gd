@@ -2,7 +2,7 @@ extends "res://tests/helpers.gd"
 ## The floor that is not a rectangle, and the two things a shaped room can break
 ## that a rectangular one never could.
 ##
-## Eleven floors are the 34 x 19 box the building was designed around, and every
+## Ten floors are the 34 x 19 box the building was designed around, and every
 ## rule about placement in this project was written while that was true of all
 ## of them. The call floor is 40 x 34 with its north-west quarter taken out, so
 ## its two doors are not in line with each other and the walk between them has
@@ -34,7 +34,7 @@ extends "res://tests/helpers.gd"
 ## it has no post - and a body with no post has no PATIENCE either, which means
 ## it hunts only what it can actually see. Two boys arriving at the top of the
 ## stairs while the player is at the far end of the hall are 620 px away and
-## notice nothing, on this floor exactly as on the eleven rectangular ones. They
+## notice nothing, on this floor exactly as on the ten plain ones. They
 ## are holding the corridor the player has to climb, which is the arrival doing
 ## its job rather than failing to. So the corner is staged at the range the
 ## question is actually asked at: close enough to be seen, with the masonry in

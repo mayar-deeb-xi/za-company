@@ -1,0 +1,12 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_eah7h"]
+_data = PackedByteArray("AAADAAUAAAABAAAALAAAADIAAAA0AQAAUklGRiwBAABXRUJQVlA4TB8BAAAvK0AMEK+gqJEkJct792X27+jknA02AQAmOebubkj/ELTiVBxJUlJ3uNsPsiD/rBxe8x971598Lrg0PASAAEKACCAEiAAigBAi/ocoGbBFIpeNptIlF+2+0fLd+wI4biRJkeaGlg6X/Hd1oKH66BvRfwZu2zaienvfM1627YZVm1mdYBQRTWIkg1gZTjCAiUYohQlIZVantCj7HBcmE8/W/X7/ak/q/u8t1ILyLcq3YAcJ5anHlfIo3/Mgr+NRvvEgz1V4LpVRb1QYvJ4fRDkjchak5KFSYtUwMUZGzYOFEAirOoa9bDs/vBsc5Vrr2p+3rqsj15HXad1crdNm4rXsO6y1oh0jM9HqpMux2bo6xYy1tr/S31Kzu9+wu8y+EwA=")
+size_override = Vector2(44, 50)
+keep_compressed_buffer = true
+
+[node name="Portrait" type="Node2D" unique_id=1533224938]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=461945680]
+texture = SubResource("PortableCompressedTexture2D_eah7h")
+centered = false

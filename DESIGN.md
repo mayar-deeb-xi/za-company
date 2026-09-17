@@ -30,7 +30,7 @@ only. Each gets its own folder + sheet seeded from the frozen body via
 | `social_media`| wraith           | 17 | phone glow, ring-light white while draining; faint floating "+1" tick |
 | `call_center` | warden           | 36 | headset; charge ring reads as a spreading "on hold" circle |
 
-HP stays on combo breakpoints (4 / 3 / 6 hits) — difficulty never scales HP.
+HP stays on combo breakpoints (3 / 3 / 5 hits on the 5 + 7 + 12 cycle) — difficulty never scales HP.
 
 ### The fourth archetype — `security`
 
@@ -52,7 +52,7 @@ warning.
 
 Two numbers carry the design and neither is round:
 
-- **48 HP** is the eighth rung of the combo and *exactly two heavies*. He is the
+- **48 HP** is the sixth rung of the combo (two full cycles) and *exactly two heavies*. He is the
   one body in the game the charged spin was built for and still cannot one-shot,
   which is what makes the heavy the right answer to him rather than the only
   one. `tests/test_slam.gd` reads both off `player.gd` so retuning either side
@@ -600,7 +600,7 @@ names the room, and the fiction carries which floor it is.
   10 office boys in four KNOTS - three to each western corner, two to each
   eastern one. Teaches the heavy, and the grouping is HOW: one boy per quadrant
   left no point in the room inside two sight radii, so the sword was always the
-  right answer and the heavy never repaid its ~1.9 rooted seconds.
+  right answer and the heavy never repaid the second it costs.
   The junk is a thick PERIMETER around a clear arena (about x 200-350,
   y 110-200): a four-on-one fight and an AoE both need floor, so the only thing
   that goes in the middle is `debris`, which blocks nothing. Two placement
@@ -703,7 +703,7 @@ names the room, and the fiction carries which floor it is.
 
 ## Bosses — overrides on enemy_base.gd's cycle, built in this order
 
-HP values are exact combo breakpoints (5/7 alternating) AND multiples of the
+HP values are exact combo breakpoints (the 5 / 7 / 12 cycle) AND multiples of the
 heavy's 24. Difficulty scales their damage only, never HP. All three concede
 instead of dying (no queue_free): defeat -> concede animation -> north door
 unlocks.

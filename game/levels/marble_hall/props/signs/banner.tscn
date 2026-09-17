@@ -1,0 +1,12 @@
+[gd_scene format=4]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_pu84r"]
+_data = PackedByteArray("AAADAAUAAAABAAAAQgAAACAAAADiAAAAUklGRtoAAABXRUJQVlA4TM4AAAAvQcAHEC+gJgABRv9ETml8K46atg2Y8mdQOAW1rkpJAAQIkf9/LJJZNP8BQPa2SEXSP3BV266cpAUE3BUHOLgrqwagApji30vyRqbviP4rbNu2kYDu6TN83st+nvW626zBl0gjQJopqKie0YVmdY9QsluQQIviGR2gnSJ7Y8MAO8Nv8tvCZzMEK3OoTrE8paIqizC74TMBkqIwRU0RPrRZaDnK8eHGkV+ib/P4dENu0w2RouETYyJ1Yxs7I6h07009vd2qlveVEW8NTvJPFA==")
+size_override = Vector2(66, 32)
+keep_compressed_buffer = true
+
+[node name="Banner" type="Node2D" unique_id=1851322060]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1396577361]
+texture = SubResource("PortableCompressedTexture2D_pu84r")
+centered = false

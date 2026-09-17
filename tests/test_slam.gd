@@ -138,23 +138,23 @@ func _shape() -> void:
 		_brute.stop_distance < reach + player_radius)
 
 
-## 48 is not a round number and must never become one: it is the eighth rung of
-## the player's combo and exactly two heavies. Read off player.gd so retuning
-## either side fails here rather than silently.
+## 48 is not a round number and must never become one: it is a rung of the
+## player's combo - the sixth, two full 5 + 7 + 12 cycles - and exactly two
+## heavies. Read off player.gd so retuning either side fails here rather than
+## silently.
 func _ladder() -> void:
 	# Off the live player's own script, the way helpers._zooms() reaches
 	# Display's constants - a constant is not a property, so get() cannot see
 	# it, and preloading player.gd here does not compile (see CHAIN above).
 	var c: Dictionary = _player().get_script().get_script_constant_map()
-	var light: int = c["ATTACK_POWER"]
-	var thrust: int = c["THRUST_POWER"]
+	var cycle: Array[int] = [c["ATTACK_POWER"], c["THRUST_POWER"], c["ARC_POWER"]]
 	var heavy: int = c["HEAVY_POWER"]
 	var rungs: Array[int] = []
 	var total := 0
 	for i in 12:
-		total += light if i % 2 == 0 else thrust
+		total += cycle[i % cycle.size()]
 		rungs.append(total)
-	_check("48 HP is a combo breakpoint (%s)" % str(rungs.slice(0, 9)),
+	_check("48 HP is a combo breakpoint (%s)" % str(rungs.slice(0, 7)),
 		rungs.has(_brute.max_health))
 	_check("and exactly two heavies (2 x %d)" % heavy,
 		_brute.max_health == heavy * 2)
