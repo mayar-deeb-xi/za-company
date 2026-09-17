@@ -73,7 +73,10 @@ nothing; a `shape` key changes the size, CUTS rectangles out of the result, or
 hands in a floor plan drawn as ASCII, and everything else follows from that one
 predicate - the wall ring is grown around whatever is left, the shadow course
 hugs it, a doorway is cut where its own column meets the wall, and a colonnade
-skips the pillars that would land in masonry. It lives in `tools/plan.gd`
+skips the pillars that would land in masonry. Only the FACE of that ring is
+painted, one tile of it, so what a cut leaves behind is the same black void the
+camera leaves around a small room rather than a slab of the level's own rock.
+It lives in `tools/plan.gd`
 rather than in the generator, because the generator's job is putting things in
 a room and a floor plan is a subject with its own vocabulary: a shape nobody
 has drawn yet is a new key there and no branch anywhere else. **The call floor

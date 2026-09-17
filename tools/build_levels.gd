@@ -803,16 +803,20 @@ func _add_door(props: Node2D, root: Node2D, scene: PackedScene, dir: String,
 ## tiles it takes, is tools/plan.gd's - see there for why a room is a predicate
 ## rather than a list of cases.
 ##
-## Solid cells are FILLED rather than left empty, including the deep ones no
-## floor touches. The camera clamps to the map's bounding box, so on a shaped
-## floor it can frame a piece of the cut; an unpainted cut is a hole in the
-## world with the clear colour showing through it.
+## Only the FACE of the building is painted - `plan.drawn()` - so a cut comes
+## out as a hole with the clear colour showing through it rather than as a slab
+## of the level's own rock. That hole is the point: it is the void the camera
+## already leaves around a small room, arriving in the middle of the map, and
+## it is what the call floor's missing corner is meant to look like. On the
+## eleven rectangular floors nothing is skipped, because every solid cell they
+## have is that face.
 func _paint(floor_layer: TileMapLayer, walls: TileMapLayer, plan: RefCounted) -> void:
 	for row in plan.rows:
 		for col in plan.cols:
 			var at := Vector2i(col, row)
 			if plan.solid(col, row):
-				walls.set_cell(at, 0, plan.wall_tile(col, row))
+				if plan.drawn(col, row):
+					walls.set_cell(at, 0, plan.wall_tile(col, row))
 			else:
 				floor_layer.set_cell(at, 0, plan.floor_tile(col, row))
 

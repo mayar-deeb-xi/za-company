@@ -140,6 +140,30 @@ func _beyond(col: int, row: int) -> bool:
 	return false
 
 
+## Is this cell a wall anybody will ever SEE?
+##
+## A wall is the FACE the building turns to the room - one tile of it, corners
+## included - and nothing behind that face is drawn at all. On the eleven
+## rectangular floors that is every solid cell there is, so this says nothing
+## about them; on a shaped floor it is the difference between a cut filled with
+## masonry and a cut left as a hole.
+##
+## The hole is the one that looks right, and it is the same answer the camera
+## already gives: the screen left over around a small room is void rather than
+## rock, because a slab of the level's own stone with nothing happening in it
+## reads as a room the player has been shut out of, where black reads as the
+## edge of the picture. A cut is that void arriving in the middle of the map
+## instead of around it, so it takes the same treatment.
+func drawn(col: int, row: int) -> bool:
+	if not solid(col, row):
+		return false
+	for x in [-1, 0, 1]:
+		for y in [-1, 0, 1]:
+			if not solid(col + x, row + y):
+				return true
+	return false
+
+
 ## The wall's three tiles, chosen by what a cell is NEXT to rather than by
 ## where it is in the grid. That is the same thing on a plain rectangle - a
 ## top-edge tile is exactly a solid one with room below it - and the only

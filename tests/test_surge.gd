@@ -14,7 +14,7 @@ extends "res://tests/helpers.gd"
 ## is the second thing in this game that could threaten the route between the
 ## doors without ever being PLACED on it, and unlike the dolly there are four of
 ## them, so the rule is checked against every run rather than against a rig. It
-## is also what makes the ARRIVAL safe - a player walks in at (272, 480), on the
+## is also what makes the ARRIVAL safe - a player walks in at (272, 528), on the
 ## walk, while the first run is already charging.
 ##
 ## This floor is the DOGLEG, so the walk is three legs with two turns in it
@@ -53,9 +53,9 @@ const TRAVEL := 48
 const LANE_STEP := 4.0
 
 ## On the first run's line - the hall's aisle, west of the walk - and clear of
-## the copier at the turn, of the dividers' feet at y 304/384/464 and of every
+## the copier at the turn, of the dividers' feet at y 352/432/512 and of every
 ## desk. The head reaches it a little over half way along.
-const ON_LINE := Vector2(128, 320)
+const ON_LINE := Vector2(128, 368)
 
 var _t0 := 0
 var _damage := 0

@@ -363,17 +363,21 @@ func _tick(frame: int) -> void:
 			_check("music: the lobby's track gave way to the building's bed (%s)"
 				% ("<silent>" if _music_track() == "" else _music_track()),
 				_music_track() == BED)
-			# DESIGN.md's densest floor, and the density IS the room: eighteen
-			# dividers in three rows rather than asset recovery's twelve in two.
-			# Counted, because a maze that lost a row is not a maze.
+			# DESIGN.md's densest floor, and the density IS the room: twenty-four
+			# dividers in four ranks rather than asset recovery's twelve in two.
+			# Counted, because a maze that lost a rank is not a maze.
 			var maze: Array = _level().get_node("Props").get_children().filter(
 				func(n: Node) -> bool: return n.name.begins_with("Column"))
-			_check("level: the call floor is a maze of eighteen dividers (%d)"
-				% maze.size(), maze.size() == 18)
+			_check("level: the call floor is a maze of twenty-four dividers (%d)"
+				% maze.size(), maze.size() == 24)
 			var ranks: Array = _level().get_node("Props").get_children().filter(
 				func(n: Node) -> bool: return n.name.begins_with("CallDesk"))
-			_check("level: ten identical stations in it (%d)"
-				% ranks.size(), ranks.size() == 10)
+			# Thirteen seats: two ranks across the hall and a bank up the arm,
+			# which is the annex being a quarter of the floor rather than a
+			# corridor. A room this size dressed for the old one reads as a
+			# call floor somebody has already been made redundant from.
+			_check("level: thirteen identical stations in it (%d)"
+				% ranks.size(), ranks.size() == 13)
 			# The board is the floor's joke, and it is also the one thing on it
 			# that needed new drawing code - the pixel font had no digits until a
 			# board that counts calls needed to write a number.
@@ -395,9 +399,10 @@ func _tick(frame: int) -> void:
 				% [_cast()], _cast() == ["call_center", "call_center",
 					"office_boy", "office_boy", "office_boy", "office_boy",
 					"office_boy", "office_boy", "office_boy"])
-			# Nobody parked behind a divider's 48 px of panel. Eighteen dividers
-			# is eighteen chances to make an enemy invisible rather than merely
-			# unfair, and only the ones NORTH of a foot hide anything - within the
+			# Nobody parked behind a divider's 48 px of panel. Twenty-four
+			# dividers is twenty-four chances to make an enemy invisible rather
+			# than merely unfair, and only the ones NORTH of a foot hide
+			# anything - within the
 			# panel's own height of it, which is the half of the rule the old
 			# version of this check got for free by every body being in the top
 			# half of a room that no longer exists.
@@ -406,7 +411,7 @@ func _tick(frame: int) -> void:
 					for x in [72, 152, 232, 312, 392, 552]:
 						if absf(n.position.x - float(x)) >= 24.0:
 							continue
-						for foot in [304.0, 384.0, 464.0]:
+						for foot in [352.0, 432.0, 512.0, 560.0]:
 							if n.position.y < foot and n.position.y >= foot - 48.0:
 								return true
 					return false)

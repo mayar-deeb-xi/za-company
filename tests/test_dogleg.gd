@@ -33,7 +33,7 @@ extends "res://tests/helpers.gd"
 ## that arrives and then stands in the arm. A reinforcement is `unleash()`d, so
 ## it has no post - and a body with no post has no PATIENCE either, which means
 ## it hunts only what it can actually see. Two boys arriving at the top of the
-## stairs while the player is at the far end of the hall are 570 px away and
+## stairs while the player is at the far end of the hall are 620 px away and
 ## notice nothing, on this floor exactly as on the eleven rectangular ones. They
 ## are holding the corridor the player has to climb, which is the arrival doing
 ## its job rather than failing to. So the corner is staged at the range the
@@ -67,12 +67,12 @@ const ARM_DOOR := Vector2(480, 80)
 ## Getting this wrong is instructive and cost two runs of this suite: a body
 ## staged 85 px away stands perfectly still for four seconds and reads exactly
 ## like a body wedged in a corner.
-const IN_THE_ARM := Vector2(372, 206)
-const SECOND_BODY := Vector2(386, 196)
-const ROUND_THE_CORNER := Vector2(330, 248)
+const IN_THE_ARM := Vector2(372, 254)
+const SECOND_BODY := Vector2(386, 244)
+const ROUND_THE_CORNER := Vector2(330, 296)
 ## The arm ends and the hall begins here. A body south of it has turned the
 ## corner; one north of it is still in the corridor.
-const HALL_TOP := 232.0
+const HALL_TOP := 280.0
 ## Four seconds at 50 px/s is 200 px for a journey of about 100, which leaves
 ## room for a sidestep or two without the check passing by accident.
 const PATIENCE := 240
@@ -100,11 +100,28 @@ func _shapes() -> void:
 		return
 	var uncrossable: Array[String] = []
 	var unreachable: Array[String] = []
+	var buried: Array[String] = []
 	for name: String in CHAIN:
 		var room := (load("res://game/levels/%s/%s.tscn" % [name, name])
 			as PackedScene).instantiate()
 		var walls := room.get_node("Walls") as TileMapLayer
 		var tile: int = walls.tile_set.tile_size.x
+		# A wall is the FACE the building turns to the room and nothing behind
+		# it is painted, so what a cut comes out as is a hole showing the clear
+		# colour rather than a slab of the level's own rock. Read back as the
+		# absence of a wall tile with no floor anywhere around it: the rule was
+		# already true of the eleven rectangles, so this only bites on a shaped
+		# floor - and it bites the moment a regeneration fills one in again,
+		# which is a change nothing else here would notice.
+		var floors := room.get_node("Floor") as TileMapLayer
+		for cell in walls.get_used_cells():
+			var faces := false
+			for x in [-1, 0, 1]:
+				for y in [-1, 0, 1]:
+					if floors.get_cell_source_id(cell + Vector2i(x, y)) != -1:
+						faces = true
+			if not faces:
+				buried.append("%s at %s" % [name, cell])
 		for leg: Rect2 in room.call("walk_lane"):
 			var x := leg.position.x
 			while x < leg.end.x:
@@ -134,14 +151,18 @@ func _shapes() -> void:
 	_check("shape: and it runs between the two doors rather than past them (%s)"
 		% ("all twelve" if unreachable.is_empty() else ", ".join(unreachable)),
 		unreachable.is_empty())
+	_check("shape: a wall is the face the room turns to you, one tile of it "
+		+ "(%d buried%s)" % [buried.size(), "" if buried.is_empty()
+			else " -> " + ", ".join(buried.slice(0, 3))],
+		buried.is_empty())
 
 	# The call floor is the instance, and these are the numbers the rest of this
 	# suite leans on. Stated here so a reshaped room fails with its own
 	# dimensions rather than as a mysterious timeout below.
 	var call_floor := (load(CALL_CENTER) as PackedScene).instantiate()
 	var box: Rect2 = call_floor.call("bounds")
-	_check("shape: the call floor is the dogleg, 640 x 544 (%s)" % box.size,
-		box.size == Vector2(640, 544))
+	_check("shape: the call floor is the dogleg, 640 x 592 (%s)" % box.size,
+		box.size == Vector2(640, 592))
 	var up := (call_floor.get_node("Props/Exit") as Node2D).position
 	var back := (call_floor.get_node("Props/Return") as Node2D).position
 	_check("shape: its two doors are not in line with each other (%.0f vs %.0f)"

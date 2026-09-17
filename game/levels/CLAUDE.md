@@ -44,7 +44,7 @@ looked worse than black.
 
 Eleven floors are a 34 x 19 rectangle - 544 x 304 px - and that was true of all
 twelve until the call floor became a DOGLEG: a hall 40 tiles wide with an arm
-off its north-east corner, 640 x 544 with the north-west quarter cut out of it.
+off its north-east corner, 640 x 592 with the north-west corner cut out of it.
 It is the only room in the game you cannot see the exit from.
 
 **The shape is data, and it lives in `tools/plan.gd` rather than in the
@@ -66,6 +66,20 @@ else. The two forms differ in one way worth knowing: a `cut` grows its walls,
 because it says where the ROOM is not; a `mask` is literal, because the hand
 that drew a plan drew its walls, and growing a second ring inside theirs would
 eat the drawing.
+
+**A wall is one tile of FACE, and behind it there is nothing.** `plan.drawn()`
+is `solid()` narrowed to the cells that have a piece of room next to them,
+corners included, and build_levels.gd paints only those - so a cut comes out as
+a HOLE showing the clear colour rather than as a slab of the level's own rock.
+It says nothing about the eleven rectangles, whose every solid cell is that
+face already; on a shaped floor it is the whole look of the missing corner.
+Filling it was the first version and it was wrong the same way filling the
+screen around a small room was wrong: masonry with nothing happening in it
+reads as a room the player has been shut out of, where black reads as the edge
+of the picture. The hole is also the thing a regeneration would quietly undo,
+so `tests/test_dogleg.gd` sweeps the whole chain for a wall tile with no floor
+anywhere around it - 373 of them on the call floor the moment anybody fills it
+back in.
 
 **The doors need not be in line with each other.** `shape.doors` gives each its
 own tile column, and the spawn markers follow - `start` under the south door,

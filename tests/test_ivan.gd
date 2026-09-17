@@ -292,7 +292,7 @@ func _baked() -> void:
 	var floors := {
 		# The dogleg: in the hall, in the pocket between the second and third
 		# ranks of dividers, on the side of the room the fight starts on.
-		"call_center": Vector2(208, 400),
+		"call_center": Vector2(208, 448),
 		"ahmed_office": Vector2(180, 160),
 		"conflict_resolution": Vector2(412, 144),
 		"asset_recovery": Vector2(80, 180),
