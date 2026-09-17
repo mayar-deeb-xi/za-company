@@ -148,10 +148,19 @@ CAST = {
 		# Light attack one. The most-heard sound in the game by a wide margin,
 		# so it is asked for SHORT and dry: anything with a tail on it becomes
 		# a smear the third time it fires inside a combo.
+		#
+		# It carries NO metal, which is the one thing about it worth stating.
+		# Three shimmering candidates were auditioned against this one and the
+		# bare air won, for a reason that only shows up in the combo: a steel
+		# ring is a pitch, and three pitched swings inside 0.86 s play as a
+		# little tune that the third press then has to talk over. Air has no
+		# note to repeat. It also leaves the metal to `hit`, so the bright part
+		# of the combo is the part that LANDED - which is the split the two
+		# cues exist to draw.
 		"swing": {
-			"prompt": "a light sword swung fast through the air, one clean "
-				"short whoosh with a faint bright steel shimmer on it, "
-				"nothing struck, no impact",
+			"prompt": "a fast blade cutting through air, a short low breathy "
+				"whoosh with no metal ring at all, dull and woody, nothing "
+				"struck, no impact",
 			"seconds": 0.7, "limit": 0.35,
 		},
 		# Light attack two - a rising slash, a launcher rather than a thrust
@@ -188,28 +197,50 @@ CAST = {
 		},
 		# The spin. 24 damage and a rooted second, so it is the one swing
 		# in the game allowed to be broad and heavy.
+		#
+		# It ACCELERATES, and that is the half of the cue the flat sweep was
+		# missing. The heavy is the only attack in the game the player holds a
+		# button for, and it fires itself at the end of the hold; a swing that
+		# is equally fast from its first sample says nothing about which end
+		# of that it is. Rising into the whoosh puts the weight late, where
+		# the blow is. The `charge` loop is still the cue that says the hold
+		# is happening - this is the one that says it is over.
 		"heavy": {
-			"prompt": "a heavy sword spun in one full circle, a single broad "
-				"unbroken sweeping whoosh of steel with a deep whump of "
-				"displaced air under it, one continuous movement from start "
-				"to finish with no gaps and no separate events in it",
+			"prompt": "a heavy blade spun in a full circle, starting slower "
+				"and lower and accelerating into a fast broad whoosh, one "
+				"continuous accelerating movement with no gaps and no "
+				"separate events in it",
 			"seconds": 1.0,
 		},
 		# What the heavy erupts into. Ignition on the first instant, because
 		# the ring is already out at full radius on the animation's frame one.
+		#
+		# Crackle rather than whoomph, and the reason is the frame it shares.
+		# `heavy` is already a big moving body of air and `hit` is landing in
+		# the same tenth of a second; a second whoosh under those is a third
+		# low sound in one instant and the whole thing reads as one muddy
+		# thump. Crackle sits ABOVE all of it and is the one texture in the
+		# stack nothing else is making - so the fire is heard as fire rather
+		# than as more of the swing.
 		"wildfire": {
-			"prompt": "a ring of fire erupting outward across the ground, at "
-				"full force on the very first sample with no silence and no "
-				"build-up before it, a deep whoosh of ignition then flame "
-				"roaring outward and falling away continuously to nothing "
-				"with no gaps",
+			"prompt": "flames sweeping outward across a floor, loud crackling "
+				"and roaring fire at full force from the very first sample, "
+				"dying away continuously to nothing, no build-up and no gaps",
 			"seconds": 1.2,
 		},
 		# A blow that LANDED. Fired from _strike() and nowhere else.
+		#
+		# Stylised rather than recorded, and it is the same call `swing` made
+		# arriving from the other side: this is a 640 px pixel-art game, and a
+		# convincing sword-into-flesh take is detail nothing on screen is
+		# drawing. What the player needs from this cue is that it happened,
+		# at a rate of three a second - so it is short, crunchy and gone,
+		# which is also what keeps a heavy landing on four bodies from
+		# turning into porridge.
 		"hit": {
-			"prompt": "a sword blade striking home into a body, one crisp "
-				"bright impact of steel with a solid thud under it, landing "
-				"on the very first instant, single hit",
+			"prompt": "a punchy stylised video game hit, a short crunchy "
+				"impact with a tight low thump under it, maximum on the "
+				"first sample and gone immediately, single hit",
 			"seconds": 0.8,
 		},
 		# The player taking a blow. Breath-forward and neutral in pitch - see
@@ -247,12 +278,12 @@ CAST = {
 ## spends nothing and changes no performance. Delete an entry to deliberately
 ## buy a new one.
 KEEP = {
-	("player", "swing"): "short, dry, front-loaded - no smear on a mashed combo",
+	("player", "swing"): "picked by ear from 4 - air, no metal; steel made a tune",
 	("player", "swing2"): "rises, and reads longer and brighter than swing",
 	("player", "charge"): "mid 0.49, hi/lo 2.0x - a bed, not a plateau (2 rolls)",
-	("player", "heavy"): "one unbroken sweep; the first roll went quiet mid-spin",
-	("player", "wildfire"): "full force on sample one, as the ring already is",
-	("player", "hit"): "maximum on the first instant, clean decay - an impact",
+	("player", "heavy"): "picked by ear from 4 - accelerates; weight lands late",
+	("player", "wildfire"): "picked by ear from 4 - crackle clears heavy + hit",
+	("player", "hit"): "picked by ear from 4 - stylised crunch, gone immediately",
 	("player", "hurt"): "breathy, neutral, one syllable, no competing thud",
 	("player", "die"): "one event; two earlier rolls had a hole in the middle",
 }
