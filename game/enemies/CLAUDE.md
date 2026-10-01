@@ -178,15 +178,17 @@ the walk home, and a guard dragged 160 px and not one pixel more.
 
 **There is one other way to be noticed, and it is a room-wide one-off.**
 Sight alone meant a player could cross a whole floor without anybody in it
-reacting, simply by not walking up to them. So the first frame the player
-steps off the walk lane - into the room rather than through it - game.gd calls
-`alert()` on every enemy standing there, which is exactly what a sighting does
-(`hunting` on, a full `_patience`) and nothing more. Everything after it is the
-leash above, unchanged: an alerted body far away walks the player's way for
-2.5 s, at most 2x its sight from its post, and then goes home unless it has
-really seen them by then. It fires once per visit - a second step off the lane
-is nothing - and the lane itself still wakes nobody, so the placement rule
-below holds as written. A boss drops the forced hunt on the next frame, because
+reacting, simply by not walking up to them. So the first frame the player is
+more than three tiles from where they came in, game.gd calls `alert()` on every
+enemy standing there, which is exactly what a sighting does (`hunting` on, a
+full `_patience`) and nothing more. Only the doorway is safe: walking on
+towards the far door wakes the room like anything else, so the walk between
+the doors is no longer a way through unseen. Everything after it is the leash
+above, unchanged: an alerted body far away walks the player's way for 2.5 s,
+at most 2x its sight from its post, and then goes home unless it has really
+seen them by then. It fires once per visit - a second trip out is nothing -
+and the placement rule below still holds as written, because it is about what
+a body can SEE from its post, which the alert does not change. A boss drops the forced hunt on the next frame, because
 `_hunt()` already does that for a body that does not leash and cannot see the
 player.
 

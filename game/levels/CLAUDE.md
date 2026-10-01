@@ -134,13 +134,14 @@ beside its title, and two questions on level.gd -
 
 They exist because the alternative was four test files agreeing with each
 other by hand about a shape only one floor has, and because a rule this old
-should be answerable by the room it is about. The one reader inside `game/`
-is game.gd's **room alert**: the first frame the player stands more than
-`LANE_ALERT_CLEARANCE` (8 px) off the walk, every enemy in the room is
-`alert()`ed once (game/enemies/CLAUDE.md, The leash), and every reinforcement
-that walks in after that is alerted on its way in. Every spawn marker
-stands ON its lane, so arriving never spends it - `tests/test_alert.gd` sweeps
-the chain for that.
+should be answerable by the room it is about. Nothing inside `game/` reads
+them any more. game.gd's **room alert** used to - it fired when the player
+stepped off the walk - and now does not: it fires the first frame the player
+is more than `ALERT_RADIUS` (3 tiles, 48 px) from the spawn marker they came
+in on, so the doorway is the only safe ground and the walk between the doors
+wakes the room like anywhere else. Every enemy in the room is `alert()`ed once
+(game/enemies/CLAUDE.md, The leash), and every reinforcement that walks in
+after that is alerted on its way in. `tests/test_alert.gd` owns it.
 
 `tests/test_dogleg.gd` owns the two failures a shape can cause. One is a room
 nobody can cross, swept across the whole chain: every floor's walk is sampled

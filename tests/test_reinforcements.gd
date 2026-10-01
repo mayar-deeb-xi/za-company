@@ -84,8 +84,11 @@ func _tick(frame: int) -> void:
 				% arrived.size(), arrived.size() == 1)
 			if not arrived.is_empty():
 				var first := (arrived[0] as Node2D).global_position
+				# Within a tile rather than on the pixel: the room was alerted
+				# long before this beat, so an arrival is already hunting and has
+				# taken a step or two off the threshold by the time it is read.
 				_check("reinforcements: it walked in through the south door (%s vs %s)"
-					% [first, _door], first.distance_to(_door) < 1.0)
+					% [first, _door], first.distance_to(_door) < 16.0)
 				_check("reinforcements: an office boy, so a guard's health (%s)"
 					% arrived[0].get("max_health"),
 					arrived[0].get("max_health") == 24)

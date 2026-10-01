@@ -281,13 +281,16 @@ still gives up, it just has no mark to be held near or to return to). Full ratio
 game/enemies/CLAUDE.md's The leash.
 
 **The one other way to be noticed is the ROOM ALERT, and it fires once per
-visit.** The first frame the player stands more than 8 px off the walk lane,
-game.gd calls `alert()` on every enemy in the room - a sighting without the
-sight, so each one walks the player's way and then the leash above decides
-everything, unchanged. Walking the lane still wakes nobody (every spawn marker
-stands on it, swept by `tests/test_alert.gd`), so the placement rule below is
-untouched; what changed is that a player can no longer cross a room's
-furniture unnoticed just by never walking up to anybody. **A reinforcement
+visit.** The first frame the player stands more than 3 tiles (48 px,
+`ALERT_RADIUS`) from where they came in - the spawn marker the door put them
+on, not the door itself, which every marker stands 3.5+ tiles inside - game.gd
+calls `alert()` on every enemy in the room: a sighting without the sight, so
+each one walks the player's way and then the leash above decides everything,
+unchanged. **The doorway is the only safe ground; the walk between the doors
+is not.** Walking door to door wakes the room exactly as wandering into the
+furniture does, so no floor is crossed unnoticed. The placement rule below is
+untouched - it is still what keeps a body from SEEING the walk - but it no
+longer means a room can be walked through in silence. **A reinforcement
 walking in after the alert is told on arrival** (game.gd's `_on_node_added`),
 and having no post it does not run out of patience - it keeps coming for the
 rest of the visit rather than stopping dead where 2.5 s ran out.
@@ -1448,12 +1451,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     patience, so it hunts only what it can see, on this floor exactly as on the
     other eleven. Staging that wrong looks identical to a wedge, which is why
     the suite measures its own premise before it measures the answer.
-  - `test_alert.gd` - the room alert: that walking the lane wakes nobody,
-    that stepping off it sets a guard far out of sight hunting, that the leash
+  - `test_alert.gd` - the room alert: that the doorway wakes nobody, that
+    walking on towards the far door sets a guard far out of sight hunting, that
+    a reinforcement arriving after it keeps coming, that the leash
     then runs unchanged (same patience, no further than 2x sight from the post,
-    back onto its mark), that a second step off in the same visit is nothing
-    and a new visit gets its own. Plus the sweep that keeps arrival from firing
-    it: every floor's spawn markers stand on that floor's own lane.
+    back onto its mark), that a second trip out in the same visit is nothing
+    and a new visit gets its own.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

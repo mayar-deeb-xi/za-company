@@ -52,8 +52,7 @@ func bounds() -> Rect2:
 ##
 ## The rule it carries - no enemy's sight, no hazard and no prop on the walk
 ## between the doors - is the oldest one in the project, enforced from OUTSIDE
-## the game by four suites reading the chain off disk. (The one reader inside
-## it is game.gd, which alerts the room once when the player steps off it.)
+## the game by four suites reading the chain off disk.
 ## The suites agreed on x 246-300 by each writing it down, which was true while
 ## every floor was the same rectangle; the call floor's way up is now at the top
 ## of an arm, so its walk has two turns in it. A floor that knows its own shape

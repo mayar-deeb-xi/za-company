@@ -11,9 +11,12 @@ extends Node2D
 
 const START_LEVEL := "res://game/levels/lobby/lobby.tscn"
 const FADE_SECONDS := 0.28
-## How far off the walk lane counts as "in the room" rather than grazing its
-## edge - see _alert_room().
-const LANE_ALERT_CLEARANCE := 8.0
+## How far from where they came in the player may stand before the room knows
+## they are there - see _alert_room(). Three tiles, measured from the spot the
+## door put them on rather than from the door itself, because every spawn marker
+## stands three and a half tiles or more inside its threshold. The doorway is
+## the one safe place in a room: walking from door to door is walking INTO it.
+const ALERT_RADIUS := 3 * 16.0
 
 ## Typed by preloaded script rather than by the `class_name` those scripts also
 ## declare: global class names come from a cache the editor writes, which a
@@ -40,7 +43,9 @@ var _level: LevelType
 var _travelling := false
 ## Whether this room's one-time alert (see _alert_room) has already fired.
 ## Reset on every arrival, like everything else a room carries no state across.
-var _lane_alerted := false
+var _room_alerted := false
+## Where the player came into this room - the centre of the ALERT_RADIUS.
+var _arrived_at := Vector2.ZERO
 ## World-space extent of the level on screen now; drives the camera.
 var _bounds := Rect2()
 ## Camera shake: world pixels of throw, and how much of it is left to spend.
@@ -82,9 +87,9 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_camera.global_position = _camera_target()
 	_apply_shake(delta)
-	if not _travelling and not _lane_alerted \
-			and _level.lane_clearance(_player.global_position) > LANE_ALERT_CLEARANCE:
-		_lane_alerted = true
+	if not _travelling and not _room_alerted \
+			and _player.global_position.distance_to(_arrived_at) > ALERT_RADIUS:
+		_room_alerted = true
 		_alert_room()
 
 
@@ -188,7 +193,7 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 	# Before the room goes in rather than with the rest of the reset below:
 	# building it adds every placed enemy through _on_node_added, and the last
 	# room's spent alert would otherwise be handed to all of them on arrival.
-	_lane_alerted = false
+	_room_alerted = false
 	_level = (load(level_path) as PackedScene).instantiate()
 	add_child(_level)
 	move_child(_level, 0)
@@ -211,6 +216,7 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 	_subtitle.clear()
 
 	_player.global_position = _level.spawn_position(spawn)
+	_arrived_at = _player.global_position
 
 	# Frame the new level before the first frame of it is drawn, then drop the
 	# smoothing history - otherwise the camera glides across from wherever the
@@ -246,7 +252,7 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 ## a body one line AFTER add_child, and it is having no post that makes it an
 ## arrival rather than something placed.
 func _on_node_added(node: Node) -> void:
-	if _lane_alerted and node.is_in_group("enemies"):
+	if _room_alerted and node.is_in_group("enemies"):
 		_alert_arrival.call_deferred(node)
 		return
 	if not node.is_in_group("npcs") or not node.has_signal(&"talk_requested"):
@@ -269,13 +275,13 @@ func _on_talk_requested(npc: Node2D) -> void:
 	_dialogue.talk(npc, _player)
 
 
-## The one push a room gets, fired once by _process the moment the player
-## steps off the walk lane - into the room rather than through it. Every
-## enemy already standing here gets alert()ed, as if it had just seen the
-## player; what happens next is entirely the leash's (patience, the bound off
-## each body's own post, the walk home if nothing comes of it). A player who
-## never leaves the lane is never noticed this way, exactly as before - this
-## only changes WHEN the first sighting can happen, never what one costs.
+## The one push a room gets, fired once by _process the moment the player is
+## more than ALERT_RADIUS from where they came in. Every enemy already standing
+## here gets alert()ed, as if it had just seen the player; what happens next is
+## entirely the leash's (patience, the bound off each body's own post, the walk
+## home if nothing comes of it). The doorway is the only safe ground - the walk
+## to the far door is not, so no room is crossed without anybody noticing. It
+## changes WHEN the first sighting can happen, never what one costs.
 ## Anything that walks in later is alerted as it arrives (_on_node_added), and
 ## a reinforcement, having no post, keeps coming (enemy_base.alert()).
 func _alert_room() -> void:

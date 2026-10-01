@@ -34,8 +34,8 @@ extends "res://tests/helpers.gd"
 ## it has no post - and a body with no post has no PATIENCE either, which means
 ## it hunts only what it can actually see. Two boys arriving at the top of the
 ## stairs while the player is at the far end of the hall are 620 px away and
-## notice nothing, on this floor exactly as on the ten plain ones - unless
-## the player has left the walk, in which case game.gd's room alert sends them
+## notice nothing BY SIGHT, on this floor exactly as on the ten plain ones -
+## in play game.gd's room alert has long since fired by then and sends them
 ## down the arm (test_alert.gd), which is not what is asked here. They
 ## are holding the corridor the player has to climb, which is the arrival doing
 ## its job rather than failing to. So the corner is staged at the range the
