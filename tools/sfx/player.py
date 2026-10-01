@@ -11,14 +11,14 @@ and its cues are not the bestiary's cues.
 
 ## One body, one voice, forever
 
-The seven characters share one sheet and one animation set and always will
+The ten characters share one sheet and one animation set and always will
 (game/player/CLAUDE.md, Characters), so they share one set of sounds for
-exactly the same reason: a swing drawn once lands on all seven, and a swing
+exactly the same reason: a swing drawn once lands on all ten, and a swing
 CUT once has to as well. That is why this file has a single member where
-`enemies.py` has six - the cast is one body wearing seven palettes.
+`enemies.py` has six - the cast is one body wearing ten palettes.
 
 It has one consequence that has to be designed for rather than discovered:
-**the hurt cue cannot commit to a gender.** Six of the seven characters are
+**the hurt cue cannot commit to a gender.** Nine of the ten characters are
 not whoever the clip sounds like, and a plainly male grunt coming out of a
 character who is not male is the animation telling the truth while the audio
 lies - the same failure the office boy's wrench exists to avoid, arriving from
@@ -255,7 +255,7 @@ CAST = {
 			"seconds": 0.7,
 		},
 		# Health at zero. Same neutrality rule, plus the sword leaving the
-		# hand - the one thing on screen that is true of all seven characters.
+		# hand - the one thing on screen that is true of all ten characters.
 		"die": {
 			"prompt": "a body hitting a hard floor together with a sword, a "
 				"breathy exhale of air knocked out with almost no pitch to "

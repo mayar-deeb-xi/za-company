@@ -96,9 +96,18 @@ func _tick(frame: int) -> void:
 				% current_scene.scene_file_path,
 				current_scene.scene_file_path
 					== "res://ui/character_select/character_select.tscn")
-			var row := current_scene.get_node("%Roster") as HBoxContainer
+			var row := current_scene.get_node("%Roster") as GridContainer
 			_check("select: one portrait per roster character (%d)" % row.get_child_count(),
-				row.get_child_count() == 7)
+				row.get_child_count() == 10)
+			# The cast outgrew one row at ten; a grid that still ran off the
+			# 640x360 design viewport would hide a character with no error.
+			# Measured as the whole column's MINIMUM size rather than where the
+			# grid sits, which is not settled on the frame the scene arrives.
+			# The column is CENTRED, so its bottom is half of it below the
+			# middle, and it must clear the 28px footer hint, not just the edge.
+			var need := (row.get_parent() as Control).get_combined_minimum_size()
+			_check("select: the roster fits above the footer (%s)" % need,
+				need.x <= 640 and 180 + need.y / 2 <= 360 - 28)
 			# Focus lands on whichever character the settings file remembers, so
 			# the expectation comes from the same place the screen reads.
 			var expected: String = _autoload("Settings").call(

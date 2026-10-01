@@ -164,9 +164,9 @@ recipe is in tools/CLAUDE.md; room anatomy in game/levels/CLAUDE.md.
 
 Every playable character shares one body, one animation set and one sheet
 (`game/player/src/character_cc0.png`) forever - a new animation drawn once
-lands on all seven. `game/player/characters/roster.gd` is the single source of
-truth; adding a character is one sheet row plus one roster entry, then
-build_characters.gd. Enemies deliberately do NOT share a sheet - each owns its
+lands on all ten. `game/player/characters/roster.gd` is the single source of
+truth; adding a character is one roster entry, then build_characters.gd - the
+sheet row is the shared body, recoloured by the entry's recipe. Enemies deliberately do NOT share a sheet - each owns its
 own, seeded once from a frozen body copy (see game/enemies/CLAUDE.md).
 
 The player owns its health and its lives (`MAX_LIVES` 3). **Four ways the
@@ -219,10 +219,10 @@ Combat.
 An `Audio` child holds id -> stream and player.gd fires eight names at it -
 `swing`, `swing2`, `charge`, `heavy`, `wildfire`, `hit`, `hurt`, `die` - so a
 cue arrives by having the WAV and nothing else, and a missing one is silent
-with no branch anywhere. One set serves all seven characters, which is the
+with no branch anywhere. One set serves all ten characters, which is the
 cast's SHEET rule applied to the other sense, and it decides the one thing
 about the audio that could not be discovered later: `hurt` and `die` cannot
-commit to a gender, because six of the seven are not whoever a grunt would
+commit to a gender, because nine of the ten are not whoever a grunt would
 sound like. The node is `game/player/player_audio.gd` and is deliberately NOT
 `game/enemies/enemy_audio.gd` bubbled up - it does a neighbouring job with a
 different first line. An enemy is somewhere, and which corner a wind-up came
@@ -726,7 +726,7 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
                                        `tools/sfx/player.py`, the engine is
                                        shared, and `--relevel` re-shapes from
                                        `game/player/src/sfx/` for free. ONE set
-                                       for all seven characters, because they
+                                       for all ten characters, because they
                                        share one body
 - `ui/sfx/*.wav`                     <- tools/sfx/ui.py, and it is the ONE sound
                                        in the game that is generated the way

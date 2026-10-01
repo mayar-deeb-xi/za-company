@@ -14,7 +14,9 @@ const Roster := preload("res://game/player/characters/roster.gd")
 const PORTRAIT_PX := 64
 const WALK_FPS := 8.0
 
-@onready var _row: HBoxContainer = %Roster
+## Two rows of five rather than one row: ten 72px portraits side by side are
+## 774px, which is wider than the 640px viewport.
+@onready var _row: GridContainer = %Roster
 @onready var _back_button: Button = %BackButton
 
 ## Button -> {"icon": TextureRect, "frames": SpriteFrames}
@@ -69,7 +71,7 @@ func _make_portrait(entry: Dictionary) -> Button:
 
 	var button := Button.new()
 	button.name = entry["id"]
-	button.custom_minimum_size = Vector2(72, 100)
+	button.custom_minimum_size = Vector2(72, 92)
 
 	# The button is the one control here; its children must not eat the mouse.
 	var box := VBoxContainer.new()

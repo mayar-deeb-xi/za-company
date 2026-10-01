@@ -625,9 +625,9 @@ audible rather than buried, checked against the drain loop she stands in.
 ## Sheets: every enemy owns its own
 
 **Every enemy owns its sprite sheet**, and this is the one place enemies and the
-cast are deliberately organised differently. The seven characters share
+cast are deliberately organised differently. The ten characters share
 `game/player/src/character_cc0.png` forever: they play the same game with the
-same moves, so a new animation drawn once should land on all seven. Enemies are
+same moves, so a new animation drawn once should land on all ten. Enemies are
 the opposite - each is heading somewhere different, and a shared sheet would
 pile every enemy's future moves into one file. So each has
 `game/enemies/<id>/src/<id>.png` of its own.

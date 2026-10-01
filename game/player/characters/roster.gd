@@ -107,6 +107,45 @@ const CHARACTERS := [
 			"hair_style": "straight", "beard": false, "build": "skinny",
 		},
 	},
+	{
+		"id": "ismeel",
+		"name": "Ismeel",
+		"frames": "res://game/player/characters/ismeel_frames.tres",
+		"recipe": {
+			"hair": "f0d5c4", "hair_light": "f0d5c4",   # unused - bald
+			"skin": "f0d5c4",
+			"eye": "2b2130",
+			"shirt": "6b4a8c", "shirt_dark": "45305e",  # purple shirt
+			"pants": "6a6a76", "pants_dark": "4a4a54",  # grey trousers
+			"hair_style": "bald", "beard": false, "build": "normal",
+		},
+	},
+	{
+		"id": "abdul",
+		"name": "Abdul",
+		"frames": "res://game/player/characters/abdul_frames.tres",
+		"recipe": {
+			"hair": "5a3a22", "hair_light": "7c5535",   # brown short curls
+			"skin": "f0d5c4",
+			"eye": "2b2130",
+			"shirt": "3f6fb8", "shirt_dark": "284a80",  # blue shirt
+			"pants": "b59a6a", "pants_dark": "84704a",  # khakis
+			"hair_style": "short_curly", "beard": false, "build": "wide",
+		},
+	},
+	{
+		"id": "adnan",
+		"name": "Adnan",
+		"frames": "res://game/player/characters/adnan_frames.tres",
+		"recipe": {
+			"hair": "221d29", "hair_light": "4d4560",   # black short curls
+			"skin": "f0d5c4",
+			"eye": "141018",                            # black
+			"shirt": "5a7a9a", "shirt_dark": "3a5470",  # slate-blue shirt
+			"pants": "33333d", "pants_dark": "202028",  # black pants
+			"hair_style": "short_curly", "beard": true, "build": "normal",
+		},
+	},
 ]
 
 

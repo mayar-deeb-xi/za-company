@@ -13,7 +13,7 @@ plus at most a one-pixel build tweak, all palette-swapped from the CC0 sheet in
 `game/player/src/` the way biome art is swapped from the dungeon sheet.
 
 The cast sharing one sheet is deliberate and permanent - they all play the same
-game with the same moves, so a new animation drawn once should land on all seven
+game with the same moves, so a new animation drawn once should land on all ten
 at no cost. Adding one is two edits: draw the row into
 `game/player/src/character_cc0.png`, then add it to `CAST_LAYOUT` in
 tools/build_characters.gd. Nothing outside the cast can see either change.
@@ -29,7 +29,10 @@ character's `<id>_frames.tres` (textures embedded as
 PortableCompressedTexture2D, so a rebuild works headless with no --import).
 Mayar's frames double as the player scene's default look. Adding a character:
 one roster entry, run build_characters.gd; the select screen builds its
-portraits from the roster at runtime.
+portraits from the roster at runtime. It lays them out five to a row, because
+ten 72px portraits in one row are 774px against a 640px viewport, and
+test_menu.gd checks the column still clears the footer hint - an eleventh
+character starts a third row and needs that check to keep passing.
 
 The choice is saved through `Settings` (section `player`, key `character`) only
 when the player actually picks someone, and player.gd swaps its SpriteFrames to
@@ -325,12 +328,12 @@ id -> stream, player.gd fires names at it through `_sfx` / `_sfx_loop` /
 no branch anywhere. Eight cues - `swing`, `swing2`, `charge`, `heavy`,
 `wildfire`, `hit`, `hurt`, `die` - and a cue arrives by having the WAV.
 
-**One set for all seven characters.** That is the sheet rule from Characters
+**One set for all ten characters.** That is the sheet rule from Characters
 above applied to the other sense, and it is permanent for the identical
 reason: they play the same game with the same moves, so a swing cut once
-should land on all seven at no cost. It has one consequence that had to be
+should land on all ten at no cost. It has one consequence that had to be
 designed for rather than discovered - **the hurt cue cannot commit to a
-gender.** Six of the seven are not whoever the clip sounds like, and a plainly
+gender.** Nine of the ten are not whoever the clip sounds like, and a plainly
 male grunt out of a character who is not male is the animation telling the
 truth while the audio lies. So `hurt` and `die` are carried by air rather than
 by tone: breathy, one syllable, neutral in pitch.

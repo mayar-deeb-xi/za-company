@@ -5,7 +5,7 @@ extends SceneTree
 ##
 ## The cast sharing a sheet is deliberate and permanent: every character plays
 ## the same game with the same moves, so they will always want the same
-## animation set, and a new move drawn once lands on all seven at no cost.
+## animation set, and a new move drawn once lands on all ten at no cost.
 ## Enemies are the opposite case and have their own generator - see
 ## tools/build_enemies.gd.
 ##
@@ -23,7 +23,7 @@ const SRC := "res://game/player/src/character_cc0.png"
 ## Deliberately the cast's own copy rather than character_art.gd's CC0_LAYOUT,
 ## even though the two are identical today. They describe different things: that
 ## one is a fact about a frozen file, this one is a description of art under
-## active development. Draw a new row into the sheet, add it here, and the seven
+## active development. Draw a new row into the sheet, add it here, and the ten
 ## characters pick it up with nothing else in the game moving - which is exactly
 ## what sharing one constant would have prevented.
 const CAST_LAYOUT := {
