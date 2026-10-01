@@ -100,7 +100,7 @@ func _tick(frame: int) -> void:
 		# collected here is then known to be his rather than merely to have
 		# been on screen.
 		var line := _line().text
-		if line != "" and _speaker() == "Dominique" \
+		if line != "" and _speaker() == "Domimi" \
 				and (_said.is_empty() or _said[-1] != line):
 			_said.append(line)
 

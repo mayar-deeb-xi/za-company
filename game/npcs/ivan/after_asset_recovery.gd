@@ -11,7 +11,7 @@ extends RefCounted
 
 const BEATS := [
 	{
-		"name": "Ivan",
+		"name": "Ivo",
 		"text": "Four of them. I counted from the stairs, and then I stopped "
 			+ "counting and came in anyway.",
 		"voice": "res://game/npcs/ivan/sfx/voice/assets_counted.wav",

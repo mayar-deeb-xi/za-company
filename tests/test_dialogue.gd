@@ -303,7 +303,7 @@ func _report() -> void:
 	_check("escort: and is never left behind (widest gap %.0f px)"
 		% _escort_gap, _escort_gap < 90.0)
 	_check("tour: she stops at the front desk on the way (%d lines)"
-		% _said.size(), script.contains("She came in for a two-week contract."))
+		% _said.size(), script.contains("He came in for a two-week contract."))
 
 	# The contract, and the two jokes in it.
 	_check("contract: refusing gets the line rather than the exit",
@@ -384,7 +384,7 @@ func _report() -> void:
 func _check_two_lines() -> void:
 	var panel := _box().get_node("%Panel") as Control
 	var one := panel.size.y
-	_box().call("say", "Dominique", "So you are going up. Fine. I will say "
+	_box().call("say", "Domimi", "So you are going up. Fine. I will say "
 		+ "this once, because I have said it to others and they also went up, "
 		+ "and they are not coming back down to tell you about it themselves.")
 	_check("box: a line that wraps is measured as the %d lines it really is"

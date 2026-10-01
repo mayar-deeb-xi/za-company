@@ -86,7 +86,7 @@ const LINES := {
 		{"text": "That's all you have?", "voice": VOICE + "hurt_1.wav"},
 		{"text": "You'll pay for that. In writing.",
 			"voice": VOICE + "hurt_2.wav"},
-		{"text": "Do you know who Mostafa is?",
+		{"text": "Do you know who Big Mo is?",
 			"voice": VOICE + "hurt_3.wav"},
 	],
 
@@ -102,6 +102,6 @@ const LINES := {
 	# purpose: there is no second thing to say here, and jumping the queue is
 	# what makes sure it is the last thing heard.
 	"concede": [
-		{"text": "I'm telling Mostafa.", "voice": VOICE + "concede_1.wav"},
+		{"text": "I'm telling Big Mo.", "voice": VOICE + "concede_1.wav"},
 	],
 }

@@ -66,16 +66,13 @@ SPEAKER_BOOST = True
 ## (cue, text) -> the take that was approved for it. See the header.
 KEEP = {
     ("taunt", "Get over here!"): "approved: [furious, roaring], listened to",
-    ("concede", "I'm telling Mostafa."): "approved: [defeated, bitter, muttering]",
 }
 
 ## Transcript variants that are the transcriber, not the take. `--verify` reads
-## a clip back and compares; these two would otherwise be flagged forever, and
-## a check that always shows the same two failures stops being read at all.
+## a clip back and compares; this one would otherwise be flagged forever, and
+## a check that always shows the same failure stops being read at all.
 ##
 ## - scribe writes digits for spoken number words
-## - "Mostafa" and "Mustafa" are one name; the take was approved by ear
 SPELLINGS = {
     "twenty": "20",
-    "mostafa": "mustafa",
 }

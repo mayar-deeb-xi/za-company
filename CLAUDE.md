@@ -546,6 +546,16 @@ knowing before touching a beat:
 
 game/levels/CLAUDE.md has the rest.
 
+## Names on screen are not the ids
+
+Three characters were renamed for the player and kept their ids: `mostafa` is
+**Big Mo**, `ivan` is **Ivo**, `dominique` is **Domimi**. Folders, scenes,
+scripts, roster ids, biome keys, clip names (`mostafa_rhythm.wav`) and these
+docs still use the old names; what the player reads or hears - dialogue
+`name` fields, the NPC name labels, every spoken line, and Big Mo's bar via
+his own `title()` override - uses the new ones. A line written for any of the
+three says the new name.
+
 ## NPCs
 
 Three friendly faces - **Dominique** (guide, front desk), **Ivan** (healer,

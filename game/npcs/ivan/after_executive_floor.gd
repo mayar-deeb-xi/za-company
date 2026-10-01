@@ -16,7 +16,7 @@ extends RefCounted
 
 const BEATS := [
 	{
-		"name": "Ivan",
+		"name": "Ivo",
 		"text": "Those ones were not staff. Nobody with a face like that has "
 			+ "ever stood in my queue for lunch.",
 		"voice": "res://game/npcs/ivan/sfx/voice/exec_not_staff.wav",

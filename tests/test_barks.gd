@@ -14,7 +14,7 @@ extends "res://tests/helpers.gd"
 ##
 ## Every line checked here is looked up in `taunts.gd` rather than spelled out,
 ## so rewording one is an edit to the data file and nothing else. The one that
-## IS spelled out is spelled out on purpose: "I'm telling Mostafa." is the line
+## IS spelled out is spelled out on purpose: "I'm telling Big Mo." is the line
 ## DESIGN.md wrote for him, and the last thing anybody hears him say.
 
 const Taunts := preload("res://game/bosses/ahmed/taunts.gd")
@@ -224,9 +224,9 @@ func _report() -> void:
 		% [_frame_said_at(_conceded_at), _conceded_at],
 		_frame_said_at(_conceded_at) == _conceded_at)
 	_check("barks: and it is the line he was written (%s)" % _text_said_at(_conceded_at),
-		_text_said_at(_conceded_at) == "I'm telling Mostafa.")
+		_text_said_at(_conceded_at) == "I'm telling Big Mo.")
 	_check("barks: it is the last thing he says (%s)" % String(_said[-1]["text"]),
-		String(_said[-1]["text"]) == "I'm telling Mostafa.")
+		String(_said[-1]["text"]) == "I'm telling Big Mo.")
 
 	# The one rule that holds across the whole recording: nothing he said was
 	# ever painted over something still being read. The two forced cues are
@@ -265,7 +265,7 @@ func _report() -> void:
 		% [voiced, str(short)], short.is_empty())
 	_check("barks: his last line is up (%s)" % _subtitle_line(),
 		_subtitle().call("showing")
-		and _subtitle_line() == "I'm telling Mostafa.")
+		and _subtitle_line() == "I'm telling Big Mo.")
 
 
 ## Beaten, and quiet. The picture must NOT stop - he is still there and still

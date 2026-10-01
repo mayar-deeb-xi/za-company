@@ -104,6 +104,13 @@ var _rage_time := -1.0
 var _blown := false
 
 
+## The building calls him Big Mo, and so does his bar. The id, folder and scene
+## stay `mostafa` - only what the player reads changed - so the base's
+## scene-name rule would still announce MOSTAFA.
+func title() -> String:
+	return "BIG MO"
+
+
 func _physics_process(delta: float) -> void:
 	_rush_timer = maxf(_rush_timer - delta, 0.0)
 	_breath = maxf(_breath - delta, 0.0)

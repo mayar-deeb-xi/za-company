@@ -39,7 +39,7 @@ const NPCS := [
 		# `long` recipe key exists - and the reason npc_art.gd lays the head
 		# over the robe rather than under it, so the hair falls onto the cloth.
 		"id": "dominique",
-		"name": "Dominique",
+		"name": "Domimi",
 		"src": "res://game/npcs/dominique/src/dominique.png",
 		"frames": "res://game/npcs/dominique/dominique_frames.tres",
 		"recipe": {
@@ -58,7 +58,7 @@ const NPCS := [
 		# hemp cord is doing real work on him, breaking the red into two blocks
 		# so a floor-length NPC does not read as a walking heart pickup.
 		"id": "ivan",
-		"name": "Ivan",
+		"name": "Ivo",
 		"src": "res://game/npcs/ivan/src/ivan.png",
 		"frames": "res://game/npcs/ivan/ivan_frames.tres",
 		"recipe": {

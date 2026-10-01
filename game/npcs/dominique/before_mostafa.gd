@@ -16,13 +16,13 @@ extends RefCounted
 
 const BEATS := [
 	{
-		"name": "Dominique",
+		"name": "Domimi",
 		"text": "Upstairs is the gym. On the floor plan it says Conflict "
 			+ "Resolution. Nothing has ever been resolved in there.",
 		"voice": "res://game/npcs/dominique/sfx/voice/mostafa_gym.wav",
 	},
 	{
-		"text": "Mostafa boxes. Two fast, then one slow. Always that order, "
+		"text": "Big Mo boxes. Two fast, then one slow. Always that order, "
 			+ "every time, until one of you stops.",
 		"voice": "res://game/npcs/dominique/sfx/voice/mostafa_rhythm.wav",
 	},

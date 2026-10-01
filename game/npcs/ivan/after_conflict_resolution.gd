@@ -13,13 +13,13 @@ extends RefCounted
 
 const BEATS := [
 	{
-		"name": "Ivan",
+		"name": "Ivo",
 		"text": "They painted a ring on the floor of a gym and wrote Conflict "
 			+ "Resolution on the door. Nobody asked me.",
 		"voice": "res://game/npcs/ivan/sfx/voice/gym_ring.wav",
 	},
 	{
-		"text": "Mostafa comes to my counter after training. Two plates, no "
+		"text": "Big Mo comes to my counter after training. Two plates, no "
 			+ "bread, and he has never once sat down to eat them.",
 		"voice": "res://game/npcs/ivan/sfx/voice/gym_two_plates.wav",
 	},
