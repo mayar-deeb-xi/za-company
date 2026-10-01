@@ -1,6 +1,7 @@
 extends "res://tests/helpers.gd"
 ## SILVERMAN's fight: the glare both ways, the crossing that passes through
-## you, the split, the cold room, and the ladder all three hang off.
+## you, the split, the prism, the cold room, and the ladder all of them hang
+## off.
 ##
 ## His own suite rather than a fourth section of test_bosses.gd, for the reason
 ## the ladder exists: every check after the first depends on how much health he
@@ -74,6 +75,17 @@ var _last_health := 0
 var _drops := 0
 var _health_at_edge := -1
 
+# The prism, staged off the frame the first one actually begins rather than a
+# frame number: when his last phase opens he may still be finishing whatever
+# he was doing, so the cast lands a few frames either way. Its arc is fixed the
+# moment it begins, which is what lets the test stand the player BEHIND it and
+# then IN it, knowing exactly where both are.
+var _prism_start := -1
+var _prism_from := 0.0
+var _prism_span := 0.0
+var _prism_health := -1
+var _prism_behind := -1
+
 
 func _tick(frame: int) -> void:
 	if _sv != null and is_instance_valid(_sv):
@@ -81,6 +93,14 @@ func _tick(frame: int) -> void:
 		if now != "" and _prev_attack == "":
 			_opened.append(now)
 			_tiers_seen[now] = int(_sv.call("tier"))
+			if now == "prism" and _prism_start < 0:
+				_prism_start = frame
+				_prism_from = _sv.get("prism_from")
+				_prism_span = _sv.get("prism_span")
+				# Dead opposite the middle of the fan: 220 degrees of the room
+				# the sweep never covers.
+				_player().global_position = _prism_spot(_prism_from + _prism_span * 0.5 + PI)
+				_prism_health = _player().get("health")
 		_prev_attack = now
 
 		var crossing: bool = _sv.get("dashing")
@@ -106,6 +126,22 @@ func _tick(frame: int) -> void:
 			_tried_interrupt = frame
 		elif _tried_interrupt > 0 and frame == _tried_interrupt + 1:
 			_phase_after_interrupt = _sv.get("phase")
+
+	# The prism's two halves, by frames into the cast: 60 of wind-up, then 84 of
+	# sweep. At 0.8 s into the sweep the beam has crossed 57% of its arc and
+	# the player steps into the arc AHEAD of it, at 90%, which the beam reaches
+	# at 1.26 s - so the second half is a body the light is coming towards.
+	if _prism_start > 0 and _sv != null:
+		var into := frame - _prism_start
+		if into == 108:
+			_prism_behind = _player().get("health")
+			_check("silverman: behind the fan the prism never reaches you (%s -> %s)"
+				% [_prism_health, _prism_behind], _prism_behind == _prism_health)
+			_player().global_position = _prism_spot(_prism_from + _prism_span * 0.9)
+		elif into == 147:
+			_check("silverman: inside its arc the beam lands its 16, once (%s -> %s)"
+				% [_prism_behind, _player().get("health")],
+				_prism_behind - int(_player().get("health")) == 16)
 
 	if _watch_drops:
 		var health: int = _player().get("health")
@@ -137,6 +173,20 @@ func _tick(frame: int) -> void:
 				% [_glare_layer(), _hud_layer()], _glare_layer() < _hud_layer())
 			_check("silverman: the band draws in the room and the wash on the frame (%s)"
 				% str(_glare_parts()), _glare_parts() == ["band", "screen"])
+			# The prism's three parts, and where each has to sit: the fan on the
+			# floor under him, the beam over everything standing in the room,
+			# the flash on his own layer under the HUD.
+			var children := _sv.get_children().map(func(n: Node) -> String: return n.name)
+			_check("silverman: the prism's fan draws under him and its beam over him (%s)"
+				% str(children),
+				children.find("PrismFloor") < children.find("AnimatedSprite2D")
+					and children.find("PrismAir") > children.find("AnimatedSprite2D")
+					and _sv.get_node("PrismAir").z_index > 0)
+			_check("silverman: and its flash goes on his layer, under the HUD",
+				_sv.get_node_or_null("Glare/PrismScreen") != null)
+			_check("silverman: the prism has its own row on the sheet (%d frames)"
+				% _sprite_of(_sv).sprite_frames.get_frame_count(&"prism_side"),
+				_sprite_of(_sv).sprite_frames.get_frame_count(&"prism_side") == 6)
 			# ---- THE HUG. Standing on him, due south, which is the one place
 			# every reach he owns used to miss: the band is a 20 px lane through
 			# his chest (so it misses on BOTH axes from here), the crossing only
@@ -252,6 +302,10 @@ func _tick(frame: int) -> void:
 			_check("silverman: so a hit at the start of a wind-up does not stagger him (phase %s)"
 				% _phase_after_interrupt, _phase_after_interrupt == 1)
 		760:
+			_check("silverman: his last phase opens with the prism (%s)" % str(_opened),
+				_prism_start > 0 and _tiers_seen.get("prism", 0) == 3)
+			_check("silverman: and the prism is a last-phase thing only (%s)"
+				% str(_tiers_seen), _opened.find("prism") > _opened.find("split"))
 			# THE COLD ROOM, isolated the honest way: his sight goes to zero, so
 			# he cannot glare, cannot cross and cannot even turn - and the aura
 			# bites anyway, which is the design. It is not on the cycle.
@@ -301,6 +355,14 @@ func _tick(frame: int) -> void:
 			_check("silverman: the ladder was climbed in order (%s)" % str(_opened),
 				_opened[0] == "glare" and _opened.has("split"))
 			_finish()
+
+
+## Where a body stands to be 60 px out from his chest along `angle` - outside
+## the cold room's 34 and Touch's 22, so the only thing that can reach it is
+## the beam. The player is measured at its own chest, 5 px up, as he is.
+func _prism_spot(angle: float) -> Vector2:
+	var chest := _sv.global_position + Vector2(0.0, -20.0)
+	return chest + Vector2.from_angle(angle) * 60.0 - Vector2(0.0, -5.0)
 
 
 func _sprite_of(enemy: Node2D) -> AnimatedSprite2D:

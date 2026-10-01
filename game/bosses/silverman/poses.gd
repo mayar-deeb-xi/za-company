@@ -79,11 +79,12 @@ const BODY := [
 
 ## Sheet order, one row per animation.
 ##
-## `glare` and `split` are his two attacks, and they are the rule above proving
-## itself: an attack row here is the same eighteen columns of ASCII as the idle,
-## at a different height and a different rung. Everything that makes either one
-## legible is drawn live beside him - glare.gd and copy.gd - which is why two
-## attacks cost two rows of nothing.
+## `glare`, `split` and `prism` are his three attacks on the cycle, and they
+## are the rule above proving itself: an attack row here is the same eighteen
+## columns of ASCII as the idle, at a different height and a different rung.
+## Everything that makes one legible is drawn live beside him - glare.gd,
+## copy.gd and prism.gd - which is why three attacks cost three rows of
+## nothing.
 ##
 ## `ghost` is the odd one out and is deliberate: it is a row the boss NEVER
 ## plays. It holds the dash pose painted one step down the ramp, and smear.gd
@@ -92,8 +93,13 @@ const BODY := [
 ## and lands between two rungs of the ramp; a boss whose whole look is six
 ## exact values does not get to approximate one of them. A picture the effect
 ## needs is a picture, so it lives on the sheet with the others.
+##
+## `prism` is LAST rather than beside the other attacks, and that is the one
+## rule for adding a row to a sheet that already exists: build_bosses.gd paints
+## only the rows a hand-owned PNG is too short to hold, so a new row goes on
+## the end or it lands on top of one somebody may have drawn into.
 const ORDER := ["idle", "walk", "dash", "ghost", "glare", "split", "concede",
-	"beaten"]
+	"beaten", "prism"]
 
 ## `dy` floats the whole body; negative is up, and it is the ONLY thing that
 ## varies between the frames of a row. `dull` is how many steps down the ramp
@@ -161,6 +167,22 @@ const ANIMS := {
 		{"dur": 0.20, "dy": -2, "impact": true},
 		{"dur": 0.20, "dy": -1},
 		{"dur": 0.20, "dy": -2},
+	],
+	# THE PRISM. The glare's own telegraph - he rises and dims, two rungs - taken
+	# a little slower, because what follows is the longest thing he does. Then
+	# the impact frame is HELD: he is at full shine for the whole 1.4 s the beam
+	# sweeps, since the beam is that shine leaving him, and a body that dulled
+	# back down mid-sweep would be a light switched off while it is still on.
+	#
+	# 1.00 wind-up, 1.90 recover. The sweep is the first 1.4 s of the recover
+	# (silverman.gd's PRISM_SWEEP), the last two frames are him settling.
+	"prism": [
+		{"dur": 0.30, "dy": -2, "dull": 1},
+		{"dur": 0.35, "dy": -3, "dull": 2},
+		{"dur": 0.35, "dy": -3, "dull": 2},
+		{"dur": 1.40, "dy": -4, "impact": true},
+		{"dur": 0.25, "dy": -3},
+		{"dur": 0.25, "dy": -2},
 	],
 	# Defeat, and for a man of metal it is the obvious one: he loses flight.
 	# He settles the two pixels onto the floor he has never touched and the

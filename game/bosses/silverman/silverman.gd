@@ -20,8 +20,9 @@ extends "res://game/bosses/boss_base.gd"
 ##   interrupts. The fair phase.
 ## - **The Meeting** (128 -> 64): the split arrives. One interrupt, then a long
 ##   lockout - you get one.
-## - **The Performance Review** (64 -> 0): the room goes cold, and standing
-##   near him costs health on its own. Fully uninterruptible.
+## - **The Performance Review** (64 -> 0): the room goes cold, standing near
+##   him costs health on its own, and the prism arrives. Fully
+##   uninterruptible.
 ##
 ## A phase is announced by `herald`, which is his version of adjusting his
 ## cuffs: he has no cuffs, so what he does instead is spend a rung of his own
@@ -29,7 +30,7 @@ extends "res://game/bosses/boss_base.gd"
 ## also clears both cooldowns, so an escalation ARRIVES rather than being
 ## something you notice a few seconds later.
 ##
-## ## The four things he does
+## ## The five things he does
 ##
 ## - **the crossing** (`DASH`) - locomotion that now hurts. He passes THROUGH
 ##   you, once per crossing, and it is the only thing he has that is not on the
@@ -39,6 +40,10 @@ extends "res://game/bosses/boss_base.gd"
 ##   outrun it.
 ## - **the split** - he divides, and the copy walks at you while he stands
 ##   still. See copy.gd; it is drawn from a sheet row he never plays.
+## - **the prism** - he draws the city's light in off the window behind him and
+##   sweeps it across the room as a white beam, 140 degrees of it. A fan on the
+##   floor shows the whole arc for the full second before it fires, and the
+##   side it does not cover is the answer. See prism.gd.
 ## - **the cold room** - an aura, not an attack. No telegraph, nothing to
 ##   interrupt, and it sits OUTSIDE the grace window because a drain is not a
 ##   blow.
@@ -54,7 +59,7 @@ const Copy := preload("res://game/bosses/silverman/copy.gd")
 ## MEDIUM numbers. The base scales an attack's damage when it is chosen; the
 ## crossing and the cold room are not on the cycle, so they scale their own
 ## (see `_ready`).
-const DAMAGE := {"glare": 16, "split": 12}
+const DAMAGE := {"glare": 16, "split": 12, "prism": 16}
 const DASH_DAMAGE := 18
 
 ## How much of a wind-up can still be interrupted, by phase, and how long an
@@ -130,6 +135,34 @@ const GLARE_SLACK := 6.0
 ## so he glares instead. The split is the mid-range answer.
 @export var split_min_distance := 34.0
 
+## THE PRISM, picked off the attack preview and shipped as previewed. The beam
+## opens PRISM_LEAD behind the player on the side it sweeps from - so it comes
+## ONTO you rather than opening on top of you - and turns PRISM_SPREAD in
+## PRISM_SWEEP seconds, alternating direction every cast.
+##
+## At 100 degrees a second it crosses a body 50 px out at about the player's
+## own walking speed, so running ahead of it at range fails and the answer is
+## the other side of him: the 220 degrees the fan never covers.
+const PRISM_SPREAD := deg_to_rad(140.0)
+const PRISM_LEAD := 0.35
+const PRISM_SWEEP := 1.4
+## Where the light leaves him, and how far a beam reaches if the room does not
+## stop it first. It starts a few pixels off his chest so it never draws across
+## his own body.
+const PRISM_CHEST := Vector2(0.0, -20.0)
+const PRISM_FROM := 6.0
+const PRISM_REACH := 190.0
+## Half the beam's width as a hitbox - the five white lanes in the middle of
+## the nine prism.gd draws. A body is measured at its chest, 5 px up.
+const PRISM_HALF := 4.0
+const PRISM_BODY := Vector2(0.0, -5.0)
+## How finely the arc is measured against the walls when a cast begins. The
+## beam's length at any angle is read off these, so the fan, the beam and the
+## hitbox all stop at one wall rather than three.
+const PRISM_SAMPLES := 48
+
+@export var prism_cooldown := 6.0
+
 ## The cold room, third phase only. A drain, so it knows its own rate and is
 ## metered by nothing: the grace window neither blocks it nor is opened by it.
 @export var chill_radius := 34.0
@@ -137,8 +170,13 @@ const GLARE_SLACK := 6.0
 
 ## World pixels of camera throw. The glare is the big one because it is the
 ## whole room; a phase arriving is worth more than either.
-const SHAKE := {"glare": 5.0, "dash": 3.4}
+const SHAKE := {"glare": 5.0, "dash": 3.4, "prism": 3.0}
 const SHAKE_SECONDS := 0.14
+## The prism's, as previewed: a 3 px kick as it fires, then a 1 px hum under
+## the rest of the sweep once the kick has decayed below it.
+const PRISM_SHAKE_SECONDS := 0.18
+const PRISM_HUM := 1.0
+const PRISM_HUM_SECONDS := 0.05
 const HERALD_SECONDS := 0.9
 const HERALD_SHAKE := 6.0
 
@@ -162,6 +200,12 @@ var dash_moving := false
 ## Seconds left of a phase announcement, counting down. Public for the same
 ## reason: glare.gd draws it and is told nothing.
 var herald := 0.0
+## The current prism's arc: where it starts and how far it turns (signed). Set
+## as the cast begins and read by prism.gd, which is told nothing else.
+var prism_from := 0.0
+var prism_span := 0.0
+## Bumped once per cast, so prism.gd can tell a new one from the last.
+var prism_casts := 0
 
 var _dash_time := 0.0
 var _dash_from := Vector2.ZERO
@@ -176,6 +220,9 @@ var _dash_damage := DASH_DAMAGE
 var _glare_timer := 0.0
 var _glare_hit := {}
 var _split_timer := 0.0
+var _prism_timer := 0.0
+var _prism_dir := 1.0
+var _prism_lengths := PackedFloat32Array()
 var _chill_rate := 0.0
 var _owed := 0.0
 var _tier := 1
@@ -225,6 +272,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_glare_timer = maxf(_glare_timer - delta, 0.0)
 	_split_timer = maxf(_split_timer - delta, 0.0)
+	_prism_timer = maxf(_prism_timer - delta, 0.0)
 	herald = maxf(herald - delta, 0.0)
 	if dashing:
 		_dash_step(delta)
@@ -235,6 +283,8 @@ func _physics_process(delta: float) -> void:
 	# hits whoever it has reached and not yet blinded.
 	if attack == "glare" and phase == Phase.RECOVER:
 		_glare_reach(glare_front(_phase_time))
+	if attack == "prism" and phase == Phase.RECOVER and _phase_time < PRISM_SWEEP:
+		_prism_reach(_phase_time)
 	_chill(delta)
 	_dash_cool = maxf(_dash_cool - delta, 0.0)
 	_consider_dash()
@@ -256,13 +306,17 @@ func _attack_spec(id: String) -> Dictionary:
 func _begin_attack(id: String) -> void:
 	commit_fraction = COMMIT[tier()]
 	interrupt_cooldown = LOCKOUT[tier()]
+	if id == "prism":
+		_aim_prism()
 	super(id)
 
 
-## The split while it is available and there is ground for the copy to cover,
-## the glare otherwise. "" holds him where he is, which is a perfectly good
+## The prism the moment his last phase allows it, then the split while it is
+## available and there is ground for the copy to cover, the glare otherwise. "" holds him where he is, which is a perfectly good
 ## thing for this boss to be doing.
 func _pick_attack() -> String:
+	if tier() >= 3 and _prism_timer <= 0.0:
+		return "prism"
 	if tier() >= 2 and _split_timer <= 0.0 and _distance_to_player() >= split_min_distance:
 		return "split"
 	if _glare_timer <= 0.0:
@@ -299,6 +353,11 @@ func _strike() -> void:
 		"split":
 			_split_timer = split_cooldown
 			_cast_copy()
+		"prism":
+			# The light leaving him. The flash is prism.gd's, off the same
+			# frame; the beam itself is _prism_reach, every frame of the sweep.
+			_prism_timer = prism_cooldown
+			shook.emit(SHAKE["prism"], PRISM_SHAKE_SECONDS)
 
 
 ## The glare bursts off HIM before it sets out, and anyone inside his own reach
@@ -363,6 +422,94 @@ func _cast_copy() -> void:
 	get_parent().add_child(copy)
 	copy.global_position = global_position
 	copy.cast(self, contact_damage, -1.0 if _facing_left else 1.0)
+
+
+# --- the prism ---------------------------------------------------------------
+
+
+## The arc for this cast, fixed the moment it begins: the fan has to show
+## exactly what will sweep, so nothing about it may move once it is drawn.
+func _aim_prism() -> void:
+	var dir := _prism_dir
+	_prism_dir = -dir
+	var to_player := Vector2.LEFT if _facing_left else Vector2.RIGHT
+	var player := get_tree().get_first_node_in_group("player") as Node2D
+	if player != null:
+		to_player = (player.global_position + PRISM_BODY) - prism_chest()
+	prism_from = to_player.angle() - dir * PRISM_LEAD
+	prism_span = dir * PRISM_SPREAD
+	_prism_lengths.resize(PRISM_SAMPLES)
+	for i in PRISM_SAMPLES:
+		var a := prism_from + prism_span * float(i) / float(PRISM_SAMPLES - 1)
+		_prism_lengths[i] = _wall_distance(prism_chest(), Vector2.from_angle(a), PRISM_REACH)
+	prism_casts += 1
+
+
+## Where the light comes out of him, in the world.
+func prism_chest() -> Vector2:
+	return global_position + PRISM_CHEST
+
+
+## The beam's angle `since` seconds into the recover. The sweep is linear and
+## holds at the end of its arc once the 1.4 s are up.
+func prism_angle(since: float) -> float:
+	return prism_from + prism_span * clampf(since / PRISM_SWEEP, 0.0, 1.0)
+
+
+## How far the beam reaches at `angle` before a wall stops it, read off the
+## arc measured when the cast began. prism.gd draws with this and
+## `_prism_reach` hurts with it, so the light you see is the light that hits.
+func prism_length(angle: float) -> float:
+	if _prism_lengths.size() < 2 or is_zero_approx(prism_span):
+		return PRISM_REACH
+	var f := clampf((angle - prism_from) / prism_span, 0.0, 1.0) * float(PRISM_SAMPLES - 1)
+	var i := mini(int(f), PRISM_SAMPLES - 2)
+	return lerpf(_prism_lengths[i], _prism_lengths[i + 1], f - float(i))
+
+
+## The beam as a segment in the world, from just off his chest to the wall.
+func prism_beam(angle: float) -> PackedVector2Array:
+	var dir := Vector2.from_angle(angle)
+	return PackedVector2Array([prism_chest() + dir * PRISM_FROM,
+		prism_chest() + dir * prism_length(angle)])
+
+
+## One frame of the sweep. A blow like any other, so the grace window is what
+## meters it, as in the preview: the beam crosses a body in about a tenth of a
+## second, which is one hit, and a player who runs WITH it at close range pays
+## again once the window has closed.
+func _prism_reach(since: float) -> void:
+	var beam := prism_beam(prism_angle(since))
+	for body in get_tree().get_nodes_in_group("player"):
+		var node := body as Node2D
+		if node == null or not node.has_method("take_damage"):
+			continue
+		var at := node.global_position + PRISM_BODY
+		var on := Geometry2D.get_closest_point_to_segment(at, beam[0], beam[1])
+		if at.distance_to(on) < PRISM_HALF:
+			node.call("take_damage", contact_damage)
+	# The hum, once the kick has decayed under it - game.gd keeps one shake at
+	# a time, so asking for 1 px any earlier would cut the 3 px short.
+	if since > PRISM_SHAKE_SECONDS * (1.0 - PRISM_HUM / SHAKE["prism"]):
+		shook.emit(PRISM_HUM, PRISM_HUM_SECONDS)
+
+
+## How far a ray from `from` gets before it meets the ROOM. Furniture and
+## bodies share the walls' collision layer, and the light goes over a desk the
+## way the glare's band does, so anything that is not the walls' tilemap is
+## excluded and the ray cast again.
+func _wall_distance(from: Vector2, dir: Vector2, reach: float) -> float:
+	var space := get_world_2d().direct_space_state
+	var exclude: Array[RID] = [get_rid()]
+	for _try in 12:
+		var query := PhysicsRayQueryParameters2D.create(from, from + dir * reach, 1, exclude)
+		var hit := space.intersect_ray(query)
+		if hit.is_empty():
+			return reach
+		if hit["collider"] is TileMapLayer:
+			return from.distance_to(hit["position"])
+		exclude.append(hit["rid"])
+	return reach
 
 
 # --- the cold room -----------------------------------------------------------
@@ -510,6 +657,7 @@ func take_damage(amount: int) -> void:
 	herald = HERALD_SECONDS
 	_glare_timer = 0.0
 	_split_timer = 0.0
+	_prism_timer = 0.0
 	shook.emit(HERALD_SHAKE, SHAKE_SECONDS)
 	# And the line, on the cue named after the phase that arrived. A boss with
 	# nothing to say here has no `Lines` child and this does nothing, which is

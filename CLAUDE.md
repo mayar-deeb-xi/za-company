@@ -181,8 +181,10 @@ hub's machines take your POSITION rather than your health, and the push is
 carried, decays on its own, and refreshes rather than stacking. It is
 deliberately never added to `velocity`, which is carried between frames and
 would compound it into a launch. Everything reaches
-the player by the `player` group + `has_method`, never by type. Full rationale,
-the HUD, the combo and the heavy: game/player/CLAUDE.md.
+the player by the `player` group + `has_method`, never by type. A blow that
+lands also throws its amount up off the head (`game/player/damage_number.gd`,
+red, gone in 0.8 s); a drain never does, for the reason a drain is silent.
+Full rationale, the HUD, the combo and the heavy: game/player/CLAUDE.md.
 
 **The heavy is a HOLD and nothing else.** `CHARGE_SECONDS` (0.75) counts from
 the PRESS, so the opening swing is inside the charge rather than a tax before
@@ -346,7 +348,8 @@ below.
 Bosses draw their own effects live from their poses rather than baking them
 into a sheet - Ahmed's fire, Mostafa's **Bell** (his punches) and **Rage** (he
 catches fire at half health, once, and never comes back down), Silverman's
-**Smear**, **Glare**, **Chill** and the **copy** his split casts. Four things
+**Smear**, **Glare**, **Prism** (a white beam swept 140 degrees off his chest
+in his last phase), **Chill** and the **copy** his split casts. Four things
 generalize out of them:
 
 - A boss effect that goes full-screen draws at TWO scales and confusing them is

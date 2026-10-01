@@ -119,6 +119,7 @@ const Roster := preload("res://game/player/characters/roster.gd")
 const PlayerAudio := preload("res://game/player/player_audio.gd")
 const Arc := preload("res://game/player/arc.gd")
 const ChargeRing := preload("res://game/player/charge_ring.gd")
+const DamageNumber := preload("res://game/player/damage_number.gd")
 
 ## Attack animation -> the cue it opens with. The two lights are named for the
 ## MOVEMENT rather than for the animation because that is what they are: air,
@@ -642,6 +643,10 @@ func take_damage(amount: int) -> void:
 		return
 	_grace = _grace_window
 	_lose_health(amount)
+	# The number off the head. Past the grace check on purpose: a blow the
+	# window swallowed cost nothing, and a number for it would say otherwise.
+	# Never from drain() - see damage_number.gd.
+	DamageNumber.spawn(self, amount)
 	# Metered for free by the window above, so a crowd cannot stack gasps. Only
 	# on a blow that was SURVIVED: `_lose_health` plays `die` at zero, and a
 	# gasp laid over the death breath in one frame is one muddy sound rather

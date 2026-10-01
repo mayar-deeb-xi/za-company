@@ -102,6 +102,15 @@ the sheet carries the attack's own timing; `character_art.slice()` grew a
 cell-size argument and `durations` for exactly this, defaulting to the 32 px
 CC0 behaviour everything else relies on.
 
+**A row added after the seed goes on the END**, and the builder paints only
+that. `build_bosses.gd` asks the painter for the whole sheet every run and, if
+the painted sheet is taller than the PNG on disk, blits ONLY the missing rows
+onto the bottom - every row already there is left exactly as it is, drawn into
+or not. That is the cast's `arc_pose.gd` rule arriving here, and it is what
+let Silverman gain `prism` without a redraw or a re-seed. The one rule it puts
+on `ORDER` is that a new animation is appended, never inserted: anywhere else
+it would land on a row somebody may have drawn into.
+
 If you hand-draw a frame, keep the body where the painter put it: the fire is
 drawn from the poses, not from the pixels, so a hand-moved axe leaves its
 flame behind.
@@ -724,10 +733,11 @@ character: **his body never changes shape.**
   that stretches while it travels reads as a cartoon, and this one is the
   final boss.
 - **He does not walk, and he has no melee.** `walk_side` is the hover taken
-  faster, because gliding is all the travel he has. He owns four things and not
+  faster, because gliding is all the travel he has. He owns five things and not
   one of them is thrown with a hand: he crosses through you, blinds you,
-  divides, and freezes the air near him. A player standing on him is answered
-  by the glare, whose band starts inside its own reach.
+  divides, sweeps the room with light, and freezes the air near him. A player
+  standing on him is answered by the glare, whose band starts inside its own
+  reach.
 - **His telegraph is DRAWN, and it can only ever dim him.** His idle already
   rests at `dull 0`, the brightest rung he has, so there is nowhere to go but
   darker on the way to a blow: an attack row takes two rungs out of him and
@@ -819,7 +829,7 @@ literal 128 and 64, so retuning his HP in the scene moves the phases with it:
 |---|---|---|---|
 | The Handshake | 192-128 | the crossing, the glare | standard (`commit` 0.65) |
 | The Meeting | 128-64 | the split | one, then 3 s (`commit` 0.40) |
-| The Performance Review | 64-0 | the cold room | none (`commit` 0.0) |
+| The Performance Review | 64-0 | the prism, the cold room | none (`commit` 0.0) |
 
 `COMMIT` and `LOCKOUT` are set per phase as each attack begins, because the base
 has one dial for each and that is the only place they can narrow over a fight -
@@ -831,11 +841,11 @@ anywhere to make it so.
 
 A phase is announced by `herald`, a countdown glare.gd draws as two pulses of
 the room. He has no cuffs to adjust, so what he spends on the announcement is a
-rung of his own shine. Crossing a threshold also clears both attack cooldowns,
+rung of his own shine. Crossing a threshold also clears every attack cooldown,
 so an escalation ARRIVES rather than being something you notice a few seconds
-later.
+later - which is why the prism is the first thing he does in his last phase.
 
-**The four attacks, and what each is made of:**
+**The five attacks, and what each is made of:**
 
 - **the glare** (16, 0.80/0.70) - the room whites out and a 20 px lane of it
   crosses the floor, travelling through his recover on Ahmed's wave contract.
@@ -852,6 +862,35 @@ later.
   health, no bar, no collision, gone in 1.8 s. A boss floor's real adds arrive
   on `at_boss_health`, and two systems that put fighters in a room is one too
   many, so this one puts a THREAT in the room instead.
+- **the prism** (16, 1.00/1.90, third phase only, 6 s cooldown) - he draws the
+  city's light in off the window and sweeps it across the room as a white
+  beam: 140 degrees in 1.4 s, opening 0.35 rad behind the player on the side
+  it comes from, alternating direction every cast. Picked from a four-way
+  preview and shipped as previewed, with one change asked for: the preview's
+  beam split into a rainbow, and the shipped one is white, his own ramp. Three
+  things about it are load-bearing:
+  - **The fan is the fairness.** For the full second of the wind-up a dithered
+    fan on the floor shows exactly the arc that will sweep, so the arc is FIXED
+    the moment the cast begins (`_aim_prism`) and nothing about it may move.
+    At 100 degrees a second the beam crosses a body 50 px out at about walking
+    speed, so outrunning it at range fails; the answer is the 220 degrees the
+    fan never covers.
+  - **One length function, three consumers.** The arc is raycast against the
+    walls once per cast (48 samples) and `prism_length()` reads it, so the
+    fan, the beam and the hitbox stop at one wall. Furniture and bodies share
+    the walls' collision layer, so the ray skips anything that is not the
+    walls' TileMapLayer: the light goes over a desk the way the band does, and
+    the fan draws over one for the same reason.
+  - **It is a blow every frame it touches you**, metered by the grace window
+    as in the preview - which is one hit for a beam that crosses a body in a
+    tenth of a second, and a second hit for a player who runs WITH it.
+  `prism.gd` is three parts split by space like the glare: `floor` (the fan,
+  under him at z 0, because a negative z draws under the Floor tilemap),
+  `air` (threads off the window, the chest point, the beam with its
+  afterimage and wall sparks, at z 1 over everything standing in the room) and
+  `screen` (one white flash, on his layer 1 under the HUD). Its row is the
+  glare's dim-and-rise with the impact frame HELD for the sweep, because the
+  beam is his shine leaving him.
 - **the cold room** (3.0/s inside r 34, third phase only) - an aura, not an
   attack, on the wraith's `drain()` path: it knows its own rate, and the grace
   window neither blocks it nor is opened by it. `chill.gd` draws the EDGE

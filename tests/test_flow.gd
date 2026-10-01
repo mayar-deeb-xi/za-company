@@ -212,6 +212,12 @@ func _tick(frame: int) -> void:
 				% [_fill().size.x, _percent().text],
 				_fill().size.x < 66.0
 					and _percent().text == "%d%%" % int(_player().get("health")))
+			_check("blow: the amount flies up off the player (%s)" % str(_damage_numbers()),
+				_damage_numbers() == ["-18"])
+			# A drain is not a blow: sixty "-1"s a second would be noise on the
+			# head, so it shows nothing. Dealt BEFORE the mark is taken, so the
+			# heart below is still measured against what it actually healed.
+			_player().call("drain", 1)
 			_health_mark = _player().get("health")
 			_player().global_position = Vector2(424, 152)
 		176:
@@ -221,6 +227,8 @@ func _tick(frame: int) -> void:
 			_check("heart: consumed on pickup",
 				_level().get_node_or_null("Props/Health") == null)
 		206:
+			_check("blow: and the number is gone, a drain added none (%s)"
+				% str(_damage_numbers()), _damage_numbers().is_empty())
 			# Waited out that blow's grace window, so this lethal hit lands.
 			_player().call("take_damage", 9999)
 		256:
@@ -1046,3 +1054,14 @@ func _cast() -> Array:
 			return n.scene_file_path.get_file().get_basename())
 	cast.sort()
 	return cast
+
+
+## What every damage number over the player currently says, oldest first.
+## Found by script: a number is in no group and nothing looks one up.
+func _damage_numbers() -> Array:
+	var said := []
+	var script := load("res://game/player/damage_number.gd")
+	for child in _player().get_children():
+		if child.get_script() == script and not child.is_queued_for_deletion():
+			said.append(child.get("text"))
+	return said

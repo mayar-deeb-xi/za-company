@@ -103,6 +103,24 @@ Three things about it are load-bearing:
   cutscene rather than a stumble. `MAX_SHOVE` and `SHOVE_SECONDS` together are
   the whole feel: half a second off a 70 ceiling is about 17 px, which is a tile.
 
+**A blow that lands shows its amount.** `take_damage()` spawns
+`game/player/damage_number.gd` past the grace check: "-18" in a 3x5 pixel font
+with a dark outline, red, rising 14 px a second from 30 px over the origin,
+solid for half a second and gone at 0.8. It was lifted verbatim off the
+Silverman attack preview, where it was drawn to make the hit checks readable.
+Three things about it are decisions:
+
+- **After the grace check, not before.** A blow the window swallowed cost
+  nothing, and a number for it would say otherwise.
+- **Never from `drain()`**, on the same reasoning that keeps a drain silent:
+  it lands a point at a time every physics frame, so a number per tick is
+  sixty "-1"s a second on the player's head.
+- **`top_level`, parented to the player.** It stays where the blow landed while
+  the player walks out from under it, and it goes wherever the player's world
+  goes - a door swaps the level, never the player. `z_index` 50 keeps a prop
+  from hiding it. test_flow.gd's blow section checks all three halves: the
+  number, its absence for a drain, and that it is gone before the next blow.
+
 The player also owns its lives (`MAX_LIVES`, 3): each death spends one via
 `lose_life()`, whose return value lets game.gd choose respawn or game over from
 one call instead of racing a second signal. With lives left, death fades back
