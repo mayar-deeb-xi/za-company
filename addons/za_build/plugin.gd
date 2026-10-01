@@ -19,6 +19,7 @@ extends EditorPlugin
 
 const Biomes := preload("res://tools/biomes.gd")
 const LevelPicker := preload("res://addons/za_build/level_picker.gd")
+const LevelSelect := preload("res://ui/level_select/level_select.gd")
 
 const MENU := "za-build"
 
@@ -46,6 +47,8 @@ func _enter_tree() -> void:
 	for entry: Array in PLAIN:
 		var path: String = entry[1]
 		_add(entry[0], func() -> void: run(path, PackedStringArray()))
+	_menu.add_separator()
+	_add_switch("Level select screen (dev)", LevelSelect.SETTING)
 	_menu.id_pressed.connect(func(id: int) -> void: _actions[id].call())
 	add_tool_submenu_item(MENU, _menu)
 
@@ -60,6 +63,30 @@ func _add(label: String, action: Callable) -> void:
 	var id: int = _actions.size()
 	_menu.add_item(label, id)
 	_actions[id] = action
+
+
+## A checkable item over one boolean in project.godot. Off is the setting's
+## initial value, so switching it off removes the line from the file rather
+## than leaving `= false` behind; it is also listed in Project Settings
+## (Advanced) for anyone who goes looking there instead. The tick is re-read
+## each time the menu opens, because that page can change it behind our back.
+func _add_switch(label: String, setting: String) -> void:
+	if not ProjectSettings.has_setting(setting):
+		ProjectSettings.set_setting(setting, false)
+	ProjectSettings.set_initial_value(setting, false)
+	ProjectSettings.add_property_info({"name": setting, "type": TYPE_BOOL})
+	var id: int = _actions.size()
+	_menu.add_check_item(label, id)
+	var tick := func() -> void:
+		_menu.set_item_checked(_menu.get_item_index(id),
+			bool(ProjectSettings.get_setting(setting, false)))
+	tick.call()
+	_menu.about_to_popup.connect(tick)
+	_actions[id] = func() -> void:
+		ProjectSettings.set_setting(setting,
+			not bool(ProjectSettings.get_setting(setting, false)))
+		ProjectSettings.save()
+		tick.call()
 
 
 ## The picker is built fresh each time rather than kept around, so it always

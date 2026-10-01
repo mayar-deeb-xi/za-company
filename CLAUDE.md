@@ -1225,13 +1225,21 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   saving that tab is the failure it is warning about. "Rebuild levels..."
   opens a picker over `CHAIN` with **include neighbours** on by default,
   because a door's `target_level` is baked into the level scene.
+- **Level select screen (dev)**, the last item on that menu, is a switch
+  rather than a command: while it is ticked, picking a character opens
+  `ui/level_select/` - every floor, found by walking the door targets from
+  `START_LEVEL` - and the run starts on the one picked, once
+  (`game.gd`'s `next_start`, spent on use). It is `za/dev/level_select` in
+  project.godot, off by default (switching it off removes the line), never
+  shown by a release export, and held off by `tests/helpers.gd` so a developer
+  who left it on does not land every suite on a floor picker.
 - All third-party assets are CC0; sources and licenses live in CREDITS.md -
   update it whenever an asset is added.
 
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Twenty-four suites,
+  They drive the real game with synthesized input and exit 0/1. Twenty-five suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1457,6 +1465,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     then runs unchanged (same patience, no further than 2x sight from the post,
     back onto its mark), that a second trip out in the same visit is nothing
     and a new visit gets its own.
+  - `test_level_select.gd` - the development floor picker: that switched off
+    the character select still goes straight to the game, that the door walk
+    finds the whole CHAIN in order with each floor's own title, that the screen
+    fits 640x360, backs out by Escape, starts the run on the floor picked and
+    then forgets it. It is the one suite that switches the dev setting ON,
+    in memory only.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

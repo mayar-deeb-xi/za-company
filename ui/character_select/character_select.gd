@@ -2,10 +2,14 @@ extends Control
 ## Pick who to play. Sits between the main menu's Play button and the game:
 ## one focusable portrait per roster character, left/right to browse, Enter or
 ## a click to choose. The choice is saved through Settings so the next visit
-## starts on the same character, then the game scene loads.
+## starts on the same character, then the game scene loads - or, while the
+## development switch is on, the level select (ui/level_select/) does.
 
 const GAME_SCENE := "res://game/game.tscn"
 const MENU_SCENE := "res://ui/main_menu/main_menu.tscn"
+## The development floor picker, which comes next only while it is switched on.
+const LevelSelect := preload("res://ui/level_select/level_select.gd")
+const LEVEL_SELECT_SCENE := "res://ui/level_select/level_select.tscn"
 
 ## Preloaded by path rather than via `class_name`, like the rest of the project.
 const Roster := preload("res://game/player/characters/roster.gd")
@@ -105,7 +109,8 @@ func _make_portrait(entry: Dictionary) -> Button:
 
 func _choose(id: String) -> void:
 	Settings.set_value(&"player", &"character", id)
-	get_tree().change_scene_to_file(GAME_SCENE)
+	get_tree().change_scene_to_file(
+		LEVEL_SELECT_SCENE if LevelSelect.enabled() else GAME_SCENE)
 
 
 func _on_portrait_focused(button: Button) -> void:

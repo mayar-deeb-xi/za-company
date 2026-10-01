@@ -47,6 +47,12 @@ func _tick(_frame: int) -> void:
 
 func _initialize() -> void:
 	_snapshot_settings()
+	# The development level select, held off for every suite whatever the
+	# developer has switched on in project.godot - otherwise picking a character
+	# would land a suite on a floor picker it never asked for. In memory only:
+	# nothing here calls ProjectSettings.save(). test_level_select.gd switches
+	# it back on for itself.
+	ProjectSettings.set_setting("za/dev/level_select", false)
 	var menu := (load("res://ui/main_menu/main_menu.tscn") as PackedScene).instantiate()
 	root.add_child(menu)
 	current_scene = menu

@@ -10,6 +10,10 @@ extends Node2D
 ## leaving the scene. Leaving for the main menu is one of its options.
 
 const START_LEVEL := "res://game/levels/lobby/lobby.tscn"
+## Where the NEXT run starts instead, when the development level select
+## (ui/level_select/) has just named a floor. Spent on use, so the run after it
+## starts in the lobby again unless the screen is passed through a second time.
+static var next_start := ""
 const FADE_SECONDS := 0.28
 ## How far from where they came in the player may stand before the room knows
 ## they are there - see _alert_room(). Three tiles, measured from the spot the
@@ -81,7 +85,9 @@ func _ready() -> void:
 	# The front end's track ends here rather than at the character select, so
 	# it carries over the load and goes out under the first room's fade-in.
 	Music.fade_out()
-	_enter_level(START_LEVEL, &"start")
+	var first := next_start if not next_start.is_empty() else START_LEVEL
+	next_start = ""
+	_enter_level(first, &"start")
 
 
 func _process(delta: float) -> void:
