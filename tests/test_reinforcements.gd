@@ -176,16 +176,16 @@ func _tick(frame: int) -> void:
 			_boss_beats = Node2D.new()
 			_boss_beats.name = "BossBeats"
 			_boss_beats.set_script(REINFORCEMENTS)
-			# Ahmed's own floor, verbatim: quarters of his 96, drain then the
-			# slow then drain.
+			# Ahmed's own floor, verbatim: quarters of whatever he opens at,
+			# drain then the slow then drain.
 			_boss_beats.set("waves", [
-				{"at_boss_health": 72, "from": "start",
+				{"at_boss_fraction": 0.75, "from": "start",
 					"enemies": ["social_media", "office_boy"],
 					"per_head": ["social_media"]},
-				{"at_boss_health": 48, "from": "start",
+				{"at_boss_fraction": 0.5, "from": "start",
 					"enemies": ["call_center"],
 					"per_head": ["office_boy"]},
-				{"at_boss_health": 24, "from": "start",
+				{"at_boss_fraction": 0.25, "from": "start",
 					"enemies": ["social_media", "social_media"],
 					"per_head": ["social_media"]},
 			])
@@ -194,9 +194,14 @@ func _tick(frame: int) -> void:
 			_check("boss cue: a boss at full health owes nothing (%d)"
 				% _arrivals().size(), _arrivals().is_empty())
 			_check("boss cue: and he does not count as a kill against it (%s)"
-				% _ahmed.get("health"), _ahmed.get("health") == 96)
+				% _ahmed.get("health"), _ahmed.get("health") == _ahmed.get("max_health"))
+			# The second head is still standing in the room, and it bought him
+			# exactly his `health_per_head` - two more heavies, added rather than
+			# multiplied, so he still dies on a whole combo.
+			_check("boss cue: the second head added his per-head health (%s of 144 + 48)"
+				% _ahmed.get("max_health"), _ahmed.get("max_health") == 192)
 		248:
-			_ahmed.call("take_damage", 24)   # 96 -> 72, the first quarter
+			_ahmed.call("take_damage", 48)   # 192 -> 144, the first quarter
 		360:
 			# Base group (drain + boy) plus one per_head drain for the second
 			# head: three bodies, two of them drains.
@@ -205,7 +210,7 @@ func _tick(frame: int) -> void:
 			_check("boss cue: two drains and a boy, at 17/17/24 (%s)"
 				% [_hp_of_arrivals()], _hp_of_arrivals() == [17, 17, 24])
 		362:
-			_ahmed.call("take_damage", 24)   # 72 -> 48, the halfway slow
+			_ahmed.call("take_damage", 48)   # 144 -> 96, the halfway slow
 		460:
 			# THE REASON per_head EXISTS. Two heads on a threshold whose base
 			# group is one `call_center` must produce exactly ONE of him - two
@@ -286,7 +291,7 @@ func _baked() -> void:
 		var beats := arena.get_node_or_null("Reinforcements")
 		var waves: Array = [] if beats == null else beats.get("waves")
 		var cued: Array = waves.filter(func(w: Dictionary) -> bool:
-			return w.has("at_boss_health") and not w.has("after_kills"))
+			return w.has("at_boss_fraction") and not w.has("after_kills"))
 		_check("reinforcements: %s carries three health-cued beats (%d of %d)"
 			% [floor_name, cued.size(), waves.size()],
 			waves.size() == 3 and cued.size() == 3)

@@ -20,7 +20,8 @@ size = Vector2(8, 20)
 [node name="Silverman" type="CharacterBody2D" groups=["bosses", "enemies"]]
 motion_mode = 1
 script = ExtResource("1_silverman")
-max_health = 192
+max_health = 288
+health_per_head = 96
 contact_damage = 0
 speed = 38.0
 sight_radius = 130.0

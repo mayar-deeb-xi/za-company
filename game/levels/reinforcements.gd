@@ -75,8 +75,9 @@ const Heads := preload("res://game/heads.gd")
 ## in by build_levels.gd. One dictionary per beat, in the order they fire:
 ##
 ##   after_kills     how many of this room's dead it waits for
-##   at_boss_health  INSTEAD of after_kills, on a boss floor: the health he has
-##                   to be down to. See `_due()`
+##   at_boss_fraction  INSTEAD of after_kills, on a boss floor: the share of
+##                   his max health he has to be down to (0.5 = half). See
+##                   `_due()`
 ##   from            the spawn marker they walk in through ("start" = south
 ##                   door); a floor can name markers of its own under `spawns`
 ##   enemies         the base group, in release order - no positions, see above
@@ -218,13 +219,19 @@ func _crowded(at: Vector2) -> bool:
 ## The concede guard is load-bearing: he concedes AT zero, which satisfies every
 ## threshold at once, so without it the last beat of a fight lands on the frame
 ## the fight ends.
+##
+## A FRACTION rather than a health number because his health is no longer one
+## number: it grows by `health_per_head` with every player beyond the first, and
+## an absolute "72" written for a solo Ahmed would fire on a party's at the
+## start of the fight instead of at its first quarter.
 func _due(wave: Dictionary) -> bool:
-	if not wave.has("at_boss_health"):
+	if not wave.has("at_boss_fraction"):
 		return _killed() >= int(wave.get("after_kills", 0))
 	var boss := get_parent().get_node_or_null("Props/Boss")
 	if boss == null or boss.get("has_conceded") == true:
 		return false
-	return int(boss.get("health")) <= int(wave["at_boss_health"])
+	return float(boss.get("health")) \
+			<= float(wave["at_boss_fraction"]) * float(boss.get("max_health"))
 
 
 ## Everything this room has buried. The count includes what this node has

@@ -73,7 +73,7 @@ func _tick(frame: int) -> void:
 			root.add_child(hard_guard)
 			_check("mode: HARD guards hit half again as hard, same health (%s dmg, %s hp)"
 				% [hard_guard.get("contact_damage"), hard_guard.get("max_health")],
-				hard_guard.get("contact_damage") == 15
+				hard_guard.get("contact_damage") == 23
 					and hard_guard.get("max_health") == 24)
 			hard_guard.free()
 			mode.pressed.emit()
@@ -82,7 +82,7 @@ func _tick(frame: int) -> void:
 			root.add_child(easy_guard)
 			_check("mode: EASY guards hit softer, same health (%s dmg)"
 				% easy_guard.get("contact_damage"),
-				mode.text == "MODE: EASY" and easy_guard.get("contact_damage") == 6)
+				mode.text == "MODE: EASY" and easy_guard.get("contact_damage") == 9)
 			easy_guard.free()
 			mode.pressed.emit()
 			_check("mode: a third press comes round to MEDIUM (%s)" % mode.text,

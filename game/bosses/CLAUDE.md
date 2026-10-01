@@ -500,7 +500,7 @@ His pieces:
   begins, which is the only way to have uninterruptible jabs and an
   interruptible hook off a base that has one dial.
 
-One consequence worth knowing: the player's grace window is 0.65 s on MEDIUM
+One consequence worth knowing: the player's grace window is 0.5 s on MEDIUM
 and his two jabs are closer together than that, so the second one is often
 eaten. That is the crowd dial doing its job, not a bug - but it is why his
 test asserts the ORDER he throws in rather than the health that comes off.
@@ -559,11 +559,11 @@ Two dials beyond the drawing, both in `mostafa.gd`:
   quantized to whole world pixels, so `_camera_target()` stays the only thing
   deciding framing and a shaken room does not crawl.
 
-### The Rage - he goes up at 72
+### The Rage - he goes up at half
 
 `rage.gd`, and `mostafa.gd` decides when. At half health he catches fire, once,
-and never comes back down. **72 was already a moment**: his floor cues
-`at_boss_health: 72`, so a `call_center` and a `social_media` come in through
+and never comes back down. **Half was already a moment**: his floor cues
+`at_boss_fraction: 0.5`, so a `call_center` and a `social_media` come in through
 the south door on the same frame the fire does.
 
 **One flip, not a ladder**, because DESIGN.md gives the ladder to Khaled and
@@ -823,13 +823,14 @@ step. The fight gets more crowded rather than faster, which is the only
 escalation available to a man who never hurries.
 
 `tier()` is the phase, taken off fractions of his own max health rather than the
-literal 128 and 64, so retuning his HP in the scene moves the phases with it:
+literal 192 and 96, so retuning his HP - or a party adding to it - moves the
+phases with it (solo numbers below):
 
 | phase | HP | adds | interrupts |
 |---|---|---|---|
-| The Handshake | 192-128 | the crossing, the glare | standard (`commit` 0.65) |
-| The Meeting | 128-64 | the split | one, then 3 s (`commit` 0.40) |
-| The Performance Review | 64-0 | the prism, the cold room | none (`commit` 0.0) |
+| The Handshake | 288-192 | the crossing, the glare | standard (`commit` 0.65) |
+| The Meeting | 192-96 | the split | one, then 3 s (`commit` 0.40) |
+| The Performance Review | 96-0 | the prism, the cold room | none (`commit` 0.0) |
 
 `COMMIT` and `LOCKOUT` are set per phase as each attack begins, because the base
 has one dial for each and that is the only place they can narrow over a fight -
@@ -860,7 +861,7 @@ later - which is why the prism is the first thing he does in his last phase.
   the sheet for the smear - so a copy of him is a copy of him by construction
   and costs **no art at all**. It is deliberately not an add: no group, no
   health, no bar, no collision, gone in 1.8 s. A boss floor's real adds arrive
-  on `at_boss_health`, and two systems that put fighters in a room is one too
+  on `at_boss_fraction`, and two systems that put fighters in a room is one too
   many, so this one puts a THREAT in the room instead.
 - **the prism** (16, 1.00/1.90, third phase only, 6 s cooldown) - he draws the
   city's light in off the window and sweeps it across the room as a white
@@ -928,9 +929,9 @@ door until the boss concedes; the penthouse is the end of the chain, so
 build_levels.gd cuts nothing through that wall and the boss-door swap has
 nothing to swap. Beating him opens no floor - what follows is the ending.
 
-His floor's beat was authored before he existed, against an assumed 192 HP, and
-192 is what he opens at - so its thresholds (144 / 96 / 48) are confirmed rather
-than guessed. They also sit deliberately OFF his phase boundaries (128 and 64):
+His floor's beat is quarters of whatever he opens at (`at_boss_fraction` 0.75 /
+0.5 / 0.25), which solo is 216 / 144 / 72 of 288. They sit deliberately OFF his
+phase boundaries (two thirds and a third), at any party size:
 one thing to read at a time was the whole argument for the arena being empty,
 and it applies just as much to two clocks running on the same health bar.
 

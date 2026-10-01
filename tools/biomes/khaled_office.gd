@@ -120,18 +120,14 @@ const BIOME := {
 	# **LIVE.** Authored before the boss existed and inert while `Props/Boss`
 	# was null; Silverman is standing there now, so these three beats fire.
 	#
-	# THE THRESHOLDS ARE QUARTERS OF 192 - eight heavies, the next breakpoint up
-	# from Mostafa's six - and 192 is what he really opens at, so the three
-	# numbers below are now confirmed against the scene rather than assumed.
-	# They are also deliberately OFF his phase boundaries: his ladder turns at
-	# 128 and 64 (two thirds and a third), and the beat lands at 144, 96 and 48,
-	# so a phase change and an arrival never coincide. One thing to read at a
-	# time was the whole argument for the arena being empty; it applies just as
-	# much to the two clocks running on his health.
-	#
-	# Retune them from `max_health` if his health ever moves: nothing will
-	# complain, the beat will simply fire at the wrong moments - or, if he ever
-	# opens below 144, all three at once.
+	# THE THRESHOLDS ARE QUARTERS of whatever he opens at - 288 solo, twelve
+	# heavies, plus 96 per extra head - which is why they are fractions: his
+	# health is no longer one number. They are deliberately OFF his phase
+	# boundaries: his ladder turns at two thirds and a third, and the beat
+	# lands at three quarters, a half and a quarter, so a phase change and an
+	# arrival never coincide at any party size. One thing to read at a time was
+	# the whole argument for the arena being empty; it applies just as much to
+	# the two clocks running on his health.
 	#
 	# In by the SOUTH door, which is the door that seals behind you - so the
 	# bodies come through the one way out, and the seal is the reason they can.
@@ -143,13 +139,13 @@ const BIOME := {
 	# repeating the slow: ONE call_center in the whole fight, at the halfway
 	# point, and never in `per_head`.
 	"reinforcements": [
-		{"at_boss_health": 144, "from": "start",
+		{"at_boss_fraction": 0.75, "from": "start",
 			"enemies": ["social_media", "social_media"],
 			"per_head": ["social_media"]},
-		{"at_boss_health": 96, "from": "start",
+		{"at_boss_fraction": 0.5, "from": "start",
 			"enemies": ["call_center", "office_boy"],
 			"per_head": ["office_boy"]},
-		{"at_boss_health": 48, "from": "start",
+		{"at_boss_fraction": 0.25, "from": "start",
 			"enemies": ["social_media", "social_media", "office_boy"],
 			"per_head": ["social_media"]},
 	],

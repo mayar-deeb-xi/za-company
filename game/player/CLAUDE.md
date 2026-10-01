@@ -48,8 +48,8 @@ and opens a fresh one. That window is the only rate limiter for blows anywhere
 in the game, and it is per-difficulty (`Difficulty.grace_seconds()`, read once
 at spawn) because it is secretly the CROWD dial: a guard's full attack cycle is
 0.8s, so a grace of 0.8 (EASY) swallows every extra guard's strikes and N
-enemies hit like one, 0.65 (MEDIUM) lets a pair partly interleave, and 0.5
-(HARD) makes a crowd a real threat. Retuning it retunes every hazard and enemy
+enemies hit like one, 0.5 (MEDIUM) lets a pair interleave, and 0.4
+(HARD) lets a third find gaps too. Retuning it retunes every hazard and enemy
 at once. A
 *drain* (`drain()`) is continuous harm that already knows its own rate - an
 aura, a poison - and sits outside the grace window in both directions: never

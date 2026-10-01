@@ -265,7 +265,7 @@ They deliberately threaten in different ways - damage, drain, denial and
 displacement - so a room is built by mixing them rather than by adding more of
 the same:
 
-- **`regular/`** - 24 HP, 10 damage on a completed strike, speed 55, sight 80,
+- **`regular/`** - 24 HP, 15 damage on a completed strike, speed 55, sight 80,
   0.45s wind-up. Carries no script of its own: its scene runs enemy_base.gd
   directly, the way torches run hazard_base.gd, so the base's defaults ARE the
   regular's numbers. It uses the swing cycle, and it is the one the interrupt

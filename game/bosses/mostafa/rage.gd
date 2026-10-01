@@ -3,7 +3,7 @@ extends "res://game/bosses/mostafa/brush.gd"
 ## rest of the fight afterwards.
 ##
 ## Half his health is already a moment: his floor's biome cues a beat at
-## `at_boss_health: 72`, so a call_center and a social_media walk in through
+## `at_boss_fraction: 0.5`, so a call_center and a social_media walk in through
 ## the south door on the same frame. The fire goes up as the door opens.
 ##
 ## It is ONE flip, not a phase ladder - DESIGN.md gives the ladder to Khaled,

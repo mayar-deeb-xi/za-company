@@ -71,7 +71,8 @@ position = Vector2(272, 140)
 motion_mode = 1
 script = ExtResource("5_2t8x7")
 music = "res://assets/music/ahmed_theme_loop.wav"
-max_health = 96
+health_per_head = 48
+max_health = 144
 contact_damage = 16
 speed = 40.0
 sight_radius = 110.0
@@ -107,17 +108,17 @@ position = Vector2(272, 80)
 [node name="Reinforcements" type="Node2D" parent="." unique_id=1235743421]
 script = ExtResource("11_8w3ht")
 waves = [{
-"at_boss_health": 72,
+"at_boss_fraction": 0.75,
 "enemies": ["social_media", "office_boy"],
 "from": "start",
 "per_head": ["social_media"]
 }, {
-"at_boss_health": 48,
+"at_boss_fraction": 0.5,
 "enemies": ["call_center"],
 "from": "start",
 "per_head": ["office_boy"]
 }, {
-"at_boss_health": 24,
+"at_boss_fraction": 0.25,
 "enemies": ["social_media", "social_media"],
 "from": "start",
 "per_head": ["social_media"]

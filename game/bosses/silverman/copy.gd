@@ -5,7 +5,7 @@ extends Node2D
 ## It is **not a body and not an add**, and keeping that true is the whole job
 ## of this file. It is in no group, it has no health, no bar, no collision and
 ## nothing to interrupt, it cannot be hit, and it is gone a second and a half
-## after it arrived. A boss floor's real adds arrive on `at_boss_health` and
+## after it arrived. A boss floor's real adds arrive on `at_boss_fraction` and
 ## are enemies; two systems that put fighters in a room is one too many, so
 ## this one puts a THREAT in the room instead: something that occupies ground
 ## and costs you once for standing where it is going.

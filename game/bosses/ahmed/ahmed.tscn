@@ -34,7 +34,8 @@ size = Vector2(64, 16)
 [node name="Ahmed" type="CharacterBody2D" groups=["bosses", "enemies"]]
 motion_mode = 1
 script = ExtResource("1_ahmed")
-max_health = 96
+max_health = 144
+health_per_head = 48
 contact_damage = 16
 speed = 40.0
 sight_radius = 110.0

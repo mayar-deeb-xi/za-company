@@ -77,8 +77,9 @@ extends RefCounted
 ## therefore in no floor's `per_head`**, and the rule a beat obeys is the one
 ## Difficulty obeys: more bodies, never a worse one.
 ##
-## A BOSS floor's beat is cued by `at_boss_health` instead of `after_kills` -
-## the health he has to be down to - because `after_kills` cannot reach any
+## A BOSS floor's beat is cued by `at_boss_fraction` instead of `after_kills` -
+## the share of his max health he has to be down to, a fraction because his
+## health grows per head (boss_base.gd's `health_per_head`) - because `after_kills` cannot reach any
 ## number but zero there: a boss is in the `enemies` group and is never freed,
 ## so he never counts as a kill. An add arriving at a threshold is a PHASE of
 ## the fight; the same add placed under `enemies` is furniture standing in the

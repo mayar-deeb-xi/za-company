@@ -1,5 +1,5 @@
 extends "res://game/bosses/boss_base.gd"
-## Mostafa, F7's boss. 144 HP - six heavies, twenty-four light hits - and a
+## Mostafa, F7's boss. 216 HP solo - nine heavies, nine full combos - and a
 ## rhythm rather than a menu. Where Ahmed picks an attack to suit the range,
 ## Mostafa runs a COMBINATION and makes you learn its shape:
 ##
@@ -58,8 +58,8 @@ const HIT_STOP := 0.08
 const HIT_STOP_HOOK := 1.3
 
 ## THE RAGE. At half health he goes up, once, and never comes back down -
-## `rage.gd` draws it, this decides when. Half of 144 is 72, which is already a
-## moment: his floor cues a reinforcement beat at `at_boss_health: 72`, so the
+## `rage.gd` draws it, this decides when. Half of him is already a
+## moment: his floor cues a reinforcement beat at `at_boss_fraction: 0.5`, so the
 ## fire and the south door open together.
 ##
 ## One flip rather than a ladder. DESIGN.md gives the ladder to Khaled, and two

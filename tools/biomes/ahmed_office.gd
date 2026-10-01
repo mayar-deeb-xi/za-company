@@ -59,13 +59,13 @@ const BIOME := {
 	# do not stack a slow, they refresh it, and permanent slow through a
 	# telegraph is the one thing here that reads unfair instead of hard.
 	"reinforcements": [
-		{"at_boss_health": 72, "from": "start",
+		{"at_boss_fraction": 0.75, "from": "start",
 			"enemies": ["social_media", "office_boy"],
 			"per_head": ["social_media"]},
-		{"at_boss_health": 48, "from": "start",
+		{"at_boss_fraction": 0.5, "from": "start",
 			"enemies": ["call_center"],
 			"per_head": ["office_boy"]},
-		{"at_boss_health": 24, "from": "start",
+		{"at_boss_fraction": 0.25, "from": "start",
 			"enemies": ["social_media", "social_media"],
 			"per_head": ["social_media"]},
 	],

@@ -30,7 +30,8 @@ size = Vector2(72, 16)
 [node name="Mostafa" type="CharacterBody2D" groups=["bosses", "enemies"]]
 motion_mode = 1
 script = ExtResource("1_mostafa")
-max_health = 144
+max_health = 216
+health_per_head = 72
 contact_damage = 6
 speed = 46.0
 sight_radius = 120.0

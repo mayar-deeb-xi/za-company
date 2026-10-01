@@ -13,10 +13,14 @@ extends RefCounted
 ## swing that does nothing visible. More heads means more BODIES, for the same
 ## reason no difficulty mode touches health either.
 ##
-## **A BOSS's health does not scale, and it is the strongest case for the rule
-## rather than an exception to it.** Ahmed's 96 is exactly four heavies and
-## Mostafa's 144 exactly six. His adds are the only honest dial, which is why
-## the boss floors put every body they have in a beat.
+## **A BOSS's health is the one exception, and it scales by ADDING rather than
+## multiplying.** His adds alone could not cover it - two players are two sets
+## of swings on one body, and the fight ends in half the wall-clock whatever
+## walks in meanwhile - so each extra head adds his `health_per_head`
+## (boss_base.gd), a whole number of 24-damage combos: Ahmed 144 + 48 a head,
+## Mostafa 216 + 72, Silverman 288 + 96. A sum of whole combos still dies on a
+## whole combo, which is all the rule above was protecting. Everything keyed to
+## how hurt he is reads a FRACTION of his max, so it moves with him.
 ##
 ## The healing side reads the same number in the other direction: Ivan hands out
 ## one heart per head (game/npcs/ivan/ivan.gd), because four players sharing one

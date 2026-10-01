@@ -17,7 +17,9 @@ extends Node
 ##   that decides whether a CROWD is worse than one enemy. A guard's full attack
 ##   cycle is 0.8s; grace at 0.8 (EASY) means a second guard's strikes land
 ##   inside the first one's window and are swallowed - N guards hit like one.
-##   At 0.5 (HARD) two guards interleave and a crowd is a real threat.
+##   At 0.5 (MEDIUM) two guards interleave and a crowd is a real threat, and at
+##   0.4 (HARD) a third starts to find gaps too. MEDIUM was 0.65, which capped
+##   a whole room's damage at about one guard's no matter how many were on you.
 ##
 ## Consumers read their numbers ONCE, where they spawn (enemies, hazards, the
 ## player) - never live. The mode is only choosable from the main menu, and a
@@ -36,8 +38,8 @@ const DEFAULT_ID := "medium"
 ## balance notes in CLAUDE.md are its numbers, scaled by 1.
 const MODES := [
 	{"id": "easy", "name": "EASY", "damage_scale": 0.6, "grace_seconds": 0.8},
-	{"id": "medium", "name": "MEDIUM", "damage_scale": 1.0, "grace_seconds": 0.65},
-	{"id": "hard", "name": "HARD", "damage_scale": 1.5, "grace_seconds": 0.5},
+	{"id": "medium", "name": "MEDIUM", "damage_scale": 1.0, "grace_seconds": 0.5},
+	{"id": "hard", "name": "HARD", "damage_scale": 1.5, "grace_seconds": 0.4},
 ]
 
 

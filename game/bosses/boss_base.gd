@@ -79,6 +79,8 @@ signal said(speaker: String, text: String, seconds: float)
 ## someone who is deliberately keeping away.
 const TAUNT_SECONDS := 3.5
 
+const Heads := preload("res://game/heads.gd")
+
 ## His theme, and it is his the way his grunts are: game.gd starts it when it
 ## finds him in the `bosses` group and takes it back down when he concedes,
 ## on exactly the moments it raises and clears his HUD bar. It is declared
@@ -88,6 +90,17 @@ const TAUNT_SECONDS := 3.5
 ## boss who names no track fights to whatever the floor was already playing,
 ## which today is silence, with no branch anywhere but game.gd's one `if`.
 @export_file("*.wav") var music := ""
+
+## Health added to `max_health` for every head BEYOND the first, read once at
+## spawn. A boss's adds are not enough on their own: two players are two sets of
+## swings on one body, so a fight tuned for one ends in half the wall-clock for
+## two, whatever walks in through the door meanwhile. It is ADDED in whole
+## combos rather than multiplied, which is what keeps the reason enemy HP never
+## scales from applying here: a multiplier lands him on a remainder, and a sum of
+## 24s still dies on a whole cycle. Anything keyed to how hurt he is - Mostafa's
+## rage, Silverman's phases, a floor's `at_boss_fraction` beats - is a FRACTION
+## of max_health, so it moves with this instead of being stranded by it.
+@export var health_per_head := 0
 
 ## The attack in progress, "" between attacks. Public for tests and for the
 ## effects that follow a swing.
@@ -99,6 +112,8 @@ var _spotted := false
 var _out_of_reach := 0.0
 
 func _ready() -> void:
+	# Before super(), which is where health is filled from max_health.
+	max_health += (Heads.count(get_tree()) - 1) * health_per_head
 	super()
 	# Read once at spawn, like the base's contact_damage: the mode cannot
 	# change mid-fight, and each attack applies it when it is chosen.

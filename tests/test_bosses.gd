@@ -77,8 +77,8 @@ func _tick(frame: int) -> void:
 			_boss = (load("res://game/bosses/ahmed/ahmed.tscn") as PackedScene).instantiate() as Node2D
 			_level().get_node("Props").add_child(_boss)
 			_boss.connect("conceded", func() -> void: _conceded_heard = true)
-			_check("bosses: Ahmed opens at 96 - four heavies (%s)" % _boss.get("health"),
-				_boss.get("health") == 96)
+			_check("bosses: Ahmed opens at 144 - six heavies (%s)" % _boss.get("health"),
+				_boss.get("health") == 144)
 			_check("bosses: he is a boss and an enemy",
 				_boss.is_in_group("bosses") and _boss.is_in_group("enemies"))
 			_check("bosses: he faces the fight sideways only (animation %s)"
@@ -260,8 +260,8 @@ func _tick(frame: int) -> void:
 			_m = (load("res://game/bosses/mostafa/mostafa.tscn") as PackedScene).instantiate() as Node2D
 			_level().get_node("Props").add_child(_m)
 			_m.connect("conceded", func() -> void: _m_conceded = true)
-			_check("bosses: Mostafa opens at 144 - six heavies (%s)" % _m.get("health"),
-				_m.get("health") == 144)
+			_check("bosses: Mostafa opens at 216 - nine heavies (%s)" % _m.get("health"),
+				_m.get("health") == 216)
 			_check("bosses: he is a boss and an enemy",
 				_m.is_in_group("bosses") and _m.is_in_group("enemies"))
 			_check("bosses: he squares up front on, on the side-only rig (%s)"
@@ -339,8 +339,8 @@ func _tick(frame: int) -> void:
 			_sv = (load("res://game/bosses/silverman/silverman.tscn") as PackedScene).instantiate() as Node2D
 			_level().get_node("Props").add_child(_sv)
 			_sv.connect("conceded", func() -> void: _sv_conceded = true)
-			_check("bosses: Silverman opens at 192 - eight heavies (%s)" % _sv.get("health"),
-				_sv.get("health") == 192)
+			_check("bosses: Silverman opens at 288 - twelve heavies (%s)" % _sv.get("health"),
+				_sv.get("health") == 288)
 			_check("bosses: he is a boss and an enemy",
 				_sv.is_in_group("bosses") and _sv.is_in_group("enemies"))
 			# 1x density, unlike Mostafa: he was drawn, shown and picked at 35

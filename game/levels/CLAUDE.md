@@ -524,14 +524,14 @@ beats is the shape of its lesson restated:
 | | 5 kills | boy + drain | +1 `social_media` | **north** |
 | F3 call_center | 3 kills | 2 `office_boy` | +1 `office_boy` | south |
 | | 7 kills | 2 `office_boy` | +1 `office_boy` | **north** |
-| F4 ahmed_office | HP 72 / 48 / 24 | drain+boy / **slow** / 2 drains | +drain / +boy / +drain | south |
+| F4 ahmed_office | 0.75 / 0.5 / 0.25 of HP | drain+boy / **slow** / 2 drains | +drain / +boy / +drain | south |
 | F5 the_hub | 2 kills | 2 `office_boy` | +1 `office_boy` | south |
 | | 6 kills | drain + boy | +1 `office_boy` | **north** |
 | F6 marble_hall | 3 kills | 2 `office_boy` | +1 `office_boy` | **north** |
 | | 6 kills | 2 `office_boy` | +1 `office_boy` | south |
 | F7 innovation_lab | 3 kills | one of each | +1 `office_boy` | south |
 | | 7 kills | boy + drain | +1 `office_boy` | **north** |
-| F8 conflict_resolution | HP 108 / 72 / 36 | 2 drains / **slow**+drain / 2 drains+**slow** | +drain / +boy / +drain | south |
+| F8 conflict_resolution | 0.75 / 0.5 / 0.25 of HP | 2 drains / **slow**+drain / 2 drains+**slow** | +drain / +boy / +drain | south |
 | F9 asset_recovery | 3 kills | 3 `office_boy` | +2 `office_boy` | south |
 | | 8 kills | 2 `office_boy` | +2 `office_boy` | **north** |
 | F10 hellfire | 3 kills | 2 `regular` + 1 `wraith` | +1 `regular` | **north** |
@@ -540,7 +540,7 @@ beats is the shape of its lesson restated:
 | F11 executive_floor | 4 kills | 1 `warden` + 2 `regular` | +1 `regular` | chokepoint |
 | | 9 kills | `regular` + drain | +1 `regular` | south |
 | | 13 kills | 2 `regular` | +1 `regular` | chokepoint |
-| F12 khaled_office | HP 144 / 96 / 48 | 2 drains / **slow**+boy / 2 drains+boy | +drain / +boy / +drain | south |
+| F12 khaled_office | 0.75 / 0.5 / 0.25 of HP | 2 drains / **slow**+boy / 2 drains+boy | +drain / +boy / +drain | south |
 
 Five of those rows carry something worth knowing:
 
@@ -552,10 +552,11 @@ Five of those rows carry something worth knowing:
 - **F6 and F10 come in by the NORTH door** - the way out. Half the room is dead,
   the stairs are in sight, and the beat arrives from the direction the player
   has stopped watching. On hellfire it also says what the floor above is.
-- **F12 is authored and inert.** Khaled is build step 6; `_due()` returns false
-  while `Props/Boss` is null, so the list costs nothing standing there. Its
-  thresholds ASSUME 192 HP and nothing will complain if he lands elsewhere -
-  set them from his real `max_health` when the scene exists.
+- **The boss rows are fractions, not health.** A boss's max grows by his
+  `health_per_head` for every player beyond the first, so a beat written as
+  "at 72" for a solo Ahmed would fire on a party's at the start of the fight.
+  `at_boss_fraction` reads his own `max_health` and lands on the same quarter
+  at any party size.
 - **F9 has the heaviest `per_head` in the game** (+2 rather than +1), because
   the crowd floor is the one whose lesson IS the head count.
 - **The ordinary floors carry two beats and the last two carry three, and they
@@ -761,7 +762,7 @@ Three things follow from that and are worth knowing before touching it:
   summon hook on boss_base.gd: a summon would need its own release interval,
   doorway hold and head count, all of which already live here.
 
-**A boss floor's beat is cued by `at_boss_health`, not `after_kills`,** and the
+**A boss floor's beat is cued by `at_boss_fraction`, not `after_kills`,** and the
 reason is not preference. A boss is in the `enemies` group and is never freed -
 he is still standing in the room when you leave - so he inflates the population
 by one and never subtracts, and `_killed()` reports only the adds. On a floor

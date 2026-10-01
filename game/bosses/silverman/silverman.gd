@@ -16,11 +16,11 @@ extends "res://game/bosses/boss_base.gd"
 ## fight gets more crowded rather than faster, which is the only escalation
 ## available to a man who never hurries:
 ##
-## - **The Handshake** (192 -> 128): the crossing and the glare. Standard
+## - **The Handshake** (288 -> 192 solo): the crossing and the glare. Standard
 ##   interrupts. The fair phase.
-## - **The Meeting** (128 -> 64): the split arrives. One interrupt, then a long
+## - **The Meeting** (192 -> 96): the split arrives. One interrupt, then a long
 ##   lockout - you get one.
-## - **The Performance Review** (64 -> 0): the room goes cold, standing near
+## - **The Performance Review** (96 -> 0): the room goes cold, standing near
 ##   him costs health on its own, and the prism arrives. Fully
 ##   uninterruptible.
 ##

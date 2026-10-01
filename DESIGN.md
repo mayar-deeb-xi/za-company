@@ -151,7 +151,7 @@ clears and stays clear.
       read at a time*, and a body arriving at a health threshold is a PHASE of
       the one fight, where the same body placed in the arena is furniture
       standing in it from the first frame. So a boss floor's `enemies` list
-      stays empty and its adds are cued by `at_boss_health` — which needed a
+      stays empty and its adds are cued by `at_boss_fraction` — which needed a
       second cue in `reinforcements.gd`, because `after_kills` cannot reach any
       number but zero on a floor whose whole population is a boss who never
       dies.
@@ -194,13 +194,19 @@ clears and stays clear.
       the halfway point, then drain again, one slower per threshold. Mostafa's
       final quarter is the one place two can be alive at once, the deliberate
       peak, and the first thing to check in play.
-- [ ] **A boss's health does not scale with head count, and should not.** 96 is
-      exactly four heavies and 144 exactly six, so a fractional multiplier
-      lands him on a last swing that does nothing visible — the same arithmetic
-      that keeps 24/17/36 off every difficulty dial. His adds are the honest
-      dial instead, which is why boss floors put every body they have in a
-      beat. Open question for playtest: two players kill a boss in half the
-      wall-clock, and whether the extra adds cover that is not yet known.
+- [x] **A boss's health scales with head count — by ADDING, never
+      multiplying.** This reverses the first version of this item, which held
+      that adds alone were the honest dial: two players are two sets of swings
+      on one body, so a fight tuned for one ended in half the wall-clock
+      whatever walked in meanwhile. Each head beyond the first adds the boss's
+      `health_per_head` — a third of him, in whole combos: Ahmed 144 + 48,
+      Mostafa 216 + 72, Silverman 288 + 96 — so he still dies on a whole
+      combo, which is the only thing the fractional-multiplier objection was
+      protecting. Difficulty still never touches it. The beats moved from
+      `at_boss_health` to `at_boss_fraction` in the same change, because an
+      absolute threshold would fire on a party's boss at the opening bell.
+      The solo numbers went up at the same time (from 96 / 144 / 192): every
+      boss floor held less HP than the ordinary floor below it.
 
 **Still missing, and it is the next thing this wants: a beat has no telegraph.**
 The staggered single-file walk-in through a known door carries it for now.
@@ -708,7 +714,7 @@ heavy's 24. Difficulty scales their damage only, never HP. All three concede
 instead of dying (no queue_free): defeat -> concede animation -> north door
 unlocks.
 
-- [x] **AHMED — 96 HP, F4.** The relative; teaching boss, and the one who
+- [x] **AHMED — 144 HP solo (+48 a head), F4.** The relative; teaching boss, and the one who
   brought an axe to a performance review. 2.5x the player and thin as a coat
   rack: black curls going grey, black beard, white shirt with the sleeves
   shoved up, black trousers. The axe burns. Four attacks on the guard's cycle,
@@ -720,7 +726,7 @@ unlocks.
   has fire on it, drawn live over a clean sheet.
   **Built**: the boss, his fire, the locked north door, tests/test_bosses.gd.
   **Built since**: the "SECURITY!" summon, and it needed no summon hook on him
-  at all - it is a `reinforcements` beat cued by `at_boss_health`, one office
+  at all - it is a `reinforcements` beat cued by `at_boss_fraction`, one office
   boy at 64 and again at 32, in by the south door. One at a time rather than a
   cap of two alive: a duel with a crowd in it is neither, and the slam still
   knows what to do with whoever is standing in the ring.
@@ -734,7 +740,7 @@ unlocks.
   whole of what he says; `game/enemies/enemy_lines.gd` decides when, and no
   other boss has lines yet.
   **Still to add**: the enormous chair.
-- [x] **MOSTAFA — 144 HP, F7.** Boxing rhythm fight; his attack is the cycle
+- [x] **MOSTAFA — 216 HP solo (+72 a head), F7.** Boxing rhythm fight; his attack is the cycle
   run 3x back-to-back:
   - Jab, jab: 0.25s wind-ups, 6 dmg each, commit_fraction ~1.0
     (effectively uninterruptible; they're swings — step out, they whiff).
@@ -755,7 +761,7 @@ unlocks.
   eruption (two sinks, a blast out of the crouch, a column he stands up
   through) and then he burns for the rest of the fight: skirt, orbiting flame,
   both gloves alight, a rim on his silhouette. Crimson and white, deliberately
-  not Ahmed's amber. It lands on the floor's existing `at_boss_health: 72`
+  not Ahmed's amber. It lands on the floor's existing `at_boss_fraction: 0.5`
   beat, so the fire and the south door open together. **No number changed** —
   the rage burns without biting; `breath_seconds` is the lever if it should do
   both. `rage.gd` + `bell.gd` over the shared `brush.gd`.
@@ -764,7 +770,7 @@ unlocks.
   his hands come down. boss_base plays `concede_side` at zero health and the
   row has to exist; replacing it is adding frames to poses.gd and nothing
   else.
-- [ ] **KHALED — 192 HP, F10.** Smooth = never hurries; each phase announced by
+- [ ] **KHALED — 288 HP solo (+96 a head), F10.** Smooth = never hurries; each phase announced by
   adjusting his cuffs:
   - P1 "The Handshake" (192→128): single strikes, 0.8s telegraph, 20 dmg,
     gliding movement. Standard interrupts. The fair phase.

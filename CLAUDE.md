@@ -345,6 +345,17 @@ silent without saying so. A boss floor is an
 arena: his sight reaching the spawn is the one deliberate exception to the rule
 below.
 
+**A boss's health is the one enemy health that scales, and only with HEADS,
+only by adding.** Solo he is Ahmed 144, Mostafa 216, Silverman 288 - six, nine
+and twelve full combos - and every head beyond the first adds his
+`health_per_head` (48 / 72 / 96, a third of him) in boss_base's `_ready`. His
+adds alone could not cover a party: two players are two sets of swings on one
+body. It is a SUM of whole 24s rather than a multiplier, so he still dies on a
+whole combo, and difficulty still never touches it. Everything keyed to how
+hurt he is - Mostafa's rage, Silverman's phases, a floor's `at_boss_fraction`
+beats - is a fraction of `max_health`, so it moves with him; an absolute
+threshold would fire on a party's boss at the start of the fight.
+
 Bosses draw their own effects live from their poses rather than baking them
 into a sheet - Ahmed's fire, Mostafa's **Bell** (his punches) and **Rage** (he
 catches fire at half health, once, and never comes back down), Silverman's
@@ -534,9 +545,11 @@ knowing before touching a beat:
   split exists because multiplying one list gave every extra player a second
   `call_center`, and two slowers do not stack a slow, they refresh it - a
   permanently slowed player cannot sidestep a telegraph. `call_center` is in no
-  floor's `per_head`. Nothing else in the game scales with players, and the rule
-  is Difficulty's: more bodies, never a worse one.
-- **A boss floor's cue is `at_boss_health`, not `after_kills`.** A boss is in
+  floor's `per_head`. The only other things that scale with players are Ivan's
+  hearts and a boss's health (see Enemies' boss paragraph); for enemies the
+  rule is Difficulty's: more bodies, never a worse one.
+- **A boss floor's cue is `at_boss_fraction`, not `after_kills`** - a share of
+  his max health, because that max grows per head. A boss is in
   the `enemies` group and is never freed, so he never counts as a kill and the
   count can only ever reach 0 there. His adds all live in his beat and his
   `enemies` list stays empty: an add arriving at a threshold is a PHASE of the
@@ -865,7 +878,7 @@ costs you. Two dials per mode:
 
 - `damage_scale` (0.6 / 1.0 / 1.5) multiplies every blow and drain - guard
   strikes, torches, wraith drain.
-- `grace_seconds` (0.8 / 0.65 / 0.5) is the player's grace window, i.e. the
+- `grace_seconds` (0.8 / 0.5 / 0.4) is the player's grace window, i.e. the
   crowd dial - see game/player/CLAUDE.md's Health.
 
 Consumers read their numbers ONCE, where they spawn, never live - the mode is

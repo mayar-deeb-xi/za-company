@@ -196,8 +196,9 @@ const MUTTER_POLL := 2.0
 ## Dealt by a completed strike, not by contact. Higher than it was when merely
 ## touching the player cost them health: a blow the player was shown coming and
 ## failed to answer should be worth answering, or eating it is cheaper than
-## playing around it.
-@export var contact_damage := 10
+## playing around it. 15 rather than the 10 it was: at 10 a guard's blow was a
+## tenth of the bar, and seven of them was a room you could stand in and trade.
+@export var contact_damage := 15
 @export var speed := 55.0
 ## Guard radius: asleep beyond it, chasing inside it. Kept modest so an enemy
 ## reads as owning a corner of the room rather than the whole map.

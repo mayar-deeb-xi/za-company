@@ -162,8 +162,8 @@ func _tick(frame: int) -> void:
 			_level().get_node("Props").add_child(_sv)
 			_sv.connect("conceded", func() -> void: _conceded = true)
 			_sv.connect("shook", func(_s: float, _t: float) -> void: _shakes += 1)
-			_check("silverman: he opens at 192 - eight heavies (%s)" % _sv.get("health"),
-				_sv.get("health") == 192)
+			_check("silverman: he opens at 288 - twelve heavies (%s)" % _sv.get("health"),
+				_sv.get("health") == 288)
 			_check("silverman: and opens in his first phase (%s)" % _sv.call("tier"),
 				int(_sv.call("tier")) == 1)
 			# His screen layer must sit UNDER the HUD: a room going white that
@@ -254,11 +254,11 @@ func _tick(frame: int) -> void:
 			_check("silverman: a blow that big shakes the room (%d)" % _shakes,
 				_shakes >= 1)
 		400:
-			# ---- THE MEETING. 128, and the split arrives -------------------
-			_sv.call("take_damage", 72)
+			# ---- THE MEETING. 192, and the split arrives -------------------
+			_sv.call("take_damage", 108)
 			_check("silverman: at two thirds he is in his second phase (%s at %s HP)"
 				% [_sv.call("tier"), _sv.get("health")],
-				int(_sv.call("tier")) == 2 and _sv.get("health") == 120)
+				int(_sv.call("tier")) == 2 and _sv.get("health") == 180)
 			_check("silverman: a phase announces itself (%.1f s)" % _sv.get("herald"),
 				float(_sv.get("herald")) > 0.0)
 			# 30 px off his line: the band is a 20 px lane and the crossing only
@@ -291,11 +291,11 @@ func _tick(frame: int) -> void:
 			_check("silverman: the copy is gone a second and a half later (%d)"
 				% _copies().size(), _copies().is_empty())
 		600:
-			# ---- THE PERFORMANCE REVIEW. 64, and the room goes cold --------
-			_sv.call("take_damage", 60)
+			# ---- THE PERFORMANCE REVIEW. 96, and the room goes cold --------
+			_sv.call("take_damage", 90)
 			_check("silverman: at a third he is in his last phase (%s at %s HP)"
 				% [_sv.call("tier"), _sv.get("health")],
-				int(_sv.call("tier")) == 3 and _sv.get("health") == 60)
+				int(_sv.call("tier")) == 3 and _sv.get("health") == 90)
 		700:
 			_check("silverman: his last phase is uninterruptible (commit %.2f)"
 				% _commit_at_interrupt, is_equal_approx(_commit_at_interrupt, 0.0))

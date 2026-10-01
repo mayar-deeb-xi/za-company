@@ -81,7 +81,7 @@ const BIOME := {
 	# him. Naming a boss here is also what swaps the north door's script for
 	# boss_door.gd - it stays shut until he concedes.
 	"boss": {"type": "mostafa", "at": Vector2(272, 138)},
-	# Quarters of his 144, in by the south door, cued by his health for the
+	# Quarters of his health, in by the south door, cued by his health for the
 	# reason in reinforcements.gd's `_due`. Ahmed's floor explains why this
 	# pair and not boys; this floor is where the pair bites hardest, because a
 	# RHYTHM fight is the one thing a drain and a slow can actually break.
@@ -91,18 +91,18 @@ const BIOME := {
 	# made worse in the only fair way: the corners get busier, not stronger.
 	#
 	# The last threshold is the ONE place in the game where two slowers can be
-	# alive at once - the 72 HP one may still be standing - and it is the
+	# alive at once - the halfway one may still be standing - and it is the
 	# deliberate peak rather than an oversight. It is also the first thing to
 	# check in play: if the final quarter reads as a room you cannot move in
 	# rather than a crescendo, this is the beat to thin.
 	"reinforcements": [
-		{"at_boss_health": 108, "from": "start",
+		{"at_boss_fraction": 0.75, "from": "start",
 			"enemies": ["social_media", "social_media"],
 			"per_head": ["social_media"]},
-		{"at_boss_health": 72, "from": "start",
+		{"at_boss_fraction": 0.5, "from": "start",
 			"enemies": ["call_center", "social_media"],
 			"per_head": ["office_boy"]},
-		{"at_boss_health": 36, "from": "start",
+		{"at_boss_fraction": 0.25, "from": "start",
 			"enemies": ["social_media", "social_media", "call_center"],
 			"per_head": ["social_media"]},
 	],

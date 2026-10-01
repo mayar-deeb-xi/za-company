@@ -1,5 +1,5 @@
 extends "res://game/bosses/boss_base.gd"
-## Ahmed, F4's boss. 96 HP - four heavies, sixteen light hits - and a burning
+## Ahmed, F4's boss. 144 HP solo - six heavies, six full combos - and a burning
 ## axe with four attacks, chosen by where you are and what you have been doing:
 ##
 ## - **chop** and **sweep** alternate when you are in reach. Same reach, same

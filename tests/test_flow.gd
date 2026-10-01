@@ -476,21 +476,21 @@ func _tick(frame: int) -> void:
 				% (0 if theme == null else theme.loop_end),
 				theme != null and theme.loop_mode == AudioStreamWAV.LOOP_FORWARD
 					and theme.loop_end > 0)
-			_check("hud: it opens full - 240 px of channel for 96 HP (%s)"
+			_check("hud: it opens full - 240 px of channel for 144 HP (%s)"
 				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 240.0))
 			if boss != null:
-				# One heavy's worth, to prove the width is his health arriving by
-				# signal and not a number read once on the way in. 24 of 96 is a
+				# A quarter of him, to prove the width is his health arriving by
+				# signal and not a number read once on the way in. 36 of 144 is a
 				# quarter of the bar, and the chip is that quarter standing pale
 				# where the fill was.
-				boss.call("take_damage", 24)
-			_check("hud: a heavy takes a quarter off the bar (%s)"
+				boss.call("take_damage", 36)
+			_check("hud: a quarter of him comes off the bar (%s)"
 				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 180.0))
 			_check("hud: the chip stands in the 60 px it just lost (%s wide, %s)"
 				% [_boss_chip().size.x, _boss_chip().visible],
 				_boss_chip().visible and is_equal_approx(_boss_chip().size.x, 60.0))
 			if boss != null:
-				boss.call("take_damage", 72)
+				boss.call("take_damage", 108)
 			_check("boss: at zero he concedes rather than dying (%s)"
 				% ("gone" if boss == null else str(boss.get("has_conceded"))),
 				boss != null and boss.get("has_conceded") == true)
@@ -719,7 +719,7 @@ func _tick(frame: int) -> void:
 			# which build_levels.gd calls Boss on every floor alike.
 			_check("hud: the gym's boss gets the same bar, named for him (got '%s')"
 				% _boss_name(), _boss_bar().visible and _boss_name() == "MOSTAFA")
-			_check("hud: full channel for his 144 as much as for Ahmed's 96 (%s)"
+			_check("hud: full channel for his 216 as much as for Ahmed's 144 (%s)"
 				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 240.0))
 			# And the theme on the same terms as the bar: HIS file, named on his
 			# scene root, not Ahmed's carried up three floors. Three rooms of
@@ -942,7 +942,7 @@ func _tick(frame: int) -> void:
 			var last := _level().get_node_or_null("Props/Boss")
 			_check("boss: Silverman is standing in the penthouse (%s)"
 				% ("<none>" if last == null else str(last.get("health"))),
-				last != null and last.get("health") == 192)
+				last != null and last.get("health") == 288)
 			_check("boss: and he is in both groups, like every boss",
 				last != null and last.is_in_group("bosses")
 					and last.is_in_group("enemies"))
@@ -954,7 +954,7 @@ func _tick(frame: int) -> void:
 				last != null and last.position.distance_to(Vector2(272, 140)) < 8.0)
 			_check("hud: the boss bar is up and names him (got '%s')"
 				% _boss_name(), _boss_bar().visible and _boss_name() == "SILVERMAN")
-			_check("hud: it opens full - 240 px of channel for 192 HP (%s)"
+			_check("hud: it opens full - 240 px of channel for 288 HP (%s)"
 				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 240.0))
 			# NO WAY UP, AND NO DOOR TO LOCK. Every other boss floor shuts its
 			# north door until the boss concedes; the penthouse is the end of the

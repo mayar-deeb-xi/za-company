@@ -69,7 +69,7 @@ func _script(frame: int) -> void:
 		114:
 			# The wind-up finished around 98 and only THEN did it cost anything.
 			_check("enemies: a completed wind-up lands the blow (%s)"
-				% _player().get("health"), _player().get("health") == 90)
+				% _player().get("health"), _player().get("health") == 85)
 			# Out of its own sight, so it finishes its cycle and settles back to
 			# CHASE - which gives the interrupt test below a known starting point.
 			_enemy.global_position = Vector2(100, 40)
@@ -106,7 +106,7 @@ func _script(frame: int) -> void:
 				% _enemy.get("phase"), _enemy.get("phase") == 1)
 		239:
 			_check("interrupt: so that blow lands, and mashing cannot lock it out (%s)"
-				% _player().get("health"), _player().get("health") == _health_mark - 10)
+				% _player().get("health"), _player().get("health") == _health_mark - 15)
 			# 14 health left: kill it the way a player would, on the combo. It
 			# dies around 276; the mash stops well before the kill check so the
 			# last buffered attack has finished by then. An enemy placed while a

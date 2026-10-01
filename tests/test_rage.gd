@@ -1,5 +1,5 @@
 extends "res://tests/helpers.gd"
-## Rage test: Mostafa going up at 72 HP, and staying up.
+## Rage test: Mostafa going up at 108 HP, and staying up.
 ##
 ## Its own suite rather than another section of test_bosses.gd, for the reason
 ## the root CLAUDE.md gives: the rage needs a world where he is FIGHTING and
@@ -7,7 +7,7 @@ extends "res://tests/helpers.gd"
 ## threading that through a file that already fights three bosses in sequence
 ## made one boss's timing decide another's. One suite, one clean world.
 ##
-## What is under test is the FLIP, not the fire: that it happens at 72 and not
+## What is under test is the FLIP, not the fire: that it happens at 108 and not
 ## before, that it happens once, that he is rooted and silent and cannot be
 ## staggered while it runs, and that it never comes back down. The picture is
 ## in the artifact; the pixels are not something a check can hold.
@@ -44,8 +44,8 @@ func _tick(frame: int) -> void:
 			_player().global_position = Vector2(272, 140)
 			_m.global_position = Vector2(272, 200)
 
-			_check("rage: he opens at 144, so half of him is 72 (%s)" % _m.get("health"),
-				_m.get("health") == 144)
+			_check("rage: he opens at 216, so half of him is 108 (%s)" % _m.get("health"),
+				_m.get("health") == 216)
 			_check("rage: and opens it cold (%s)" % _m.get("is_raging"),
 				_m.get("is_raging") == false)
 			# The sheet grew a row for this. Six frames, played once.
@@ -67,17 +67,17 @@ func _tick(frame: int) -> void:
 		110:
 			_check("rage: he is mid-combination before anything happens (%s)"
 				% str(_seq), not _seq.is_empty())
-			_m.call("take_damage", 60)
+			_m.call("take_damage", 96)
 		116:
-			_check("rage: at 84 he is still just a boxer (%s hp, raging %s)"
+			_check("rage: at 120 he is still just a boxer (%s hp, raging %s)"
 				% [_m.get("health"), _m.get("is_raging")],
-				_m.get("health") == 84 and _m.get("is_raging") == false)
+				_m.get("health") == 120 and _m.get("is_raging") == false)
 			_seq_at_rage = _seq.size()
 			_m.call("take_damage", 20)
 		119:
-			_check("rage: crossing 72 sets him alight (%s hp, raging %s)"
+			_check("rage: crossing 108 sets him alight (%s hp, raging %s)"
 				% [_m.get("health"), _m.get("is_raging")],
-				_m.get("health") == 64 and _m.get("is_raging") == true)
+				_m.get("health") == 100 and _m.get("is_raging") == true)
 			_check("rage: the eruption takes the sprite (%s)"
 				% _sprite_of(_m).animation, _sprite_of(_m).animation == &"rage_side")
 			# The noise of going up, and the fire he is left carrying. The loop
@@ -109,13 +109,13 @@ func _tick(frame: int) -> void:
 			_check("rage: and cannot be staggered out of it (%s)"
 				% _sprite_of(_m).animation, _sprite_of(_m).animation == &"rage_side")
 			_check("rage: though the hits still land - it is a free window (%s hp)"
-				% _m.get("health"), _m.get("health") == 63)
+				% _m.get("health"), _m.get("health") == 99)
 		200:
 			_check("rage: the eruption ends and he fights again (%s)"
 				% _sprite_of(_m).animation, _sprite_of(_m).animation != &"rage_side")
 			_check("rage: but the fire stays lit - it never comes back down",
 				_m.get("is_raging") == true)
-			_m.call("take_damage", 39)
+			_m.call("take_damage", 75)
 		206:
 			_check("rage: crossing the line again does not re-light him (%s hp)"
 				% _m.get("health"),
