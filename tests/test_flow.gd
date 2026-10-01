@@ -718,7 +718,7 @@ func _tick(frame: int) -> void:
 			# the bar is per boss. He is named off his own scene, not his node,
 			# which build_levels.gd calls Boss on every floor alike.
 			_check("hud: the gym's boss gets the same bar, named for him (got '%s')"
-				% _boss_name(), _boss_bar().visible and _boss_name() == "MOSTAFA")
+				% _boss_name(), _boss_bar().visible and _boss_name() == "BIG MO")
 			_check("hud: full channel for his 216 as much as for Ahmed's 144 (%s)"
 				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 240.0))
 			# And the theme on the same terms as the bar: HIS file, named on his
