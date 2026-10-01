@@ -117,9 +117,10 @@ that drift.
 
 `sight_radius` is how an enemy NOTICES the player and that is now all it is.
 Every authored position in `tools/biomes/` is placed so no sight radius reaches
-the door lane, so **entering the circle has to stay the only way to be seen** -
-widen it and every floor in the game breaks at once, along with the flow and
-combat tests. That half does not move.
+the door lane, so **entering the circle has to stay the only way to be seen
+from the lane** - widen it and every floor in the game breaks at once, along
+with the flow and combat tests. That half does not move. (Stepping OFF the
+lane is the one other way, once per visit - see the end of this section.)
 
 What was wrong was everything after it. The chase was gated on the player
 being inside that circle THIS FRAME, so an enemy stopped mid-stride the moment
@@ -174,6 +175,20 @@ through. A body that came to find you is not defending anything.
 
 `tests/test_combat.gd` ends on it - the pursuit past the circle, the giving up,
 the walk home, and a guard dragged 160 px and not one pixel more.
+
+**There is one other way to be noticed, and it is a room-wide one-off.**
+Sight alone meant a player could cross a whole floor without anybody in it
+reacting, simply by not walking up to them. So the first frame the player
+steps off the walk lane - into the room rather than through it - game.gd calls
+`alert()` on every enemy standing there, which is exactly what a sighting does
+(`hunting` on, a full `_patience`) and nothing more. Everything after it is the
+leash above, unchanged: an alerted body far away walks the player's way for
+2.5 s, at most 2x its sight from its post, and then goes home unless it has
+really seen them by then. It fires once per visit - a second step off the lane
+is nothing - and the lane itself still wakes nobody, so the placement rule
+below holds as written. A boss or an unleashed reinforcement drops the forced
+hunt on the next frame, because `_hunt()` already does that for a body with no
+post that cannot see the player. `tests/test_alert.gd` owns it.
 
 ## Getting round the furniture: the desk problem
 

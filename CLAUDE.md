@@ -277,6 +277,15 @@ POST only (`unleash()` - it is the one enemy with no authored position, so it
 still gives up, it just has no mark to be held near or to return to). Full rationale:
 game/enemies/CLAUDE.md's The leash.
 
+**The one other way to be noticed is the ROOM ALERT, and it fires once per
+visit.** The first frame the player stands more than 8 px off the walk lane,
+game.gd calls `alert()` on every enemy in the room - a sighting without the
+sight, so each one walks the player's way and then the leash above decides
+everything, unchanged. Walking the lane still wakes nobody (every spawn marker
+stands on it, swept by `tests/test_alert.gd`), so the placement rule below is
+untouched; what changed is that a player can no longer cross a room's
+furniture unnoticed just by never walking up to anybody.
+
 **An enemy gets round the furniture, and there is still no pathfinding.**
 Steering is *walk at the player*; what that cannot do is the thing it creates -
 a body sliding along a desk turns to face the player ever more squarely until
@@ -1189,7 +1198,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Twenty suites,
+  They drive the real game with synthesized input and exit 0/1. Twenty-three suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1399,6 +1408,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     patience, so it hunts only what it can see, on this floor exactly as on the
     other eleven. Staging that wrong looks identical to a wedge, which is why
     the suite measures its own premise before it measures the answer.
+  - `test_alert.gd` - the room alert: that walking the lane wakes nobody,
+    that stepping off it sets a guard far out of sight hunting, that the leash
+    then runs unchanged (same patience, no further than 2x sight from the post,
+    back onto its mark), that a second step off in the same visit is nothing
+    and a new visit gets its own. Plus the sweep that keeps arrival from firing
+    it: every floor's spawn markers stand on that floor's own lane.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

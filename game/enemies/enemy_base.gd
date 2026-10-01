@@ -591,6 +591,20 @@ func unleash() -> void:
 	post = Vector2.INF
 
 
+## Forces the hunt on, as if sight_radius had just caught the player - called
+## once by game.gd the moment the player leaves a room's walk lane, so a room
+## is not crossed without anybody in it noticing. Everything after this one
+## frame is the ordinary leash: the same patience window, the same bound off
+## this body's own post, the same walk home if it comes to nothing - a body
+## that was never going to follow this far still won't. A boss or a roaming
+## reinforcement is untouched by it in practice: the next frame's _hunt() reads
+## `_leashes()` exactly as it always has and drops the hunt again if it is
+## false and the player is not literally in sight.
+func alert() -> void:
+	hunting = true
+	_patience = patience_seconds
+
+
 ## 0..1 through the current wind-up; 0 when not winding up.
 func _windup_progress() -> float:
 	if phase != Phase.WINDUP or windup_seconds <= 0.0:

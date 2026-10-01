@@ -11,6 +11,9 @@ extends Node2D
 
 const START_LEVEL := "res://game/levels/lobby/lobby.tscn"
 const FADE_SECONDS := 0.28
+## How far off the walk lane counts as "in the room" rather than grazing its
+## edge - see _alert_room().
+const LANE_ALERT_CLEARANCE := 8.0
 
 ## Typed by preloaded script rather than by the `class_name` those scripts also
 ## declare: global class names come from a cache the editor writes, which a
@@ -35,6 +38,9 @@ const SubtitleType := preload("res://ui/subtitle/subtitle.gd")
 
 var _level: LevelType
 var _travelling := false
+## Whether this room's one-time alert (see _alert_room) has already fired.
+## Reset on every arrival, like everything else a room carries no state across.
+var _lane_alerted := false
 ## World-space extent of the level on screen now; drives the camera.
 var _bounds := Rect2()
 ## Camera shake: world pixels of throw, and how much of it is left to spend.
@@ -68,6 +74,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_camera.global_position = _camera_target()
 	_apply_shake(delta)
+	if not _travelling and not _lane_alerted \
+			and _level.lane_clearance(_player.global_position) > LANE_ALERT_CLEARANCE:
+		_lane_alerted = true
+		_alert_room()
 
 
 ## Zoom decides how much world fits on screen, which in turn decides whether
@@ -186,6 +196,7 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 	_shake_left = 0.0
 	_camera.offset = Vector2.ZERO
 	_subtitle.clear()
+	_lane_alerted = false
 
 	_player.global_position = _level.spawn_position(spawn)
 
@@ -228,6 +239,19 @@ func _on_talk_requested(npc: Node2D) -> void:
 	if _travelling:
 		return
 	_dialogue.talk(npc, _player)
+
+
+## The one push a room gets, fired once by _process the moment the player
+## steps off the walk lane - into the room rather than through it. Every
+## enemy already standing here gets alert()ed, as if it had just seen the
+## player; what happens next is entirely the leash's (patience, the bound off
+## each body's own post, the walk home if nothing comes of it). A player who
+## never leaves the lane is never noticed this way, exactly as before - this
+## only changes WHEN the first sighting can happen, never what one costs.
+func _alert_room() -> void:
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if node.has_method("alert"):
+			node.alert()
 
 
 ## A boss floor puts a second bar on screen. Found by GROUP at the moment the

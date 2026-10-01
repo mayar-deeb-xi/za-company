@@ -132,9 +132,14 @@ beside its title, and two questions on level.gd -
   the placement rule is actually measured in: a body clears the walk by its own
   sight radius.
 
-Nothing in `game/` reads either. They exist because the alternative was four
-test files agreeing with each other by hand about a shape only one floor has,
-and because a rule this old should be answerable by the room it is about.
+They exist because the alternative was four test files agreeing with each
+other by hand about a shape only one floor has, and because a rule this old
+should be answerable by the room it is about. The one reader inside `game/`
+is game.gd's **room alert**: the first frame the player stands more than
+`LANE_ALERT_CLEARANCE` (8 px) off the walk, every enemy in the room is
+`alert()`ed once (game/enemies/CLAUDE.md, The leash). Every spawn marker
+stands ON its lane, so arriving never spends it - `tests/test_alert.gd` sweeps
+the chain for that.
 
 `tests/test_dogleg.gd` owns the two failures a shape can cause. One is a room
 nobody can cross, swept across the whole chain: every floor's walk is sampled
