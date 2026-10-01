@@ -10,9 +10,9 @@ extends RefCounted
 ## rather than about the boss - everything they have been saving stops working
 ## at 64 health, so the advice is to spend it before then.
 ##
-## It is also the last thing she says in the game, which is why she says so.
+## It is also the last thing he says in the game, which is why he says so.
 ## There is no floor after the penthouse and no fourth briefing to write: this
-## one closes her out.
+## one closes him out.
 
 const BEATS := [
 	{

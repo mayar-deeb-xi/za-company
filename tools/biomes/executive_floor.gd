@@ -227,13 +227,13 @@ const BIOME := {
 	"relief": {"npc": "ivan", "from": "start", "at": Vector2(324, 196),
 		"say": "res://game/npcs/ivan/after_executive_floor.gd"},
 	# The FOURTH beat, and the last one in the game: the penthouse is above this
-	# room and there is no floor after it, so this is where she stops.
+	# room and there is no floor after it, so this is where he stops.
 	#
-	# She is the only person in the building who is ever NORTH of the partition
+	# He is the only person in the building who is ever NORTH of the partition
 	# wall, which is the point - Ivan is placed in the south half and comes up
-	# behind it, and she is already past it, on the boss's side of the only gap
+	# behind it, and he is already past it, on the boss's side of the only gap
 	# in the room. The spot is in the strip between the awards cabinets at y 66
-	# and the partitions at y 128, east of the gap (x 240-304) so she never
+	# and the partitions at y 128, east of the gap (x 240-304) so he never
 	# stands in it: a 64px body in the one chokepoint on the floor is the
 	# mistake the relief entry above is worded to avoid, and it is the same
 	# mistake here.

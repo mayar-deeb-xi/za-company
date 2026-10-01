@@ -5,11 +5,11 @@ extends RefCounted
 ##
 ## ## A signpost that is worth stopping for
 ##
-## She is the fourth beat (`briefing` in biome data, game/levels/relief.gd), and
-## the whole reason she is a beat rather than a line at a door is that a warning
-## about a fight is only information while the fight is still ahead. She comes
-## DOWN through the north door - the one the player is about to go up - so she
-## is standing between them and it, and walking past her is a choice.
+## He is the fourth beat (`briefing` in biome data, game/levels/relief.gd), and
+## the whole reason he is a beat rather than a line at a door is that a warning
+## about a fight is only information while the fight is still ahead. He comes
+## DOWN through the north door - the one the player is about to go up - so he
+## is standing between them and it, and walking past him is a choice.
 ##
 ## Every briefing in this folder ends on the boss's actual TELL, because Ahmed
 ## is the teaching boss and this is the floor before him: the fire wave is the
@@ -18,8 +18,8 @@ extends RefCounted
 ## before it happens is the difference between a lesson and an ambush. The
 ## middle beats are the fight's shape; the last one is the thing to do.
 ##
-## Four beats and no question. She has no branch anywhere in the game - a guide
-## who asks you things is a conversation, and she is a road sign.
+## Four beats and no question. He has no branch anywhere in the game - a guide
+## who asks you things is a conversation, and he is a road sign.
 
 const BEATS := [
 	{

@@ -269,9 +269,9 @@ clear - because a warning is only information while the fight is still ahead,
 and a signpost standing in the room during the fight is furniture. Each briefing
 names the boss and ends on that fight's actual tell: sidestep Ahmed's wave,
 break Mostafa's third punch, spend everything before Silverman's last phase.
-They come down the north door while Ivan comes up the south one. Voiced, twelve
+He comes down the north door while Ivan comes up the south one. Voiced, twelve
 clips, in the same pipeline as the other three mouths. `tests/test_dominique.gd`
-holds the rule that put them on exactly those three floors.
+holds the rule that put him on exactly those three floors.
 
 ## HR's induction — the first conversation in the game
 

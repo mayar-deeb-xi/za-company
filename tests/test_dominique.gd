@@ -39,8 +39,8 @@ const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
 ## it all three biome entries could be empty and every check would still pass.
 const BRIEFINGS := {
 	"call_center": {
-		# The dogleg: she waits in the ARM, off the walk by sixty pixels, where
-		# the player cannot get to the stairs without passing her.
+		# The dogleg: he waits in the ARM, off the walk by sixty pixels, where
+		# the player cannot get to the stairs without passing him.
 		"at": Vector2(568, 128),
 		"say": "res://game/npcs/dominique/before_ahmed.gd",
 	},
@@ -97,7 +97,7 @@ func _tick(frame: int) -> void:
 		# Gated on the SPEAKER, which does two jobs: the box ships with
 		# design-time placeholders in its scene ("..." over "HR") and is visible
 		# with them for the frame before the first `say()` lands, and everything
-		# collected here is then known to be hers rather than merely to have
+		# collected here is then known to be his rather than merely to have
 		# been on screen.
 		var line := _line().text
 		if line != "" and _speaker() == "Dominique" \

@@ -659,7 +659,7 @@ the NORTH door - the one the player is about to go up** - to say what is waiting
 at the top of it. Three floors have one, and they are exactly the three that sit
 under a boss:
 
-| floor | they stand at | what is upstairs |
+| floor | he stands at | what is upstairs |
 |-------|---------------|------------------|
 | F3 call_center | (568, 128) | F4 Ahmed - the axe, the slam, and the fire that answers running |
 | F7 innovation_lab | (232, 120) | F8 Mostafa - two fast, one slow, and the fire at half |
@@ -676,9 +676,9 @@ Ivan, who arrives on the SAME cue through the south door - and two people
 walking in at one threshold is two solid bodies in the same sixteen pixels,
 shoving each other out of it. It also says the thing each of them is for
 without a line of dialogue: he has come from where the player has been, and
-they have come from where the player is going.
+he has come from where the player is going.
 
-Her spot obeys the furniture rule on `at` alone, exactly as Ivan's does - off
+His spot obeys the furniture rule on `at` alone, exactly as Ivan's does - off
 the walk that floor keeps clear, off the divider xs on the floors that have
 them, and
 far enough from Ivan's spot that the two are not standing on each other. The

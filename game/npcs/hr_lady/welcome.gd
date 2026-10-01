@@ -73,11 +73,11 @@ const BEATS := [
 	# The front desk, where Dominique will one day be standing.
 	{"walk": Vector2(196, 122), "escort": true},
 	{
-		"text": "Reception. Dominique is lovely, you'll adore her.",
+		"text": "Reception. Dominique is lovely, you'll adore him.",
 		"voice": "res://game/npcs/hr_lady/sfx/voice/reception_1.wav",
 	},
 	{
-		"text": "Eleven years now. She came in for a two-week contract.",
+		"text": "Eleven years now. He came in for a two-week contract.",
 		"voice": "res://game/npcs/hr_lady/sfx/voice/reception_2.wav",
 	},
 

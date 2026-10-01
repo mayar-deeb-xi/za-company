@@ -308,8 +308,8 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   floor's warning. `tests/test_dominique.gd` checks that no two floors share a
   clip, because cut.py would not have said anything.
 - **Bold, Slavic and impatient**, picked off the same four-voice audition Ivan's
-  read came out of and deliberately not his warmth: he is glad to see you, and
-  they have given this speech before to people who did not come back.
+  read came out of and deliberately not his warmth: Ivan is glad to see you, and
+  Dominique has given this speech before to people who did not come back.
 - Four delivery tags across the twelve, shared the way HR's ten are, and the
   arc inside each briefing is the same three steps - open brisk, state the
   fight flat, land the tell hard.

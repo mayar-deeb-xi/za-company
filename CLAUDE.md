@@ -622,19 +622,19 @@ cut into one folder and nothing dedupes across them - and every floor really
 does end on the same word.
 
 **Dominique is the FOURTH beat, and the only one that hands over information.**
-A floor with `briefing` in its biome walks them in once the room is clear to say
+A floor with `briefing` in its biome walks him in once the room is clear to say
 what is standing on the floor above - and it is the three floors that sit under
 a boss, which is the rule rather than the list: `tests/test_dominique.gd` reads
 the whole chain off disk and fails if a boss ever gets one without a warning
-under it. They come down the NORTH door, the one the player is about to go up,
+under it. He comes down the NORTH door, the one the player is about to go up,
 where Ivan comes up the south one - two of the three floors have both, and one
 doorway cannot take two 64px bodies on one cue. It is the same
 `game/levels/relief.gd` doing both, because that file has never named anybody:
 the beats are told apart by node name and biome key, the way the prop shelves
-are told apart by role. Their lines are one file per boss
-(`game/npcs/dominique/before_<boss>.gd`) and they are voiced too - twelve clips,
+are told apart by role. His lines are one file per boss
+(`game/npcs/dominique/before_<boss>.gd`) and he is voiced too - twelve clips,
 bold and Slavic and impatient, deliberately not Ivan's warmth: he is glad to see
-you, and they have given this speech before to people who did not come back.
+you, and Dominique has given this speech before to people who did not come back.
 
 The rest - the pipeline's three steps, why the robe goes down before the head,
 and what a third NPC would need: game/npcs/CLAUDE.md.

@@ -1,4 +1,4 @@
-"""Dominique's voice: the recipe. What they sound like, line by line.
+"""Dominique's voice: the recipe. What he sounds like, line by line.
 
 The mechanism is `cut.py`; this is the data, the same split every generated
 thing in this project uses. The three briefings hold WHAT is said and are read
@@ -25,7 +25,7 @@ Bold, Slavic and impatient, picked off the same four-voice audition Ivan's read
 came out of. The two of them are deliberately not the same warmth: Ivan is glad
 to see you and shows it, and Dominique has given this speech before to people
 who did not come back. An impatient read is what makes a briefing feel like
-information rather than sympathy - they are a road sign, not a send-off.
+information rather than sympathy - he is a road sign, not a send-off.
 
 ## Four reads across twelve lines
 

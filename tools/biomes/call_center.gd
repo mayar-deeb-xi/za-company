@@ -345,13 +345,14 @@ const BIOME := {
 		"say": "res://game/npcs/ivan/after_call_center.gd"},
 	# The FOURTH beat, and this is the first floor to carry one: Dominique comes
 	# DOWN the north stairs - the ones the player is about to go up - to say what
-	# is waiting at the top. `from: "returned"` is the whole reason she is
+	# is waiting at the top. `from: "returned"` is the whole reason he is
 	# legible here: Ivan arrives on the same cue through the south door, and two
 	# people walking in at one threshold is two bodies shoving each other across
 	# the same sixteen pixels. Opposite doors also say the two things they are
-	# for - he has come from where you have been, she from where you are going.
+	# for - Ivan has come from where you have been, Dominique from where you are
+	# going.
 	#
-	# She waits in the ARM, off the lane by sixty pixels, which is the one thing
+	# He waits in the ARM, off the lane by sixty pixels, which is the one thing
 	# this floor's shape makes easy: there is a corridor between the player and
 	# the stairs, and somebody standing in it cannot be walked past by accident.
 	"briefing": {"npc": "dominique", "from": "returned", "at": Vector2(568, 128),

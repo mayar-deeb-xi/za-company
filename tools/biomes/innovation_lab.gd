@@ -273,11 +273,11 @@ const BIOME := {
 			"per_head": ["office_boy"]},
 	],
 	# The FOURTH beat, and the one floor that carries it WITHOUT Ivan: the gym
-	# is next, and this floor is not one of the six he walks. So she arrives
+	# is next, and this floor is not one of the six he walks. So he arrives
 	# alone, through the north door like every briefing, and the room has one
 	# arrival rather than two.
 	#
-	# In the top hall, which is the one she comes down into - west of the climb
+	# In the top hall, which is the one he comes down into - west of the climb
 	# to the door, north of the crossing, and clear of the desk at (250, 60) and
 	# of this hall's two pillars. The walk from the north door is short and
 	# crosses nothing.
