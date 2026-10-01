@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://game/bosses/ahmed/ahmed.gd" id="1_ahmed"]
 [ext_resource type="SpriteFrames" path="res://game/bosses/ahmed/ahmed_frames.tres" id="2_frames"]
@@ -27,9 +27,6 @@ radius = 24.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_ring"]
 radius = 40.0
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_lane"]
-size = Vector2(64, 16)
 
 [node name="Ahmed" type="CharacterBody2D" groups=["bosses", "enemies"]]
 motion_mode = 1
@@ -78,13 +75,6 @@ monitorable = false
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ring"]
 position = Vector2(0, -2)
 shape = SubResource("CircleShape2D_ring")
-
-[node name="Lane" type="Area2D" parent="."]
-position = Vector2(40, -4)
-monitorable = false
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Lane"]
-shape = SubResource("RectangleShape2D_lane")
 
 [node name="Audio" type="Node2D" parent="."]
 script = ExtResource("4_audio")

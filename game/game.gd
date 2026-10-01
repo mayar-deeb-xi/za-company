@@ -47,6 +47,14 @@ var _bounds := Rect2()
 var _shake_throw := 0.0
 var _shake_left := 0.0
 var _shake_span := 0.12
+## Hit-stop: which stop is the latest. Each one's timer lets the world go only
+## if no later stop has been asked for since - so they extend, never stack.
+var _freeze_token := 0
+
+## How slow "stopped" is. Not zero: a zero delta is a division waiting to
+## happen somewhere in every script that measures a speed, and a twentieth of
+## a frame's worth of motion across five frames is nothing anybody can see.
+const FREEZE_SCALE := 0.05
 
 
 func _ready() -> void:
@@ -177,6 +185,10 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 		remove_child(_level)
 		_level.queue_free()
 
+	# Before the room goes in rather than with the rest of the reset below:
+	# building it adds every placed enemy through _on_node_added, and the last
+	# room's spent alert would otherwise be handed to all of them on arrival.
+	_lane_alerted = false
 	_level = (load(level_path) as PackedScene).instantiate()
 	add_child(_level)
 	move_child(_level, 0)
@@ -195,8 +207,8 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 	# line still up would be shouted by a boss who is now a floor away.
 	_shake_left = 0.0
 	_camera.offset = Vector2.ZERO
+	_unfreeze()
 	_subtitle.clear()
-	_lane_alerted = false
 
 	_player.global_position = _level.spawn_position(spawn)
 
@@ -226,11 +238,27 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 ## be connected to anything - his prompt would come up and the key would do
 ## nothing. Listening to the tree instead catches both, since instancing a level
 ## adds every node in it one at a time too.
+##
+## Enemies arrive late on the same terms - a beat walks them in through a door
+## (game/levels/reinforcements.gd) - and one that arrives after the room alert
+## has fired would otherwise be the only body in the room nobody told. So it is
+## told here, on its way in - deferred, because reinforcements.gd `unleash()`es
+## a body one line AFTER add_child, and it is having no post that makes it an
+## arrival rather than something placed.
 func _on_node_added(node: Node) -> void:
+	if _lane_alerted and node.is_in_group("enemies"):
+		_alert_arrival.call_deferred(node)
+		return
 	if not node.is_in_group("npcs") or not node.has_signal(&"talk_requested"):
 		return
 	if not node.is_connected(&"talk_requested", _on_talk_requested):
 		node.connect(&"talk_requested", _on_talk_requested)
+
+
+func _alert_arrival(node: Node) -> void:
+	if is_instance_valid(node) and node.has_method("roaming") \
+			and node.call("roaming") and node.has_method("alert"):
+		node.call("alert")
 
 
 func _on_talk_requested(npc: Node2D) -> void:
@@ -248,6 +276,8 @@ func _on_talk_requested(npc: Node2D) -> void:
 ## each body's own post, the walk home if nothing comes of it). A player who
 ## never leaves the lane is never noticed this way, exactly as before - this
 ## only changes WHEN the first sighting can happen, never what one costs.
+## Anything that walks in later is alerted as it arrives (_on_node_added), and
+## a reinforcement, having no post, keeps coming (enemy_base.alert()).
 func _alert_room() -> void:
 	for node in get_tree().get_nodes_in_group("enemies"):
 		if node.has_method("alert"):
@@ -284,6 +314,10 @@ func _watch_boss() -> void:
 		# - the same deal the bar gets one line above.
 		if node.has_signal(&"shook"):
 			node.connect(&"shook", Callable(self, "_shake"))
+		# And the hit-stop, on exactly those terms: he says a blow landed, and
+		# this is what owns the clock.
+		if node.has_signal(&"froze"):
+			node.connect(&"froze", Callable(self, "_freeze"))
 		# And a mouth, on the same terms again. A boss who says nothing emits
 		# nothing, so no floor and nothing here has to know which of them talk.
 		if node.has_signal(&"said"):
@@ -374,6 +408,35 @@ func _shake(strength: float, seconds: float) -> void:
 	_shake_throw = strength
 	_shake_span = maxf(seconds, 0.001)
 	_shake_left = _shake_span
+
+
+## The world held still for `seconds` of unscaled time - the hit-stop. The whole
+## room, on purpose, rather than the boss and the body he hit: a blow that
+## stops two people while everything else in the room carries on reads as lag,
+## not weight. Overlapping stops extend rather than stack, and the timer runs
+## on unscaled time, or the stop would stretch itself twentyfold.
+func _freeze(seconds: float) -> void:
+	_freeze_token += 1
+	Engine.time_scale = FREEZE_SCALE
+	get_tree().create_timer(seconds, true, false, true).timeout.connect(
+		_thaw.bind(_freeze_token))
+
+
+func _thaw(token: int) -> void:
+	if token == _freeze_token:
+		_unfreeze()
+
+
+## Back to full speed now. Also on every room change and on the way out, so a
+## stop can never outlive the fight that asked for it - a menu running at a
+## twentieth of its speed would be the bug report.
+func _unfreeze() -> void:
+	_freeze_token += 1
+	Engine.time_scale = 1.0
+
+
+func _exit_tree() -> void:
+	_unfreeze()
 
 
 ## The shake as an OFFSET, so _camera_target() above stays the only thing that

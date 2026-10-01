@@ -44,6 +44,8 @@ static func paint() -> Image:
 static func _blit(img: Image, f: Dictionary, cell: Vector2i) -> void:
 	var dy: int = f.get("dy", 0)
 	var dull: int = f.get("dull", 0)
+	# The flash row: every pixel the brightest rung, the outline too.
+	var white: bool = f.get("white", false)
 	for r in Poses.BODY.size():
 		var line: String = Poses.BODY[r]
 		for c in line.length():
@@ -53,4 +55,5 @@ static func _blit(img: Image, f: Dictionary, cell: Vector2i) -> void:
 			var at := cell + BODY_AT + Vector2i(c, r + dy)
 			if at.x < 0 or at.y < 0 or at.x >= img.get_width() or at.y >= img.get_height():
 				continue
-			img.set_pixelv(at, Color.html(Poses.PAL[Poses.dulled(key, dull)]))
+			var paint := "W" if white else Poses.dulled(key, dull)
+			img.set_pixelv(at, Color.html(Poses.PAL[paint]))

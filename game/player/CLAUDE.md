@@ -112,14 +112,21 @@ Three things about it are decisions:
 
 - **After the grace check, not before.** A blow the window swallowed cost
   nothing, and a number for it would say otherwise.
-- **Never from `drain()`**, on the same reasoning that keeps a drain silent:
-  it lands a point at a time every physics frame, so a number per tick is
-  sixty "-1"s a second on the player's head.
+- **A drain shows too, but its ticks share one number.** It used to show
+  nothing, on the reasoning that keeps a drain silent, and that read as a bug:
+  the wraiths, the social media team and Silverman's cold room took health
+  with no number on it. A drain lands a point at a time, several a second, so
+  a number per tick is a pile of "-1"s - instead a tick lands on the newest
+  drain number while it is still solid (`absorbs()`, under `FADE_FROM`) and
+  its total climbs; after that the next tick starts a fresh one. A drain reads
+  as a steady trickle of small totals. Its SOUND is still silent, for the
+  reason under The noise - the eye can take a trickle that the ear cannot.
 - **`top_level`, parented to the player.** It stays where the blow landed while
   the player walks out from under it, and it goes wherever the player's world
   goes - a door swaps the level, never the player. `z_index` 50 keeps a prop
-  from hiding it. test_flow.gd's blow section checks all three halves: the
-  number, its absence for a drain, and that it is gone before the next blow.
+  from hiding it. test_flow.gd's blow section checks the
+  number, two drain ticks adding up on one, the blow's number gone by the next
+  blow, and a fading drain number refusing a later tick.
 
 The player also owns its lives (`MAX_LIVES`, 3): each death spends one via
 `lose_life()`, whose return value lets game.gd choose respawn or game over from

@@ -35,9 +35,10 @@ extends "res://game/bosses/boss_base.gd"
 ## - **the crossing** (`DASH`) - locomotion that now hurts. He passes THROUGH
 ##   you, once per crossing, and it is the only thing he has that is not on the
 ##   attack cycle at all.
-## - **the glare** - the room whites out and a band of it crosses the floor,
-##   travelling through his recover. You step out of its line; you cannot
-##   outrun it.
+## - **the glare** - the room whites out and the light leaves him as a CROSS:
+##   a band left and right along the floor, and two shorter arms straight up
+##   and down, all travelling through his recover. You step off both lines -
+##   diagonal to him is the only safe place near him; you cannot outrun it.
 ## - **the split** - he divides, and the copy walks at you while he stands
 ##   still. See copy.gd; it is drawn from a sheet row he never plays.
 ## - **the prism** - he draws the city's light in off the window behind him and
@@ -128,6 +129,16 @@ const DASH := [
 const GLARE_START := 16.0
 const GLARE_REACH := 140.0
 const GLARE_SLACK := 6.0
+## THE CROSSFIRE: the arms straight up and down, picked off the glare preview
+## and shipped as previewed. Shorter than the band because the room is less
+## deep than it is wide, and fired on the same frame, over the same travel, as
+## part of the same glare - one glare is still one hit, whichever arm finds
+## you. Each arm is a 20 px lane, the band's own width turned on its side.
+const GLARE_ARM := 80.0
+## Where every lane is centred: his chest's height, the Band node's own y.
+const GLARE_LANE_Y := -10.0
+## A body is measured along an arm at its own centre, 4 px over its origin.
+const GLARE_BODY_Y := -4.0
 
 @export var glare_cooldown := 3.2
 @export var split_cooldown := 5.0
@@ -230,6 +241,8 @@ var _tier := 1
 var _dash_total := _total_of(DASH)
 
 @onready var _band: Area2D = $Band
+@onready var _band_up: Area2D = $BandUp
+@onready var _band_down: Area2D = $BandDown
 
 
 func _ready() -> void:
@@ -283,6 +296,8 @@ func _physics_process(delta: float) -> void:
 	# hits whoever it has reached and not yet blinded.
 	if attack == "glare" and phase == Phase.RECOVER:
 		_glare_reach(glare_front(_phase_time))
+		_glare_reach_arm(_band_up, -1.0, glare_arm_front(_phase_time))
+		_glare_reach_arm(_band_down, 1.0, glare_arm_front(_phase_time))
 	if attack == "prism" and phase == Phase.RECOVER and _phase_time < PRISM_SWEEP:
 		_prism_reach(_phase_time)
 	_chill(delta)
@@ -349,6 +364,8 @@ func _strike() -> void:
 			# with the band, so nobody is caught twice by one glare.
 			_flash_at_source()
 			_glare_reach(GLARE_START)
+			_glare_reach_arm(_band_up, -1.0, GLARE_START)
+			_glare_reach_arm(_band_down, 1.0, GLARE_START)
 			shook.emit(SHAKE["glare"], SHAKE_SECONDS)
 		"split":
 			_split_timer = split_cooldown
@@ -401,6 +418,29 @@ func _glare_reach(front: float) -> void:
 		if body == self or _glare_hit.has(body) or not body.has_method("take_damage"):
 			continue
 		if _forward_of(body) <= front + GLARE_SLACK:
+			_glare_hit[body] = true
+			body.call("take_damage", contact_damage)
+
+
+## How far the up and down arms' fronts have crossed, `since` seconds after
+## the light landed - the band's travel over the arms' shorter reach.
+func glare_arm_front(since: float) -> float:
+	var travel := maxf(Poses.recover_of("glare"), 0.001)
+	return GLARE_START + (GLARE_ARM - GLARE_START) * clampf(since / travel, 0.0, 1.0)
+
+
+## One vertical arm, `dy` -1 up and 1 down: the band's rule turned on its side.
+## The area is moved to the front and asked who it overlaps, and a body counts
+## once the front has reached it, sharing `_glare_hit` with the band so one
+## glare still lands once.
+func _glare_reach_arm(area: Area2D, dy: float, front: float) -> void:
+	area.position.y = GLARE_LANE_Y + dy * front
+	for body in area.get_overlapping_bodies():
+		if body == self or _glare_hit.has(body) or not body.has_method("take_damage"):
+			continue
+		var along: float = (body.global_position.y + GLARE_BODY_Y
+			- (global_position.y + GLARE_LANE_Y)) * dy
+		if along <= front + GLARE_SLACK:
 			_glare_hit[body] = true
 			body.call("take_damage", contact_damage)
 

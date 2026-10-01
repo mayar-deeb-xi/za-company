@@ -137,7 +137,8 @@ other by hand about a shape only one floor has, and because a rule this old
 should be answerable by the room it is about. The one reader inside `game/`
 is game.gd's **room alert**: the first frame the player stands more than
 `LANE_ALERT_CLEARANCE` (8 px) off the walk, every enemy in the room is
-`alert()`ed once (game/enemies/CLAUDE.md, The leash). Every spawn marker
+`alert()`ed once (game/enemies/CLAUDE.md, The leash), and every reinforcement
+that walks in after that is alerted on its way in. Every spawn marker
 stands ON its lane, so arriving never spends it - `tests/test_alert.gd` sweeps
 the chain for that.
 
@@ -747,7 +748,8 @@ Three things follow from that and are worth knowing before touching it:
   enemy is held within 2x its sight of its mark and walks back to it
   (game/enemies/CLAUDE.md, The leash), and the only mark an arrival could be
   given is the doorway it came through. It still gives up on a player it has
-  lost; it simply has nowhere to go back to.
+  lost, unless the room alert has fired - then it keeps coming, because
+  giving up would only leave it standing wherever it stopped.
 - **Which makes it the one place head count can live.** `_head_count()` returns
   1 today and multiplies the group when a second player exists. It obeys the
   rule `Difficulty` already obeys - scale what the world sends, never what it is

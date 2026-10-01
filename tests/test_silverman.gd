@@ -86,6 +86,9 @@ var _prism_span := 0.0
 var _prism_health := -1
 var _prism_behind := -1
 
+# The crossfire's down arm, measured as a delta like the copy.
+var _before_arm := -1
+
 
 func _tick(frame: int) -> void:
 	if _sv != null and is_instance_valid(_sv):
@@ -184,6 +187,12 @@ func _tick(frame: int) -> void:
 					and _sv.get_node("PrismAir").z_index > 0)
 			_check("silverman: and its flash goes on his layer, under the HUD",
 				_sv.get_node_or_null("Glare/PrismScreen") != null)
+			_check("silverman: the glare's white flash is a row on the sheet (%d frame)"
+				% _sprite_of(_sv).sprite_frames.get_frame_count(&"flash_side"),
+				_sprite_of(_sv).sprite_frames.get_frame_count(&"flash_side") == 1)
+			_check("silverman: and its light draws over him (%s)"
+				% str(_sv.get_node_or_null("GlareAir")),
+				_sv.get_node_or_null("GlareAir") != null and _sv.get_node("GlareAir").z_index > 0)
 			_check("silverman: the prism has its own row on the sheet (%d frames)"
 				% _sprite_of(_sv).sprite_frames.get_frame_count(&"prism_side"),
 				_sprite_of(_sv).sprite_frames.get_frame_count(&"prism_side") == 6)
@@ -333,7 +342,28 @@ func _tick(frame: int) -> void:
 			_check("silverman: step out of the radius and it stops (%s -> %s)"
 				% [_health_at_edge, _player().get("health")],
 				_player().get("health") == _health_at_edge)
-		970:
+		965:
+			# ---- THE CROSSFIRE. The glare's arms straight up and down. 50 px
+			# due south of him is outside the burst (Touch, 22) and outside the
+			# cold room (34), and off the band's lane by a long way - so the
+			# only thing that can reach a player standing here is the down arm.
+			# The split and the prism would both come first in his last phase,
+			# so their cooldowns are held off for this one glare.
+			_sv.set("sight_radius", 130.0)
+			_sv.set("_split_timer", 99.0)
+			_sv.set("_prism_timer", 99.0)
+			_player().global_position = _sv.global_position + Vector2(0.0, 50.0)
+			_before_arm = _player().get("health")
+		1060:
+			_check("silverman: due south of him, the glare's down arm lands its 16 (%s -> %s)"
+				% [_before_arm, _player().get("health")],
+				_before_arm - int(_player().get("health")) == 16)
+			_check("silverman: and it was a glare that did it (%s)" % _opened.back(),
+				_opened.back() == "glare")
+			# The aura check below compares against health after this glare, not
+			# before it - the arm's 16 is not the aura's.
+			_health_at_edge = _player().get("health")
+		1170:
 			_sv.call("take_damage", 500)
 			_check("silverman: at zero he concedes (%s)" % _sv.get("has_conceded"),
 				_sv.get("has_conceded") == true)
@@ -343,11 +373,11 @@ func _tick(frame: int) -> void:
 				and _sv.is_in_group("bosses"))
 			_check("silverman: losing flight is the defeat (%s)"
 				% _sprite_of(_sv).animation, _sprite_of(_sv).animation == &"concede_side")
-		990:
+		1190:
 			_check("silverman: a conceded boss draws no aura", _drawn_nothing())
 			_check("silverman: and casts no more copies (%d)" % _copies().size(),
 				_copies().is_empty())
-		1060:
+		1260:
 			_check("silverman: he settles, then keeps cooling (%s)"
 				% _sprite_of(_sv).animation, _sprite_of(_sv).animation == &"beaten_side")
 			_check("silverman: and stops crossing the room",

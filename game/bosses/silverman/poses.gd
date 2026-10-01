@@ -99,7 +99,7 @@ const BODY := [
 ## only the rows a hand-owned PNG is too short to hold, so a new row goes on
 ## the end or it lands on top of one somebody may have drawn into.
 const ORDER := ["idle", "walk", "dash", "ghost", "glare", "split", "concede",
-	"beaten", "prism"]
+	"beaten", "prism", "flash"]
 
 ## `dy` floats the whole body; negative is up, and it is the ONLY thing that
 ## varies between the frames of a row. `dull` is how many steps down the ramp
@@ -183,6 +183,14 @@ const ANIMS := {
 		{"dur": 1.40, "dy": -4, "impact": true},
 		{"dur": 0.25, "dy": -3},
 		{"dur": 0.25, "dy": -2},
+	],
+	# Never played, like `ghost`: the glare's impact pose with every pixel his
+	# brightest rung, outline included - the instant his whole body goes white
+	# as the light leaves him. glare.gd stamps it over the real sprite and fades
+	# it out. A white-out is a picture rather than a modulate, which can only
+	# darken, so it lives on the sheet with the others.
+	"flash": [
+		{"dur": 0.5, "dy": -4, "white": true},
 	],
 	# Defeat, and for a man of metal it is the obvious one: he loses flight.
 	# He settles the two pixels onto the floor he has never touched and the

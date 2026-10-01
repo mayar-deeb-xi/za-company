@@ -717,13 +717,22 @@ unlocks.
 - [x] **AHMED — 144 HP solo (+48 a head), F4.** The relative; teaching boss, and the one who
   brought an axe to a performance review. 2.5x the player and thin as a coat
   rack: black curls going grey, black beard, white shirt with the sleeves
-  shoved up, black trousers. The axe burns. Four attacks on the guard's cycle,
-  chosen by range and by how the player is behaving (game/bosses/ahmed/):
-  CHOP 16 and SWEEP 12 alternate in reach; every third swing - or sooner, if
-  he is hit twice inside 2 s - is the SLAM, 20 to EVERYONE in a 40 px ring,
-  office boys included; a player who kites gets the FIRE WAVE, 14 down a
-  64 px lane, dodged by a sidestep. Standard interrupt economy. Every attack
-  has fire on it, drawn live over a clean sheet.
+  shoved up, black trousers. The axe burns. Five attacks on the guard's cycle,
+  chosen by range and by how the player is behaving (game/bosses/ahmed/),
+  reworked 2026-10-01 from an animated preview because the first four all
+  asked the same question - are you next to him or not:
+  CHOP 16 and SWEEP 12 alternate in reach. The chop is a FISSURE - a crack
+  runs on ahead and pillars burst out of it, 8 more, so backing straight off
+  is wrong; the sweep SHOVES you out of reach and in front of him, into the
+  wave. Every third swing - or sooner, if he is hit twice inside 2 s - is the
+  SLAM, now a LEAP onto where you stood (a ring marks it), 20 to EVERYONE in
+  40 px, office boys included; out of reach it is also how he follows you. A
+  player in front of him and out of reach gets the THREE-WAY WAVE, 14 per
+  lane, safe between two of them. And three seconds of keeping away brings out
+  THE ENORMOUS CHAIR: he spins it up, rolls at you until he hits something
+  (18), and sits there dizzy - the punish. Standard interrupt economy; every
+  impact has a hit-stop, a shake and a flash. Every attack has fire on it,
+  drawn live over a clean sheet. The chair has no sound or voice line yet.
   **Built**: the boss, his fire, the locked north door, tests/test_bosses.gd.
   **Built since**: the "SECURITY!" summon, and it needed no summon hook on him
   at all - it is a `reinforcements` beat cued by `at_boss_fraction`, one office
@@ -739,7 +748,7 @@ unlocks.
   recording runs. `ahmed/taunts.gd` is the
   whole of what he says; `game/enemies/enemy_lines.gd` decides when, and no
   other boss has lines yet.
-  **Still to add**: the enormous chair.
+  **Built since**: the enormous chair, as his fifth attack (above).
 - [x] **MOSTAFA — 216 HP solo (+72 a head), F7.** Boxing rhythm fight; his attack is the cycle
   run 3x back-to-back:
   - Jab, jab: 0.25s wind-ups, 6 dmg each, commit_fraction ~1.0

@@ -206,6 +206,9 @@ var _charge := 0.0
 ## placed in player.tscn because it exists only for the length of a stance.
 var _ring: Node2D = null
 var _grace := 0.0
+## The newest number a drain put up, which later ticks add to while it lasts -
+## see damage_number.gd. A blow never touches it: a blow is its own number.
+var _drain_number: Node2D = null
 ## Enemies already struck by the current swing, so a swing lands once per enemy
 ## rather than once per physics frame it overlaps them.
 var _swing_hits := {}
@@ -645,7 +648,6 @@ func take_damage(amount: int) -> void:
 	_lose_health(amount)
 	# The number off the head. Past the grace check on purpose: a blow the
 	# window swallowed cost nothing, and a number for it would say otherwise.
-	# Never from drain() - see damage_number.gd.
 	DamageNumber.spawn(self, amount)
 	# Metered for free by the window above, so a crowd cannot stack gasps. Only
 	# on a blow that was SURVIVED: `_lose_health` plays `die` at zero, and a
@@ -664,10 +666,18 @@ func take_damage(amount: int) -> void:
 ## work. Routed through take_damage(), a drain would be swallowed for 0.8s
 ## every time an unrelated torch clipped the player, and would blink the sprite
 ## as though they were being struck once a second.
+##
+## It is still SHOWN: health that goes with no number on it reads as a bug.
+## The ticks share one number while it is fresh rather than putting up one each,
+## so a drain is a trickle of small totals and not a pile of "-1"s.
 func drain(amount: int) -> void:
 	if health <= 0:
 		return
 	_lose_health(amount)
+	if is_instance_valid(_drain_number) and _drain_number.call("absorbs"):
+		_drain_number.call("add", amount)
+	else:
+		_drain_number = DamageNumber.spawn(self, amount)
 
 
 ## A status the player CARRIES, which is a third thing again: take_damage() and

@@ -37,6 +37,11 @@ signal health_changed(health: int, max_health: int)
 ## pixels of throw and decays to nothing over `seconds`. A boss that never
 ## emits it simply never shakes anything.
 signal shook(strength: float, seconds: float)
+## And may stop it dead for a moment - the hit-stop, the few frames the world
+## holds still when a blow lands so the eye gets to see it land. Fourth in
+## the shape above and wired the same way: game.gd owns the clock, so it is
+## game.gd that slows it. `seconds` is unscaled time, not the room's.
+signal froze(seconds: float)
 ## A boss may also talk, and this is the third signal in that shape and wired
 ## the same way for the third time: he shouts, and never learns that a subtitle
 ## exists. game.gd listens, because game.gd is what owns the screen. `seconds`

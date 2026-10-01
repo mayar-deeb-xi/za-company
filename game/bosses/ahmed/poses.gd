@@ -145,7 +145,9 @@ const FRONT_SHOULDER := Vector2i(8, 19)
 const BACK_SHOULDER := Vector2i(3, 19)
 
 ## Sheet order: one row per animation, in this order.
-const ORDER := ["idle", "walk", "chop", "sweep", "slam", "wave", "concede", "beaten"]
+## A row added after the sheet was seeded goes LAST: build_bosses.gd paints
+## only the rows the PNG is too short to hold (see its `_extend`).
+const ORDER := ["idle", "walk", "chop", "sweep", "slam", "wave", "concede", "beaten", "chair"]
 
 const ANIMS := {
 	"idle": [
@@ -163,7 +165,9 @@ const ANIMS := {
 			"axe": {"hand": Vector2i(11, 23), "ang": 55.0, "len": 8, "blade": -1}},
 	],
 	# Overhead. Sparks off the raised blade, fire down the haft, then a column
-	# of fire out of the floor where it lands and a fissure running on ahead.
+	# of fire out of the floor where it lands. The crack that runs on ahead
+	# and the pillars that burst out of it are fissure.gd's, on their own clock,
+	# because they outlast the swing.
 	"chop": [
 		{"dur": 0.2, "phase": "w", "glow": 1.2, "arms": [{"sh": "front", "hand": Vector2i(9, 4), "bend": -3}],
 			"axe": {"hand": Vector2i(9, 4), "ang": -115.0, "len": 12},
@@ -186,11 +190,11 @@ const ANIMS := {
 			"arms": [{"sh": "front", "hand": Vector2i(14, 22), "bend": 2}],
 			"axe": {"hand": Vector2i(14, 22), "ang": 52.0, "len": 12},
 			"floor": [["ring", 17, 0, 11.0, 1.5, "orange", ""]],
-			"fx": [["geyser", 17, 0, 11, 4], ["splash", 17, 0, 18], ["fissure", 21, 0, 16, true],
+			"fx": [["geyser", 17, 0, 11, 4], ["splash", 17, 0, 18],
 				["sparks", 17, -18, 8, 12], ["scorch", 17, 0, 9, 1.0]]},
 		{"dur": 0.2, "phase": "r", "arms": [{"sh": "front", "hand": Vector2i(12, 24), "bend": 2}],
 			"axe": {"hand": Vector2i(12, 24), "ang": 55.0, "len": 9, "blade": -1},
-			"fx": [["patch", 17, 0, 8, 4], ["fissure", 21, 0, 20, true], ["embers", 25, -6, 6, 10]]},
+			"fx": [["patch", 17, 0, 8, 4], ["embers", 25, -6, 6, 10]]},
 	],
 	# Horizontal. The low blade drags fire across the floor behind him, then
 	# the swing throws a crescent of flame that widens and breaks apart.
@@ -220,53 +224,45 @@ const ANIMS := {
 			"fx": [["crescent", 10, -13, 27, 35, -105, 50, 2], ["embers", 40, -17, 12, 12],
 				["flame", 40, 0, 3, 2], ["scorch", 38, 0, 8, 0.6]]},
 	],
-	# The area attack. Both hands; a ring of embers creeps out to the full
-	# radius over the wind-up and goes up as fire when the axe lands.
+	# The area attack, and a LEAP: two frames of crouch, then the third frame is
+	# the jump itself - held for 0.6 s while ahmed.gd carries him through the
+	# air to where the player stood when he left the ground - and he lands with
+	# the axe. The ring on the floor is no longer here: the telegraph is
+	# leap_mark.gd's at the TARGET, and the fire he lands in is slam_land.gd's,
+	# both circles, because the Ring area that hurts is one.
 	"slam": [
 		{"dur": 0.34, "phase": "w", "glow": 1.3,
 			"arms": [{"sh": "back", "hand": Vector2i(10, 12), "bend": -3, "behind": true}, {"sh": "front", "hand": Vector2i(10, 12), "bend": -4}],
-			"axe": {"hand": Vector2i(10, 12), "ang": -95.0, "len": 12},
-			"floor": [["ring", 0, -1, 12.0, 1.2, "ember", "ember_fill"]]},
+			"axe": {"hand": Vector2i(10, 12), "ang": -95.0, "len": 12}},
 		{"dur": 0.33, "phase": "w", "glow": 1.6, "lift": -1,
 			"arms": [{"sh": "back", "hand": Vector2i(9, 6), "bend": -3, "behind": true}, {"sh": "front", "hand": Vector2i(9, 6), "bend": -4}],
-			"axe": {"hand": Vector2i(9, 6), "ang": -90.0, "len": 12},
-			"floor": [["ring", 0, -1, 24.8, 1.2, "ember", "ember_fill"]],
-			"fx": [["embers", 0, -1, 6, 22]]},
-		{"dur": 0.33, "phase": "w", "glow": 2.0, "lift": -3, "dx": 1, "legs": "brace",
+			"axe": {"hand": Vector2i(9, 6), "ang": -90.0, "len": 12}},
+		{"dur": 0.6, "phase": "w", "glow": 2.0, "lift": -3, "dx": 1, "legs": "brace", "air": true,
 			"arms": [{"sh": "back", "hand": Vector2i(9, 2), "bend": -3, "behind": true}, {"sh": "front", "hand": Vector2i(9, 2), "bend": -4}],
-			"axe": {"hand": Vector2i(9, 2), "ang": -88.0, "len": 12},
-			"floor": [["ring", 0, -1, 38.0, 1.4, "hot", "ember_fill"]],
-			"fx": [["embers", 0, -1, 10, 34]]},
+			"axe": {"hand": Vector2i(9, 2), "ang": -88.0, "len": 12}},
 		{"dur": 0.1, "phase": "s", "impact": true, "legs": "brace",
 			"arms": [{"sh": "back", "hand": Vector2i(12, 22), "bend": 2, "behind": true}, {"sh": "front", "hand": Vector2i(12, 22), "bend": 3}],
 			"axe": {"hand": Vector2i(12, 22), "ang": 72.0, "len": 9},
-			"floor": [["ring", 0, -1, 7.0, 3.0, "flash", "flash_fill"]],
 			"fx": [["burst", 10, -1, 1.2]]},
 		{"dur": 0.1, "phase": "s", "legs": "brace",
 			"arms": [{"sh": "back", "hand": Vector2i(12, 22), "bend": 2, "behind": true}, {"sh": "front", "hand": Vector2i(12, 22), "bend": 3}],
 			"axe": {"hand": Vector2i(12, 22), "ang": 72.0, "len": 9},
-			"floor": [["ring", 0, -1, 20.0, 2.5, "orange", "orange_fill"], ["cracks", 0, -1, 20.0, "crack_hot"]],
-			"fx": [["pillars", 20, 7], ["burst", 10, -1, 0.8]]},
+			"fx": [["burst", 10, -1, 0.8]]},
 		{"dur": 0.18, "phase": "r", "legs": "brace",
 			"arms": [{"sh": "back", "hand": Vector2i(12, 22), "bend": 2, "behind": true}, {"sh": "front", "hand": Vector2i(12, 22), "bend": 3}],
-			"axe": {"hand": Vector2i(12, 22), "ang": 72.0, "len": 9},
-			"floor": [["ring", 0, -1, 32.0, 2.0, "fire", "fire_fill"], ["cracks", 0, -1, 28.0, "crack_warm"]],
-			"fx": [["pillars", 32, 9], ["embers", 0, -5, 12, 30]]},
+			"axe": {"hand": Vector2i(12, 22), "ang": 72.0, "len": 9}},
 		{"dur": 0.18, "phase": "r", "legs": "brace",
 			"arms": [{"sh": "back", "hand": Vector2i(12, 22), "bend": 2, "behind": true}, {"sh": "front", "hand": Vector2i(12, 22), "bend": 3}],
-			"axe": {"hand": Vector2i(12, 22), "ang": 72.0, "len": 9},
-			"floor": [["ring", 0, -1, 40.0, 1.5, "fire_dim", ""], ["cracks", 0, -1, 28.0, "crack_dim"]],
-			"fx": [["pillars", 40, 6], ["embers", 0, -7, 8, 36]]},
+			"axe": {"hand": Vector2i(12, 22), "ang": 72.0, "len": 9}},
 		{"dur": 0.17, "phase": "r", "legs": "brace", "arms": [{"sh": "front", "hand": Vector2i(13, 21), "bend": 2}],
-			"axe": {"hand": Vector2i(13, 21), "ang": 60.0, "len": 10},
-			"floor": [["ring", 0, -1, 40.0, 1.2, "dim", ""], ["cracks", 0, -1, 24.0, "crack_out"]],
-			"fx": [["pillars", 40, 3]]},
+			"axe": {"hand": Vector2i(13, 21), "ang": 60.0, "len": 10}},
 		{"dur": 0.17, "phase": "r", "arms": [{"sh": "front", "hand": Vector2i(12, 24), "bend": 2}],
-			"axe": {"hand": Vector2i(12, 24), "ang": 55.0, "len": 9, "blade": -1},
-			"floor": [["ring", 0, -1, 40.0, 1.0, "scorch", ""]]},
+			"axe": {"hand": Vector2i(12, 24), "ang": 55.0, "len": 9, "blade": -1}},
 	],
 	# Ranged. The blade is charged over the wind-up, then brought down; the
-	# fire keeps going as a wave along the floor.
+	# fire goes on as THREE waves in a fan, which are fan_wave.gd's - they run
+	# on their own clock from the impact frame, so the frames after it carry
+	# only the burst where the blade went in.
 	"wave": [
 		{"dur": 0.23, "phase": "w", "glow": 1.4, "arms": [{"sh": "front", "hand": Vector2i(8, 6), "bend": -3}],
 			"axe": {"hand": Vector2i(8, 6), "ang": -80.0, "len": 12}},
@@ -280,20 +276,15 @@ const ANIMS := {
 			"axe": {"hand": Vector2i(14, 22), "ang": 52.0, "len": 12},
 			"fx": [["trail", -85, 45], ["burst", 13, 0, 1.3]]},
 		{"dur": 0.07, "phase": "s", "legs": "brace", "arms": [{"sh": "front", "hand": Vector2i(14, 22), "bend": 2}],
-			"axe": {"hand": Vector2i(14, 22), "ang": 52.0, "len": 12},
-			"fx": [["wave", 13, 31]]},
+			"axe": {"hand": Vector2i(14, 22), "ang": 52.0, "len": 12}},
 		{"dur": 0.07, "phase": "s", "legs": "brace", "arms": [{"sh": "front", "hand": Vector2i(14, 22), "bend": 2}],
-			"axe": {"hand": Vector2i(14, 22), "ang": 52.0, "len": 12},
-			"fx": [["wave", 13, 49]]},
+			"axe": {"hand": Vector2i(14, 22), "ang": 52.0, "len": 12}},
 		{"dur": 0.08, "phase": "s", "legs": "brace", "arms": [{"sh": "front", "hand": Vector2i(14, 22), "bend": 2}],
-			"axe": {"hand": Vector2i(14, 22), "ang": 52.0, "len": 12},
-			"fx": [["wave", 13, 67]]},
+			"axe": {"hand": Vector2i(14, 22), "ang": 52.0, "len": 12}},
 		{"dur": 0.25, "phase": "r", "legs": "brace", "arms": [{"sh": "front", "hand": Vector2i(13, 21), "bend": 2}],
-			"axe": {"hand": Vector2i(13, 21), "ang": 60.0, "len": 10},
-			"fx": [["wave_scorch", 13, 60, 0.7], ["flame", 75, 0, 4, 3], ["flame", 43, 1, 3, 2]]},
+			"axe": {"hand": Vector2i(13, 21), "ang": 60.0, "len": 10}},
 		{"dur": 0.25, "phase": "r", "arms": [{"sh": "front", "hand": Vector2i(12, 24), "bend": 2}],
-			"axe": {"hand": Vector2i(12, 24), "ang": 55.0, "len": 9, "blade": -1},
-			"fx": [["wave_scorch", 13, 60, 0.4]]},
+			"axe": {"hand": Vector2i(12, 24), "ang": 55.0, "len": 9, "blade": -1}},
 	],
 	# Bosses concede rather than die, and Ahmed lets go of the axe to do it:
 	# he straightens up one last time, his fingers open, the axe drops and
@@ -339,11 +330,58 @@ const ANIMS := {
 			"axe": {"hand": Vector2i(16, 32), "ang": 0.0, "len": 9, "blade": -1},
 			"fx": [["scorch", 16, 0, 5, 0.4], ["smoke", 20, -6]]},
 	],
+	# THE ENORMOUS CHAIR. He sits in it - the beaten kneel, raised four pixels
+	# onto the seat, hands on his knees and no axe - spins it up, rolls across
+	# the room in it and sits there dizzy after it hits something. One picture
+	# four times over: the spin is ahmed.gd flipping the sprite, the run is him
+	# moving, and the three phases are only so the timer can read them. The
+	# chair is axe_fire.gd's, the back and castors under him and the seat over
+	# his legs, so it mirrors with the sprite. The charge frame's `dur` is the
+	# LONGEST it may run; it stops sooner on anything solid.
+	"chair": [
+		{"dur": 1.0, "phase": "w", "dy": 4, "lift": -4, "legs": "kneel", "glow": 0.0,
+			"arms": [{"sh": "back", "hand": Vector2i(2, 32), "bend": 2}, {"sh": "front", "hand": Vector2i(9, 31), "bend": 2}],
+			"floor": [["chair_back"]], "fx": [["chair_seat"]]},
+		{"dur": 1.2, "phase": "s", "impact": true, "dy": 4, "lift": -4, "legs": "kneel", "glow": 0.0,
+			"arms": [{"sh": "back", "hand": Vector2i(2, 32), "bend": 2}, {"sh": "front", "hand": Vector2i(9, 31), "bend": 2}],
+			"floor": [["chair_back"]], "fx": [["chair_seat"]]},
+		{"dur": 1.55, "phase": "r", "dy": 4, "lift": -4, "legs": "kneel", "glow": 0.0,
+			"arms": [{"sh": "back", "hand": Vector2i(2, 32), "bend": 2}, {"sh": "front", "hand": Vector2i(9, 31), "bend": 2}],
+			"floor": [["chair_back"]], "fx": [["chair_seat"]]},
+	],
 }
 
 ## Which animations loop. Every attack plays once and holds its last frame;
 ## so does the concede - but it hands off to `beaten`, which loops for good.
 const LOOPS := {"idle": true, "walk": true, "beaten": true}
+
+## The chair's run, in seconds: the longest the charge may last, and the dizzy
+## spell after it stops. Read off the frames like the wind-up, so the picture
+## and the timer cannot drift.
+static func chair_charge_seconds() -> float:
+	return ANIMS["chair"][1]["dur"]
+
+
+static func chair_dizzy_seconds() -> float:
+	return ANIMS["chair"][2]["dur"]
+
+
+## The slam's crouch before he leaves the ground, and how long he is in the
+## air: the frame marked `air` and everything before it.
+static func leap_crouch_seconds() -> float:
+	var total := 0.0
+	for frame in ANIMS["slam"]:
+		if frame.get("air", false):
+			return total
+		total += frame["dur"]
+	return total
+
+
+static func leap_air_seconds() -> float:
+	for frame in ANIMS["slam"]:
+		if frame.get("air", false):
+			return frame["dur"]
+	return 0.0
 
 ## Base speed the sheet is sliced at; each frame's `dur` becomes a duration
 ## multiplier on it, so the sheet carries the attack's own timing.

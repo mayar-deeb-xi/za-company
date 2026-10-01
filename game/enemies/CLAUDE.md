@@ -186,9 +186,22 @@ leash above, unchanged: an alerted body far away walks the player's way for
 2.5 s, at most 2x its sight from its post, and then goes home unless it has
 really seen them by then. It fires once per visit - a second step off the lane
 is nothing - and the lane itself still wakes nobody, so the placement rule
-below holds as written. A boss or an unleashed reinforcement drops the forced
-hunt on the next frame, because `_hunt()` already does that for a body with no
-post that cannot see the player. `tests/test_alert.gd` owns it.
+below holds as written. A boss drops the forced hunt on the next frame, because
+`_hunt()` already does that for a body that does not leash and cannot see the
+player.
+
+**A reinforcement is the one body the alert changes for good.** Two gaps let
+the beats sit out the room's push: anything that walked in AFTER it fired was
+never told, and a body told would have run its 2.5 s of patience down and then
+stopped dead wherever it stood, because a body with no post has no walk home
+to fall into. So game.gd's `_on_node_added` alerts every `unleash()`ed body
+that enters the tree once the room's alert is spent (asked on a deferred call,
+because the unleash lands one line after add_child; a body placed by hand
+late, which only a test ever does, is left alone) - and
+`_hunt()` lets an alerted body with no post keep coming for the rest of the
+visit. Nothing bounds it, because the leash is measured from a post it does not
+have; that is the same reasoning `unleash()` already stated, followed one step
+further. `tests/test_alert.gd` owns it.
 
 ## Getting round the furniture: the desk problem
 

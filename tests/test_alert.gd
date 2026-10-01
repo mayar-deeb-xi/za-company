@@ -13,6 +13,10 @@ extends "res://tests/helpers.gd"
 ## to the same post, and a second step off the lane in the same visit is
 ## nothing. Plus the one sweep that keeps it honest across the chain - no
 ## floor's spawn marker may sit off its own lane, or arriving would fire it.
+##
+## And the one thing that DOES change for good: a reinforcement walking in after
+## the alert is told on arrival, and having no post it keeps coming past the
+## patience a placed body would have gone home on.
 
 const GUARD := "res://game/enemies/regular/regular.tscn"
 const LOBBY := "res://game/levels/lobby/lobby.tscn"
@@ -26,6 +30,7 @@ const OFF_AGAIN := Vector2(510, 140)
 
 var _t0 := 0
 var _guard: CharacterBody2D = null
+var _arrival: CharacterBody2D = null
 var _farthest := 0.0
 var _woke_again := false
 
@@ -118,7 +123,24 @@ func _lobby(at: int) -> void:
 			_player().global_position = OFF_LANE
 		608:
 			_check("visit: and spends it on its own", _guard.hunting)
+			# Out of the way, so the only body left is the one walking in next.
+			_guard.queue_free()
 		610:
+			_arrival = _arrive(POST)
+		612:
+			_check("arrival: a body walking in after the alert is told on its way in",
+				_arrival.hunting)
+			_check("arrival: without being able to see you (%.0f px, sight %.0f)"
+				% [_arrival.global_position.distance_to(OFF_LANE), _arrival.sight_radius],
+				_arrival.global_position.distance_to(OFF_LANE) > _arrival.sight_radius)
+		# 2.5 s of patience from frame 610 ran out around 760; well past it.
+		840:
+			var walked := _arrival.global_position.x - POST.x
+			var patience_walk: float = _arrival.speed * _arrival.patience_seconds
+			_check("arrival: having no post, it does not give up on the patience",
+				_arrival.hunting)
+			_check("arrival: and is still coming (%.0f px east, patience alone walks %.0f)"
+				% [walked, patience_walk], walked > patience_walk)
 			_finish()
 
 
@@ -126,4 +148,14 @@ func _spawn(at: Vector2) -> CharacterBody2D:
 	var enemy := (load(GUARD) as PackedScene).instantiate() as CharacterBody2D
 	_level().add_child(enemy)
 	enemy.global_position = at
+	return enemy
+
+
+## A reinforcement, the way game/levels/reinforcements.gd's _spawn makes one:
+## into Props, placed one line after add_child, and given no post.
+func _arrive(at: Vector2) -> CharacterBody2D:
+	var enemy := (load(GUARD) as PackedScene).instantiate() as CharacterBody2D
+	_level().get_node("Props").add_child(enemy)
+	enemy.global_position = at
+	enemy.call("unleash")
 	return enemy

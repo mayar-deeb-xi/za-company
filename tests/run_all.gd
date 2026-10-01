@@ -24,7 +24,7 @@ extends SceneTree
 ## never goes true - which is the case that actually matters.
 
 const SUITES := ["test_menu", "test_flow", "test_combat", "test_arc", "test_slam",
-	"test_bosses",
+	"test_bosses", "test_ahmed_moves",
 	"test_rage", "test_silverman", "test_barks", "test_reinforcements",
 	"test_dialogue", "test_ivan", "test_dominique", "test_enemy_sfx",
 	"test_player_sfx", "test_studio", "test_surge", "test_scrubber",

@@ -10,12 +10,16 @@ extends Node2D
 ## because a Label's font is antialiased at any size small enough to sit over
 ## a 32 px body, and this one is the game's own pixels.
 ##
-## **Blows only.** player.gd spawns one from `take_damage()` past the grace
-## window - so a blow the window swallowed shows nothing, which is the truth -
-## and never from `drain()`. A drain lands every physics frame at one point a
-## time, so a number per tick is sixty a second of "-1" stacked on the head;
-## the same reason a drain is silent. The thing draining you is already the
-## thing on screen.
+## **A blow gets its own; a drain's ticks share one.** player.gd spawns one
+## from `take_damage()` past the grace window - so a blow the window swallowed
+## shows nothing, which is the truth. `drain()` shows too, because health that
+## goes with no number on it reads as a missing number rather than as a
+## different kind of harm - but a drain lands a point at a time, several a
+## second and more with two wraiths on you, so a number per tick is a stack of
+## "-1"s on the head. Instead a tick lands on the newest drain number while it
+## is still solid (`absorbs()`) and its total climbs, "-1" to "-2"; once that
+## one has started to fade the next tick starts a fresh one. A drain therefore
+## reads as a steady trickle of small numbers, which is what it is.
 ##
 ## It is `top_level`, so it stays where the blow landed while the player walks
 ## out from under it rather than riding along like a hat, and it sits at a
@@ -43,8 +47,9 @@ const GLYPHS := {
 	"9": "111101111001111", "-": "000000111000000",
 }
 
-## What it says. Set by `spawn()`; read by tests.
+## What it says. Set by `spawn()` and `add()`; read by tests.
 var text := ""
+var _amount := 0
 var _age := 0.0
 
 
@@ -53,12 +58,25 @@ var _age := 0.0
 ## player), but top-level so it does not follow the body about.
 static func spawn(body: Node2D, amount: int) -> Node2D:
 	var node: Node2D = (load("res://game/player/damage_number.gd") as GDScript).new()
-	node.text = "-%d" % amount
+	node.add(amount)
 	node.top_level = true
 	node.z_index = Z
 	body.add_child(node)
 	node.global_position = (body.global_position + RISE_FROM).round()
 	return node
+
+
+## Whether another drain tick should land on this number rather than start its
+## own: only while it is still fully opaque, so a total never changes on a
+## number that is already leaving.
+func absorbs() -> bool:
+	return _age < FADE_FROM and not is_queued_for_deletion()
+
+
+func add(amount: int) -> void:
+	_amount += amount
+	text = "-%d" % _amount
+	queue_redraw()
 
 
 func _process(delta: float) -> void:

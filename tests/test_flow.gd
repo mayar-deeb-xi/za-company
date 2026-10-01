@@ -214,10 +214,14 @@ func _tick(frame: int) -> void:
 					and _percent().text == "%d%%" % int(_player().get("health")))
 			_check("blow: the amount flies up off the player (%s)" % str(_damage_numbers()),
 				_damage_numbers() == ["-18"])
-			# A drain is not a blow: sixty "-1"s a second would be noise on the
-			# head, so it shows nothing. Dealt BEFORE the mark is taken, so the
-			# heart below is still measured against what it actually healed.
+			# A drain shows too, but its ticks share one number while it is
+			# fresh: two ticks are one "-3", not a "-1" and a "-2". Dealt
+			# BEFORE the mark is taken, so the heart below is still measured
+			# against what it actually healed.
 			_player().call("drain", 1)
+			_player().call("drain", 2)
+			_check("drain: ticks add up on one number beside the blow's (%s)"
+				% str(_damage_numbers()), _damage_numbers() == ["-18", "-3"])
 			_health_mark = _player().get("health")
 			_player().global_position = Vector2(424, 152)
 		176:
@@ -227,8 +231,11 @@ func _tick(frame: int) -> void:
 			_check("heart: consumed on pickup",
 				_level().get_node_or_null("Props/Health") == null)
 		206:
-			_check("blow: and the number is gone, a drain added none (%s)"
-				% str(_damage_numbers()), _damage_numbers().is_empty())
+			# The blow's 0.8 s is up; the drain's number, 40 frames old, is
+			# still on screen but fading - so the next tick starts its own.
+			_player().call("drain", 1)
+			_check("blow: the number is gone, and a fading drain number takes no more (%s)"
+				% str(_damage_numbers()), _damage_numbers() == ["-3", "-1"])
 			# Waited out that blow's grace window, so this lethal hit lands.
 			_player().call("take_damage", 9999)
 		256:

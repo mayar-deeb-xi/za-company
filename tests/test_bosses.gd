@@ -1,6 +1,9 @@
 extends "res://tests/helpers.gd"
-## Boss test: Ahmed's four attacks, the order he picks them in, the slam
+## Boss test: Ahmed's attacks, the order he picks them in, the slam
 ## landing on his own adds, the wave at range, the interrupt, and the concede.
+## What each of his attacks DOES on its own - the fissure, the shove, the leap,
+## the fan's safe gap, the chair, the hit-stop - is tests/test_ahmed_moves.gd's,
+## which stages them one at a time; this file runs the fight he picks.
 ## Boots into the empty lobby like test_combat.gd and places him by hand, so
 ## his is the only fight in the room and the frame numbers below hold.
 ##
@@ -17,6 +20,14 @@ var _conceded_heard := false
 var _interrupted_at := -1
 var _phase_after_interrupt := -1
 var _health_at_concede := -1
+var _health_before_wave := -1
+## The frame the wave was staged on, and how long the opening attacks had run
+## by then - staged off his STATE rather than a frame number, because the leap
+## lands him wherever the player stood, and where that is decides what he
+## throws next and when.
+var _wave_at := -1
+var _seq_at_wave := -1
+var _melee_at := -1
 
 # Mostafa, fought second in the same cleared room.
 var _m: Node2D
@@ -57,9 +68,41 @@ func _tick(frame: int) -> void:
 		var now: String = _boss.get("attack")
 		if now != "" and (_seq.is_empty() or _seq[-1] != now):
 			_seq.append(now)
-		# The first frame of the first chop after the wave: hit him at the very
-		# start of the wind-up, where the interrupt rules say it must stagger him.
-		if frame > 420 and _interrupted_at < 0 and now == "chop" and _boss.get("phase") == 1:
+		# The opening, read the first frame he is recovering from the leap he
+		# finishes it with; then the wave staged from there - out of reach,
+		# straight ahead, which is exactly what it is for. Staged in the
+		# RECOVER rather than between attacks, because a body moved on the
+		# frame he is choosing is still in his Touch area until the next
+		# physics step, and he would swing at where it was.
+		if _wave_at < 0 and now == "slam" and _boss.get("phase") == 2:
+			_check("bosses: chop, then sweep, then the slam (%s)" % str(_seq),
+				_seq == ["chop", "sweep", "slam"])
+			_check("bosses: sweep 12 and slam 20 have landed (%s)" % _player().get("health"),
+				_player().get("health") == 52)
+			_check("bosses: the slam hits everyone in the ring - the office boy too (%s)"
+				% _boy.get("health"), _boy.get("health") == 4)
+			_wave_at = frame
+			_seq_at_wave = _seq.size()
+			_player().global_position = _boss.global_position + Vector2(60, 0)
+			_player().call("heal", 100)
+			_health_before_wave = _player().get("health")
+		if _wave_at > 0 and frame == _wave_at + 150:
+			_check("bosses: out of reach in the lane, he sends the wave (%s from %d)"
+				% [str(_seq), _seq_at_wave],
+				_seq.size() > _seq_at_wave and _seq[_seq_at_wave] == "wave")
+			_check("bosses: the wave lands 14 at 60 px (%s -> %s)"
+				% [_health_before_wave, _player().get("health")],
+				_player().get("health") == _health_before_wave - 14)
+			# Back into his reach, so the next thing he throws is the axe and
+			# the interrupt below has a swing to catch - left at range he would
+			# leap the gap the moment the cooldown let him.
+			_player().global_position = _boss.global_position + Vector2(0, -28)
+			_player().call("heal", 100)
+			_melee_at = frame
+		# The first frame of the first swing after that: hit him at the very
+		# start of the wind-up, where the interrupt rules say it must stagger
+		# him. Chop or sweep, whichever his alternation has reached.
+		if _melee_at > 0 and _interrupted_at < 0 and now in ["chop", "sweep"] 				and _boss.get("phase") == 1:
 			_boss.call("take_damage", 1)
 			_interrupted_at = frame
 		elif _interrupted_at > 0 and frame == _interrupted_at + 1:
@@ -84,21 +127,23 @@ func _tick(frame: int) -> void:
 			_check("bosses: he faces the fight sideways only (animation %s)"
 				% _sprite_of(_boss).animation, _sprite_of(_boss).animation == &"idle_side")
 			# Mid-room, clear of the furniture; he is inside his own sight and
-			# 60 px off, which at speed 40 is a second's walk to stop distance.
+			# 36 px off, straight below - inside LEAP_MIN, so he walks rather
+			# than jumps, and off his fan, which only reaches forward.
 			_player().global_position = Vector2(272, 140)
-			_boss.global_position = Vector2(272, 200)
+			_boss.global_position = Vector2(272, 176)
 			# An add for the slam to catch. Sight zeroed so it stands where it is
 			# put and never swings at the player - the only thing that can hurt it
-			# in this room is Ahmed.
+			# in this room is Ahmed. It stands where the sweep's shove leaves the
+			# player, because the slam is a leap now and comes down THERE.
 			_boy = (load("res://game/enemies/office_boy/office_boy.tscn") as PackedScene).instantiate() as Node2D
 			_level().get_node("Props").add_child(_boy)
 			_boy.set("sight_radius", 0.0)
-			_boy.global_position = Vector2(300, 175)
-		62:
+			_boy.global_position = Vector2(300, 118)
+		38:
 			_check("bosses: he closes the ground (%.0f px away)"
 				% _boss.global_position.distance_to(_player().global_position),
-				_boss.global_position.distance_to(_player().global_position) < 50.0)
-		110:
+				_boss.global_position.distance_to(_player().global_position) < 36.0)
+		62:
 			_check("bosses: arrived, he winds up (phase %s, attack '%s')"
 				% [_boss.get("phase"), _boss.get("attack")],
 				_boss.get("phase") == 1 and _boss.get("attack") == "chop")
@@ -115,6 +160,7 @@ func _tick(frame: int) -> void:
 			# it, so its loop is running from his first frame; the breath he
 			# is left with has not been asked for. Checked the other way round
 			# at 568, which is the pair that makes either one mean anything.
+			# (Checked here rather than later because the walk in is 7 px now.)
 			var snd: Node = _boss.get_node_or_null("Audio")
 			_check("bosses: the axe is alight from his first frame (%s)"
 				% _loop_mode_of(snd, "axe"),
@@ -122,23 +168,9 @@ func _tick(frame: int) -> void:
 			_check("bosses: the breath he ends on has not started (%s)"
 				% _loop_mode_of(snd, "breath"),
 				_loop_mode_of(snd, "breath") == AudioStreamWAV.LOOP_DISABLED)
-		150:
+		100:
 			_check("bosses: the chop lands 16 (%s)" % _player().get("health"),
 				_player().get("health") == 84)
-		305:
-			_check("bosses: chop, then sweep, then the slam (%s)" % str(_seq),
-				_seq == ["chop", "sweep", "slam"])
-			_check("bosses: sweep 12 and slam 20 have landed (%s)" % _player().get("health"),
-				_player().get("health") == 52)
-			_check("bosses: the slam hits everyone in the ring - the office boy too (%s)"
-				% _boy.get("health"), _boy.get("health") == 4)
-			# Out of reach, straight ahead: the wave is for exactly this.
-			_player().global_position = _boss.global_position + Vector2(60, 0)
-		410:
-			_check("bosses: out of reach in the lane, he sends the wave (%s)" % str(_seq),
-				_seq.size() == 4 and _seq[3] == "wave")
-			_check("bosses: the wave lands 14 at 60 px (%s)" % _player().get("health"),
-				_player().get("health") == 38)
 		560:
 			_check("bosses: an early hit on a wind-up staggers him (hit at %d, phase after %d)"
 				% [_interrupted_at, _phase_after_interrupt],
@@ -181,12 +213,13 @@ func _tick(frame: int) -> void:
 				sounds.has("hurt") and sounds.has("stagger")
 				and sounds.has("concede") and sounds.has("axe")
 				and sounds.has("breath"))
-			# And a telegraph plus an impact for every attack he has. The ids
-			# are DERIVED from his attacks rather than listed, so a fifth
-			# attack fails this the day it is added instead of shipping the one
-			# swing in the fight that makes no noise. The split is the design:
-			# a wind-up can be interrupted, so the blow is a separate file that
-			# only plays if it actually lands.
+			# And a telegraph plus an impact for every attack he has. The split
+			# is the design: a wind-up can be interrupted, so the blow is a
+			# separate file that only plays if it actually lands. The CHAIR is
+			# left out of this list knowingly, and is the one attack he has
+			# with no sound yet (`chair_windup` and `chair_hit` are legal
+			# misses, silent until tools/sfx/ cuts them) - add it here the day
+			# they exist.
 			var unvoiced: Array = []
 			for id in ["chop", "sweep", "slam", "wave"]:
 				for part in ["_windup", "_hit"]:

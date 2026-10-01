@@ -183,7 +183,8 @@ deliberately never added to `velocity`, which is carried between frames and
 would compound it into a launch. Everything reaches
 the player by the `player` group + `has_method`, never by type. A blow that
 lands also throws its amount up off the head (`game/player/damage_number.gd`,
-red, gone in 0.8 s); a drain never does, for the reason a drain is silent.
+red, gone in 0.8 s); a drain does too, but its ticks add up on one number
+while it is fresh rather than stacking a "-1" each.
 Full rationale, the HUD, the combo and the heavy: game/player/CLAUDE.md.
 
 **The heavy is a HOLD and nothing else.** `CHARGE_SECONDS` (0.75) counts from
@@ -286,7 +287,10 @@ sight, so each one walks the player's way and then the leash above decides
 everything, unchanged. Walking the lane still wakes nobody (every spawn marker
 stands on it, swept by `tests/test_alert.gd`), so the placement rule below is
 untouched; what changed is that a player can no longer cross a room's
-furniture unnoticed just by never walking up to anybody.
+furniture unnoticed just by never walking up to anybody. **A reinforcement
+walking in after the alert is told on arrival** (game.gd's `_on_node_added`),
+and having no post it does not run out of patience - it keeps coming for the
+rest of the visit rather than stopping dead where 2.5 s ran out.
 
 **An enemy gets round the furniture, and there is still no pathfinding.**
 Steering is *walk at the player*; what that cannot do is the thing it creates -
@@ -1224,7 +1228,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Twenty-three suites,
+  They drive the real game with synthesized input and exit 0/1. Twenty-four suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1257,6 +1261,16 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     player who stays put, and this one moves them.
   - `test_bosses.gd` - Ahmed's attacks, the order he picks them in, the
     interrupt and the concede.
+  - `test_ahmed_moves.gd` - Ahmed's attacks one at a time, each staged with a
+    FRESH Ahmed so no cooldown or alternation leaks between them: backing
+    straight off a chop is caught by the fissure's pillars (8, not 16), the
+    sweep pushes you out of his reach, the leap's ring goes down where you
+    stand as he jumps and he comes down on it, the gap between two of the
+    fan's waves is safe, and three seconds of keeping away earns the chair -
+    spun, rolled, landed, dizzy for its 1.55 s. Plus the weight: the hit-stop
+    really slows the room, really lets it go, and is asked for by signal like
+    the shake. Its own suite because every stage needs him fighting ONE way,
+    which is the opposite of test_bosses.gd running the fight he picks.
   - `test_rage.gd` - Mostafa going up at 72 and staying up: that it fires at
     half health and not before, fires once, roots and silences him without
     letting him be staggered, never comes back down, and that every beat of

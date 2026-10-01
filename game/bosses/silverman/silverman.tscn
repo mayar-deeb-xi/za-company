@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://game/bosses/silverman/silverman.gd" id="1_silverman"]
 [ext_resource type="SpriteFrames" path="res://game/bosses/silverman/silverman_frames.tres" id="2_frames"]
@@ -16,6 +16,9 @@ radius = 22.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_band"]
 size = Vector2(8, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_arm"]
+size = Vector2(20, 8)
 
 [node name="Silverman" type="CharacterBody2D" groups=["bosses", "enemies"]]
 motion_mode = 1
@@ -51,6 +54,10 @@ animation = &"idle_side"
 autoplay = "idle_side"
 offset = Vector2(0, -24)
 
+[node name="GlareAir" type="Node2D" parent="."]
+script = ExtResource("4_glare")
+part = "air"
+
 [node name="PrismAir" type="Node2D" parent="."]
 script = ExtResource("7_prism")
 part = "air"
@@ -83,6 +90,20 @@ monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Band"]
 shape = SubResource("RectangleShape2D_band")
+
+[node name="BandUp" type="Area2D" parent="."]
+position = Vector2(0, -10)
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BandUp"]
+shape = SubResource("RectangleShape2D_arm")
+
+[node name="BandDown" type="Area2D" parent="."]
+position = Vector2(0, -10)
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BandDown"]
+shape = SubResource("RectangleShape2D_arm")
 
 [node name="Lines" type="Node2D" parent="."]
 script = ExtResource("6_lines")

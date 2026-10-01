@@ -31,6 +31,7 @@ extends Node2D
 
 const Poses := preload("res://game/bosses/silverman/poses.gd")
 const Silverman := preload("res://game/bosses/silverman/silverman.gd")
+const Px := preload("res://game/bosses/silverman/pixels.gd")
 
 @export_enum("floor", "air", "screen") var part := "floor"
 
@@ -67,7 +68,6 @@ const TRAIL_STEP := 1.0 / 60.0
 ## The flash as it fires.
 const FLASH := 0.3
 const FLASH_SECONDS := 0.16
-const FAINT := 0.03
 
 var _boss: Node2D
 var _sprite: AnimatedSprite2D
@@ -149,13 +149,13 @@ func _draw_floor(t: float, since: float) -> void:
 	if since < 0.0:
 		var dir := Vector2.from_angle(from)
 		var reach := minf(START_TO, float(_boss.call("prism_length", from)))
-		_line(chest + dir * START_FROM, chest + dir * reach, W, 0.55, 3, -t * 30.0)
+		Px.line(self, chest + dir * START_FROM, chest + dir * reach, W, 0.55, 3, -t * 30.0)
 		for k in 3:
 			var f := fmod(t * 1.2 + float(k) / 3.0, 1.0)
 			var a := from + span * f
 			for r in [MOTE_R, MOTE_R + 1.0]:
-				_px(chest + Vector2.from_angle(a) * r, W, 0.8 * sin(f * PI))
-	_ring(Vector2.ZERO, 10.0 + sin(t * 20.0), 4.0, L, 0.3)
+				Px.px(self, chest + Vector2.from_angle(a) * r, W, 0.8 * sin(f * PI))
+	Px.ring(self, Vector2.ZERO, 10.0 + sin(t * 20.0), 4.0, L, 0.3)
 
 
 ## The fan as a polygon: the arc out to the wall (or FAN_OUTER, whichever is
@@ -203,12 +203,12 @@ func _draw_air(t: float, since: float) -> void:
 	if charge > 0.0:
 		for k in THREADS:
 			var from := Vector2((float(k) - 2.0) * THREAD_GAP, THREAD_FROM)
-			_line(from, chest, THREAD_COLOURS[k],
+			Px.line(self, from, chest, THREAD_COLOURS[k],
 				0.38 * charge * (0.7 + 0.3 * sin(t * 30.0 + float(k))), 2, t * 20.0)
 	if since < sweep:
 		var r := roundf(3.0 * clampf(t / windup, 0.0, 1.0)) if since < 0.0 else 3.0
-		_disc(chest, r, W, 1.0)
-		_ring(chest, r + 2.0, r + 2.0, L, 0.5)
+		Px.disc(self, chest, r, W, 1.0)
+		Px.ring(self, chest, r + 2.0, r + 2.0, L, 0.5)
 	if since < 0.0 or since >= sweep:
 		return
 	for i in range(1, TRAIL + 1):
@@ -216,17 +216,17 @@ func _draw_air(t: float, since: float) -> void:
 		if back < 0.0:
 			break
 		var ghost := _beam(float(_boss.call("prism_angle", back)))
-		_line(ghost[0], ghost[1], W, 0.16 * (1.0 - float(i) / 12.0))
+		Px.line(self, ghost[0], ghost[1], W, 0.16 * (1.0 - float(i) / 12.0))
 	var a := float(_boss.call("prism_angle", since))
 	var seg := _beam(a)
 	var across := Vector2(-sin(a), cos(a))
 	var flicker := 0.65 + 0.35 * sin(t * 50.0)
 	for lane in LANES:
 		var off := across * float(lane[0])
-		_line(seg[0] + off, seg[1] + off, lane[1], 0.8 * flicker if absi(lane[0]) > 1 else 1.0)
-	_disc(seg[1], 2.0, W, flicker)
+		Px.line(self, seg[0] + off, seg[1] + off, lane[1], 0.8 * flicker if absi(lane[0]) > 1 else 1.0)
+	Px.disc(self, seg[1], 2.0, W, flicker)
 	for s in _sparks:
-		_px(s[0], s[3], minf(1.0, s[2] / 0.35 * 1.5))
+		Px.px(self, s[0], s[3], minf(1.0, s[2] / 0.35 * 1.5))
 
 
 ## The boss's beam segment, in this node's space.
@@ -252,71 +252,3 @@ func _tick_sparks(delta: float) -> void:
 	for i in 2:
 		_sparks.append([end, Vector2(randf_range(-50, 50), randf_range(-50, 50)),
 			randf_range(0.15, 0.35), [W, W, L, S].pick_random()])
-
-
-# --- pixels -------------------------------------------------------------------
-
-
-func _px(at: Vector2, col: Color, alpha: float) -> void:
-	if alpha <= FAINT:
-		return
-	draw_rect(Rect2(at.round(), Vector2.ONE), Color(col, alpha))
-
-
-## A one-pixel line, stepped like the preview's: Bresenham, and dotted when
-## `dot` is set - `ceil(dot / 2)` on, the rest off, scrolled by `phase`.
-func _line(a: Vector2, b: Vector2, col: Color, alpha: float, dot := 0, phase := 0.0) -> void:
-	if alpha <= FAINT:
-		return
-	var c := Color(col, alpha)
-	var x0 := roundi(a.x)
-	var y0 := roundi(a.y)
-	var x1 := roundi(b.x)
-	var y1 := roundi(b.y)
-	var dx := absi(x1 - x0)
-	var dy := -absi(y1 - y0)
-	var sx := 1 if x0 < x1 else -1
-	var sy := 1 if y0 < y1 else -1
-	var err := dx + dy
-	var n := 0
-	var on := ceili(dot / 2.0)
-	var shift := floori(phase)
-	for _guard in 2000:
-		if dot == 0 or posmod(n + shift, dot) < on:
-			draw_rect(Rect2(x0, y0, 1, 1), c)
-		n += 1
-		if x0 == x1 and y0 == y1:
-			break
-		var e2 := 2 * err
-		if e2 >= dy:
-			err += dy
-			x0 += sx
-		if e2 <= dx:
-			err += dx
-			y0 += sy
-
-
-func _ring(at: Vector2, rx: float, ry: float, col: Color, alpha: float) -> void:
-	if rx < 0.5 or alpha <= FAINT:
-		return
-	var c := Color(col, alpha)
-	var steps := maxi(12, ceili((rx + ry) * 3.0))
-	var seen := {}
-	for i in steps:
-		var th := TAU * float(i) / float(steps)
-		var p := (at + Vector2(cos(th) * rx, sin(th) * ry)).round()
-		if seen.has(p):
-			continue
-		seen[p] = true
-		draw_rect(Rect2(p, Vector2.ONE), c)
-
-
-func _disc(at: Vector2, r: float, col: Color, alpha: float) -> void:
-	if alpha <= FAINT:
-		return
-	var c := Color(col, alpha)
-	var ri := int(r)
-	var centre := at.round()
-	for y in range(-ri, ri + 1):
-		var w := floori(sqrt(float(ri * ri - y * y)))
-		draw_rect(Rect2(centre.x - w, centre.y + y, w * 2 + 1, 1), c)

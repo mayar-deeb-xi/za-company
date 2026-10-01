@@ -51,6 +51,20 @@ const FLOOR := {
 	"crack_out": Color(120 / 255.0, 40 / 255.0, 25 / 255.0, 0.5),
 }
 
+## The enormous chair, as rectangles [x, y, w, h, colour] in local pixels from
+## the origin between his feet, facing right: the preview's chair, unchanged.
+## The back, its post, the base and the castors stand under him (the floor
+## part); the seat goes over his shins (the air part), which is what sits him
+## in it.
+const CHAIR_BACK := [
+	[-12, -34, 8, 24, "0d0b0d"], [-11, -33, 6, 22, "3a1f17"], [-10, -32, 2, 20, "5a3324"],
+	[-2, -8, 3, 6, "26202a"], [-9, -2, 19, 1, "26202a"],
+	[-9, -1, 2, 2, "111114"], [0, -1, 2, 2, "111114"], [9, -1, 2, 2, "111114"],
+]
+const CHAIR_SEAT := [
+	[-10, -9, 20, 4, "0d0b0d"], [-9, -8, 18, 2, "4a2a1e"], [-9, -8, 18, 1, "6b3d2a"],
+]
+
 var _time := 0.0
 var _pixels := {}
 var _sprite: AnimatedSprite2D
@@ -131,6 +145,8 @@ func _air_fx(d: Array, f: Dictionary, seed: int) -> void:
 		"wave_scorch":
 			for x in range(d[1], d[1] + d[2], 3):
 				_scorch(x, 0, 3, seed + x, d[3])
+		"chair_seat":
+			_chair(CHAIR_SEAT)
 		"smoke":
 			_put(d[1], d[2], Color(SMOKE, 0.5))
 			_put(d[1] + 1, d[2] - 2, Color(SMOKE, 0.35))
@@ -143,6 +159,16 @@ func _floor_fx(d: Array) -> void:
 			_ring(d[1], d[2], d[3], d[4], FLOOR[d[5]], FLOOR[d[6]] if d[6] != "" else Color(0, 0, 0, 0))
 		"cracks":
 			_cracks(d[1], d[2], d[3], FLOOR[d[4]])
+		"chair_back":
+			_chair(CHAIR_BACK)
+
+
+func _chair(rects: Array) -> void:
+	for r in rects:
+		var col := Color(r[4])
+		for y in range(r[1], r[1] + r[3]):
+			for x in range(r[0], r[0] + r[2]):
+				_put(x, y, col)
 
 
 # --- the pixel kit -----------------------------------------------------------

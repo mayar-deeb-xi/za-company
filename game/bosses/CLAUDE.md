@@ -75,17 +75,54 @@ different places.
   tells it anything. A left-facing frame is drawn mirrored about the origin:
   local x lands at -1 - x. The sheet stays a clean body to draw into because
   the fire is not on it.
-- **Four attacks, chosen by range and behaviour** (`ahmed.gd`): chop and sweep
-  alternate in reach; every third swing, or sooner if he is hit twice inside
-  2 s, is the slam; a player in the lane and out of reach gets the wave, then
-  a cooldown. Damage is MEDIUM data in `DAMAGE`, scaled once when chosen.
-- **Three reaches, three Area2Ds.** `Touch` (r 24) is the axe and what the
-  base uses to decide he has arrived - so his wind-up starts at ~29 px from the
-  player, before `stop_distance` (20) ever applies. `Ring` (r 40) is the slam:
-  everyone in it with a `take_damage()`, office boys included. `Lane` (64x16,
-  swung to his facing every frame) is the wave, which hits as it travels: the
-  strike frame reaches 20 px, then each recover frame that draws the front
-  further down the lane hits whoever it has reached and not yet burned.
+- **Five attacks, chosen by range and behaviour** (`ahmed.gd`), picked from
+  an animated preview and built to it: each asks for a different move.
+  - In reach, chop and sweep alternate. The chop is a **fissure** - a crack
+    runs 73 px on ahead of the blade and seven pillars burst out of it, 8 more
+    to anyone on the line, so backing straight off is the wrong answer. The
+    sweep **shoves** (`shove()` at the player's own cap of 70, ~18 px of
+    skid): far enough to put you out of reach and in front of him, which is
+    where the wave goes - a combo you can see coming.
+  - The slam is a **leap**: two crouch frames, then the frame marked `air` is
+    the jump (0.6 s), carrying him to where the player stood as he left the
+    ground, up to 100 px. In reach it is every third swing or two hits inside
+    2 s, as before, and is a hop; out of reach it is how he follows you. The
+    sprite and AirFire rise (`_set_height`); his body, shadow and Ring stay on
+    the floor.
+  - In front of him and out of reach, the **fan**: three waves 0.42 rad apart,
+    14 each. Between two of them is safe - sidestep a little, not a lot.
+  - Kept out of his reach for 3 s, **the enormous chair**: he sits in it (the
+    `chair` row, painted last onto the sheet by build_bosses' `_extend`),
+    spins it up for a second - the sprite flipping fourteen times a second -
+    and rolls at 255 px/s until he hits something, 18 to whoever the Touch
+    area meets on the way, then sits dizzy for 1.55 s. The charge frame's
+    `dur` is the longest the run may last; the recover the base counts is the
+    dizzy spell alone, and the clock is held while he rolls.
+  - The three ranged answers share a 1.5 s `ranged_gap`, so keeping away is a
+    fight and not a barrage. Damage is MEDIUM data in `DAMAGE`, scaled once
+    when chosen.
+- **Every impact lands with weight** (`_jolt`): a 0.08 s hit-stop, a shake and
+  a white star. The stop is the `froze` signal on boss_base, wired by game.gd
+  like `shook`; game.gd drops `Engine.time_scale` to 0.05 (never 0 - a zero
+  delta is a division waiting to happen) and lets it go on an unscaled timer,
+  extending rather than stacking, and on every room change and exit.
+- **Two reaches, two Area2Ds, and the rest is geometry.** `Touch` (r 24) is the
+  axe, the chair's bumper, and what the base uses to decide he has arrived -
+  so his wind-up starts at ~29 px from the player, before `stop_distance` (20)
+  ever applies. `Ring` (r 40) is the slam: everyone in it with a
+  `take_damage()`, office boys included. The old 64x16 `Lane` is gone: the
+  fan and the fissure carry their own lanes, measured in their own nodes, so
+  the line you see is the line that burns.
+- **What an attack throws off is a child of his pinned to the floor**
+  (`fx_node.gd`): fissure, fan, leap mark, landing, shove dust, chair run,
+  impact star. A child, so it draws in his slot in the room's y-sort like the
+  axe fire; re-pinned to its `anchor` every frame, so it stays where it fell
+  while he walks away; on its own clock, because most of them outlast the
+  frames that made them. They draw with `fx_kit.gd`, the preview's own pixel
+  functions ported line for line (JavaScript's half-up rounding included), so
+  a number tuned on the preview means the same thing here. The landing and
+  the leap mark are CIRCLES where the old slam drew an ellipse: the Ring is a
+  circle, and the drawing that says get out must be the shape that hits.
 
 ## Sheets: seed once, slice always
 
@@ -250,8 +287,10 @@ Neither is wired by hand: the id IS the attack, so `boss_base._begin_attack`
 asks for `<id>_windup` beside the bark it already says, and any boss gets
 telegraphs the day he owns the files. The IMPACT is said in Ahmed's own
 `_strike` rather than the base's, and that asymmetry is the fight's fault
-rather than an oversight - the slam sweeps a ring and the wave walks a lane,
-neither calls `super()`, so the base never sees two of his four blows land.
+rather than an oversight - the slam sweeps a ring, the wave hands its lanes to
+a fan, the chair's blow is its crash; none calls `super()`, so the base never
+sees three of his five blows land. The chair has no `chair_windup` or
+`chair_hit` yet: both are legal misses, and it is silent until they are cut.
 
 They are levelled by RMS against the sounds he already had, not by peak.
 Peak-normalising all eight to a flat -4 dBFS left 13 dB of spread in how loud
@@ -848,14 +887,28 @@ later - which is why the prism is the first thing he does in his last phase.
 
 **The five attacks, and what each is made of:**
 
-- **the glare** (16, 0.80/0.70) - the room whites out and a 20 px lane of it
-  crosses the floor, travelling through his recover on Ahmed's wave contract.
-  You step out of its line; you cannot outrun it. `glare.gd`, two parts split by
-  SPACE like the Bell: `band` under the body in world pixels, `screen` on a
-  CanvasLayer at layer 1 in viewport pixels. **The band draws exactly the
-  hitbox** - its front is the boss's own `glare_front()`, the same function
-  `_glare_reach()` moves the Area2D to, because a sweep you are asked to step
-  out of has to be a sweep whose edges you can see.
+- **the glare** (16, 0.80/0.70) - the room whites out and the light leaves him
+  as a CROSS: a 20 px lane along the floor the way he faces, out to 140, and
+  two arms straight up and down, out to 80 (`GLARE_ARM`), all travelling
+  through his recover on Ahmed's wave contract. One glare is still one hit,
+  whichever arm finds you - every arm shares `_glare_hit`. You step off both
+  lines, so diagonal to him is the only safe place near him; you cannot
+  outrun it. The cross and its look were picked off a four-way preview
+  ("Crossfire" on "Mirror flash") and shipped as previewed: light spiralling
+  into him while he dims, a star off his chest and his whole body flashing
+  white as it fires, each arm a wall of light with a dithered wake, flare
+  spikes, floor reflection and dust, sparks where each runs out. `glare.gd`
+  is three parts split by SPACE like the Bell: `band` under the body in world
+  pixels (the walls), `air` over everything at z 1 (the spiral, the star, the
+  flash and the particles) and `screen` on a CanvasLayer at layer 1 in
+  viewport pixels. The white flash is the `flash` row on his sheet - his
+  impact pose with every pixel his brightest rung, never played, the `ghost`
+  row's arrangement - because a modulate can only darken. **Every arm draws
+  exactly its hitbox** - the band's front is the boss's own `glare_front()`
+  and the arms' is `glare_arm_front()`, the functions `Band`, `BandUp` and
+  `BandDown` are moved with, because a sweep you are asked to step out of has
+  to be a sweep whose edges you can see. `pixels.gd` holds the one-pixel
+  drawing both glare.gd and prism.gd were previewed in.
 - **the split** (12, 0.60 wind-up) - he divides, and the copy walks at you while
   he stands still. `copy.gd` draws the `ghost` row - the dulled body already on
   the sheet for the smear - so a copy of him is a copy of him by construction
@@ -899,8 +952,8 @@ later - which is why the prism is the first thing he does in his last phase.
   telegraph is only fair if you can see how far it reaches.
 - **the crossing** (18) - above.
 
-**Every reach he owns points along x, so he had to be given one that does
-not.** The band is a 20 px lane through his chest, the crossing only travels
+**Every reach he owns used to point along x, so he had to be given one that
+does not** - and the crossfire's arms are now a second answer, at range. The band is a 20 px lane through his chest, the crossing only travels
 along x, and the split will not fire closer than 34 - so a player standing
 directly north or south of him at arm's length was missed by the lane on BOTH
 axes, slid past by the crossing, and not worth a split. Phases one and two

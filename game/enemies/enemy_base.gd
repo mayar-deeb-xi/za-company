@@ -317,6 +317,9 @@ var _interrupt_locked := 0.0
 ## told it has no post at all.
 var _patience := 0.0
 var _roaming := false
+## Whether the room has told this body the player is in it (see `alert()`).
+## Only a roaming body reads it: one with no post keeps coming once told.
+var _alerted := false
 ## Seconds until the next mutter is ASKED for. See `_ready` for why the first
 ## one is random.
 var _mutter_in := 0.0
@@ -443,6 +446,12 @@ func _hunt(player: Node2D, delta: float) -> bool:
 	if not hunting or not _leashes():
 		hunting = false
 		return false
+	# A reinforcement the room has been alerted to does not run out of patience.
+	# Patience is what sends a placed body home, and this one has no home: run
+	# down, it would stop dead wherever the clock ran out, which is a body
+	# parked in the middle of the floor ignoring a fight it walked in to join.
+	if _alerted and _roaming:
+		return true
 	_patience -= delta
 	hunting = _patience > 0.0
 	return hunting
@@ -592,18 +601,30 @@ func unleash() -> void:
 	post = Vector2.INF
 
 
+## Whether `unleash()` has been said to this body. game.gd asks, to tell an
+## arrival from something placed.
+func roaming() -> bool:
+	return _roaming
+
+
 ## Forces the hunt on, as if sight_radius had just caught the player - called
-## once by game.gd the moment the player leaves a room's walk lane, so a room
-## is not crossed without anybody in it noticing. Everything after this one
-## frame is the ordinary leash: the same patience window, the same bound off
-## this body's own post, the same walk home if it comes to nothing - a body
-## that was never going to follow this far still won't. A boss or a roaming
-## reinforcement is untouched by it in practice: the next frame's _hunt() reads
-## `_leashes()` exactly as it always has and drops the hunt again if it is
-## false and the player is not literally in sight.
+## by game.gd on every enemy in the room the moment the player leaves its walk
+## lane, so a room is not crossed without anybody in it noticing, and on every
+## arrival after that moment. For a placed body everything after this one frame
+## is the ordinary leash: the same patience window, the same bound off its own
+## post, the same walk home if it comes to nothing - a body that was never going
+## to follow this far still won't. A boss is untouched by it in practice: the
+## next frame's _hunt() reads `_leashes()` and drops the hunt again unless the
+## player is literally in sight.
+##
+## A reinforcement is the one body it changes for good. It has no post, so
+## nothing bounds the chase and nothing calls it back, and _hunt() lets it keep
+## coming for the rest of the visit - it came through a door to find the player,
+## and the room has just told it where they are.
 func alert() -> void:
 	hunting = true
 	_patience = patience_seconds
+	_alerted = true
 
 
 ## 0..1 through the current wind-up; 0 when not winding up.

@@ -5,7 +5,9 @@ extends "res://tests/helpers.gd"
 ## give it: a taunt is what he says when the player will NOT come near him, so
 ## the whole first half of this file is a boss who never reaches anybody -
 ## which is the exact opposite of the fight test_bosses.gd has to run to check
-## his four attacks. One file, one world, as everywhere else here.
+## his attacks. One file, one world, as everywhere else here. (He has two
+## answers of his own to a gap now - the leap and the chair - so this file
+## holds both off; see frame 32.)
 ##
 ## He is kited by taking his speed away rather than by teleporting the player
 ## every frame: a boss walking after a player who is moved to stay ahead of him
@@ -56,8 +58,14 @@ func _tick(frame: int) -> void:
 			# sight (110), which is the whole of what a kite is.
 			_player().global_position = Vector2(272, 140)
 			_boss.global_position = Vector2(272, 200)
-			# Rooted, so the gap holds without the player having to run.
+			# Rooted, so the gap holds without the player having to run - and
+			# his two answers to a gap held off, the leap that would close it
+			# and the chair that would roll across it. (The chair says the
+			# taunt as it comes; that it does is test_ahmed_moves.gd's, and
+			# what is under test here is boss_base's own clock for it.)
 			_boss.set("speed", 0.0)
+			_boss.set("_leap_timer", 1.0e6)
+			_boss.set("_chair_timer", 1.0e6)
 			# The wiring under test is game.gd's own rather than a second copy
 			# of it written here: _watch_boss is what a built room runs, so a
 			# boss placed by hand into an already-built one is handed over the
