@@ -45,7 +45,7 @@ character.
 
 ## Levelled with the others, not under them
 
--19 dBFS, the same as Ahmed and Mostafa, even though he is the quiet one. His
+-19 dBFS, the same as Ahmed and Big Mo, even though he is the quiet one. His
 quiet is in the delivery and in the words; putting it in the fader as well
 gives the last fight in the game a boss you cannot hear over his own glare,
 which is a bug wearing a characterisation.

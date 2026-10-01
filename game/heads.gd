@@ -18,7 +18,7 @@ extends RefCounted
 ## of swings on one body, and the fight ends in half the wall-clock whatever
 ## walks in meanwhile - so each extra head adds his `health_per_head`
 ## (boss_base.gd), a whole number of 24-damage combos: Ahmed 144 + 48 a head,
-## Mostafa 216 + 72, Silverman 288 + 96. A sum of whole combos still dies on a
+## Big Mo 216 + 72, Silverman 288 + 96. A sum of whole combos still dies on a
 ## whole combo, which is all the rule above was protecting. Everything keyed to
 ## how hurt he is reads a FRACTION of his max, so it moves with him.
 ##

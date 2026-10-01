@@ -8,7 +8,7 @@ line - it only says how each cue is delivered.
 ## The first voice in the game that is not a boss, and the first that is female
 
 Everything cut before this was one man shouting at the player: Ahmed roaring,
-Mostafa booking the room, HR reading a contract. This is the other thing a
+Big Mo booking the room, HR reading a contract. This is the other thing a
 voice can do in a game - not address the player at all. She is talking to
 herself, and the player is overhearing an office.
 
@@ -44,7 +44,7 @@ nobody chose. These have not been auditioned.
 ## the character. A naturally flat or breathy voice would have read as sad,
 ## and she is not sad, she is late.
 ##
-## No other voice in the game may take this id. Ahmed is Jack, Mostafa is
+## No other voice in the game may take this id. Ahmed is Jack, Big Mo is
 ## Edward, the call centre is Eric; the whole point of a bestiary that talks
 ## is that nobody has to check which enemy they are listening to.
 VOICE_ID = "FGY2WhTYpPnrIDTdsKH5"

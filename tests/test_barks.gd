@@ -303,17 +303,17 @@ func _close() -> void:
 	_check("barks: and it takes itself down when the line is done",
 		not _subtitle().call("showing"))
 
-	# Mostafa's own cue. `rage` is not one of the seven boss_base fires - he
+	# Big Mo's own cue. `rage` is not one of the seven boss_base fires - he
 	# says it himself on the frame he catches fire - so this is the check that
 	# a boss can ADD a cue of his own without the base or the runner learning
 	# it. His lines file and his script have to agree, and nothing else would
 	# notice if one of them stopped.
-	var m := (load("res://game/bosses/mostafa/mostafa.tscn") as PackedScene).instantiate() as Node2D
+	var m := (load("res://game/bosses/big_mo/big_mo.tscn") as PackedScene).instantiate() as Node2D
 	_level().get_node("Props").add_child(m)
 	var said := [""]
 	m.connect("said", func(_c, t, _x): said[0] = t)
 	m.call("_say", "rage")
-	_check("barks: Mostafa has a cue of his own for going up (%s)"
+	_check("barks: Big Mo has a cue of his own for going up (%s)"
 		% ("<nothing>" if said[0] == "" else said[0]),
 		said[0] != "")
 	m.queue_free()
@@ -321,7 +321,7 @@ func _close() -> void:
 	# A boss with no lines is legal and silent, with no branch anywhere but
 	# `_say` - the same deal a boss with no sounds and no theme is on.
 	#
-	# It used to be asked of whichever boss happened to still be mute: Mostafa
+	# It used to be asked of whichever boss happened to still be mute: Big Mo
 	# until he was given a mouth, then Silverman until he was. That ran out,
 	# which the note here always said it would - all three talk now, and a
 	# promise about SILENCE cannot be kept by a boss who has lines.

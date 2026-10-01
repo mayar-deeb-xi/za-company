@@ -54,12 +54,12 @@ Credited voluntarily; CC0 imposes no obligation to do so.
 - Files: `assets/fonts/KenneyBlocks.ttf` (titles), `assets/fonts/KenneyMiniSquare.ttf` (UI),
   plus `KenneyPixel.ttf` and `KenneyFutureNarrow.ttf` kept as alternatives
 
-## Ahmed's and Mostafa's sound effects
+## Ahmed's and Big Mo's sound effects
 - Author: **generated with ElevenLabs** (text-to-sound-effects), then trimmed,
   summed to mono, levelled and loop-sealed by hand
 - License: per the ElevenLabs terms in force for the generating account -
   **not** CC0 like everything above, which is why they are listed separately
-- Files: `game/bosses/mostafa/sfx/*.wav` - eleven: a telegraph and an impact
+- Files: `game/bosses/big_mo/sfx/*.wav` - eleven: a telegraph and an impact
   for each of jab, hook and rush, the `rage` eruption, the `fire` loop he wears
   from half health on, and his hurt/stagger/concede. And
   `game/bosses/ahmed/sfx/*.wav` - the burning axe's idle loop, his hurt
@@ -67,8 +67,8 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   as he concedes, and the breathing he is left with; plus the eight attack
   sounds, a `<attack>_windup` telegraph and a `<attack>_hit` impact for each of
   chop, sweep, slam and wave
-- Mostafa's twenty-two voice lines are Eleven v3 text-to-speech (voice
-  "Edward"), cut by `tools/voice/cut.py mostafa`; Ahmed's twenty-three are the
+- Big Mo's twenty-two voice lines are Eleven v3 text-to-speech (voice
+  "Edward"), cut by `tools/voice/cut.py big_mo`; Ahmed's twenty-three are the
   same pipeline on voice "Jack". Both are delivery-tagged per cue rather than
   steered by a stability slider - the tags live in `tools/voice/<boss>.py`
   beside the rest of the recipe, and what each boss SAYS lives with him in
@@ -174,7 +174,7 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   `mutter_<n>.wav`, one per line in that enemy's own `mutters.gd`
 - Voices: **Laura** (`FGY2WhTYpPnrIDTdsKH5`, female) for the Content Studio,
   **Eric** (`cjVigY5qzO86Huf0OWal`, male) for the phone team. Neither is a
-  voice on the account's own list. Ahmed is Jack and Mostafa is Edward; no two
+  voice on the account's own list. Ahmed is Jack and Big Mo is Edward; no two
   characters in this game may share a voice, which is the whole point of a
   bestiary that talks
 - **The recipe is in the repo**: `tools/voice/` holds the mechanism (`cut.py`,
@@ -303,7 +303,7 @@ Credited voluntarily; CC0 imposes no obligation to do so.
 - **One voice, three conversations, one folder**, which is the only thing about
   this mouth that is not HR's arrangement exactly: `BEATS` in the recipe is a
   LIST. Nothing dedupes clip names across files, so the names are namespaced by
-  the boss they warn about (`ahmed_`, `mostafa_`, `silverman_`) - two briefings
+  the boss they warn about (`ahmed_`, `big_mo_`, `silverman_`) - two briefings
   sharing a name would cut once and one floor would quietly play the other
   floor's warning. `tests/test_dominique.gd` checks that no two floors share a
   clip, because cut.py would not have said anything.
@@ -329,13 +329,13 @@ Credited voluntarily; CC0 imposes no obligation to do so.
 - Files: `assets/music/finale_loop.wav` (the last two floors - the executive
   floor and the penthouse, which share it so the music crosses the door between
   them unbroken; dark cyberpunk / industrial darksynth, 120 BPM read as
-  half-time, which is the same grid Mostafa's sits on and therefore Silverman's
+  half-time, which is the same grid Big Mo's sits on and therefore Silverman's
   0.5 s wind-up on the beat rather than drifting against it),
   `assets/music/menu_loop.wav` (the front end),
   `assets/music/level_loop.wav` (the bed under the nine floors that name no
   track of their own - see below), `assets/music/lobby_loop.wav` (floor 1
   alone, which was the bed until the building got a faster one), `assets/music/ahmed_theme_loop.wav` (Ahmed's fight, floor 4)
-  and `assets/music/mostafa_theme_loop.wav` (Mostafa's, the gym on floor 7 -
+  and `assets/music/big_mo_theme_loop.wav` (Big Mo's, the gym on floor 7 -
   industrial cyberpunk techno at 120 BPM, which is a beat every 30 frames and
   therefore his 0.25 s jab on the grid rather than drifting against it)
 - **The finale's numbers**, since every one of them was measured rather than
@@ -343,7 +343,7 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   bars at **56.0011 s** - the bar count picking which peak, and a low-band
   sweep saying where it is (+55 samples off the nominal 56.000, r +0.86) - then
   the usual 12 ms equal-power crossfade, then **-5.24 dB** to land on
-  `mostafa_theme_loop`'s -16.24 dBFS RMS. That last number is the one that
+  `big_mo_theme_loop`'s -16.24 dBFS RMS. That last number is the one that
   looks wrong and is not: this track plays over an ORDINARY floor as well as a
   boss arena, so it sits above the enemies whose telegraphs are levelled at -29
   rather than above nothing, and matching the other techno track in the game is
@@ -360,7 +360,7 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   normalised, and Ahmed's sits ~1.5 dB hotter than the menu's at source, which
   is the right direction - a fight should be more present than a menu bed.
   **A boss theme is levelled against his own sounds, not against the other
-  theme**, and Mostafa is where that was learned. Matching Ahmed's RMS came
+  theme**, and Big Mo is where that was learned. Matching Ahmed's RMS came
   first (-1.7 dB, since his export landed that much hotter) and it was the
   wrong target: broadband loudness says nothing about MASKING, which is per
   band. Measured in octave bands at playing level, his eruption `rage.wav`
@@ -368,7 +368,7 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   live under 250 Hz and that is exactly where a techno track keeps its kick
   (60-125 Hz sits 17 dB above its own mids). Ahmed's quietest sound clears his
   theme by 2.3 dB, so that is the floor this was levelled to: a further -3 dB,
-  i.e. **-4.67 dB flat from the export**, which puts every one of Mostafa's
+  i.e. **-4.67 dB flat from the export**, which puts every one of Big Mo's
   eleven sounds at least 3.1 dB over the bed in some band, with the hook - the
   one read in the fight - at 20.5. He therefore sits 3 dB under Ahmed at
   -16.1 dBFS RMS, peak -5.2, and that is the number doing a job rather than a
@@ -389,7 +389,7 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   this track's own mean sample-to-sample step. 59.988 s, 2,879,424 frames.
 - **And then it came down 6.5 dB, which is the part that was not optional.**
   The export sits at -12.80 dBFS RMS: louder than the menu, louder than
-  Mostafa, louder than Ahmed - i.e. the bed under nine ordinary floors would
+  Big Mo, louder than Ahmed - i.e. the bed under nine ordinary floors would
   have been the loudest thing in the game, and walking onto a boss floor would
   have read as the music getting SMALLER. It is levelled **-6.48 dB to
   -19.28 dBFS RMS**, peak -7.35, which is the number the previous bed sat at
@@ -398,7 +398,7 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   tempo and the arrangement, not the fader. Post-gain the seam step is 335
   against a mean step of 367, so the join stays under the music's own motion.
 - **`lobby_loop.wav` is floor 1's, and was the bed.** Calm cyberpunk ambience
-  at 90 BPM - deliberately NOT Mostafa's grid. It was written as the bed, on
+  at 90 BPM - deliberately NOT Big Mo's grid. It was written as the bed, on
   the brief "cyberpunk, but calmer", and it is now the tutorial floor's alone:
   the lobby is where a player is still finding out which key swings, and a
   track that insists on a pace is a track arguing with the room. A beat is 40
@@ -408,7 +408,7 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   measured against that number, so matching it is what lets a track be swapped
   without re-deriving the paragraph. It stays the quietest of the four by some
   way, and the bed that replaced it is levelled to the same number for the
-  same reason - 4.7 dB under the menu, 6.2 under Ahmed and 3.2 under Mostafa. That gap is the point rather than an accident, and it is
+  same reason - 4.7 dB under the menu, 6.2 under Ahmed and 3.2 under Big Mo. That gap is the point rather than an accident, and it is
   doing two jobs. It is the escalation - walking onto a boss floor has to read
   as the music getting bigger - and it is the headroom, because this is the
   track that will still be playing when ordinary floors finally get sound
@@ -420,7 +420,7 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   the first place to listen if her induction ever sounds like it is competing
   with the room rather than being said in it.
 - Untouched exports go in `assets/music/src/` on the same terms as every other
-  `src/` here. `menu_loop`, `mostafa_theme_loop`, `lobby_loop` and
+  `src/` here. `menu_loop`, `big_mo_theme_loop`, `lobby_loop` and
   `level_loop` have one;
   `ahmed_theme_loop` is currently played as it came out of the generator, so
   re-trimming its loop seam means keeping a copy there first.
@@ -446,7 +446,7 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   not where it is. Its cost is that the played period is 11 ms short of 20 whole
   bars - which nothing can hear and nothing syncs to, since the bed is the one
   track no fight is timed against.
-- **Mostafa's loop is sealed, Ahmed's is not**, and the numbers say why it
+- **Big Mo's loop is sealed, Ahmed's is not**, and the numbers say why it
   matters: the step across the loop point was 9139 against a median
   sample-to-sample step of 591 in the body, i.e. a tick once a minute, and a
   12 ms equal-power crossfade of the tail over the head takes it to 19 for

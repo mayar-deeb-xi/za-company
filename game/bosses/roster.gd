@@ -29,15 +29,15 @@ const BOSSES := [
 		"cell": 64,
 	},
 	{
-		"id": "mostafa",
-		"src": "res://game/bosses/mostafa/src/mostafa.png",
-		"frames": "res://game/bosses/mostafa/mostafa_frames.tres",
-		"painter": "res://tools/bosses/mostafa.gd",
-		"poses": preload("res://game/bosses/mostafa/poses.gd"),
-		# Twice Ahmed's, because Mostafa is drawn at 2x DENSITY - 70 source rows
+		"id": "big_mo",
+		"src": "res://game/bosses/big_mo/src/big_mo.png",
+		"frames": "res://game/bosses/big_mo/big_mo_frames.tres",
+		"painter": "res://tools/bosses/big_mo.gd",
+		"poses": preload("res://game/bosses/big_mo/poses.gd"),
+		# Twice Ahmed's, because Big Mo is drawn at 2x DENSITY - 70 source rows
 		# across the same 35 world px, where Ahmed spends 35. His scene halves
 		# it back with scale 0.5, so the two bosses stand the same height in the
-		# room and only Mostafa's pixels are finer. The entry is per boss for
+		# room and only Big Mo's pixels are finer. The entry is per boss for
 		# exactly this reason: nothing about the art is shared.
 		"cell": 128,
 	},
@@ -47,7 +47,7 @@ const BOSSES := [
 		"frames": "res://game/bosses/silverman/silverman_frames.tres",
 		"painter": "res://tools/bosses/silverman.gd",
 		"poses": preload("res://game/bosses/silverman/poses.gd"),
-		# Ahmed's, not Mostafa's. He was drawn, shown and picked at 1x - 35 rows
+		# Ahmed's, not Big Mo's. He was drawn, shown and picked at 1x - 35 rows
 		# across 35 world px - so 1x is what ships: the approved picture is the
 		# spec, and redrawing it at double density to gain ramp headroom would be
 		# shipping a different character. He needs the headroom least of the three

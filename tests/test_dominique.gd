@@ -49,7 +49,7 @@ const BRIEFINGS := {
 		# three the north door opens onto - west of the climb to that door and
 		# north of the crossing, so the walk from the stairs crosses nothing.
 		"at": Vector2(200, 130),
-		"say": "res://game/npcs/dominique/before_mostafa.gd",
+		"say": "res://game/npcs/dominique/before_big_mo.gd",
 	},
 	"executive_floor": {
 		"at": Vector2(310, 97),

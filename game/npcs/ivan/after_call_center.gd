@@ -20,7 +20,7 @@ extends RefCounted
 ##   thing he could not have said downstairs. The floor's own fight, its own
 ##   people, its own joke.
 ## - **He knows everybody**, which is what makes him warm rather than merely
-##   useful: Ahmed and Mostafa eat in his kitchen, the office boys fix his
+##   useful: Ahmed and Big Mo eat in his kitchen, the office boys fix his
 ##   ovens. DESIGN.md's tone rule is affectionate and never mean, and the man
 ##   who feeds the enemy is how a beat-em-up keeps it.
 ## - **The last word is "Eat."** on every floor. It is DESIGN.md's one line for

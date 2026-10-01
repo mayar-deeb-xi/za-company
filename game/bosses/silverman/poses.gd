@@ -5,7 +5,7 @@ extends RefCounted
 ## this file reserves for it.
 ##
 ## He is the one boss whose shape NEVER CHANGES. Ahmed's poses are an arm and
-## an axe moved around a torso; Mostafa's are thirteen measurements restruck
+## an axe moved around a torso; Big Mo's are thirteen measurements restruck
 ## per frame. Silverman's are one body and two numbers - how high he is
 ## floating and how far down the ramp he has gone - because he is a man made of
 ## silver who does not walk, and a liquid that deforms while it travels reads

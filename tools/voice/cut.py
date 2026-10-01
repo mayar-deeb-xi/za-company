@@ -234,7 +234,7 @@ def level(s, target_db, ceiling_db):
 
     Capping the gain instead - which this did - lets one plosive decide how
     loud a whole line is. It barely showed on Ahmed, who shouts seven of his
-    nine cues, and cost Mostafa 6.5 dB on the two lines that matter most: the
+    nine cues, and cost Big Mo 6.5 dB on the two lines that matter most: the
     first thing he says and the last. Both are tagged quiet, so they have the
     widest gap between their loudest consonant and their speaking level, and
     both ended up pinned at the ceiling with the words 6 dB under everything

@@ -1,9 +1,9 @@
 extends RefCounted
-## What Ivan says in the gym, after Mostafa. Data only - the shape of one of
+## What Ivan says in the gym, after Big Mo. Data only - the shape of one of
 ## these is in after_call_center.gd.
 ##
-## Mostafa gets the same treatment Ahmed got one file over, from the other end:
-## Ahmed is a man who complains about the soup, and Mostafa is a man who eats
+## Big Mo gets the same treatment Ahmed got one file over, from the other end:
+## Ahmed is a man who complains about the soup, and Big Mo is a man who eats
 ## two plates of it standing up. Nobody in this building is a monster to the
 ## person who feeds them, and that is the joke the healer exists to make.
 ##

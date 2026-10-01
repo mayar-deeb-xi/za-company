@@ -75,17 +75,17 @@ const BIOME := {
 	# bodies without breaking either - an arrival carries no `at`, so it cannot
 	# be parked in the ring by accident the way a placement can.
 	"enemies": [],
-	# Mostafa, in the middle of the painted ring. The ring runs 232x148 from
+	# Big Mo, in the middle of the painted ring. The ring runs 232x148 from
 	# (156, 78), so its centre is (272, 152); he stands a little north of that
 	# so the walk in from the south door is a walk toward him rather than into
 	# him. Naming a boss here is also what swaps the north door's script for
 	# boss_door.gd - it stays shut until he concedes.
-	"boss": {"type": "mostafa", "at": Vector2(272, 138)},
+	"boss": {"type": "big_mo", "at": Vector2(272, 138)},
 	# Quarters of his health, in by the south door, cued by his health for the
 	# reason in reinforcements.gd's `_due`. Ahmed's floor explains why this
 	# pair and not boys; this floor is where the pair bites hardest, because a
 	# RHYTHM fight is the one thing a drain and a slow can actually break.
-	# Mostafa's combination is jab-jab-hook on a beat you learn, and being bled
+	# Big Mo's combination is jab-jab-hook on a beat you learn, and being bled
 	# while you count it and slowed while you step out of it is the fight asked
 	# again with both hands occupied - which is also DESIGN.md's corner rush
 	# made worse in the only fair way: the corners get busier, not stronger.
@@ -106,7 +106,7 @@ const BIOME := {
 			"enemies": ["social_media", "social_media", "call_center"],
 			"per_head": ["social_media"]},
 	],
-	# Ringside, east, after Mostafa is done. Nothing solid may stand INSIDE the
+	# Ringside, east, after Big Mo is done. Nothing solid may stand INSIDE the
 	# ring - the rhythm fight needs the whole 232x148 of it - and by the time he
 	# walks in there is no fight left to crowd, but the spot keeps the rule
 	# anyway: (412, 144) is outside the ring's right edge at x 388, and clear of

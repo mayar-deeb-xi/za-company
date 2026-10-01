@@ -158,7 +158,7 @@ clears and stays clear.
       - **F4 Ahmed** — 1 `office_boy` at 64 HP and again at 32, in by the south
         door. This is DESIGN.md's own "SECURITY!" summon, arrived at without a
         summon hook.
-      - **F8 Mostafa** — 1 `office_boy` at 96 HP and again at 48. It lands on
+      - **F8 Big Mo** — 1 `office_boy` at 96 HP and again at 48. It lands on
         the floor's own idea: the corner rush already makes the edges dangerous,
         and a body arriving mid-rhythm is a body you have to fit into a rhythm.
       - **F12 Khaled** — held until he exists. His three phases already fold in
@@ -191,7 +191,7 @@ clears and stays clear.
       wind-up to interrupt, so it cannot be answered with the timing the boss
       is teaching, and the slow takes the dodge away — Ahmed's fire wave is a
       sidestep and nothing else. Every boss floor runs drain, then the slow at
-      the halfway point, then drain again, one slower per threshold. Mostafa's
+      the halfway point, then drain again, one slower per threshold. Big Mo's
       final quarter is the one place two can be alive at once, the deliberate
       peak, and the first thing to check in play.
 - [x] **A boss's health scales with head count — by ADDING, never
@@ -200,7 +200,7 @@ clears and stays clear.
       on one body, so a fight tuned for one ended in half the wall-clock
       whatever walked in meanwhile. Each head beyond the first adds the boss's
       `health_per_head` — a third of him, in whole combos: Ahmed 144 + 48,
-      Mostafa 216 + 72, Silverman 288 + 96 — so he still dies on a whole
+      Big Mo 216 + 72, Silverman 288 + 96 — so he still dies on a whole
       combo, which is the only thing the fractional-multiplier objection was
       protecting. Difficulty still never touches it. The beats moved from
       `at_boss_health` to `at_boss_fraction` in the same change, because an
@@ -238,7 +238,7 @@ The staggered single-file walk-in through a known door carries it for now.
   particular reads as a vending machine with a voice. Six conversations now
   (`game/npcs/ivan/after_<floor>.gd`), one per floor, and it cost no code -
   `conversation` was always placement. He introduces himself on the call floor,
-  complains that Ahmed says the soup needs salt, knows that Mostafa eats two
+  complains that Ahmed says the soup needs salt, knows that Big Mo eats two
   plates standing up, tells you the office boys fix his ovens and that somebody
   upstairs pointed them at you, notices on the executive floor that those ones
   have never stood in his lunch queue, and on the top floor says there is
@@ -274,7 +274,7 @@ three floors that sit under a boss, arriving the way Ivan does once the room is
 clear - because a warning is only information while the fight is still ahead,
 and a signpost standing in the room during the fight is furniture. Each briefing
 names the boss and ends on that fight's actual tell: sidestep Ahmed's wave,
-break Mostafa's third punch, spend everything before Silverman's last phase.
+break Big Mo's third punch, spend everything before Silverman's last phase.
 He comes down the north door while Ivan comes up the south one. Voiced, twelve
 clips, in the same pipeline as the other three mouths. `tests/test_dominique.gd`
 holds the rule that put him on exactly those three floors.
@@ -563,7 +563,7 @@ names the room, and the fiction carries which floor it is.
   floor has no mechanic assigned to it yet.
 - [x] **F7 Conflict Resolution** (BOSS): company gym, boxing ring painted on
   the floor, poster: "TALK IT OUT" crossed out, "GLOVE IT OUT" under it.
-  Tight arena, no columns. Mostafa. Ivan.
+  Tight arena, no columns. Big Mo. Ivan.
   **Built**: the room, and it is the only room in the game with no colour in
   it. Every other floor has a cast - the lobby blue, asset recovery brown, the
   call floor green - and this one is plain concrete and rubber, so the single
@@ -587,7 +587,7 @@ names the room, and the fiction carries which floor it is.
   No hazard, for the same reason Ahmed's office has none: one fight is enough
   to read at a time, and a boss room that also burns you is a boss room where
   the death was the floor's fault.
-  **Still to add**: Mostafa stands in the middle of the ring at
+  **Still to add**: Big Mo stands in the middle of the ring at
   (272, 138), and naming him in the biome is also what swapped the north
   door for boss_door.gd. His adds are a beat rather than placements - one
   office boy at 96 HP and again at 48 - which is also what keeps the ring
@@ -742,14 +742,14 @@ unlocks.
   **Built since**: his mouth. He shouts through the fight - a hello, a taunt
   when you keep out of his reach ("Get over here!", "Come here, coward!"), a
   line on the wind-up of a swing, one for being hit and a different one for
-  being interrupted, and "I'm telling Mostafa." as he kneels. Subtitles AND voice:
+  being interrupted, and "I'm telling Big Mo." as he kneels. Subtitles AND voice:
   all twenty-three lines are cut with ElevenLabs v3, the read tagged per cue
   rather than tuned on a slider, and the subtitle holds for as long as the
   recording runs. `ahmed/taunts.gd` is the
   whole of what he says; `game/enemies/enemy_lines.gd` decides when, and no
   other boss has lines yet.
   **Built since**: the enormous chair, as his fifth attack (above).
-- [x] **MOSTAFA — 216 HP solo (+72 a head), F7.** Boxing rhythm fight; his attack is the cycle
+- [x] **BIG MO — 216 HP solo (+72 a head), F7.** Boxing rhythm fight; his attack is the cycle
   run 3x back-to-back:
   - Jab, jab: 0.25s wind-ups, 6 dmg each, commit_fraction ~1.0
     (effectively uninterruptible; they're swings — step out, they whiff).
@@ -763,7 +763,7 @@ unlocks.
   `flip_h` is invisible on it. And he is drawn at 2x DENSITY: 70 source rows
   across the same 35 world px Ahmed spends 35 on, cell 128, halved back by
   `scale 0.5` in the scene. The style pass that shaped him needed the range.
-  Commit is per attack (`COMMIT` in mostafa.gd), which is what makes the jabs
+  Commit is per attack (`COMMIT` in big_mo.gd), which is what makes the jabs
   uninterruptible and the hook not — the base has one dial, so he sets it as
   each attack begins.
   He also **goes up at 72** — half health, once, and never back down. A 0.95 s
@@ -811,7 +811,7 @@ unlocks.
   `title()` reads the scene's filename and the floor card reads the biome, so
   neither had to learn about the other. Nothing in the game says he is Khaled;
   it is the rule the other two already follow, that a name passed up the stairs
-  is the whole threat and the blood is never spelled out. Mostafa escalates
+  is the whole threat and the blood is never spelled out. Big Mo escalates
   "to Khaled", the player walks into KHALED'S OFFICE, and the man waiting there
   does not introduce himself.
   **He talks, and he says everything twice** - Swedish, then the same thing in
@@ -940,7 +940,7 @@ never tougher ones**, because 24/17/36 are exact combo breakpoints.
 - [x] 5. Boss plumbing: locked north door (done: game/levels/boss_door.gd),
         defeat -> concede -> unlock (done: boss_base.gd), boss HP bar on HUD
         (done: ui/hud/boss_bar.gd, found by group so every boss gets one).
-- [ ] 6. Bosses in order Ahmed -> Mostafa -> Khaled (each adds one idea:
+- [ ] 6. Bosses in order Ahmed -> Big Mo -> Khaled (each adds one idea:
         summons; multi-hit rhythm; phases). Ahmed is built, less his summon.
 - [ ] 7. Ending: sticky-note screen, discount code constant, credits.
 - [x] 8. Tests: new `tests/test_bosses.gd` suite (one suite = one world);

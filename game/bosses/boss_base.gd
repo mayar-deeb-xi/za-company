@@ -102,7 +102,7 @@ const Heads := preload("res://game/heads.gd")
 ## two, whatever walks in through the door meanwhile. It is ADDED in whole
 ## combos rather than multiplied, which is what keeps the reason enemy HP never
 ## scales from applying here: a multiplier lands him on a remainder, and a sum of
-## 24s still dies on a whole cycle. Anything keyed to how hurt he is - Mostafa's
+## 24s still dies on a whole cycle. Anything keyed to how hurt he is - Big Mo's
 ## rage, Silverman's phases, a floor's `at_boss_fraction` beats - is a FRACTION
 ## of max_health, so it moves with this instead of being stranded by it.
 @export var health_per_head := 0

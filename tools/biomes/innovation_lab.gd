@@ -282,5 +282,5 @@ const BIOME := {
 	# of this hall's two pillars. The walk from the north door is short and
 	# crosses nothing.
 	"briefing": {"npc": "dominique", "from": "returned", "at": Vector2(200, 130),
-		"say": "res://game/npcs/dominique/before_mostafa.gd"},
+		"say": "res://game/npcs/dominique/before_big_mo.gd"},
 }

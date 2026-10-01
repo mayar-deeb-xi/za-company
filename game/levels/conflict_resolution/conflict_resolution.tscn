@@ -12,8 +12,8 @@
 [ext_resource type="PackedScene" path="res://game/levels/conflict_resolution/props/furniture/dead_plant.tscn" id="10_hwwyg"]
 [ext_resource type="PackedScene" path="res://game/levels/conflict_resolution/props/furniture/sofa.tscn" id="11_sggbt"]
 [ext_resource type="PackedScene" path="res://game/levels/conflict_resolution/props/hardware/debris.tscn" id="12_rf18x"]
-[ext_resource type="PackedScene" path="res://game/bosses/mostafa/mostafa.tscn" id="13_bg8ql"]
-[ext_resource type="Script" path="res://game/bosses/mostafa/mostafa.gd" id="14_dpvjx"]
+[ext_resource type="PackedScene" path="res://game/bosses/big_mo/big_mo.tscn" id="13_bg8ql"]
+[ext_resource type="Script" path="res://game/bosses/big_mo/big_mo.gd" id="14_dpvjx"]
 [ext_resource type="PackedScene" path="res://game/levels/conflict_resolution/door.tscn" id="15_frnil"]
 [ext_resource type="Script" path="res://game/levels/boss_door.gd" id="16_wfkj1"]
 [ext_resource type="Texture2D" path="res://game/levels/conflict_resolution/doorway_out.tres" id="17_jif2y"]
@@ -106,7 +106,7 @@ position = Vector2(470, 244)
 position = Vector2(272, 138)
 motion_mode = 1
 script = ExtResource("14_dpvjx")
-music = "res://assets/music/mostafa_theme_loop.wav"
+music = "res://assets/music/big_mo_theme_loop.wav"
 health_per_head = 72
 max_health = 216
 contact_damage = 6

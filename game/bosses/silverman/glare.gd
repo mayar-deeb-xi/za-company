@@ -18,7 +18,7 @@ extends Node2D
 ## dust kicked off its front, sparks where each arm runs out.
 ##
 ## Three parts, one script, chosen by `part`, split by SPACE the way Ahmed's
-## axe_fire.gd and Mostafa's bell.gd are:
+## axe_fire.gd and Big Mo's bell.gd are:
 ##
 ## - **band** sits under the body at z 0: the walls of light crossing the room
 ##   and the floor brightening under him as he loads. WORLD pixels. z 0 rather

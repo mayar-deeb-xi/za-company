@@ -11,7 +11,7 @@ extends "res://tests/helpers.gd"
 ## records each new one, so the checks read the order he fought in rather than
 ## betting on the exact frame a swing began.
 
-const _MPoses := preload("res://game/bosses/mostafa/poses.gd")
+const _MPoses := preload("res://game/bosses/big_mo/poses.gd")
 
 var _boss: Node2D
 var _boy: Node2D
@@ -29,7 +29,7 @@ var _wave_at := -1
 var _seq_at_wave := -1
 var _melee_at := -1
 
-# Mostafa, fought second in the same cleared room.
+# Big Mo, fought second in the same cleared room.
 var _m: Node2D
 var _mseq: Array[String] = []
 var _m_conceded := false
@@ -229,12 +229,12 @@ func _tick(frame: int) -> void:
 				% ("all eight" if unvoiced.is_empty() else str(unvoiced)),
 				unvoiced.is_empty())
 
-			# Mostafa on the same terms, derived from HIS attacks. He is the
+			# Big Mo on the same terms, derived from HIS attacks. He is the
 			# second boss to own sounds, which is what makes this a contract
 			# rather than a note about Ahmed: three attacks, not four, plus the
 			# two the rage brought with it.
 			var maudio: Node = _m.get_node_or_null("Audio")
-			_check("bosses: Mostafa carries his own sounds too (%s)" % maudio,
+			_check("bosses: Big Mo carries his own sounds too (%s)" % maudio,
 				maudio != null)
 			var msounds: Dictionary = maudio.get("sounds") if maudio != null else {}
 			var mquiet: Array = []
@@ -274,14 +274,14 @@ func _tick(frame: int) -> void:
 				% _loop_mode_of(audio, "breath"),
 				_loop_mode_of(audio, "breath") == AudioStreamWAV.LOOP_FORWARD)
 
-		# ---- Mostafa. Same room, cleared: his fight is a RHYTHM, so what is
+		# ---- Big Mo. Same room, cleared: his fight is a RHYTHM, so what is
 		# checked here is the ORDER he throws in, not the frame each punch
 		# lands on. The player is healed first because Ahmed left them at 38
 		# and a hook is 18 - a death mid-suite would respawn them elsewhere.
 		570:
 			# Guarded: the office boy has usually been killed by Ahmed's second
 			# slam by now and freed itself, and an unguarded queue_free on it
-			# throws - which would abort this whole arm and leave Mostafa
+			# throws - which would abort this whole arm and leave Big Mo
 			# uncreated.
 			if is_instance_valid(_boss):
 				_boss.queue_free()
@@ -290,10 +290,10 @@ func _tick(frame: int) -> void:
 			_boss = null
 			_boy = null
 			_player().call("heal", 100)
-			_m = (load("res://game/bosses/mostafa/mostafa.tscn") as PackedScene).instantiate() as Node2D
+			_m = (load("res://game/bosses/big_mo/big_mo.tscn") as PackedScene).instantiate() as Node2D
 			_level().get_node("Props").add_child(_m)
 			_m.connect("conceded", func() -> void: _m_conceded = true)
-			_check("bosses: Mostafa opens at 216 - nine heavies (%s)" % _m.get("health"),
+			_check("bosses: Big Mo opens at 216 - nine heavies (%s)" % _m.get("health"),
 				_m.get("health") == 216)
 			_check("bosses: he is a boss and an enemy",
 				_m.is_in_group("bosses") and _m.is_in_group("enemies"))
@@ -316,7 +316,7 @@ func _tick(frame: int) -> void:
 			_player().global_position = Vector2(272, 140)
 			_m.global_position = Vector2(272, 196)
 		700:
-			_check("bosses: Mostafa opens the combination with a jab (%s)" % str(_mseq),
+			_check("bosses: Big Mo opens the combination with a jab (%s)" % str(_mseq),
 				not _mseq.is_empty() and _mseq[0] == "jab")
 			_check("bosses: every swing plays its own animation (%s)"
 				% ("all matched" if _m_anim_mismatch == "" else _m_anim_mismatch),
@@ -352,7 +352,7 @@ func _tick(frame: int) -> void:
 				not _m.is_in_group("enemies") and _m.is_inside_tree()
 				and _m.is_in_group("bosses"))
 		1125:
-			_check("bosses: Mostafa has a concede row to hold on (%s)"
+			_check("bosses: Big Mo has a concede row to hold on (%s)"
 				% _sprite_of(_m).animation, _sprite_of(_m).animation == &"concede_side")
 			_check("bosses: nothing more lands after he concedes (%s -> %s)"
 				% [_m_health_at_concede, _player().get("health")],
@@ -376,7 +376,7 @@ func _tick(frame: int) -> void:
 				_sv.get("health") == 288)
 			_check("bosses: he is a boss and an enemy",
 				_sv.is_in_group("bosses") and _sv.is_in_group("enemies"))
-			# 1x density, unlike Mostafa: he was drawn, shown and picked at 35
+			# 1x density, unlike Big Mo: he was drawn, shown and picked at 35
 			# rows, and the approved picture is the spec. A scale here that is
 			# not 1 means someone redrew him at double density.
 			_check("bosses: he ships at 1x, unscaled like Ahmed (scale %s)"

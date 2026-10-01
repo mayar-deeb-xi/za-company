@@ -8,7 +8,7 @@ extends RefCounted
 ## it drew. Static, and handed the CanvasItem to draw on, so it can only ever
 ## be called from inside that item's own `_draw()`.
 ##
-## His alone, like everything else in this folder: Mostafa's brush.gd draws
+## His alone, like everything else in this folder: Big Mo's brush.gd draws
 ## fire, and nothing about the ART is shared between bosses.
 
 ## Below this an alpha is not worth a draw call.

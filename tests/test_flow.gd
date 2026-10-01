@@ -709,16 +709,16 @@ func _tick(frame: int) -> void:
 			_check("level: the gym is dressed as a gym (missing %s)"
 				% [unfit], unfit.is_empty())
 			# A boss room has one thing in it that hurts, and it is the boss:
-			# no hazard, no heart, and for now no Mostafa either.
+			# no hazard, no heart, and for now no Big Mo either.
 			_check("level: no hazard and no heart in the gym",
 				_level().get_node_or_null("Props/Torch") == null
 					and _level().get_node_or_null("Props/Health") == null)
-			# Mostafa and nothing else: a rhythm fight is one fight, so the ring
+			# Big Mo and nothing else: a rhythm fight is one fight, so the ring
 			# has to stay clear. Same shape as the check on Ahmed's floor.
-			_check("boss: Mostafa stands in the ring",
+			_check("boss: Big Mo stands in the ring",
 				_level().get_node_or_null("Props/Boss") != null
 					and _level().get_node("Props/Boss").is_in_group("bosses"))
-			_check("level: no adds in the gym - Mostafa alone (%d)"
+			_check("level: no adds in the gym - Big Mo alone (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").size() == 1)
 			# The SECOND boss, and the point of checking him too: nothing about
@@ -732,9 +732,9 @@ func _tick(frame: int) -> void:
 			# scene root, not Ahmed's carried up three floors. Three rooms of
 			# the bed stand between the two fights, so what this actually
 			# catches is a second theme that never replaced the first.
-			_check("music: the gym plays Mostafa's theme, not Ahmed's (%s)"
+			_check("music: the gym plays Big Mo's theme, not Ahmed's (%s)"
 				% ("<silent>" if _music_track() == "" else _music_track()),
-				_music_track() == "res://assets/music/mostafa_theme_loop.wav")
+				_music_track() == "res://assets/music/big_mo_theme_loop.wav")
 			var gym_theme := null if _music() == null else _music().stream as AudioStreamWAV
 			_check("music: his stream is sealed as a loop with a real end (%d)"
 				% (0 if gym_theme == null else gym_theme.loop_end),

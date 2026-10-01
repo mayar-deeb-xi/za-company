@@ -3,10 +3,10 @@ extends RefCounted
 ## is the only thing that reads it, and the only thing that decides when.
 ##
 ## He is Khaled. Nothing on screen says so - his bar still reads SILVERMAN and
-## his floor still announces itself as KHALED'S OFFICE - on the rule Mostafa's
+## his floor still announces itself as KHALED'S OFFICE - on the rule Big Mo's
 ## file already set: a name is the whole threat, and spelling out the blood
-## turns three bosses into a soap opera. Ahmed threatens you with Mostafa,
-## Mostafa threatens you with Khaled, and the man at the top of the building
+## turns three bosses into a soap opera. Ahmed threatens you with Big Mo,
+## Big Mo threatens you with Khaled, and the man at the top of the building
 ## threatens you with nothing at all.
 ##
 ## ## He says everything twice
@@ -27,7 +27,7 @@ extends RefCounted
 ##
 ## ## He is gracious, and that is the third boss
 ##
-## Ahmed is entitled and loud and sure this is HR's fault. Mostafa is
+## Ahmed is entitled and loud and sure this is HR's fault. Big Mo is
 ## procedural, booking the room, noting your feedback. Khaled is PLEASED TO
 ## MEET YOU - he compliments you, he means it, and he is going to kill you
 ## anyway. Two men of one family shouting would be one boss fought twice;

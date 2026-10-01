@@ -19,7 +19,7 @@ fight already has three bosses, and this one is supposed to be somebody's
 colleague. The unbroken pleasantness is what makes the two lines that describe
 the slow land at all.
 
-His brief is therefore the inverse of Mostafa's, who is calm because he is
+His brief is therefore the inverse of Big Mo's, who is calm because he is
 dangerous. This one is calm because he genuinely thinks he is helping.
 
 ## Whispered, and levelled like a whisper
@@ -43,7 +43,7 @@ auditioned.
 ##
 ## Deliberately not Brian ("Deep, Resonant and Comforting"), which was the
 ## closer match on the word "comforting" and the worse match on the character:
-## deep and resonant is where Mostafa already lives, and a warden who sounds
+## deep and resonant is where Big Mo already lives, and a warden who sounds
 ## like a boss is the one thing this enemy must not be.
 VOICE_ID = "cjVigY5qzO86Huf0OWal"
 MODEL = "eleven_v3"

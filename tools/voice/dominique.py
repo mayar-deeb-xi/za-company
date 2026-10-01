@@ -12,7 +12,7 @@ boss on each of the three floors below one, so `BEATS` is a LIST. They cut as
 one voice into one folder, which is the whole reason the clip names below are
 namespaced by the boss they are about: nothing dedupes across files, so two
 briefings that both called a line `opening` would cut once and the second floor
-would quietly play the first floor's read. `ahmed_`, `mostafa_`, `silverman_`
+would quietly play the first floor's read. `ahmed_`, `big_mo_`, `silverman_`
 makes that impossible to do by accident.
 
 The names are worded rather than numbered for the reason every conversation's
@@ -56,7 +56,7 @@ RAW = "game/npcs/dominique/src/voice"
 ## a LIST of them is what tells it there is more than one floor.
 BEATS = [
     "game/npcs/dominique/before_ahmed.gd",
-    "game/npcs/dominique/before_mostafa.gd",
+    "game/npcs/dominique/before_big_mo.gd",
     "game/npcs/dominique/before_silverman.gd",
 ]
 
@@ -79,10 +79,10 @@ TAGS = {
     "ahmed_slam": _FLAT,
     "ahmed_fire": _HARD,
 
-    "mostafa_gym": _DRY,
-    "mostafa_rhythm": _FLAT,
-    "mostafa_break": _HARD,
-    "mostafa_fire": _HARD,
+    "big_mo_gym": _DRY,
+    "big_mo_rhythm": _FLAT,
+    "big_mo_break": _HARD,
+    "big_mo_fire": _HARD,
 
     "silverman_last_door": _BRISK,
     "silverman_slow": _DRY,

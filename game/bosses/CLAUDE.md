@@ -197,7 +197,7 @@ The bar itself is ember, not the player's crimson - two red bars on one screen
 is one bar the player has to identify first - and the pale block trailing the
 fill is a hit's worth of ground, held and then drained. Both boss HP are
 multiples of the heavy's 24, so a heavy is a visible chunk of a 240 px channel:
-a quarter of Ahmed, a sixth of Mostafa.
+a quarter of Ahmed, a sixth of Big Mo.
 
 ## The noise
 
@@ -339,7 +339,7 @@ asks for another while it is still going. Ahmed's is
 listen for is its seam - a generated track is rendered to a time, not to a
 bar, so the loop point is where it will show.
 
-Mostafa's is `assets/music/mostafa_theme_loop.wav`, and adding it was the
+Big Mo's is `assets/music/big_mo_theme_loop.wav`, and adding it was the
 claim above being tested: one line on his scene root, no code anywhere. Two
 things about it are worth carrying to the third theme. Its **tempo is chosen
 against his cycle** rather than against the room - 120 BPM is a beat every 30
@@ -351,7 +351,7 @@ that saves itself for a drop is a track that is quiet for the half of the
 fight he spends on fire.
 
 And the level a theme is mixed at is decided against HIS sounds, never against
-the other theme. Mostafa's was first matched to Ahmed's loudness, which was the
+the other theme. Big Mo's was first matched to Ahmed's loudness, which was the
 wrong question - masking is per band, and his rage and his fire both live under
 250 Hz where a techno track keeps its kick, so they were arriving level with
 the bed while every one of his impacts had 16 dB of room. Three more dB off the
@@ -382,7 +382,7 @@ What a boss still owns is the SUBTITLE. `_say` is overridden here to emit
 boss is addressing the player, an enemy is being overheard.** An enemy's line
 deliberately never reaches the box.
 
-**All three talk now.** `ahmed/taunts.gd`, `mostafa/taunts.gd` and
+**All three talk now.** `ahmed/taunts.gd`, `big_mo/taunts.gd` and
 `silverman/taunts.gd` sit beside their own poses and sheets, on the placement
 rule an NPC's own conversation already follows: a line is owned by the mouth it
 comes out of. There is no silent boss left in the building, and that cost
@@ -493,9 +493,9 @@ direction in `ahmed.py`):
 every suite here does: the headline cue needs a boss who never reaches anybody,
 which is the exact opposite of the fight test_bosses.gd has to run.
 
-## Mostafa
+## Big Mo
 
-`mostafa/` is the second boss, and he breaks two of Ahmed's assumptions on
+`big_mo/` is the second boss, and he breaks two of Ahmed's assumptions on
 purpose. Both are load-bearing, so read them before touching his art.
 
 - **He is drawn FRONT ON.** Every other boss is a profile. A boxer squares up
@@ -507,7 +507,7 @@ purpose. Both are load-bearing, so read them before touching his art.
 - **He is drawn at 2x DENSITY.** 70 source rows across 35 world px, where Ahmed
   spends 35 rows on the same 35 px. His cell is therefore `128` in roster.gd
   and his scene halves it back with `scale 0.5` and `offset -48`, so the two
-  bosses stand the same height in the room and only Mostafa's pixels are finer.
+  bosses stand the same height in the room and only Big Mo's pixels are finer.
   The cost is real: his pixels do not line up with the room's at odd window
   scales. It was chosen deliberately, because the style pass that shaped him
   had no range to work in at 1x - a 35px-tall body gives a head-width slider
@@ -516,7 +516,7 @@ purpose. Both are load-bearing, so read them before touching his art.
 His pieces:
 
 - **`poses.gd` is measurements, not a picture.** Where Ahmed's is body ASCII
-  with an arm drawn over it, Mostafa's is thirteen numbers (head, shoulders,
+  with an arm drawn over it, Big Mo's is thirteen numbers (head, shoulders,
   taper, torso, glove, shorts, legs, boots) plus a per-frame pose: body and
   head offsets, leg offsets, stance, and two arms each given as an elbow and a
   glove. That is what let him be shaped with sliders, and it is why a new frame
@@ -526,10 +526,10 @@ His pieces:
   The painter reads them rather than deriving its own, because the moment a
   second thing draws a glove from pose data there must be one shoulder line
   and not two.
-- **`tools/bosses/mostafa.gd` paints from those measurements.** Same seed-once
+- **`tools/bosses/big_mo.gd` paints from those measurements.** Same seed-once
   contract as Ahmed's. The canvas lands at a FIXED offset in the cell, never
   centred per frame, or the body jitters between frames of a row.
-- **Four attacks, but a RHYTHM rather than a menu** (`mostafa.gd`): jab, jab,
+- **Four attacks, but a RHYTHM rather than a menu** (`big_mo.gd`): jab, jab,
   hook, three times through, then `breath_seconds`. The corner rush breaks the
   pattern for a player who kites - and the dash IS its wind-up, with the blow
   on the last running frame, so he connects on arrival rather than swinging
@@ -584,7 +584,7 @@ chevrons MEET (his chest, 13 world px up) and where the rush's streaks sit.
 The mockup this was ported from previewed at a zoom the game does not have, so
 every number in it had to be read as one or the other.
 
-Two dials beyond the drawing, both in `mostafa.gd`:
+Two dials beyond the drawing, both in `big_mo.gd`:
 
 - **`HIT_STOP`** holds the sprite still for 0.08 s on the frame a blow lands
   (the hook gets half again), which is most of what tells a player the attack
@@ -600,7 +600,7 @@ Two dials beyond the drawing, both in `mostafa.gd`:
 
 ### The Rage - he goes up at half
 
-`rage.gd`, and `mostafa.gd` decides when. At half health he catches fire, once,
+`rage.gd`, and `big_mo.gd` decides when. At half health he catches fire, once,
 and never comes back down. **Half was already a moment**: his floor cues
 `at_boss_fraction: 0.5`, so a `call_center` and a `social_media` come in through
 the south door on the same frame the fire does.
@@ -653,7 +653,7 @@ Ahmed keeps his own copy of most of those shapes inside `axe_fire.gd`, and that
 stays deliberate. Nothing about the ART is shared between bosses, and a flame is
 art: the shapes here are the same as his, because one game should have one
 fire, but **the ramp is the whole point of drawing it twice** - Ahmed is yellow
-and amber, fuel burning on an axe; Mostafa is crimson and white, a body
+and amber, fuel burning on an axe; Big Mo is crimson and white, a body
 overheating. Nobody should have to check which boss they are fighting. A third
 consumer is the moment these bubble up to `game/bosses/` as a kit taking a
 ramp, and not before.
@@ -661,7 +661,7 @@ ramp, and not before.
 ### His sheet grew a row
 
 `ORDER` is now idle, walk, jab, hook, rush, **rage**, concede - seven rows, and
-`src/mostafa.png` was re-seeded to get it. That was free, and the reason is
+`src/big_mo.png` was re-seeded to get it. That was free, and the reason is
 worth keeping: his PNG was still **exactly what the painter paints**, verified
 by repainting and diffing all 896x768 before deleting it. Every old row came
 back byte-identical and the concede moved down a row intact.
@@ -698,7 +698,7 @@ Two consequences worth keeping:
   0.12 s in, and aligning to it padded almost half a second of dead air in
   front of the eruption.
 - **Nothing stops the fire.** Ahmed fades his axe on the concede because he
-  drops the axe; Mostafa IS the fire, and he is still burning when he kneels.
+  drops the axe; Big Mo IS the fire, and he is still burning when he kneels.
   Its loop is crossfaded over a 0.5 s seam, because a bed that plays from half
   health to the end of a fight is heard looping many times.
 
@@ -710,19 +710,19 @@ is.
 
 ### What he says
 
-Twenty-two lines across nine cues in `mostafa/taunts.gd`, cut by
-`tools/voice/cut.py mostafa` off `tools/voice/mostafa.py`, exactly as Ahmed's
+Twenty-two lines across nine cues in `big_mo/taunts.gd`, cut by
+`tools/voice/cut.py big_mo` off `tools/voice/big_mo.py`, exactly as Ahmed's
 are. Three things about the set are decisions rather than transcription:
 
 - **He is the answer to a line the floor below already set up.** Ahmed asks
-  "Do you know who Mostafa is?" when hurt and goes down saying "I'm telling
-  Mostafa", so the first thing this man says is "So you're the one who upset
+  "Do you know who Big Mo is?" when hurt and goes down saying "I'm telling
+  Big Mo", so the first thing this man says is "So you're the one who upset
   Ahmed" and the last is "I'm escalating this. To Khaled." The chain of
   command IS the boss order, and each concede hands you up it.
 
   **Nobody in the building ever says HOW they are related, and that is the
-  rule rather than an omission.** Mostafa is Ahmed's uncle and Khaled is
-  Mostafa's brother; the family tree is the reason the three of them are the
+  rule rather than an omission.** Big Mo is Ahmed's uncle and Khaled is
+  Big Mo's brother; the family tree is the reason the three of them are the
   three bosses, and stating it out loud turns a threat into a soap opera. A
   name passed up the stairs already says everything the player needs - that
   this man knows the next one and can reach him - so every line about another
@@ -730,13 +730,13 @@ are. Three things about the set are decisions rather than transcription:
   briefing and no kitchen story explains the blood.
 - **He talks like the department he runs, and that is the whole contrast.**
   Ahmed is entitled and loud - seven of his nine cues are tagged furious or
-  shouting. Mostafa runs CONFLICT RESOLUTION and speaks like it: avoidance is
+  shouting. Big Mo runs CONFLICT RESOLUTION and speaks like it: avoidance is
   not a resolution, I've booked this room for an hour, meeting you halfway.
   Seven of HIS nine cues are tagged quiet, and he is cast as Edward against
   Ahmed's Jack - British both, because they are family, dark and low against
   loud. Two men of one family tagged the same way would be one boss fought
   twice.
-- **`rage` is a cue he added himself**, said by `mostafa.gd` on the frame he
+- **`rage` is a cue he added himself**, said by `big_mo.gd` on the frame he
   catches fire - the base fires seven cues and none of them is "the moment the
   process stops". It has one line, like `concede`, because there is no second
   thing to say there; and it is the only cue in his file tagged like one of
@@ -744,7 +744,7 @@ are. Three things about the set are decisions rather than transcription:
 
 `cut.py` levels the SPEECH to target and soft-limits what pokes through, rather
 than capping the gain - which it used to do, and which let one plosive decide a
-whole line's loudness. That barely showed on a man who shouts; it cost Mostafa
+whole line's loudness. That barely showed on a man who shouts; it cost Big Mo
 6.5 dB on his first line and his last, both tagged quiet and both therefore
 holding the widest gap between a consonant and a speaking voice.
 
@@ -764,7 +764,7 @@ other two the same way they broke each other, and the break is the whole
 character: **his body never changes shape.**
 
 - **One picture, moved around.** Ahmed's poses are an arm and an axe swung
-  about a torso; Mostafa's are thirteen measurements restruck per frame.
+  about a torso; Big Mo's are thirteen measurements restruck per frame.
   Silverman's are one block of ASCII and two numbers per frame - `dy`, how
   high he is floating, and `dull`, how many steps down the ramp he is painted.
   There is no scale, no lean, no clip and no leg variant anywhere in his
@@ -786,7 +786,7 @@ character: **his body never changes shape.**
   greyscale values lands between two rungs of the only thing he is made of.
 - **1x, like Ahmed.** Cell 64, sprite unscaled, offset -24. He was drawn,
   shown and picked at 35 rows, and the approved picture is the spec -
-  redrawing him at Mostafa's density to gain ramp headroom would be shipping a
+  redrawing him at Big Mo's density to gain ramp headroom would be shipping a
   different character. He needs it least of the three anyway: every frame of
   every row is the same pixels at a different height.
 - **His toes end on row 32.** The two empty rows under them are the hover, and
@@ -854,7 +854,7 @@ next `_dash_step`, or he spends one frame crossing the room in his idle pose.
 
 ### The fight: a ladder, not a menu and not a rhythm
 
-Ahmed is a menu (the attack suits the range) and Mostafa is a rhythm (jab, jab,
+Ahmed is a menu (the attack suits the range) and Big Mo is a rhythm (jab, jab,
 hook). Silverman had to be a third thing or the last fight in the building is
 one you have already had twice, so he is **cumulative**: three phases, each
 ADDING a mechanic and removing nothing, the interrupt window narrowing on every
@@ -873,7 +873,7 @@ phases with it (solo numbers below):
 
 `COMMIT` and `LOCKOUT` are set per phase as each attack begins, because the base
 has one dial for each and that is the only place they can narrow over a fight -
-Mostafa's per-attack trick, applied per phase instead. **`commit_fraction` 0.0
+Big Mo's per-attack trick, applied per phase instead. **`commit_fraction` 0.0
 is never interruptible, not always**: `_interruptible()` asks whether the
 wind-up's progress is still BELOW it, so a lower number is a more committed
 boss, and 0.0 is DESIGN.md's "fully uninterruptible" with no special case
@@ -994,7 +994,7 @@ man in KHALED'S OFFICE is Khaled, and SILVERMAN is what the fight is called.
 The two never meet on screen, because `title()` reads the scene's filename and
 the floor card reads the biome, so neither had to learn about the other. His
 own lines are written knowing who he is; nothing in them says so, on the rule
-Mostafa's file already set (see What he says).
+Big Mo's file already set (see What he says).
 
 ### He says everything twice
 
@@ -1043,7 +1043,7 @@ Twenty lines across nine cues in `silverman/taunts.gd`, cut by
 `tools/voice/cut.py silverman`. Two things about the set are decisions:
 
 - **He is gracious, and that is what makes him the third boss.** Ahmed is
-  entitled and loud and sure this is HR's fault; Mostafa is procedural, booking
+  entitled and loud and sure this is HR's fault; Big Mo is procedural, booking
   the room and noting your feedback; Khaled is PLEASED TO MEET YOU. He
   compliments you on arriving, he thanks you for hitting him, and he is going
   to kill you anyway. There is not one insult in the file and the only thing he
@@ -1076,7 +1076,7 @@ over `boss_base.gd`, which is all game.gd looks for. See The bar.
 
 ## Still to build
 
-Mostafa's concede is a single placeholder frame - the animation DESIGN.md
+Big Mo's concede is a single placeholder frame - the animation DESIGN.md
 describes (gloves off, a nod, a point at the ceiling) was drawn and rejected in
 review. `boss_base.gd` plays `concede_side` at zero health so the row has to
 exist; replacing it is adding frames to his poses.gd and nothing else.

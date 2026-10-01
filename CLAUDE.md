@@ -373,18 +373,18 @@ arena: his sight reaching the spawn is the one deliberate exception to the rule
 below.
 
 **A boss's health is the one enemy health that scales, and only with HEADS,
-only by adding.** Solo he is Ahmed 144, Mostafa 216, Silverman 288 - six, nine
+only by adding.** Solo he is Ahmed 144, Big Mo 216, Silverman 288 - six, nine
 and twelve full combos - and every head beyond the first adds his
 `health_per_head` (48 / 72 / 96, a third of him) in boss_base's `_ready`. His
 adds alone could not cover a party: two players are two sets of swings on one
 body. It is a SUM of whole 24s rather than a multiplier, so he still dies on a
 whole combo, and difficulty still never touches it. Everything keyed to how
-hurt he is - Mostafa's rage, Silverman's phases, a floor's `at_boss_fraction`
+hurt he is - Big Mo's rage, Silverman's phases, a floor's `at_boss_fraction`
 beats - is a fraction of `max_health`, so it moves with him; an absolute
 threshold would fire on a party's boss at the start of the fight.
 
 Bosses draw their own effects live from their poses rather than baking them
-into a sheet - Ahmed's fire, Mostafa's **Bell** (his punches) and **Rage** (he
+into a sheet - Ahmed's fire, Big Mo's **Bell** (his punches) and **Rage** (he
 catches fire at half health, once, and never comes back down), Silverman's
 **Smear**, **Glare**, **Prism** (a white beam swept 140 degrees off his chest
 in his last phase), **Chill** and the **copy** his split casts. Four things
@@ -395,11 +395,11 @@ generalize out of them:
   fraction of the viewport, or it is invisible at 640 px wide and changes size
   with the zoom; a thing in the ROOM is world pixels.
 - An effect keyed to fixed seconds and an animation keyed to frames agree only
-  while every beat is a **frame boundary**. Mostafa's rage has a test that says
+  while every beat is a **frame boundary**. Big Mo's rage has a test that says
   so, because nothing else would notice a retimed `dur` sliding the fire off
   the picture.
 - **Fire is per boss on purpose.** The shapes are shared so the game has one
-  fire; the RAMP is what says whose it is - Ahmed yellow and amber, Mostafa
+  fire; the RAMP is what says whose it is - Ahmed yellow and amber, Big Mo
   crimson and white. Nobody should have to check which boss they are fighting.
 - **A boss's wind-up tint is the base's, until his palette says otherwise.**
   enemy_base fades a winding enemy towards amber, which is free legibility for
@@ -418,7 +418,7 @@ and the player refusing to come near him, which is the taunt. He emits `said`
 and game.gd puts it on `ui/subtitle/`, which is deliberately NOT the dialogue
 box: that one types, waits for a keypress and takes the player's hands, and in
 a fight a line that eats the attack key is a line that gets you hit. **All
-three talk, and all three are VOICED** - Ahmed twenty-three clips, Mostafa
+three talk, and all three are VOICED** - Ahmed twenty-three clips, Big Mo
 twenty-two, Silverman twenty - cut by `tools/voice/` with the read tagged per
 cue, and the subtitle holds for as long as the recording runs. Nothing in the
 game changed to make that work - a line always carried its clip path - see
@@ -455,7 +455,7 @@ tracks are neither, and live on the `Music` autoload - see Music below for the
 half of the audio that is not standing anywhere in particular.
 
 game/bosses/CLAUDE.md has all of it, and the three fights are three different
-SHAPES on the one cycle: Ahmed a menu (the attack suits the range), Mostafa a
+SHAPES on the one cycle: Ahmed a menu (the attack suits the range), Big Mo a
 rhythm (jab, jab, hook), Silverman a ladder (three phases, each adding a
 mechanic, interrupts narrowing to none).
 
@@ -591,13 +591,19 @@ game/levels/CLAUDE.md has the rest.
 
 ## Names on screen are not the ids
 
-Three characters were renamed for the player and kept their ids: `mostafa` is
-**Big Mo**, `ivan` is **Ivo**, `dominique` is **Domimi**. Folders, scenes,
-scripts, roster ids, biome keys, clip names (`mostafa_rhythm.wav`) and these
-docs still use the old names; what the player reads or hears - dialogue
-`name` fields, the NPC name labels, every spoken line, and Big Mo's bar via
-his own `title()` override - uses the new ones. A line written for any of the
-three says the new name.
+Two characters were renamed for the player and kept their ids: `ivan` is
+**Ivo** and `dominique` is **Domimi**. Folders, scenes, scripts, roster ids,
+biome keys, clip names (`ivan/sfx/voice/call_eat.wav`) and these docs still
+use the old names; what the player reads or hears - dialogue `name` fields,
+the NPC name labels and every spoken line - uses the new ones. A line written
+for either says the new name.
+
+The third went all the way: the boss who was `mostafa` is `big_mo` in every
+folder, file, id and doc as well as on screen. His bar still needs his own
+`title()` override, because the base derives a title from the scene's file
+name and `big_mo.tscn` would announce BIG_MO. Two voice recipes still spell
+"mostafa" in `SPELLINGS`, and that is not a leftover: it maps how the
+transcriber spells a spoken word, and is not a path.
 
 ## NPCs
 
@@ -770,7 +776,7 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
                                        from there; how it is delivered is
                                        tools/voice/<id>.py
 - `game/bosses/ahmed/sfx/voice/*.wav`
-  `game/bosses/mostafa/sfx/voice/*.wav`
+  `game/bosses/big_mo/sfx/voice/*.wav`
   `game/bosses/silverman/sfx/voice/*.wav`
   `game/npcs/hr_lady/sfx/voice/*.wav`
   `game/npcs/ivan/sfx/voice/*.wav`
@@ -1078,7 +1084,7 @@ over his own theme, which is to say under it. The broadband number is only half
 of what was wrong: measured at 300 Hz - 4 kHz, where intelligibility lives,
 every other track in the building sits 13-15 dB below its own broadband level
 and his sat 7 dB below it - a midrange-heavy fight theme standing exactly where
-he was talking, 9.7 dB hotter in that band than Mostafa's. **The check is the
+he was talking, 9.7 dB hotter in that band than Big Mo's. **The check is the
 75th-percentile window RMS of the track and of a voice clip, both band-limited
 to 300-4000, with the music's -8 applied; the voice wants to clear it by
 something like 8-13 dB, which is where all three bosses now are.** A track that
@@ -1312,7 +1318,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     really slows the room, really lets it go, and is asked for by signal like
     the shake. Its own suite because every stage needs him fighting ONE way,
     which is the opposite of test_bosses.gd running the fight he picks.
-  - `test_rage.gd` - Mostafa going up at 72 and staying up: that it fires at
+  - `test_rage.gd` - Big Mo going up at 72 and staying up: that it fires at
     half health and not before, fires once, roots and silences him without
     letting him be staggered, never comes back down, and that every beat of
     the fire still lands on a frame boundary. Its own suite because it needs

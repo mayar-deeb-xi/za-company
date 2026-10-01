@@ -607,7 +607,7 @@ have one:
 |-------|--------------|----------------|
 | F3 call_center | (208, 400) | first floor where a slow near two guards kills; last before Ahmed |
 | F4 ahmed_office | (180, 160) | after Ahmed concedes |
-| F8 conflict_resolution | (412, 144) | ringside, after Mostafa |
+| F8 conflict_resolution | (412, 144) | ringside, after Big Mo |
 | F9 asset_recovery | (80, 180) | the heaviest `per_head` in the game deserves the matching heal |
 | F11 executive_floor | (324, 196) | the exam floor, last stop before the roof |
 | F12 khaled_office | (400, 176) | the finale |
@@ -670,7 +670,7 @@ under a boss:
 | floor | he stands at | what is upstairs |
 |-------|---------------|------------------|
 | F3 call_center | (568, 128) | F4 Ahmed - the axe, the slam, and the fire that answers running |
-| F7 innovation_lab | (232, 120) | F8 Mostafa - two fast, one slow, and the fire at half |
+| F7 innovation_lab | (232, 120) | F8 Big Mo - two fast, one slow, and the fire at half |
 | F11 executive_floor | (310, 97) | F12 Silverman - three phases, and no interrupts by the last |
 
 **A briefing is only information while the fight is still ahead**, which is the
@@ -706,11 +706,11 @@ choice is pointed at the thing a boss fight actually is - reading one telegraph:
   cannot be answered with the timing the boss is teaching. It just bleeds you
   while you watch him.
 - **`call_center` takes the dodge away.** Ahmed's fire wave is a sidestep and
-  nothing else; Mostafa's rush needs you to move. Slowed, neither is dodgeable.
+  nothing else; Big Mo's rush needs you to move. Slowed, neither is dodgeable.
 
 So every boss floor runs drain, then the slow at the halfway point, then drain
 again - the slower arriving as one distinct event rather than a state the player
-lives in. ONE of him per threshold. Mostafa's final quarter is the single place
+lives in. ONE of him per threshold. Big Mo's final quarter is the single place
 in the game where two can be alive at once, as the deliberate peak, and it is
 the first thing to check in play: if it reads as a room you cannot move in
 rather than a crescendo, that is the beat to thin.

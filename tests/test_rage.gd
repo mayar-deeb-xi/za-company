@@ -1,5 +1,5 @@
 extends "res://tests/helpers.gd"
-## Rage test: Mostafa going up at 108 HP, and staying up.
+## Rage test: Big Mo going up at 108 HP, and staying up.
 ##
 ## Its own suite rather than another section of test_bosses.gd, for the reason
 ## the root CLAUDE.md gives: the rage needs a world where he is FIGHTING and
@@ -12,7 +12,7 @@ extends "res://tests/helpers.gd"
 ## staggered while it runs, and that it never comes back down. The picture is
 ## in the artifact; the pixels are not something a check can hold.
 
-const Poses := preload("res://game/bosses/mostafa/poses.gd")
+const Poses := preload("res://game/bosses/big_mo/poses.gd")
 
 var _m: Node2D
 var _seq: Array[String] = []
@@ -35,7 +35,7 @@ func _tick(frame: int) -> void:
 		17:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
 		32:
-			_m = (load("res://game/bosses/mostafa/mostafa.tscn") as PackedScene)\
+			_m = (load("res://game/bosses/big_mo/big_mo.tscn") as PackedScene)\
 				.instantiate() as Node2D
 			_level().get_node("Props").add_child(_m)
 			_m.connect("shook", _on_shook)
@@ -160,7 +160,7 @@ func _boundaries() -> Array:
 
 
 func _beats_on_frames() -> bool:
-	var Rage := load("res://game/bosses/mostafa/rage.gd") as GDScript
+	var Rage := load("res://game/bosses/big_mo/rage.gd") as GDScript
 	var bounds := _boundaries()
 	var beats: Array = (Rage.get_script_constant_map()["PULSES"] as Array).duplicate()
 	beats.append(Rage.get_script_constant_map()["BLAST"])
