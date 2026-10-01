@@ -25,6 +25,14 @@ extends Node2D
 ## out from under it rather than riding along like a hat, and it sits at a
 ## high `z_index` so a prop the player is standing behind cannot hide it. It
 ## frees itself.
+##
+## **It also flies off the enemies, the other way round.** A blow the PLAYER
+## lands puts its amount over the body it hit (`spawn_dealt()`): white for the
+## blade, the spark colour for a bolt's jump, double size for the heavy, and
+## with no minus sign - the minus is what says the number is yours to lose. It
+## is parented to the body's PARENT rather than the body, because the blow that
+## matters most is the one that kills, and that body is freed on the same
+## frame. Picked from the Combo Lab preview with the rest of the hit feel.
 
 ## Where it starts, above the body's origin: 6 px over the top of a 32 px cell
 ## drawn at offset -8, which is where the preview put it.
@@ -49,6 +57,13 @@ const GLYPHS := {
 
 ## What it says. Set by `spawn()` and `add()`; read by tests.
 var text := ""
+## How it is drawn. The defaults are the player's own red "-N"; `spawn_dealt()`
+## sets them for a number over an enemy.
+var colour := COLOUR
+var outline := OUTLINE
+var prefix := "-"
+## Screen pixels per glyph pixel. The outline stays one pixel at any size.
+var size := 1
 var _amount := 0
 var _age := 0.0
 
@@ -66,6 +81,22 @@ static func spawn(body: Node2D, amount: int) -> Node2D:
 	return node
 
 
+## A blow the player landed, over the enemy it landed on. See the header.
+static func spawn_dealt(body: Node2D, amount: int, ink: Color, edge: Color,
+		pixel := 1) -> Node2D:
+	var node: Node2D = (load("res://game/player/damage_number.gd") as GDScript).new()
+	node.colour = ink
+	node.outline = edge
+	node.prefix = ""
+	node.size = pixel
+	node.add(amount)
+	node.top_level = true
+	node.z_index = Z
+	body.get_parent().add_child(node)
+	node.global_position = (body.global_position + RISE_FROM).round()
+	return node
+
+
 ## Whether another drain tick should land on this number rather than start its
 ## own: only while it is still fully opaque, so a total never changes on a
 ## number that is already leaving.
@@ -75,7 +106,7 @@ func absorbs() -> bool:
 
 func add(amount: int) -> void:
 	_amount += amount
-	text = "-%d" % _amount
+	text = "%s%d" % [prefix, _amount]
 	queue_redraw()
 
 
@@ -89,10 +120,11 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var alpha := 1.0 - clampf((_age - FADE_FROM) / (LIFE - FADE_FROM), 0.0, 1.0)
-	var width := text.length() * 4 - 1
+	var width := (text.length() * 4 - 1) * size
 	var origin := Vector2(-floorf(width / 2.0), -roundf(_age * RISE_SPEED))
-	var ink := Color(COLOUR, alpha)
-	var edge := Color(OUTLINE, alpha)
+	var ink := Color(colour, alpha)
+	var edge := Color(outline, alpha)
+	var dot := Vector2(size, size)
 	# Outline first, everywhere, then the ink over it - so where two strokes'
 	# outlines overlap a neighbour's ink, the ink wins.
 	for pass_ink in [false, true]:
@@ -101,9 +133,9 @@ func _draw() -> void:
 			for k in glyph.length():
 				if glyph[k] != "1":
 					continue
-				var at := origin + Vector2(i * 4 + k % 3, floori(k / 3.0))
+				var at := origin + Vector2(i * 4 + k % 3, floori(k / 3.0)) * size
 				if pass_ink:
-					draw_rect(Rect2(at, Vector2.ONE), ink)
+					draw_rect(Rect2(at, dot), ink)
 				else:
 					for off in [Vector2.RIGHT, Vector2.LEFT, Vector2.DOWN, Vector2.UP]:
-						draw_rect(Rect2(at + off, Vector2.ONE), edge)
+						draw_rect(Rect2(at + off, dot), edge)

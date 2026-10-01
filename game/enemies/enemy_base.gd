@@ -176,6 +176,8 @@ const EnemyAudio := preload("res://game/enemies/enemy_audio.gd")
 ## positionally. A body with no `Lines` child says nothing, with no branch
 ## anywhere but `_say`.
 const EnemyLines := preload("res://game/enemies/enemy_lines.gd")
+## The dust a launched body kicks up when it comes down - see `launch()`.
+const LandingDust := preload("res://game/enemies/landing_dust.gd")
 
 ## The one cue a plain enemy has, and it is unlike every cue a boss has.
 ##
@@ -275,6 +277,21 @@ const GIVE_UP_SECONDS := 3.0
 
 const HURT_FLASH_SECONDS := 0.15
 const HURT_TINT := Color(1.0, 0.4, 0.4)
+## The blow's first three frames are WHITE, before the red tint above takes
+## over - the flash says the hit landed, the tint says it hurt. Over 1 on every
+## channel so a multiply lifts the whole figure towards white without a shader;
+## its outline stays dark, which is what keeps the silhouette readable.
+const STRUCK_SECONDS := 0.05
+const STRUCK_TINT := Color(4.0, 4.0, 4.0)
+## How a body REELS from a blow the player landed - see `recoil()` and
+## `launch()`. Both move the sprite and never the body, so the leash, the
+## steering and every placement band in the building are exactly as they were.
+## Picked from the Combo Lab preview with the rest of the hit feel.
+const RECOIL_SECONDS := 0.12
+const RECOIL_PX := 2.0
+const LAUNCH_SPEED := 72.0
+const LAUNCH_GRAVITY := 330.0
+const LAUNCH_SHADOW := Color(0, 0, 0, 0.35)
 ## Reads hotter the closer the swing is to landing, so a wind-up is legible even
 ## with the animation still playing behind it.
 const WINDUP_TINT := Color(1.0, 0.72, 0.45)
@@ -310,6 +327,15 @@ var post := Vector2.INF
 var _facing: Facing = Facing.DOWN
 var _facing_left := false
 var _flash := 0.0
+var _struck := 0.0
+## The reel: seconds of recoil left and which way, and how high the sprite is
+## off the floor and how fast it is going up. `_sprite_rest` is where the scene
+## put the sprite, which every offset is measured from.
+var _recoil := 0.0
+var _recoil_away := Vector2.ZERO
+var _juggle_height := 0.0
+var _juggle_speed := 0.0
+var _sprite_rest := Vector2.ZERO
 ## Time spent in the current phase, and the countdown on being interruptible.
 var _phase_time := 0.0
 var _interrupt_locked := 0.0
@@ -339,6 +365,7 @@ var _slid := Vector2.ZERO
 
 func _ready() -> void:
 	health = max_health
+	_sprite_rest = _sprite.position
 	# Difficulty scales what the world DEALS, applied once at spawn. Health is
 	# deliberately untouched: 24 / 17 / 36 are exact breakpoints on the player's
 	# combo, and a multiplier would shred them on two of the three modes.
@@ -356,6 +383,9 @@ func _physics_process(delta: float) -> void:
 	_mutter(delta)
 	if _flash > 0.0:
 		_flash = maxf(_flash - delta, 0.0)
+	if _struck > 0.0:
+		_struck = maxf(_struck - delta, 0.0)
+	_reel(delta)
 	if _interrupt_locked > 0.0:
 		_interrupt_locked = maxf(_interrupt_locked - delta, 0.0)
 	if _gave_up > 0.0:
@@ -412,7 +442,9 @@ func _physics_process(delta: float) -> void:
 	# Resolved last, so an effect that tints while it works has already seen this
 	# frame's contact. Being hurt outranks everything; a swing about to land
 	# outranks whatever a type wants to say the rest of the time.
-	if _flash > 0.0:
+	if _struck > 0.0:
+		_sprite.modulate = STRUCK_TINT
+	elif _flash > 0.0:
 		_sprite.modulate = HURT_TINT
 	elif phase == Phase.WINDUP:
 		_sprite.modulate = Color.WHITE.lerp(_windup_tint(), _windup_progress())
@@ -771,6 +803,7 @@ func take_damage(amount: int) -> void:
 	# The tint itself is applied by _physics_process, which is the one place
 	# that decides how the sprite reads.
 	_flash = HURT_FLASH_SECONDS
+	_struck = STRUCK_SECONDS
 	if health == 0:
 		# Detached, because the next line frees the thing that would play it.
 		_sfx_detached("die")
@@ -783,6 +816,63 @@ func take_damage(amount: int) -> void:
 		_sfx("stagger")
 	else:
 		_sfx("hurt")
+
+
+## Jolted RECOIL_PX away from a blow, settling back over RECOIL_SECONDS. Called
+## by the player on a blow it landed, by group + method like the blow itself;
+## `away` is the direction the blow travelled.
+func recoil(away: Vector2) -> void:
+	if not _reels() or away == Vector2.ZERO:
+		return
+	_recoil = RECOIL_SECONDS
+	_recoil_away = away.normalized()
+
+
+## Knocked off its feet: the sprite pops up and drops back while its shadow
+## stays on the floor and the body stays exactly where it was. The rising
+## slash is drawn as a launcher, and this is what lets it launch. A body
+## already in the air is not launched again.
+func launch() -> void:
+	if not _reels() or _juggle_height > 0.0 or _juggle_speed > 0.0:
+		return
+	_juggle_speed = LAUNCH_SPEED
+	queue_redraw()
+
+
+## Whether blows move this body's sprite at all. A boss opts out, the way he
+## opts out of the leash: he moves his own sprite (Ahmed's leap is a lift), and
+## a boss the swing can juggle is not the boss.
+func _reels() -> bool:
+	return true
+
+
+func _reel(delta: float) -> void:
+	if not _reels():
+		return
+	var lifted := _juggle_height > 0.0 or _juggle_speed > 0.0
+	if lifted:
+		_juggle_height += _juggle_speed * delta
+		_juggle_speed -= LAUNCH_GRAVITY * delta
+		if _juggle_height <= 0.0:
+			_juggle_height = 0.0
+			_juggle_speed = 0.0
+			LandingDust.kick(self)
+		queue_redraw()
+	if _recoil > 0.0:
+		_recoil = maxf(_recoil - delta, 0.0)
+	if lifted or _recoil > 0.0 or _sprite.position != _sprite_rest:
+		var off := _recoil_away * RECOIL_PX * (_recoil / RECOIL_SECONDS)
+		_sprite.position = _sprite_rest + Vector2(off.x, off.y - _juggle_height).round()
+
+
+## The shadow a launched body leaves on the floor, shrinking as it rises.
+func _draw() -> void:
+	if _juggle_height <= 0.0:
+		return
+	var width := maxf(6.0, 11.0 - _juggle_height * 0.5)
+	for j in 3:
+		var w := roundf(width * (0.55 + 0.45 * (1.0 - absf((j + 0.5) / 3.0 * 2.0 - 1.0))))
+		draw_rect(Rect2(-roundf(w / 2.0), j - 1, w, 1), LAUNCH_SHADOW)
 
 
 ## Whether this hit cancels what the enemy is doing. Three ways it does not:

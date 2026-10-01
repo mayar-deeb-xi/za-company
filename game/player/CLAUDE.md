@@ -293,6 +293,72 @@ the bald. One test-side consequence: a synthesized Space left held is no longer
 inert - a test's mash window must end on a release, or the player stands in
 the charge stance for every later movement check.
 
+## The hit feel - what a blow that lands now does
+
+The attacks were correct and dull: a struck guard turned red for 0.15 s, and a
+kill made it vanish on the frame it was freed. The fix was picked from the
+Combo Lab preview (one option per attack, plus a set of toggles under all four,
+every one taken) and shipped as previewed. **Not one damage number moved**, and
+that is the constraint everything below was chosen under.
+
+**Under every attack.** `_land()` is now the one place a player blow reaches
+an enemy, and it does five things besides `take_damage`:
+
+- **Hit-stop.** `HIT_STOP` per attack - 0.04 swing, 0.05 slash, 0.07 arc, 0.1
+  heavy - asked once per FRAME something was struck (like `hit`), through a
+  `froze` signal game.gd connects to its own `_freeze`, exactly as a boss asks.
+  The stops slow both sides of the heavy/combo ratio and it still holds: about
+  23.5/s for the combo (0.16 s of stops) against 20/s for the heavy with its
+  swing (0.14 s - the heavy's two 0.1 stops land together and extend rather
+  than stack).
+- **White first.** enemy_base's `STRUCK_TINT` for 0.05 s before `HURT_TINT` -
+  a modulate over 1, so the figure lifts towards white with its outline dark.
+- **Recoil.** `recoil(away)`: the SPRITE jolts 2 px and settles over 0.12 s.
+- **A number over the enemy.** damage_number.gd's `spawn_dealt()`: white for
+  the blade, the spark colour for a jump, double size for the heavy, no minus
+  sign, and parented to the body's PARENT, because the number that matters
+  most is the killing one and that body is freed the same frame. It shows only
+  if health moved, so a conceded boss in the swing says nothing.
+- **Kill burst.** kill_burst.gd reads the frame the body was showing, on the
+  frame it is freed, and throws every other opaque pixel of it.
+
+**Static charge, on the light hits.** Each swing or slash that lands adds a
+charge (two at most, 1.8 s) to the body - static_charge.gd, a CHILD of the
+body, found by node name, invisible to enemy_base. The arc's jump prefers a
+charged body anywhere inside its 40 px over a nearer uncharged one, and a
+charged body the arc reaches discharges (spark_burst.gd). It is the one pick
+that changes logic, and it changes only WHO the chain goes to.
+
+**The juggle, on the slash.** `launch()` pops the sprite up at 72 px/s against
+330 of gravity - about 7 px and 0.44 s - with a shadow on the floor and dust on
+landing (game/enemies/landing_dust.gd). It is enemy_base's because the enemy
+owns its sprite.
+
+**The rule under recoil and juggle both: they move the SPRITE, never the
+body.** That is why no placement band, leash, steering or alert check changed,
+and test_hit_feel.gd measures it. And **a boss never reels** - `_reels()`
+beside `_leashes()`, false in boss_base - because he moves his own sprite
+(Ahmed's leap writes `_sprite.position`), and a boss the slash can juggle is not
+the boss. He still flashes white.
+
+**The thunderclap, on the arc.** arc.gd grows forks and a 4 px glow and lives
+0.36 s; player.gd adds the shake (2, 0.15), a flash (screen_flash.gd, at
+CanvasLayer 1 so the HUD is never washed out) and shock.gd on every body the
+bolt touched - the body's own current frame as a spark-coloured silhouette at
+four offsets behind it, for 0.5 s.
+
+**The supernova, on the heavy.** charge_ring.gd draws embers in while the
+charge fills; when the heavy fires, player.gd freezes the room 0.1 s, shakes it
+(3, 0.22), flashes it, and drops supernova.gd at the feet - two shockwaves and
+nine cracks that cool from white to scars and fade by 1.8 s.
+
+Two traps found on the way. **A name in enemy_base is a name in every boss**:
+the juggle's height was first `_air`, which is Ahmed's air-fire node, and that
+one collision stopped his script compiling - it showed up as "nonexistent
+function take_damage" on a CharacterBody2D. And **a landed hit now costs
+frames**: a suite that checks the end of an attack that lands, by frame number,
+needs slack (test_arc.gd moved its later checks by 6).
+
 ## Scripted control - when the world has the wheel
 
 `take_control()` / `release_control()` / `lead_to()` are how a cutscene moves

@@ -88,7 +88,10 @@ func _tick(frame: int) -> void:
 				_player().get("_attack") == "attack3")
 			_check("arc: and the sprite is on its own row (%s)"
 				% _sprite().animation, _sprite().animation == "attack3_side")
-		110:
+		# 116 rather than the arc's own end: the three hits of the cycle each
+		# hold the room still for a moment (player.gd's HIT_STOP), which
+		# pushes the arc's last frame - and the bolt's - a few frames on.
+		116:
 			var hp := ""
 			for g in _guards:
 				hp += (str(g.get("health")) if is_instance_valid(g) else "dead") + " "
@@ -108,40 +111,42 @@ func _tick(frame: int) -> void:
 			var spark: String = Roster.spark_hex(Roster.find("reem")["recipe"])
 			_check("arc: in the character's own spark colour (%s vs %s)" % [_bolt_colour, spark],
 				_bolt_colour == spark)
-			_check("arc: the bolt has cleared the room", get_nodes_in_group("player_arcs").is_empty())
 			_check("arc: the chain ended - no grace after the arc (%s, %.2f)"
 				% [_player().get("_attack"), _player().get("_combo_grace")],
 				_player().get("_attack") == "" and float(_player().get("_combo_grace")) == 0.0)
 			_key(KEY_SPACE, true)
-		112:
+		118:
 			_check("arc: so the press after it is a fresh swing (%s)" % _player().get("_attack"),
 				_player().get("_attack") == "attack")
-		114:
+		120:
 			_key(KEY_SPACE, false)
-		# The swing started at 110 ends around 127; a press inside the 0.2 s
+		# The swing started at 116 ends around 133; a press inside the 0.2 s
 		# grace window chains WITHOUT a buffer - the late-press path.
-		130:
+		136:
+			# Read here rather than with the arc's own checks: the thunderclap's
+			# bolt lives 0.36 s, and the hit-stop slows it like everything else.
+			_check("arc: the bolt has cleared the room", get_nodes_in_group("player_arcs").is_empty())
 			_check("arc: the swing is over and the window is open (%s, %.2f)"
 				% [_player().get("_attack"), _player().get("_combo_grace")],
 				_player().get("_attack") == "" and float(_player().get("_combo_grace")) > 0.0)
 			_key(KEY_SPACE, true)
-		132:
+		138:
 			_check("arc: a late press chains the rising slash (%s)" % _player().get("_attack"),
 				_player().get("_attack") == "attack2")
-		134:
+		140:
 			_key(KEY_SPACE, false)
-		# The rising slash started at 130 ends around 147.
-		150:
+		# The rising slash started at 136 ends around 153.
+		156:
 			_check("arc: over, window open again (%s, %.2f)"
 				% [_player().get("_attack"), _player().get("_combo_grace")],
 				_player().get("_attack") == "" and float(_player().get("_combo_grace")) > 0.0)
 			_key(KEY_SPACE, true)
-		152:
+		158:
 			_check("arc: a late press after the rising slash reaches the arc (%s)"
 				% _player().get("_attack"), _player().get("_attack") == "attack3")
-		154:
+		160:
 			_key(KEY_SPACE, false)
-		175:
+		181:
 			_numbers()
 			_sheets()
 			_finish()

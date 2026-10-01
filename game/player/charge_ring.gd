@@ -20,6 +20,13 @@ extends Node2D
 ## `fire()` when the heavy goes off (the node then flares and frees itself) and
 ## frees it outright on an early release, where nothing happened and nothing
 ## should flash.
+##
+## **It also draws in EMBERS**, the charge half of the supernova picked from the
+## Combo Lab preview: sparks spawned 26 - 36 px out on the floor that stream to
+## the feet, faster as the charge fills. They are progress a third time, and
+## they leave the ring's own tighten-and-flare cue exactly as it was - the ring
+## is still the thing that says how full, the embers only say that something is
+## being gathered. The blast they feed is supernova.gd.
 
 ## The ring's radius at an empty charge and at a full one. It closes INWARD -
 ## a ring that grows would read as something already happening, and this is a
@@ -40,6 +47,16 @@ const TICK_TURNS := 1.5
 ## The flare when it goes off: the ring snapping outward, white, and gone.
 const FLASH_SECONDS := 0.14
 const FLASH_TO := 28.0
+## Embers per second, where they start, and how fast they come in - from
+## EMBER_SPEED at an empty charge to twice that at a full one. Their target is
+## the body's middle, 2 px above the ring's own centre.
+const EMBER_RATE := 45.0
+const EMBER_FROM := 26.0
+const EMBER_TO := 36.0
+const EMBER_LIFT := 6.0
+const EMBER_SPEED := 70.0
+const EMBER_SECONDS := 0.8
+const EMBER_TARGET := Vector2(0, -2)
 ## Found by tests through this group; nothing in the game looks a ring up.
 const GROUP := "player_charge"
 
@@ -48,6 +65,9 @@ var progress := 0.0
 var colour := Color.WHITE
 ## Seconds into the flare, or -1 while still charging.
 var _flash := -1.0
+## [position, last position, speed, age]
+var _embers: Array = []
+var _ember_debt := 0.0
 
 
 func setup(spark: Color) -> void:
@@ -72,7 +92,29 @@ func _process(delta: float) -> void:
 		if _flash >= FLASH_SECONDS:
 			queue_free()
 			return
+	else:
+		_gather(delta)
 	queue_redraw()
+
+
+func _gather(delta: float) -> void:
+	_ember_debt += delta * EMBER_RATE
+	while _ember_debt >= 1.0:
+		_ember_debt -= 1.0
+		var t := randf() * TAU
+		var r := randf_range(EMBER_FROM, EMBER_TO)
+		var at := Vector2(cos(t) * r, sin(t) * r * SQUASH - randf() * EMBER_LIFT)
+		_embers.append([at, at, EMBER_SPEED * (1.0 + clampf(progress, 0.0, 1.0)), 0.0])
+	var kept: Array = []
+	for e in _embers:
+		var to: Vector2 = EMBER_TARGET - e[0]
+		e[3] += delta
+		if to.length() < 3.0 or e[3] >= EMBER_SECONDS:
+			continue
+		e[1] = e[0]
+		e[0] += to.normalized() * float(e[2]) * delta
+		kept.append(e)
+	_embers = kept
 
 
 func _draw() -> void:
@@ -88,6 +130,9 @@ func _draw() -> void:
 	var ink := colour.lerp(Color.WHITE, filled * 0.6)
 	ink.a = 0.5 + 0.5 * filled
 	draw_polyline(_ellipse(radius), ink, 1.0)
+	for e in _embers:
+		draw_line(e[1].round(), e[0].round(), Color(colour, 0.6), 1.0)
+		draw_rect(Rect2(e[0].round(), Vector2.ONE), Color.WHITE)
 	var spin := filled * TAU * TICK_TURNS
 	for i in TICKS:
 		var angle := TAU * i / TICKS + spin

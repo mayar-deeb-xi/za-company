@@ -113,6 +113,12 @@ const LEAD_STOP := 6.0
 signal health_changed(health: int, max_health: int)
 signal lives_changed(lives: int, max_lives: int)
 signal died
+## The hit feel, asked of game.gd on exactly a boss's terms: the player says a
+## blow landed and how hard, and whatever owns the clock and the camera holds
+## the room still or throws it about. A player that nothing is listening to -
+## one instanced alone in a test - simply never pauses anything.
+signal froze(seconds: float)
+signal shook(strength: float, seconds: float)
 
 ## Preloaded by path rather than via `class_name`, like the rest of the project.
 const Roster := preload("res://game/player/characters/roster.gd")
@@ -120,6 +126,36 @@ const PlayerAudio := preload("res://game/player/player_audio.gd")
 const Arc := preload("res://game/player/arc.gd")
 const ChargeRing := preload("res://game/player/charge_ring.gd")
 const DamageNumber := preload("res://game/player/damage_number.gd")
+const StaticCharge := preload("res://game/player/static_charge.gd")
+const Shock := preload("res://game/player/shock.gd")
+const KillBurst := preload("res://game/player/kill_burst.gd")
+const ScreenFlash := preload("res://game/player/screen_flash.gd")
+const Supernova := preload("res://game/player/supernova.gd")
+
+## THE HIT FEEL, picked from the Combo Lab preview with one option per attack
+## and shipped as previewed. None of it touches a damage number.
+##
+## How long the room holds still when an attack lands, by attack: a swing's
+## worth is a flicker, the heavy is a beat. Asked once per FRAME something was
+## struck, like the `hit` sound, and stops extend rather than stack (game.gd).
+const HIT_STOP := {
+	"attack": 0.04, "attack2": 0.05, "attack3": 0.07, "heavy": 0.1, "wildfire": 0.1,
+}
+## [strength, seconds] of camera shake: the arc's THUNDERCLAP, the heavy's
+## SUPERNOVA going off, and a body dying.
+const ARC_SHAKE := [2.0, 0.15]
+const NOVA_SHAKE := [3.0, 0.22]
+const KILL_SHAKE := [1.0, 0.08]
+## The screen flash (screen_flash.gd) for the same two, and the supernova's own
+## stop, which is asked on the frame the heavy FIRES rather than when it lands.
+const ARC_FLASH := 0.1
+const NOVA_FLASH := 0.06
+const NOVA_STOP := 0.1
+## A number over an enemy: white for the blade, the spark colour for a bolt's
+## jump, double size and spark-darkened outline for the heavy.
+const DEALT_INK := Color.WHITE
+const DEALT_EDGE := Color(24 / 255.0, 18 / 255.0, 32 / 255.0)
+const HEAVY_EDGE_DARKEN := 0.55
 
 ## Attack animation -> the cue it opens with. The two lights are named for the
 ## MOVEMENT rather than for the animation because that is what they are: air,
@@ -212,6 +248,8 @@ var _drain_number: Node2D = null
 ## Enemies already struck by the current swing, so a swing lands once per enemy
 ## rather than once per physics frame it overlaps them.
 var _swing_hits := {}
+## The thunderclap's and the supernova's white, at CanvasLayer 1.
+var _screen_flash: CanvasLayer = null
 
 
 func _ready() -> void:
@@ -221,6 +259,8 @@ func _ready() -> void:
 	_grace_window = Difficulty.grace_seconds()
 	_sprite.animation_finished.connect(_on_animation_finished)
 	_apply_animation("idle")
+	_screen_flash = ScreenFlash.new()
+	add_child(_screen_flash)
 
 
 ## Every character shares the same animation set, so becoming one is a frames
@@ -475,6 +515,19 @@ func _start_attack(anim: String) -> void:
 		_hitbox.position = _hitbox_offset()
 	_apply_animation(anim, true)
 	_sfx(ATTACK_SOUNDS.get(anim, ""))
+	if anim == "heavy":
+		_supernova()
+
+
+## The heavy going off: the room freezes, two shockwaves roll out and the
+## floor cracks round the feet. The embers that fed it were the ring's.
+func _supernova() -> void:
+	froze.emit(NOVA_STOP)
+	shook.emit(NOVA_SHAKE[0], NOVA_SHAKE[1])
+	_screen_flash.flash(NOVA_FLASH)
+	var nova := Supernova.new()
+	add_child(nova)
+	nova.setup(global_position, _spark)
 
 
 ## The hitbox sits one step ahead of the body in whatever direction the attack
@@ -512,15 +565,52 @@ func _strike() -> void:
 			continue
 		if body.has_method("take_damage"):
 			_swing_hits[body] = true
-			body.call("take_damage", power)
+			_land(body, power, "heavy" if heavy else "blade")
 			struck.append(body)
+			if body.is_queued_for_deletion():
+				continue
+			# STATIC CHARGE: the two light hits tag what they reach, for the
+			# arc to set off. JUGGLE: the rising slash launches what it reaches.
+			if _attack == "attack" or _attack == "attack2":
+				StaticCharge.add_to(body, _spark)
+			if _attack == "attack2" and body.has_method("launch"):
+				body.call("launch")
 	if struck.is_empty():
 		return
 	if _attack == "attack3":
 		_arc(struck)
 	# Once for the frame, not once per enemy: a heavy landing on four bodies is
-	# one impact, and four copies of one clip started together is a click.
+	# one impact, and four copies of one clip started together is a click. The
+	# hit-stop is the same, for the same reason - four stops on one frame are
+	# one stop.
 	_sfx("hit")
+	froze.emit(HIT_STOP.get(_attack, 0.0))
+
+
+## One blow the player lands, and everything a blow that lands now does: the
+## damage, the number over the body, the recoil, and - if it killed - the body
+## breaking apart and a knock of the camera. `kind` is "blade", "jump" or
+## "heavy", which only decides how the number is drawn. The number shows only
+## when health actually moved, so a conceded boss standing in the swing says
+## nothing.
+func _land(body: Node2D, power: int, kind: String) -> void:
+	var away := body.global_position - global_position
+	var before: Variant = body.get("health")
+	body.call("take_damage", power)
+	var after: Variant = body.get("health")
+	if before == null or after == null or int(after) < int(before):
+		var ink := _spark if kind == "jump" else DEALT_INK
+		var edge := _spark.darkened(HEAVY_EDGE_DARKEN) if kind == "heavy" else DEALT_EDGE
+		DamageNumber.spawn_dealt(body, power, ink, edge, 2 if kind == "heavy" else 1)
+	if body.is_queued_for_deletion():
+		KillBurst.shatter(body, away, _spark)
+		# Not on the heavy: game.gd's newest shake REPLACES the last, and the
+		# supernova's bigger one went out the frame the heavy fired. The arc
+		# is safe the other way round - its own shake is asked after its kills.
+		if kind != "heavy":
+			shook.emit(KILL_SHAKE[0], KILL_SHAKE[1])
+	elif body.has_method("recoil"):
+		body.call("recoil", away)
 
 
 ## The arc's lightning. From each body the blade reached it jumps to the
@@ -537,37 +627,60 @@ func _strike() -> void:
 ## between two bodies has no fixed shape a sheet could hold.
 func _arc(struck: Array[Node2D]) -> void:
 	var chains: Array[PackedVector2Array] = []
+	var touched: Array[Node2D] = []
 	for primary in struck:
 		var chain := PackedVector2Array([_hitbox.global_position, _chest(primary)])
+		touched.append(primary)
 		var from := primary
 		for _jump in ARC_JUMPS:
 			var next := _nearest_enemy(from.global_position)
 			if next == null:
 				break
 			_swing_hits[next] = true
-			next.call("take_damage", ARC_JUMP_POWER)
+			_land(next, ARC_JUMP_POWER, "jump")
 			chain.append(_chest(next))
+			touched.append(next)
 			from = next
 		chains.append(chain)
 	var bolt := Arc.new()
 	bolt.setup(chains, _spark)
 	get_parent().add_child(bolt)
+	# THE THUNDERCLAP: the room shakes and goes white for a tenth of a second,
+	# every body the bolt went through is left crackling, and every charge the
+	# light hits left on them goes off. The stop is the frame's own (HIT_STOP).
+	shook.emit(ARC_SHAKE[0], ARC_SHAKE[1])
+	_screen_flash.flash(ARC_FLASH)
+	for body in touched:
+		var charge := StaticCharge.of(body)
+		if charge != null:
+			charge.discharge()
+		if not body.is_queued_for_deletion():
+			Shock.apply(body, _spark)
 
 
 ## The nearest enemy the arc may still jump to, or null. Group + method, never
 ## type, like everything else here that reaches across to the enemies.
+##
+## A body carrying STATIC CHARGE beats an uncharged one anywhere inside the
+## range, and the nearest wins among equals - so the light hits decide where
+## the chain goes. That is the whole of the charge's logic: who, never how much.
 func _nearest_enemy(at: Vector2) -> Node2D:
 	var best: Node2D = null
 	var best_distance := ARC_JUMP_RANGE
+	var best_charged := false
 	for node in get_tree().get_nodes_in_group("enemies"):
 		if _swing_hits.has(node) or not node.has_method("take_damage"):
 			continue
-		if node.get("has_conceded") == true:
+		if node.get("has_conceded") == true or node.is_queued_for_deletion():
 			continue
 		var distance: float = (node as Node2D).global_position.distance_to(at)
-		if distance <= best_distance:
+		if distance > ARC_JUMP_RANGE:
+			continue
+		var charged := StaticCharge.of(node) != null
+		if (charged and not best_charged) or (charged == best_charged and distance <= best_distance):
 			best_distance = distance
 			best = node
+			best_charged = charged
 	return best
 
 

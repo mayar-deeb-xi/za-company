@@ -179,6 +179,13 @@ func _leashes() -> bool:
 	return false
 
 
+## Nor does a blow move him: no recoil, no juggle. He moves his own sprite -
+## Ahmed's leap is a lift - and a boss the rising slash can juggle is not the
+## boss. The white flash still lands on him; that is the base's tint, not a reel.
+func _reels() -> bool:
+	return false
+
+
 ## The name the HUD's boss bar announces him by. Read off his own SCENE and
 ## not his node name, which build_levels.gd overwrites with "Boss" so the
 ## floor's north door can find him - a bar reading BOSS is the one thing it

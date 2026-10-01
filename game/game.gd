@@ -76,6 +76,11 @@ func _ready() -> void:
 	_player.health_changed.connect(_hud.set_health)
 	_player.lives_changed.connect(_hud.set_lives)
 	_player.died.connect(_on_player_died)
+	# The player's blows ask for the hit-stop and the shake on exactly a boss's
+	# terms (see _watch_boss): it says a blow landed, this owns the clock and
+	# the camera.
+	_player.froze.connect(_freeze)
+	_player.shook.connect(_shake)
 	_hud.set_health(_player.health, PlayerType.MAX_HEALTH)
 	_hud.set_lives(_player.lives, PlayerType.MAX_LIVES)
 	# Every friendly face in the game, wired once here rather than per room -

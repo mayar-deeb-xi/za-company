@@ -215,6 +215,26 @@ the truth from then on. It has no sound of its own yet and opens on `swing`.
 The whole design, and the three candidates it beat: game/player/CLAUDE.md's
 Combat.
 
+**A blow that lands now FEELS like one, and not one damage number moved.**
+Picked from the Combo Lab preview, one option per attack plus the hit feel
+under all four. Every landed blow holds the room still (`HIT_STOP`, 0.04 s on
+a swing to 0.1 on the heavy, asked of game.gd's `_freeze` by a `froze` signal
+exactly as a boss asks), flashes the body white for three frames before its red
+tint, jolts its sprite 2 px away, and puts its amount over the enemy - white
+for the blade, the spark colour for a jump, double size for the heavy. A body
+that dies breaks into its own pixels instead of vanishing. On top of that:
+**static charge** (the swing and the slash leave one charge each, the arc's jump
+prefers a charged body inside the same 40 px, and the charge goes off when the
+arc reaches it - the one pick that changes logic, and it changes WHO, never how
+much), the **juggle** (the slash pops the sprite 7 px up; the body never leaves
+its spot), the **thunderclap** (a forked bolt, a flash at CanvasLayer 1, a shake,
+every body it touched left crackling) and the **supernova** (embers into the
+charge ring, then shockwaves and floor cracks as the heavy fires). Two rules
+hold all of it up: everything that moves a body moves only its SPRITE, which is
+why no placement band, leash or steering check had to change; and a boss never
+reels (`_reels()`, beside `_leashes()`), because he moves his own sprite.
+game/player/CLAUDE.md's *The hit feel*.
+
 **The player makes noise on the bestiary's exact terms: by owning the files.**
 An `Audio` child holds id -> stream and player.gd fires eight names at it -
 `swing`, `swing2`, `charge`, `heavy`, `wildfire`, `hit`, `hurt`, `die` - so a
@@ -1239,7 +1259,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Twenty-five suites,
+  They drive the real game with synthesized input and exit 0/1. Twenty-six suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1255,6 +1275,16 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     and the leash: that losing sight of the player does not stop a chase, that
     it ends 2.5s later, that the body walks back to the spot it was placed on,
     and that kiting drags it exactly 160 px and no further.
+  - `test_hit_feel.gd` - what a landed blow does besides the damage: the
+    hit-stop, the white flash, the recoil, the numbers over the enemies, the
+    kill burst, the static charge and the arc preferring a charged body, the
+    juggle with the BODY never moving, the thunderclap's flash and crackle, the
+    supernova's embers, blast and stop, the room back at full speed after, and
+    a boss never reeling. It LATCHES rather than reading frame numbers - every
+    effect is brief and the hit-stop itself stretches time, so it asks every
+    frame "was it seen" and answers at the end. Note for every frame-numbered
+    suite: a landed hit now stops the room for a few frames, so a check timed
+    to the end of an attack that LANDS needs slack (test_arc.gd moved by 6).
   - `test_slam.gd` - the fourth archetype: that the ring draws the Touch
     shape's own reach (a retune that moves the hitbox and leaves the drawing
     behind is a bug nobody can see), that the wind-up telegraphs without
