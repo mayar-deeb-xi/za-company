@@ -1,0 +1,79 @@
+# The game's online back end: two small services, and never the game itself.
+# Everything that varies per server is in .env (copy .env.example). See README.md.
+#
+#   docker compose up -d                     # you already run a reverse proxy
+#   docker compose --profile tls up -d       # let Caddy own 80/443 and the cert
+
+services:
+  # Introduces a guest to a host by join code, hands both a TURN login.
+  signaling:
+    build: ./signaling
+    restart: unless-stopped
+    environment:
+      PUBLIC_HOST: ${DOMAIN:?set DOMAIN in .env}
+      TURN_PORT: ${TURN_PORT:-3478}
+      TURN_SECRET: ${TURN_SECRET:?set TURN_SECRET in .env}
+      PARTY_CEILING: ${PARTY_CEILING:-8}
+    # Loopback only: the outside world reaches it through the TLS proxy, so
+    # it is never plain ws:// on the public interface.
+    ports:
+      - "127.0.0.1:${SIGNAL_PORT:-8765}:8765"
+
+  # STUN (finds the direct route) and TURN (the relay, only when there is none).
+  # Host networking because a relay allocates one UDP port per relayed player
+  # out of a range, and Docker's port mapping of a large UDP range is slow and
+  # hides the real source address coturn needs to see.
+  coturn:
+    image: coturn/coturn:4.18
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - -n
+      - --log-file=stdout
+      - --listening-port=${TURN_PORT:-3478}
+      - --min-port=${TURN_MIN_PORT:-49160}
+      - --max-port=${TURN_MAX_PORT:-49200}
+      - --realm=${DOMAIN}
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET}
+      - --external-ip=${EXTERNAL_IP:?set EXTERNAL_IP in .env}
+      - --fingerprint
+      - --no-cli
+      - --no-tls
+      - --no-dtls
+      - --no-multicast-peers
+      # Never relay INTO a private network: an open path from the internet to
+      # the server's own LAN, Docker networks and cloud metadata is the classic
+      # TURN hole, and a game peer is always on a public address.
+      - --denied-peer-ip=0.0.0.0-0.255.255.255
+      - --denied-peer-ip=10.0.0.0-10.255.255.255
+      - --denied-peer-ip=100.64.0.0-100.127.255.255
+      - --denied-peer-ip=127.0.0.0-127.255.255.255
+      - --denied-peer-ip=169.254.0.0-169.254.255.255
+      - --denied-peer-ip=172.16.0.0-172.31.255.255
+      - --denied-peer-ip=192.168.0.0-192.168.255.255
+      # A guest needs one allocation; a few spare covers a reconnect.
+      - --user-quota=4
+      - --total-quota=${TURN_TOTAL_QUOTA:-40}
+      # Bytes per second per session: a 2D game at 60 Hz is a fraction of this.
+      - --max-bps=262144
+
+  # Optional: terminates TLS for wss:// with an automatic Let's Encrypt cert.
+  # Leave it off if nginx/Traefik/another Caddy already owns 80/443 on this box
+  # and point that at 127.0.0.1:${SIGNAL_PORT} instead (README.md).
+  caddy:
+    image: caddy:2
+    profiles: ["tls"]
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      SIGNAL_DOMAIN: ${DOMAIN}
+      SIGNAL_PORT: ${SIGNAL_PORT:-8765}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

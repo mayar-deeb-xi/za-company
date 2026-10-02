@@ -22,8 +22,17 @@ checklist. This file says HOW things work; DESIGN.md says WHAT to build.
   `tools/voice/` is the one corner of it that is python rather than GDScript,
   because it talks to a web API; what it writes is ordinary art the game loads
   like any other file
-- `addons/` - editor plugins, and there is one: `za_build`, which puts the
-  `tools/` generators on the Project > Tools menu (see Workflow)
+- `addons/` - editor plugins and engine extensions, and there are two:
+  `za_build`, which puts the `tools/` generators on the Project > Tools menu
+  (see Workflow), and `webrtc_native`, the official GDExtension that gives
+  desktop Godot WebRTC for online co-op - vendored, desktop libraries only
+  (CREDITS.md). A new GDExtension is only loaded once `.godot/
+  extension_list.cfg` names it, which the editor's scan or an `--import` pass
+  writes - so a fresh checkout needs one of those before headless runs see it
+- `server/` - the online back end that runs on OUR server, never the game:
+  a signaling service and coturn, in Docker. Python, `.gdignore`d so Godot
+  never scans or exports it; deploying it is `server/README.md`. The plan it
+  serves is DESIGN.md's *Multiplayer*
 
 Placement rules:
 1. A file lives with the feature that owns it. Scripts sit next to their

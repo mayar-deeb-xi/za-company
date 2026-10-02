@@ -452,3 +452,24 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   12 ms equal-power crossfade of the tail over the head takes it to 19 for
   0.012 s of length. Ahmed's seam is 10413 against a body step of 125 and is
   the louder of the two - a known debt, and the same fix when it is paid.
+
+## WebRTC for desktop (online co-op)
+- **Not an asset and not CC0**: the first third-party CODE in the project, so
+  its licences carry obligations the art's do not.
+- Project: **webrtc-native** 1.2.2-stable by the Godot Engine contributors,
+  the official GDExtension that gives desktop Godot `WebRTCPeerConnection`
+- Source: https://github.com/godotengine/webrtc-native/releases/tag/1.2.2-stable
+- Files: `addons/webrtc_native/`, vendored from the release zip with only the
+  desktop libraries kept (Windows and Linux x86_64, macOS universal; debug and
+  release of each). `webrtc_native.gdextension` is untouched, so it still
+  lists the other platforms; restore their libraries from the same zip before
+  exporting for one.
+- Licences, each shipped beside the libraries as `LICENSE.<name>`:
+  webrtc-native **MIT**; libdatachannel and libjuice **MPL-2.0**; usrsctp and
+  libsrtp **BSD-3-Clause**; Mbed TLS **Apache-2.0** (dual-licensed, Apache
+  taken); plog **MIT**.
+- What that asks of a release: keep the licence files with the shipped
+  binaries, and since MPL-2.0 covers libdatachannel and libjuice, say where
+  their source is (https://github.com/paullouisageneau/libdatachannel and
+  https://github.com/paullouisageneau/libjuice) in the game's credits or
+  readme. The game's own code is unaffected - MPL is per file.

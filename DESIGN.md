@@ -840,34 +840,167 @@ Khaled's concession speech, then:
 Smash cut: desk, laptop connected, notification "Welcome to the team 🎉 —
 Khaled". Dominique: "Password changes Monday. The discount doesn't." Credits.
 
-## Multiplayer — a known future, not a current one
+## Multiplayer — online co-op, one player hosts
 
-The game may grow a second player. Writing it down so it is a recorded decision
-rather than something rediscovered later, along with what was and was NOT built
-for it.
+Decided 2026-10-02. Online play over the internet, a party of up to
+`MAX_PARTY` (4 today, and ONE constant: nothing else in the game may write a
+party size down), with the whole run played together.
 
-**Already safe, by accident of a good rule.** Everything the world does to the
-player goes through the `player` group plus `has_method` — `take_damage()`,
-`drain()`, `apply_slow()`. None of it knows a type or a singleton, so a torch, a
-drain field and a guard's strike would already hit two players correctly with no
-line changed. That was the expensive seam and it is already open.
+**What was already safe, by accident of a good rule.** Everything the world does
+to the player goes through the `player` group plus `has_method` — `take_damage()`,
+`drain()`, `apply_slow()`, `shove()`. None of it knows a type or a singleton, so a
+torch, a drain field and a guard's strike already hit two players correctly. And
+everything that scales with a crowd already reads one number, `game/heads.gd`:
+boss health adds `health_per_head`, a beat adds its `per_head`, Ivan throws a
+heart per head. It returns 1 today because game.tscn holds one player, and it
+starts telling the truth the day it holds two. **More bodies, never tougher
+ones** — 24/17/36/48 are exact combo breakpoints.
 
-**Genuinely single-player, and both are honest to fix later.** `game.gd` owns
-`$Player` as one child — camera follow, HUD, lives, death and respawn all hang
-off that node — and `enemy_base.gd` targets `get_first_node_in_group("player")`.
-Neither gets cheaper by preparing now, and both need decisions that cannot be
-guessed well yet: does the camera frame both or split, are lives shared or per
-player, what happens at a door with one player standing in it, does an enemy
-take the nearest or hold aggro.
+### The shape of the network
 
-**The one thing built for it now is `reinforcements.gd`'s `_head_count()`**, and
-it is there because reinforcements are the ONLY enemies in the game with no
-authored position. An `at` in a biome is a spot picked against sight radii and
-clear lanes; you cannot multiply a spot. So two players do not get a second copy
-of a room's arrangement — they get more of its second beat, which is the only
-part of a fight that can scale without being re-authored. It returns 1 today,
-costs one line, and obeys the rule `Difficulty` already obeys: **more bodies,
-never tougher ones**, because 24/17/36 are exact combo breakpoints.
+- **One player HOSTS and plays; the others connect to the host only** (a star,
+  not a mesh). The host's machine runs the real world. Its cost is accepted:
+  the host leaving ends the session for everybody.
+- **Direct first, relay only as the fallback.** WebRTC (the official
+  `webrtc-native` GDExtension, since desktop Godot does not ship it) finds a
+  direct route on the same network or through the router, and a TURN relay on
+  our own server carries the traffic only when no direct route exists.
+- **Our server runs two small things and never the game**: a *signaling*
+  service (a WebSocket that introduces a guest to a host and hands out join
+  codes) and *coturn* (the STUN that finds the direct route, and the TURN that
+  relays). TURN credentials are time-limited and issued by the signaling
+  service, or the relay is a free open proxy for the whole internet.
+- **A relayed connection says so.** Godot's WebRTC API reports neither which
+  route ICE picked nor a round-trip time, so the route is found by asking
+  twice: connect with STUN only, and if nothing connects inside ~6 s, connect
+  again with TURN added. A guest who only got in on the second try is relayed
+  — they see "Connected through relay — expect higher ping", the host sees it
+  against their name, and the scoreboard tags them RELAY.
+- **The game never knows which wire it is on.** Everything above the transport
+  talks to Godot's `MultiplayerAPI`; the transport is chosen in ONE place
+  (`autoload/net.gd`). The suites run on ENet over localhost, which is the
+  same API with none of the internet in it.
+
+### Who decides what
+
+Co-op against the computer: nobody gains from cheating, so every split is the
+one that FEELS best rather than the one that is safest.
+
+| Thing | Decided by | Why |
+|---|---|---|
+| Your own movement, facing, swings and the charge | **your machine** | zero input lag; a 0.04 s hit-stop is shorter than most pings |
+| "My swing reached enemy X" | **your machine reports it, the host applies it** | the attacker gets the benefit of the doubt |
+| Enemies, bosses, hazards, the studio's clock, the wiring, the scrubbers, every beat, Ivan, Dominique, pickups | **host** | one real room |
+| A blow on a player, health, the shared lives, doors, which floor we are on | **host** | everybody has to agree |
+| Slow and shove on YOUR body | **host decides, your machine applies** | they move a body, and only its owner moves it |
+| Numbers, flashes, sparks, bursts, shake, sound | **every machine, on the host's word** | cosmetic: nothing to keep in step |
+
+### The rules of a party
+
+- **Lives are ONE shared pool of `MAX_LIVES` (3).** A player who dies gets up at
+  the room's door after a short wait and spends one. With the pool empty a death
+  leaves that player down, watching, and the run ends when nobody is standing.
+- **A door waits for the party.** It fires only when every STANDING player is
+  in the doorway, and says so meanwhile ("1/2"); a downed player is carried
+  through. Travel is the host's call, and every machine loads the floor it
+  names.
+- **An enemy goes for the nearest player, and sticks.** It changes target only
+  when another player is clearly closer (by a margin, so two players at the
+  same distance do not make it twitch). One function in enemy_base answers
+  "who am I after", and every one of the seventeen
+  `get_first_node_in_group("player")` lookups in the bosses and enemies goes
+  through it.
+- **Each machine's camera follows its own player**, at its own zoom. Nothing
+  frames two people, so no floor is too big for a party.
+- **The room alert is anyone's**: the first player more than `ALERT_RADIUS` from
+  where they came in wakes the room for all of them.
+- **Nothing pauses online.** The pause menu and the death screen become
+  overlays; `get_tree().paused` is a solo-only thing.
+- **Join in the lobby, not mid-run** — for now.
+
+### Ping, the Counter-Strike way
+
+- **Hold Tab for the scoreboard**: one row per player — name, character, ping in
+  ms, and the route (HOST / DIRECT / RELAY). A new `scoreboard` action, added in
+  tools/setup_project.gd like every other key.
+- **Your own ping sits in a corner** for the whole online run, green under
+  60 ms, amber under 120, red above.
+- **Ping is measured by the game, not read off the transport**, since WebRTC
+  will not say: the host pings each guest once a second on the unreliable
+  channel, keeps a rolling average, and sends the table round. Every number is
+  a player's distance to the HOST, exactly as Counter-Strike shows distance to
+  the server; the host's row reads HOST.
+- The player NAME lives in the lobby screen, saved under Settings section
+  `online` — not on the settings panel, which is at 325 of 360 px and has no
+  room for a fourth row.
+
+### Rules that keep it honest
+
+- **Solo is a party of one and plays exactly as it does today.** Offline is a
+  host with no guests. All the suites stay green at every step below, and the
+  true hit-stop (`Engine.time_scale`) stays in solo — online it would stall the
+  host's whole world for everybody else's hits, so there it holds only the
+  sprites and the effects still.
+- **Anything that appears mid-room is SPAWNED by the host** (reinforcements,
+  Ivan and Dominique walking in, the hearts, Silverman's copy) through a
+  `MultiplayerSpawner`. Anything a level places shares its node path on every
+  machine already, because every machine loads the same scene.
+- **Gameplay dice are rolled on the host only** (the scrubbers, the surge's
+  stagger, Silverman's picks, a pickup's choice); cosmetic dice (sparks, bursts)
+  stay local.
+- **A guest leaving takes their body with them**; the pool is untouched. The
+  host leaving puts everyone back on the menu with "the host left".
+
+### Still to decide, with the default until then
+
+- **Talking**: whoever presses interact is the one talking and the one HR tows;
+  everyone else keeps their hands and reads along. Whether HR's induction and
+  the contract are the whole party's, or the first player's, is open.
+- **Reconnecting** to a run after a drop: not in the first version.
+
+### Build order — each step leaves solo exactly as it was
+
+- [ ] M0. **Spike, thrown away afterwards.** `webrtc-native` on 4.7, two
+        machines on two networks, through signaling + coturn on our server:
+        connects direct, falls back to relay when direct is blocked, and the
+        two-stage ask really tells them apart. If the plugin does not hold up,
+        the fallback is ENet with punch-through and a relay of our own — the
+        layers above do not change. Deliverable: the server stack running.
+        **Built and proved on one machine (2026-10-02)**: `server/` (signaling
+        + coturn + optional Caddy, in Docker, 12 checks green) and
+        `tools/net_spike/`. The plugin runs on 4.7.2; two processes meet by
+        code and connect DIRECT with a measured ping; a forced relay with no
+        TURN running FAILS, as it must. That last check caught the design's
+        one mistake: filtering only the guest's candidates is not enough,
+        because ICE learns a peer-reflexive address from the first check that
+        arrives, so it now filters both ends (rtc_link.gd's header). **Left:**
+        the four checks in server/README.md, on the real server across two
+        real networks.
+- [ ] M1. **A party on ONE machine, no network.** The player reads an *input
+        source* instead of `Input` (yours is the keyboard; later, the wire);
+        game.gd spawns one player per member instead of owning `$Player`;
+        the sticky nearest target; the shared pool; the waiting door; the room
+        alert per player; a HUD for N. `heads.gd` starts counting for real.
+        New suite `test_party.gd`, two players driven by synthesized sources.
+- [ ] M2. **The `Net` autoload and the lobby.** Host, join by code, leave;
+        the party roster (peer, name, character); the ping heartbeat. ONLINE
+        on the main menu opens `ui/lobby/`: the host's code, the players and
+        their pings, START for the host. New suite `test_net.gd` runs a host
+        and a guest in one process, each in its own SubViewport so the two
+        copies of a room do not collide with each other, over ENet localhost.
+- [ ] M3. **The world in step.** Players from their owners; enemies, bosses,
+        hazards and beats from the host; the damage flow in the table above;
+        spawners for what arrives mid-room; travel, health, lives, the boss bar
+        and the floor's music all following the host.
+- [ ] M4. **The feel.** Remote bodies drawn ~100 ms behind and interpolated;
+        the hit-stop visual-only online; effects, numbers and sounds fired
+        locally on the host's word.
+- [ ] M5. **Ping and the connection, on screen.** The Tab scoreboard, the
+        corner ping, the relay warning, "player left" / "host left".
+- [ ] M6. **The cracks.** A guest dropping mid-fight, dying during a fade,
+        two players reaching a door during one, a boss conceding to a lagging
+        guest, an NPC talked to by two people at once; and the export presets
+        carrying the plugin's binaries.
 
 ## Build order — each step ships playable
 
@@ -945,3 +1078,4 @@ never tougher ones**, because 24/17/36 are exact combo breakpoints.
 - [ ] 7. Ending: sticky-note screen, discount code constant, credits.
 - [x] 8. Tests: new `tests/test_bosses.gd` suite (one suite = one world);
         test_flow checks the locked door and concedes Ahmed to walk on.
+- [ ] 9. Online co-op: M0-M6 under Multiplayer above.
