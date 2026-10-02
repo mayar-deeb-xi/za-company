@@ -33,6 +33,10 @@ checklist. This file says HOW things work; DESIGN.md says WHAT to build.
   a signaling service and coturn, in Docker. Python, `.gdignore`d so Godot
   never scans or exports it; deploying it is `server/README.md`. The plan it
   serves is DESIGN.md's *Multiplayer*
+- `docs/` - the images `README.md` shows, `.gdignore`d on `server/`'s terms:
+  a screenshot is not a game asset, so Godot must never import or export one.
+  They are real captures (a windowed run, `root.get_texture()`, 1280 x 720 =
+  an exact 2x), never mockups
 
 Placement rules:
 1. A file lives with the feature that owns it. Scripts sit next to their
