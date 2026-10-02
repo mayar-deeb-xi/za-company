@@ -13,6 +13,9 @@
   clothes per character. `tools/build_characters.gd` regenerates them from
   `game/player/src/character_cc0.png`, which is the cast's working sheet and
   will grow animations over time.
+- The project icon (`icon.svg`) is the default character's restyled idle frame
+  from that sheet, framed in code by `tools/build_icon.gd`; the round frame,
+  the green band and its lettering are original work.
 - Every enemy sheet (`game/enemies/<id>/src/<id>.png`) was **seeded** as a
   restyle of `game/enemies/src/body_cc0.png` - a byte-identical, deliberately
   frozen copy of the same CC0 sheet - and is hand-owned art from then on. The

@@ -33,6 +33,7 @@ const PLAIN := [
 	["Rebuild boss frames", "res://tools/build_bosses.gd"],
 	["Rebuild NPC frames", "res://tools/build_npcs.gd"],
 	["Rebuild the UI theme", "res://tools/build_ui_theme.gd"],
+	["Rebuild the project icon", "res://tools/build_icon.gd"],
 	["Re-apply project settings", "res://tools/setup_project.gd"],
 ]
 

@@ -727,6 +727,13 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
 ## Generated resources - regenerate, don't hand-edit
 
 - `ui/theme/menu_theme.tres`        <- tools/build_ui_theme.gd
+- `icon.svg`                        <- tools/build_icon.gd: the default
+                                       character's idle frame as a portrait
+                                       in a LinkedIn-style #OPENTOWORK frame,
+                                       64 x 64 pixels written as crisp rects.
+                                       It reads the cast's FRAMES, so a
+                                       redrawn idle row reaches the icon on
+                                       the next run
 - `game/player/characters/*_frames.tres`
                                     <- tools/build_characters.gd, which
                                        slices whatever is on disk - and
