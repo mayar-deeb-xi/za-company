@@ -27,8 +27,15 @@ reads. RELEASING.md has both flows step by step.
 the same droplet - compose project `za-dev`, port 8766, `/healthz` answers
 `ok dev` - and the dev site's Caddy block points at it. A deploy to dev
 rebuilds it from `develop`; a release never touches it after creating it the
-first time. (Commit `80643a2`, shipped in v0.1.2; the first-time start is
-item A.)
+first time. (Commit `80643a2`, shipped in v0.1.2.)
+
+**Live and checked, 2026-10-02:** started by the first deploy to dev after
+v0.1.2. The server runs two signaling containers from two images -
+production's `server-signaling-1` (image `server-signaling`, built by the
+release) on 8765, and dev's `za-dev-signaling-1` (image `za-dev-signaling`,
+built by the deploy to dev) on 8766 - and the dev site's `/healthz` answers
+`ok dev`. A deploy to dev rebuilds only the `za-dev` one, so production's
+signaling is not touched by it.
 
 **2. Dev desktop builds talk to dev's signaling.** `Net.signaling_url()`
 (`autoload/net.gd`) is the one rule: a web build uses its own page's host, a
@@ -101,7 +108,8 @@ production, and it only fully takes effect one release LATE, because a
 release's `server` step is run by the copy the PREVIOUS release installed.
 v0.1.2 is the proof: the old copy put the new Caddyfile in place, and the
 step that would have started dev's signaling was only in the new copy, so
-the dev site's signaling answered 502.
+the dev site's signaling answered 502. (It was cleared by the next deploy to
+dev: its `server-dev` step was one the old copy already knew.)
 
 A dev copy that dev deploys could update was rejected because of what the
 script is: it runs as root on the box that serves production, and its job is
@@ -115,16 +123,19 @@ items below solve the actual problem without that.
 ### A. `deploy.sh` finishes its own install (`settle`)
 
 **Status:** built and committed on `develop` (`0b19288`); arrives with the
-next release.
+next release. Dev's signaling no longer waits on it - a deploy to dev already
+started it (item 1) - so what it buys now is every FUTURE change to the
+script.
 
 At the end of `server`, after installing itself, the script runs the NEW copy
 with `settle`, which does whatever the release taught it - today, starting
-dev's signaling if it has never been started. So a change to the script
-takes effect in the release that ships it, not the one after. `settle` only
-ever makes sure of things, so it is safe to run alone.
+dev's signaling if it has never been started (on this server it has, so that
+part is now a no-op). So a change to the script takes effect in the release
+that ships it, not the one after. `settle` only ever makes sure of things, so
+it is safe to run alone.
 
-**Done when:** a release ships it, and the dev site's `/healthz` answers
-`ok dev` without anyone logging in to the server.
+**Done when:** a release ships it and its `deploy` job passes - the new copy
+runs `settle`, and the dev site's `/healthz` still answers `ok dev` after it.
 
 ### B. An upgrade test for `deploy.sh` in CI
 
@@ -159,16 +170,17 @@ bundle, no dev signaling) and passes with `settle`.
 
 ### C. A memory cap on the signaling containers
 
-**Status:** not started. About fifteen minutes, once the next release has
-dev's signaling running for step 1 to measure.
+**Status:** step 1 done; the cap itself not started. About fifteen minutes.
 
-1. Measure first, once dev's signaling is up: on the server,
-   `docker stats --no-stream` and `free -m`.
+1. ~~Measure first.~~ Done 2026-10-02, `docker stats --no-stream` on the
+   server: production's signaling 11.8 MiB, dev's 17.8 MiB, Caddy 20.9 MiB,
+   coturn 2.3 MiB - and every container's limit is the whole server's
+   458 MiB, which is to say there is no cap yet.
 2. One line on the `signaling` service in `docker-compose.yml`:
-   `mem_limit: ${SIGNAL_MEM_LIMIT:-128m}` (or a few times what step 1
-   measured). Both copies start from that file, so it caps production's and
-   dev's alike - a runaway dev build is then killed by Docker instead of
-   pushing production into swap.
+   `mem_limit: ${SIGNAL_MEM_LIMIT:-128m}` - about seven times the bigger of
+   the two today, so it only ever stops a runaway. Both copies start from that
+   file, so it caps production's and dev's alike - a runaway dev build is then
+   killed by Docker instead of pushing production into swap.
 3. The next deploy to dev gives dev's copy the cap, and the next release
    gives production's.
 
