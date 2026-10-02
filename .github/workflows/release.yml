@@ -41,12 +41,14 @@ on:
       - .github/workflows/release.yml
       - tools/release/**
   # Re-run by hand from the Actions tab: on main it releases if VERSION is not
-  # out yet (and stops at "already released" if it is); anywhere else it is a
-  # dry run - or, with the box ticked, a deploy to dev.
+  # out yet (and stops at "already released" if it is); on develop it is a dry
+  # run - or, with the box ticked, a deploy to dev. Any other branch or a tag
+  # is refused: GitHub lists them all in "Use workflow from" and offers the box
+  # on every one, and there is no way to hide either, so the plan job says no.
   workflow_dispatch:
     inputs:
       deploy_dev:
-        description: "Deploy to dev: replace the dev pre-release and the dev site (not on main)"
+        description: "Deploy to dev: replace the dev pre-release and the dev site (develop only)"
         type: boolean
         default: false
 
@@ -80,6 +82,15 @@ jobs:
         env:
           DEPLOY_DEV: ${{ inputs.deploy_dev }}
         run: |
+          # main or develop and nothing else - not an old branch, not a tag,
+          # where the box would put that old code on the dev site.
+          case "$GITHUB_REF" in
+            refs/heads/main | refs/heads/develop) ;;
+            *)
+              echo "::error::Run this from main (a release) or develop (a dry run or a deploy to dev), not ${GITHUB_REF#refs/*/} (RELEASING.md)."
+              exit 1
+              ;;
+          esac
           version="$(tr -d ' \t\r\n' < VERSION)"
           if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
             echo "::error file=VERSION::'$version' is not MAJOR.MINOR.PATCH (optionally -suffix, e.g. 1.2.0-beta.1)"
@@ -92,7 +103,7 @@ jobs:
           dev=false
           if [ "$DEPLOY_DEV" = "true" ]; then
             if [ "$GITHUB_REF" = "refs/heads/main" ]; then
-              echo "::error::Deploy to dev builds develop (or another branch), not main: on main a release is a VERSION change (RELEASING.md)."
+              echo "::error::Deploy to dev builds develop, not main: on main a release is a VERSION change (RELEASING.md)."
               exit 1
             fi
             dev=true

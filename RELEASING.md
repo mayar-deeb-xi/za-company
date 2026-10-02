@@ -214,6 +214,12 @@ a signaling change; the release's `server` job checks the Caddyfile with Caddy
 itself and the compose file with Compose.
 
 Ticking the box on `main` is refused: there, a release is a `VERSION` change.
+And the workflow runs only from `main` or `develop`: a tag or any other branch
+is refused, box or not, because a deploy to dev from one would put that old
+code on the dev site. GitHub still LISTS every branch and tag under "Use
+workflow from" and shows the box on all of them - neither can be hidden - so
+the refusal is the workflow's first job saying no within seconds. Keep the
+repository to the two branches and the list stays short.
 
 **A step a deploy to dev needs arrives with a release.** The dev site, its
 signaling and the steps that fill them live in the server's own files (the
