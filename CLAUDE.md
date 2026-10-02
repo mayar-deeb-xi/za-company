@@ -1259,6 +1259,11 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 
 ## Workflow
 
+- **Commit and push to `develop`; `main` takes a finished feature by merging
+  `develop` into it.** A release is the `VERSION` file changing on `main` and
+  nothing else - `.github/workflows/release.yml` then tags `v<VERSION>` and
+  publishes a GitHub Release. So never bump `VERSION` as a side effect of
+  other work; it is the user's call. The whole flow: `RELEASING.md`.
 - Godot binary (not on PATH):
   `~/OneDrive/Desktop/Godot_v4.7.2-stable_win64_console.exe`
 - Quick check: `--headless --path . --quit-after 3`

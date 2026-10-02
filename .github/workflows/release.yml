@@ -1,0 +1,99 @@
+# A release is a change to VERSION reaching main, and nothing else is.
+#
+# Pushing and merging into main is ordinary work and publishes nothing. The day
+# VERSION changes on main, this tags that commit v<VERSION> and publishes a
+# GitHub Release listing every commit since the last one. The rest of the flow
+# (develop -> main, bumping the number) is RELEASING.md.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: [VERSION]
+  # Re-run by hand from the Actions tab. Harmless when the version is already
+  # out: it stops at "already released" rather than publishing it twice.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # A manual run from another branch must not tag that branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # every tag and commit, for the notes and the checks
+
+      - name: Read and check VERSION
+        id: version
+        run: |
+          version="$(tr -d ' \t\r\n' < VERSION)"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error file=VERSION::'$version' is not MAJOR.MINOR.PATCH (optionally -suffix, e.g. 1.2.0-beta.1)"
+            exit 1
+          fi
+          tag="v$version"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "::notice::$tag is already released - nothing to do"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A lower number than one already out is a typo, not a release.
+          # Compared on MAJOR.MINOR.PATCH alone: sort -V ranks 1.0.0 BELOW
+          # 1.0.0-rc.1, which is backwards for releasing 1.0.0 after its rc.
+          latest="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1)"
+          if [ -n "$latest" ]; then
+            core_new="${version%%-*}"
+            core_old="${latest#v}"; core_old="${core_old%%-*}"
+            top="$(printf '%s\n%s\n' "$core_old" "$core_new" | sort -V | tail -n1)"
+            if [ "$core_new" != "$core_old" ] && [ "$top" != "$core_new" ]; then
+              echo "::error file=VERSION::$version is lower than the latest release $latest"
+              exit 1
+            fi
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "previous=$latest" >> "$GITHUB_OUTPUT"
+          # A -suffix (1.2.0-beta.1) is marked pre-release on GitHub.
+          [[ "$version" == *-* ]] && echo "prerelease=true" >> "$GITHUB_OUTPUT" || true
+
+      - name: Write release notes
+        if: steps.version.outputs.skip != 'true'
+        env:
+          PREVIOUS: ${{ steps.version.outputs.previous }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          {
+            if [ -n "$PREVIOUS" ]; then
+              echo "## Changes since $PREVIOUS"
+              echo
+              git log --no-merges --format='- %s (%h)' "$PREVIOUS..HEAD"
+              echo
+              echo "**Full diff:** https://github.com/${GITHUB_REPOSITORY}/compare/$PREVIOUS...$TAG"
+            else
+              echo "## First release"
+              echo
+              echo "The first versioned build of THE NEW HIRE: $(git rev-list --count HEAD) commits of history up to this point."
+            fi
+          } > notes.md
+          cat notes.md
+
+      - name: Publish the release
+        if: steps.version.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          flags=()
+          [ "$PRERELEASE" = "true" ] && flags+=(--prerelease)
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" \
+            --notes-file notes.md "${flags[@]}"
