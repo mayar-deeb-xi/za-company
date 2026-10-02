@@ -728,13 +728,15 @@ and what a third NPC would need: game/npcs/CLAUDE.md.
 ## Generated resources - regenerate, don't hand-edit
 
 - `ui/theme/menu_theme.tres`        <- tools/build_ui_theme.gd
-- `icon.svg`                        <- tools/build_icon.gd: the default
+- `icon.svg`, `splash.png`          <- tools/build_icon.gd: the default
                                        character's idle frame as a portrait
                                        in a LinkedIn-style #OPENTOWORK frame,
                                        64 x 64 pixels written as crisp rects.
                                        It reads the cast's FRAMES, so a
                                        redrawn idle row reaches the icon on
-                                       the next run
+                                       the next run. splash.png is the SAME
+                                       picture at 4x for the boot splash,
+                                       which takes nothing but a PNG
 - `game/player/characters/*_frames.tres`
                                     <- tools/build_characters.gd, which
                                        slices whatever is on disk - and
@@ -1312,6 +1314,15 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   browser has WebRTC built in. QUIT is hidden on the main and pause menus
   there (`OS.has_feature("web")`), because quitting a tab freezes it on its
   last frame rather than closing it.
+- **The loading screen is the icon.** The boot splash is `splash.png`,
+  written by build_icon.gd beside `icon.svg` from the same picture at 4x,
+  because a boot splash takes only a PNG and says so at startup
+  (tools/setup_project.gd: real size, unfiltered, on the menu's `BG_DEEP`).
+  On the web Godot's stock page shows it while the game downloads, and that
+  page is styled rather than replaced: `html/head_include` in the preset is
+  CSS that draws the bar in the menu theme's colours, which keeps Godot's own
+  shell - and its updates - rather than a copy of it. A new icon is one run
+  of build_icon.gd; the favicon follows `icon.svg` by itself.
 - All third-party assets are CC0; sources and licenses live in CREDITS.md -
   update it whenever an asset is added.
 

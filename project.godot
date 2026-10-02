@@ -13,6 +13,10 @@ config_version=5
 config/name="za-company"
 run/main_scene="uid://baccfre32cs6j"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/bg_color=Color(0.105882354, 0.06666667, 0.09803922, 1)
+boot_splash/stretch_mode=0
+boot_splash/use_filter=false
+boot_splash/image="res://splash.png"
 config/icon="res://icon.svg"
 
 [autoload]

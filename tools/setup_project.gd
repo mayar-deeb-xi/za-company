@@ -28,6 +28,18 @@ func _initialize() -> void:
 	ProjectSettings.set_setting("display/window/size/window_width_override", 1920)
 	ProjectSettings.set_setting("display/window/size/window_height_override", 1080)
 
+	# The loading screen is the game's own icon on the menu's background (the
+	# theme's BG_DEEP) rather than Godot's logo: the boot splash natively, and
+	# the page the web build loads behind. It is splash.png, not icon.svg - a
+	# boot splash takes only a PNG - and build_icon.gd writes both from one
+	# picture. Stretch 0 is "Disabled", its real size (the art at 4x), and
+	# unfiltered for the reason every sprite is. The web page styles the bar
+	# around it (export_presets.cfg's `html/head_include`).
+	ProjectSettings.set_setting("application/boot_splash/image", "res://splash.png")
+	ProjectSettings.set_setting("application/boot_splash/stretch_mode", 0)
+	ProjectSettings.set_setting("application/boot_splash/use_filter", false)
+	ProjectSettings.set_setting("application/boot_splash/bg_color", Color("1b1119"))
+
 	# Physical keycodes so WASD stays positional on non-QWERTY layouts.
 	ProjectSettings.set_setting("input/move_up", _action([_key(KEY_W), _key(KEY_UP)]))
 	ProjectSettings.set_setting("input/move_down", _action([_key(KEY_S), _key(KEY_DOWN)]))

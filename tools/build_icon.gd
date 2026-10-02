@@ -14,6 +14,12 @@ extends SceneTree
 ## (build_ui_theme.gd) plus the band's own two greens.
 
 const OUT := "res://icon.svg"
+## The boot splash takes only a PNG ("the only supported format"), so the same
+## painted image is written again for it, enlarged with no filtering by a whole
+## 4 - which is also exactly the size the web build's loading page shows it at
+## (export_presets.cfg's `html/head_include`).
+const SPLASH := "res://splash.png"
+const SPLASH_SCALE := 4
 const Roster := preload("res://game/player/characters/roster.gd")
 const Brush := preload("res://tools/props/_brush.gd")
 
@@ -39,10 +45,14 @@ const HASH := [".X.X.", "XXXXX", ".X.X.", "XXXXX", ".X.X."]
 
 
 func _initialize() -> void:
+	var img := _paint()
 	var f := FileAccess.open(OUT, FileAccess.WRITE)
-	f.store_string(svg(_paint()))
+	f.store_string(svg(img))
 	f.close()
 	print("wrote ", OUT)
+	img.resize(N * SPLASH_SCALE, N * SPLASH_SCALE, Image.INTERPOLATE_NEAREST)
+	img.save_png(SPLASH)
+	print("wrote ", SPLASH)
 	quit()
 
 
