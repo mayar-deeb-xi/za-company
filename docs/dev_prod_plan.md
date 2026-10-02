@@ -194,14 +194,32 @@ developer's machine (ubuntu 24.04 with its own Docker):
 | The one after | The new script | The first deploy through the hand-off; its `deploy` log says `za-deploy: the new copy takes over` |
 
 The rehearsal itself starts at once: it runs on every dry run, deploy to dev
-and release from the next one on. One gap: a push to `develop` that changes
-only `server/` does not start a dry run (release.yml's push `paths` do not
-list it), so such a change is first rehearsed by the next dev deploy or
-release - each of which it blocks if it fails.
+and release, and - since the gap below was closed - on every push that
+touches `server/`. It first passed on GitHub on 2026-10-02 (run 37061169709,
+the dry run of `e0c2073`).
 
-**Done when:** the rehearsal has passed once on GitHub; the next release's
-`deploy` job passes; and the release after it shows `the new copy takes
-over` in its `deploy` log.
+**The gap, closed 2026-10-03.** release.yml's push `paths` leave `server/`
+out on purpose, because a dry run builds the game for three platforms; so a
+push that changed only server files started no run, and a broken server
+change was first noticed at the next deploy to dev or release - days later,
+mixed in with other work. Nothing broken could reach the server (both of
+those stop on the checks), but it was found late. Now:
+
+- `.github/actions/server_checks/` holds the server's checks ONCE: the
+  signaling tests, the compose file, the Caddyfile, the bundle, and the
+  rehearsal.
+- release.yml's `server` job uses it, as before, gating every release and
+  deploy to dev.
+- `.github/workflows/server.yml` uses it on every push to `develop` or
+  `main` that touches `server/`, the rehearsal script or the checks
+  themselves: a few minutes, no game builds, its own queue (a newer push
+  cancels an older run, and it never holds up a deploy to dev). It
+  publishes and gates nothing - it is only how a broken server change is
+  noticed while whoever made it still remembers it.
+
+**Done when:** the rehearsal has passed once on GitHub (done); the next
+release's `deploy` job passes; and the release after it shows `the new copy
+takes over` in its `deploy` log.
 
 ### C. A memory cap on the signaling containers
 

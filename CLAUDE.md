@@ -1492,7 +1492,11 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   release's `deploy.sh` upgrading a throwaway runner to this commit at the
   server's real paths, then this commit's script again, checked through
   Caddy - and refuses to run anywhere but CI, because on a real box it would
-  replace `/opt/za-company`. `deploy.sh server` is only a HAND-OFF to the
+  replace `/opt/za-company`. The server's checks live ONCE, in
+  `.github/actions/server_checks/`: release.yml's `server` job runs them to
+  gate a release or deploy to dev, and `.github/workflows/server.yml` runs
+  them on every push touching `server/` (no game builds), because the dry
+  run's push paths leave `server/` out. `deploy.sh server` is only a HAND-OFF to the
   copy it installs (`apply`), because a release is deployed by the PREVIOUS
   release's script (server/README.md, *How a release updates this script*). Never export
   headless from the project while the editor is open: `--export-release` is a

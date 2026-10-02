@@ -113,7 +113,10 @@ GitHub's own throwaway machine: the previous release's `deploy.sh` deploying
 this release's server files at the server's real paths, then the new script
 deploying them again, then a deploy to dev and the web builds, each checked
 through Caddy (`tools/release/rehearse_deploy.sh`). If the rehearsal fails,
-nothing is published and the server is not touched. server/README.md's *How
+nothing is published and the server is not touched. The same checks run on
+every push that touches `server/` (`.github/workflows/server.yml`, a few
+minutes, no game builds), so a broken server change is usually caught long
+before a release meets it. server/README.md's *How
 a release updates this script* says why the previous release's script is the
 one that matters.
 

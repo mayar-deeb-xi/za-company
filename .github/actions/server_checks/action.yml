@@ -1,0 +1,79 @@
+# Everything a change to server/ must pass before it can reach the server, in
+# ONE place, because two workflows run it:
+#
+# - release.yml's `server` job, which gates every release and deploy to dev;
+# - server.yml, on every push that touches server/ - so a broken server change
+#   is noticed minutes after it is pushed, not at the next deploy.
+#
+# It leaves the bundle at dist/server.tar for the caller (release.yml uploads
+# it for the deploy). Needs the repository checked out, and `previous` - the
+# release the server is on now - fetchable from origin.
+
+name: Server checks
+description: >-
+  The signaling tests, the compose file and the Caddyfile checked by their own
+  tools, the server bundle, and the deploy rehearsal.
+
+inputs:
+  previous:
+    description: >-
+      The release tag the server is on now (its deploy.sh is the one that will
+      run the upgrade). Empty rehearses a fresh server.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Test the signaling service
+      shell: bash
+      working-directory: server/signaling
+      run: |
+        python3 -m venv /tmp/venv
+        /tmp/venv/bin/pip install --quiet -r requirements.txt
+        /tmp/venv/bin/python -m unittest -v test_signaling
+
+    - name: Check the compose file
+      # Against a stand-in .env: the real one, with the TURN secret, only
+      # ever lives on the server.
+      shell: bash
+      working-directory: server
+      run: |
+        sed 's/^TURN_SECRET=.*/TURN_SECRET=ci-only/' .env.example > .env
+        docker compose --profile tls config --quiet
+        rm .env
+
+    - name: Check the Caddyfile
+      # By the Caddy that will run it, because a Caddyfile it rejects is the
+      # live site down - and a config check of the compose file cannot see
+      # inside one.
+      shell: bash
+      working-directory: server
+      run: |
+        docker run --rm -e SIGNAL_DOMAIN=example.com -e SIGNAL_PORT=8765 -e DEV_SIGNAL_PORT=8766 \
+          -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 \
+          caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+    - name: Bundle
+      shell: bash
+      run: |
+        mkdir -p dist
+        tar -C server --exclude=./.env --exclude=./web --exclude=__pycache__ -cf dist/server.tar .
+        tar -tf dist/server.tar
+
+    - name: Rehearse the deploy
+      # On this throwaway runner, at the server's own paths: the previous
+      # release's deploy.sh deploys this bundle (the upgrade the server will
+      # really see), then the copy it installed deploys it again (every
+      # release after, and the hand-off), then a deploy to dev, settle and
+      # the web builds - each checked through Caddy, the way a player
+      # reaches it (tools/release/rehearse_deploy.sh). A deploy.sh that
+      # cannot upgrade the server fails here, not there.
+      shell: bash
+      env:
+        PREVIOUS: ${{ inputs.previous }}
+      run: |
+        if [ -n "$PREVIOUS" ]; then
+          git fetch --no-tags --depth=1 origin "refs/tags/$PREVIOUS:refs/tags/$PREVIOUS"
+        fi
+        bash tools/release/rehearse_deploy.sh dist/server.tar "$PREVIOUS"

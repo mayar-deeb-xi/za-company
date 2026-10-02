@@ -13,7 +13,9 @@
 # On develop it is a DRY RUN: a push there that touches what the builds are
 # made of (the presets, this file, tools/release/) builds everything and keeps
 # the files on the run's page for a week, and publishes nothing. That is how a
-# packaging change is tried without spending a version number on it.
+# packaging change is tried without spending a version number on it. A push
+# that touches server/ is not one: server.yml gives it the server's checks
+# alone, the same ones the `server` job below runs, without building the game.
 #
 # DEPLOY TO DEV is the same run started by hand on develop with its box ticked
 # (never on its own: develop takes too many half-finished pushes). The same
@@ -290,53 +292,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Test the signaling service
-        working-directory: server/signaling
-        run: |
-          python3 -m venv /tmp/venv
-          /tmp/venv/bin/pip install --quiet -r requirements.txt
-          /tmp/venv/bin/python -m unittest -v test_signaling
-
-      - name: Check the compose file
-        # Against a stand-in .env: the real one, with the TURN secret, only
-        # ever lives on the server.
-        working-directory: server
-        run: |
-          sed 's/^TURN_SECRET=.*/TURN_SECRET=ci-only/' .env.example > .env
-          docker compose --profile tls config --quiet
-          rm .env
-
-      - name: Check the Caddyfile
-        # By the Caddy that will run it, because a Caddyfile it rejects is the
-        # live site down - and a config check of the compose file cannot see
-        # inside one.
-        working-directory: server
-        run: |
-          docker run --rm -e SIGNAL_DOMAIN=example.com -e SIGNAL_PORT=8765 -e DEV_SIGNAL_PORT=8766 \
-            -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 \
-            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
-
-      - name: Bundle
-        run: |
-          mkdir -p dist
-          tar -C server --exclude=./.env --exclude=./web --exclude=__pycache__ -cf dist/server.tar .
-          tar -tf dist/server.tar
-
-      - name: Rehearse the deploy
-        # On this throwaway runner, at the server's own paths: the previous
-        # release's deploy.sh deploys this bundle (the upgrade the server will
-        # really see), then the copy it installed deploys it again (every
-        # release after, and the hand-off), then a deploy to dev, settle and
-        # the web builds - each checked through Caddy, the way a player
-        # reaches it (tools/release/rehearse_deploy.sh). A deploy.sh that
-        # cannot upgrade the server stops the release here, not there.
-        env:
-          PREVIOUS: ${{ needs.plan.outputs.previous }}
-        run: |
-          if [ -n "$PREVIOUS" ]; then
-            git fetch --no-tags --depth=1 origin "refs/tags/$PREVIOUS:refs/tags/$PREVIOUS"
-          fi
-          bash tools/release/rehearse_deploy.sh dist/server.tar "$PREVIOUS"
+      # The same checks every push touching server/ gets (server.yml): the
+      # signaling tests, compose and Caddy, the bundle and the deploy
+      # rehearsal, from the release the server is on now.
+      - uses: ./.github/actions/server_checks
+        with:
+          previous: ${{ needs.plan.outputs.previous }}
 
       - uses: actions/upload-artifact@v7
         with:

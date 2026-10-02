@@ -1,0 +1,56 @@
+# The server's checks on every push that touches it, and nothing else.
+#
+# release.yml's dry run leaves server/ out of its push paths on purpose - it
+# builds the game for three platforms - so before this, a broken server change
+# was first noticed at the next deploy to dev or release, days later and mixed
+# in with other work. This runs the very same checks release.yml's `server`
+# job does (.github/actions/server_checks: the signaling tests, compose and
+# Caddy, the bundle, and the deploy rehearsal from the release the server is
+# on now), in a few minutes, without building anything else.
+#
+# It publishes and deploys nothing, and it does not gate anything either: a
+# deploy to dev and a release still run the same checks themselves, and stop
+# on them. This is only how a broken server change is noticed while the person
+# who made it still remembers it. docs/dev_prod_plan.md, items A and B.
+
+name: Server
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - server/**
+      - tools/release/rehearse_deploy.sh
+      - .github/actions/server_checks/**
+      - .github/workflows/server.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Only the newest push's checks matter: a newer one cancels an older run.
+concurrency:
+  group: server-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: The release the server is on now
+        # release.yml's plan job's rule, so both workflows rehearse the same
+        # upgrade: the highest v-tag, which is what the last release left
+        # installed.
+        id: previous
+        run: |
+          git fetch --no-tags --depth=1 origin '+refs/tags/v*:refs/tags/v*'
+          tag="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "::notice::rehearsing the upgrade from ${tag:-a fresh server}"
+
+      - uses: ./.github/actions/server_checks
+        with:
+          previous: ${{ steps.previous.outputs.tag }}

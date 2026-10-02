@@ -255,7 +255,10 @@ WebRTC through this server.
   a room. `PARTY_CEILING` here is only a safety cap. Raise it if the game ever
   goes past 8.
 - **Tests**: `cd signaling && pip install websockets==17.1 && python -m unittest test_signaling`.
-  The release workflow runs them too, so a failing test stops a release.
+  GitHub runs them on every push that touches this folder
+  (`.github/workflows/server.yml`, with the compose and Caddy checks and the
+  deploy rehearsal - no game builds), and the release workflow runs the same
+  checks again, so a failing test stops a release or a deploy to dev.
 - **Updating** is a release: the `deploy` job sends this folder to
   `deploy.sh server`, which mirrors it into `/opt/za-company/server` (keeping
   `.env` and `web/`) and runs `docker compose --profile tls up -d --build`, so
