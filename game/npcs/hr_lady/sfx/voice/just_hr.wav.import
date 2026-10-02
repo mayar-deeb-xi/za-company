@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/just_hr.wav-33170f76490038bc84f2358779a284d9.
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

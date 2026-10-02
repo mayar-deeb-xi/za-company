@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/ahmed_axe.wav-2d2dc3f30e9b811d41b4b06f0162d84
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

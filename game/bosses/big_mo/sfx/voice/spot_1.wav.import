@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/spot_1.wav-35381d608f23ed3f2a9135ebdec2638e.s
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

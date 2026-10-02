@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/rush_2.wav-b3c18d8e4ecad34208f0c9498c7cbb68.s
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/gym_hands.wav-2879823a06f07fcae54e0da721af8c7
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

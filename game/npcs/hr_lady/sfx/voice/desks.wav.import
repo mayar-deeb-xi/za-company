@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/desks.wav-a696b8d6dec3163fea9e80fb290e05d0.sa
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

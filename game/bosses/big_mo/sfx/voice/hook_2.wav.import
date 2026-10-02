@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/hook_2.wav-b3360626f791c0795f8af59bdc15b430.s
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

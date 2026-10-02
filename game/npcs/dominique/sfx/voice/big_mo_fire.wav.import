@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/big_mo_fire.wav-6dabf58e5800315290096ff4dff3e
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

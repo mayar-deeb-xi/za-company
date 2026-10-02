@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/big_mo_gym.wav-7a68126fecc7c792a13e6b56f8317f
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

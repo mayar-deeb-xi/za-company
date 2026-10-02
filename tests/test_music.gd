@@ -29,6 +29,15 @@ extends "res://tests/helpers.gd"
 ## in the last four minutes of the game. That absence is load-bearing and is
 ## checked, because nothing else in the project would notice a `music` line
 ## being added to his scene.
+##
+## ## And the rate everything a player HEARS over it is stored at
+##
+## Every voice clip and every track imports at 24 kHz rather than the 48 the
+## exports arrive at - half the bytes, picked by ear on the Sample Rate
+## Audition page against Godot's own resampler. It lives here because it is a
+## promise about files on disk that nothing else would notice breaking: a clip
+## `tools/voice/cut.py` writes tomorrow gets a fresh `.import` at Godot's
+## default, plays fine, and quietly ships at twice the size.
 
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
 	"the_hub", "marble_hall", "innovation_lab", "conflict_resolution",
@@ -38,6 +47,9 @@ const EXEC := "res://game/levels/executive_floor/executive_floor.tscn"
 const PENTHOUSE := "res://game/levels/khaled_office/khaled_office.tscn"
 const FINALE := "res://assets/music/finale_loop.wav"
 const LOBBY := "res://assets/music/lobby_loop.wav"
+
+## What every voice clip and track is imported at (`force/max_rate_hz`).
+const RATE := 24000
 
 ## The floors that carry a track of their own, and what each one carries. The
 ## rest of the building runs on Music.DEFAULT. Written as a map rather than a
@@ -115,6 +127,7 @@ func _tick(frame: int) -> void:
 				% [_pos_before, _pos_after], _pos_after >= SEEK_TO)
 			_boss()
 			_scored()
+			_rates()
 			_finish()
 
 
@@ -139,6 +152,10 @@ func _seal() -> void:
 		stream.loop_mode == AudioStreamWAV.LOOP_FORWARD)
 	_check("exec: and the loop is sealed to its real length (%d of %d frames)"
 		% [stream.loop_end, want], stream.loop_end == want)
+	# The live half of _rates() below: the setting really reached the stream,
+	# which it only does once the import pass has run.
+	_check("exec: and it was imported at %d Hz (%d)" % [RATE, stream.mix_rate],
+		stream.mix_rate == RATE)
 
 
 ## The boss standing on the second of the two floors, and the theme he does not
@@ -187,6 +204,38 @@ func _scored() -> void:
 		% ", ".join(scored), scored == CHAIN.slice(CHAIN.size() - 2))
 	_check("chain: while the lobby's own is floor 1 and nowhere else",
 		SCORED.get(CHAIN[0], "") == LOBBY)
+
+
+## Every voice clip in the game and every track in assets/music/ is imported at
+## RATE, read off the `.import` files themselves - a new clip cut tomorrow gets
+## Godot's default and fails here. `src/` is skipped: those are the untouched
+## exports, which never ship.
+func _rates() -> void:
+	var files: Array[String] = []
+	_voice_imports("res://game", files)
+	for f in DirAccess.get_files_at("res://assets/music"):
+		if f.ends_with(".wav.import"):
+			files.append("res://assets/music/" + f)
+	var wrong: Array[String] = []
+	for path in files:
+		var cfg := ConfigFile.new()
+		if (cfg.load(path) != OK
+				or not bool(cfg.get_value("params", "force/max_rate", false))
+				or int(cfg.get_value("params", "force/max_rate_hz", 0)) != RATE):
+			wrong.append(path.trim_prefix("res://").trim_suffix(".import"))
+	_check("audio: all %d voice clips and tracks import at %d Hz (%s)"
+		% [files.size(), RATE, "every one" if wrong.is_empty() else ", ".join(wrong)],
+		wrong.is_empty() and not files.is_empty())
+
+
+func _voice_imports(dir: String, out: Array[String]) -> void:
+	for sub in DirAccess.get_directories_at(dir):
+		if sub != "src":
+			_voice_imports(dir.path_join(sub), out)
+	if dir.ends_with("/sfx/voice"):
+		for f in DirAccess.get_files_at(dir):
+			if f.ends_with(".wav.import"):
+				out.append(dir.path_join(f))
 
 
 ## Music.DEFAULT, read off the autoload rather than spelled out here: the bed's

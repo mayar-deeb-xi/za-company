@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/taunt_7.wav-d35fba2c35ba90616570aff1a4d7ef33.
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

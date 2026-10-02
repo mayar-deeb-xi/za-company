@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/jab_1.wav-1684c0753612378ab6082397fc19d3e0.sa
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

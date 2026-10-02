@@ -970,6 +970,18 @@ work before it could loop keeps its untouched export beside it in
 `assets/music/src/`, on the enemies' and bosses' exact terms: `src/` is the
 hand-owned original, the file above it is what the game plays.
 
+**Every track and every voice clip imports at 24 kHz**, not the 48 they are
+exported at: `force/max_rate` on in each `.wav.import`, which halves 23 MB of
+audio to 11.5 in every build. It is Godot's own resampler AS-IS, and that
+resampler has no low-pass - at 48 -> 24 it keeps every other sample, so
+treble above 12 kHz folds down rather than being cut. That was measured
+(about -21 dB on Domimi and the social media mutter, under -40 on most) and
+then judged by ear on an A/B page, and as-is won; a pre-filter is the fix if a
+future line ever sounds gritty. Godot gives a NEW clip a fresh `.import` at its
+48 kHz default, so a line cut tomorrow ships at twice the size and plays fine -
+`tests/test_music.gd` sweeps every `sfx/voice/` and `assets/music/` import off
+disk and fails on it. SFX and the menu's `ui/sfx/` stay at 48 kHz.
+
 **Three floors are the exception to all of that, and a floor's track is not a
 boss's.** A biome may carry a `music` key, which the generator writes into the
 level scene beside its title and game.gd reads where it used to say

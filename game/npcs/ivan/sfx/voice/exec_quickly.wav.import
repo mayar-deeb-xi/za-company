@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/exec_quickly.wav-c8f7e514006da25ab29a40218a7f
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

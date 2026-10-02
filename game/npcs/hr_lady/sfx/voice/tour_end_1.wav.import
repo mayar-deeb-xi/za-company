@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/tour_end_1.wav-0066e9b08a3b2bb15b0eb3e007c110
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0

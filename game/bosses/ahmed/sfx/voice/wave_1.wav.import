@@ -14,8 +14,8 @@ dest_files=["res://.godot/imported/wave_1.wav-d1e83b5f3444ba554914cdf7559e3a39.s
 
 force/8_bit=false
 force/mono=false
-force/max_rate=false
-force/max_rate_hz=44100
+force/max_rate=true
+force/max_rate_hz=24000
 edit/trim=false
 edit/normalize=false
 edit/loop_mode=0
