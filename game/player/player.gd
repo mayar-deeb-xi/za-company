@@ -125,6 +125,10 @@ signal shook(strength: float, seconds: float)
 ## blink, `slowed` and `shoved` because only the owner moves the body. Health
 ## itself travels on `health_changed`, which the host sends to everybody.
 signal reached(what: String, args: Array)
+## A guest only: this body's blow reached `body`, which the host applies -
+## "my swing reached enemy X" is the attacker's to say (DESIGN.md's *Who decides
+## what*), and game/sync/world.gd carries it.
+signal landed(body: Node2D, power: int)
 
 ## Preloaded by path rather than via `class_name`, like the rest of the project.
 const Roster := preload("res://game/player/characters/roster.gd")
@@ -663,6 +667,9 @@ func _strike() -> void:
 ## nothing.
 func _land(body: Node2D, power: int, kind: String) -> void:
 	var away := body.global_position - global_position
+	if not _world_reaches():
+		_land_for_host(body, power, kind, away)
+		return
 	var before: Variant = body.get("health")
 	body.call("take_damage", power)
 	var after: Variant = body.get("health")
@@ -678,6 +685,24 @@ func _land(body: Node2D, power: int, kind: String) -> void:
 		if kind != "heavy":
 			shook.emit(KILL_SHAKE[0], KILL_SHAKE[1])
 	elif body.has_method("recoil"):
+		body.call("recoil", away)
+
+
+## A blow on a guest: the host deals it, and this screen shows it at once -
+## the benefit of the doubt the attacker gets, since waiting a round trip to
+## see your own hit land is the one lag a player feels in their hands. The
+## number and the jolt, then; the white flash is the enemy's own (net_flash),
+## and whether it died is the host's to say.
+func _land_for_host(body: Node2D, power: int, kind: String, away: Vector2) -> void:
+	if body.get("has_conceded") == true or int(body.get("health")) <= 0:
+		return
+	landed.emit(body, power)
+	var ink := _spark if kind == "jump" else DEALT_INK
+	var edge := _spark.darkened(HEAVY_EDGE_DARKEN) if kind == "heavy" else DEALT_EDGE
+	DamageNumber.spawn_dealt(body, power, ink, edge, 2 if kind == "heavy" else 1)
+	if body.has_method("net_flash"):
+		body.call("net_flash")
+	if body.has_method("recoil"):
 		body.call("recoil", away)
 
 
@@ -829,7 +854,7 @@ func _on_animation_finished() -> void:
 ## a player is a no-op, and what the host decided arrives by net_reached() and
 ## net_health() instead (DESIGN.md's Multiplayer, *Who decides what*).
 func _world_reaches() -> bool:
-	return multiplayer.is_server()
+	return not is_inside_tree() or multiplayer.is_server()
 
 
 ## A blow: metered by the grace window, and it opens a fresh one.

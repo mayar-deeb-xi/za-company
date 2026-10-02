@@ -217,6 +217,10 @@ func title() -> String:
 
 
 func _physics_process(delta: float) -> void:
+	# A guest's copy is the host's, drawn (enemy_base.gd's *Online*).
+	if not _in_charge():
+		super(delta)
+		return
 	_rush_timer = maxf(_rush_timer - delta, 0.0)
 	_breath = maxf(_breath - delta, 0.0)
 	# Hit-stop, and the one thing that must always let go of it: a boss who

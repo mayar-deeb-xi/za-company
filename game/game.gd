@@ -244,6 +244,11 @@ func party() -> Array[PlayerType]:
 	return _players
 
 
+## The floor in play now, for game/sync/, which keeps it in step.
+func current_level() -> LevelType:
+	return _level
+
+
 func _process(delta: float) -> void:
 	_camera.global_position = _camera_target()
 	_apply_shake(delta)

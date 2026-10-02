@@ -197,6 +197,10 @@ func _concede() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# A guest's copy is the host's, drawn (enemy_base.gd's *Online*).
+	if not _in_charge():
+		super(delta)
+		return
 	_wave_timer = maxf(_wave_timer - delta, 0.0)
 	_leap_timer = maxf(_leap_timer - delta, 0.0)
 	_chair_timer = maxf(_chair_timer - delta, 0.0)

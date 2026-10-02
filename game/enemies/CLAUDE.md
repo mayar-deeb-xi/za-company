@@ -126,6 +126,36 @@ scene and its reskin keeps the old numbers. `tests/test_combat.gd` spawns both
 reskins and asserts their health against the archetype's, which is what catches
 that drift.
 
+## Online: the host's, drawn everywhere
+
+Every machine builds the same room and only the HOST runs it (DESIGN.md's
+Multiplayer, M3). `_in_charge()` is the line: on a guest `_physics_process`
+hands over to `_drawn_step()` and nothing is decided - no hunt, no steering, no
+wind-up, and `take_damage` takes nothing. The body stands and plays what the
+host's last snapshot said (`net_state()` / `apply_net_state()`, carried by
+`game/sync/world.gd`), and that is the whole of a guest's copy. Three things
+make it look right rather than merely be in the right place:
+
+- **The PHASE is the host's, and so is how far into it.** Every type's own
+  drawing runs after `super()` and reads only the base's state, so a warden's
+  field, a brute's ring and a wraith's aura fill on a guest exactly as they
+  fill on the host - and `_phase_time` keeps counting between snapshots, so
+  they fill smoothly rather than in twentieths of a second. A wind-up that
+  lands on the host lands here (`_net_phase()` runs `_strike()`, whose every
+  touch on a player is a no-op on a guest: it is what lands the field and the
+  ring).
+- **The tint is the host's**, sent as a colour, with the struck flash as a
+  flag, because a tint brighter than white does not fit in one.
+- **A guest's own blow flashes at once** (`net_flash()`) and reels at once (the
+  reel is the sprite's and always local), because the host's flash for it is a
+  round trip away. The blow itself is reported by the attacker (player.gd's
+  `landed`) and dealt on the host.
+
+A boss is the same body and three of his own on top - he adds his health and
+his concede to the snapshot, so the bar and the end follow; his attacks'
+effects are M3 step 4. Each boss's own `_physics_process` steps aside for the
+base's on a guest, since everything after its `super()` decides something.
+
 ## The leash: what an enemy does about a player who walks away
 
 `sight_radius` is how an enemy NOTICES the player and that is now all it is.

@@ -109,6 +109,11 @@ var _cooldown := 0.0
 
 
 func _process(delta: float) -> void:
+	# The host's beat. A guest's room gets every arrival from the host's own
+	# snapshot (game/sync/world.gd), so a second door opening here would be a
+	# second set of bodies.
+	if not multiplayer.is_server():
+		return
 	if _population < 0:
 		_population = _alive()
 		return

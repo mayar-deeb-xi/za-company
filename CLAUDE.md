@@ -1298,6 +1298,16 @@ The host is the truth for everything but where a body is:
   running game, and game.gd hands this machine's player still hands while one
   is up. The true hit-stop is solo-only until M4.
 - **A guest leaving takes their body with them** (`net_left`), and their row.
+- **The room is ONE snapshot** (`game/sync/world.gd`): twenty times a second,
+  compressed, every `synced` thing in it by its path - an enemy, a boss - and
+  what it looks like. A guest draws each one where the host says
+  (game/enemies/CLAUDE.md's *Online*), and the same message is the only word
+  on what EXISTS: an entry the guest lacks was spawned on the host and carries
+  its scene, so the guest makes one at that path; a thing the guest has and
+  the snapshot lacks is gone, and goes. No spawn or despawn message to lose,
+  arrive out of order or be missed by a guest still fading in. A guest's
+  swing is reported by the attacker (player.gd's `landed`) and dealt on the
+  host; a beat (`reinforcements.gd`) is the host's alone.
 
 ## Settings
 
@@ -1506,7 +1516,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Thirty-three suites,
+  They drive the real game with synthesized input and exit 0/1. Thirty-four suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1834,6 +1844,16 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     opening over a running game, the end of the run on both, and the guest's
     body leaving with them. `coop_guest.gd` is not in run_all.gd's list: it is
     a suite's second machine, never a suite.
+  - `test_coop_world.gd` - the same two machines, and the ENEMIES: on
+    hellfire, which the guest is welcomed to from the lobby, every body the host
+    has the guest has where the host has it, a body the host moves moves there,
+    a warden winding up on the host fills its field on the guest's screen and
+    the slow it lands is the guest's own body's, the guard's blow hurts the
+    guest and the guest's swing hurts the guard, a body the host kills is gone
+    on the guest, and a reinforcement the host lets in appears there - made
+    from the scene its snapshot entry carries - and goes when it dies. Every
+    enemy but the one a step is about stands still, so a crowd never decides a
+    check.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

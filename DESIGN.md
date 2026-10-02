@@ -1046,6 +1046,18 @@ one that FEELS best rather than the one that is safest.
         player.gd's `_world_reaches()` - on a guest the world hurts, heals,
         slows and shoves nobody, and the host's word arrives instead.
         `tests/test_coop.gd` is two processes (29 checks).
+        **Step 2 done (2026-10-02), the enemies**: on a guest an enemy is the
+        host's, drawn (`_in_charge()`, `_drawn_step()`), with the phase and
+        how far into it carried, so every type's own telegraph - a warden's
+        field, a brute's ring, a wraith's aura - fills there as on the host.
+        ONE snapshot of the room's `synced` things is the whole truth of what
+        exists (`game/sync/world.gd`): an entry the guest lacks was spawned on
+        the host and carries its scene, and a thing the snapshot lacks is gone
+        - so there is no spawn or despawn message to lose. Compressed, because
+        hellfire's room was already one byte past a packet. A guest's swing is
+        reported and dealt on the host, and shown at once on the attacker's
+        screen. A boss is drawn too, with his bar and his concede; his
+        attacks are step 4. `tests/test_coop_world.gd` (17 checks).
 - [ ] M4. **The feel.** Remote bodies drawn ~100 ms behind and interpolated;
         the hit-stop visual-only online; effects, numbers and sounds fired
         locally on the host's word.

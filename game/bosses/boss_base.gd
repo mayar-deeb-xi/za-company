@@ -131,7 +131,40 @@ func _physics_process(delta: float) -> void:
 		_sprite.modulate = Color.WHITE
 		return
 	super(delta)
-	_watch_player(delta)
+	# What he says is the host's; a guest hears it from there.
+	if _in_charge():
+		_watch_player(delta)
+
+
+## A boss's snapshot is an enemy's and two more things the HUD reads: whether
+## he has given in, and the health he has to give - which grew per head on the
+## host when he was built, and is the host's number either way.
+func net_state() -> Array:
+	var state := super()
+	state.append(has_conceded)
+	state.append(max_health)
+	return state
+
+
+## And on a guest, the bar follows and so does the end: his health moving says
+## so on `health_changed`, and his giving in is the same `_concede()` the host
+## ran - the bar comes down, the theme goes and the door upstairs hears it.
+func apply_net_state(state: Array) -> void:
+	if state.size() < 11 or has_conceded:
+		return
+	var before := health
+	max_health = int(state[10])
+	super(state)
+	if health != before:
+		health_changed.emit(health, max_health)
+	if bool(state[9]):
+		_concede()
+
+
+## A boss's moments are his own attacks', not the base's one swing: what his
+## wind-ups and blows look like on a guest arrives with his effects (M3 step 4).
+func _net_phase(_was: Phase, _now: Phase) -> void:
+	pass
 
 
 ## The two things worth saying that no step of the cycle is in a position to
@@ -286,7 +319,7 @@ func _apply_animation(state: String) -> void:
 
 
 func take_damage(amount: int) -> void:
-	if health <= 0 or has_conceded:
+	if not _in_charge() or health <= 0 or has_conceded:
 		return
 	health = maxi(health - amount, 0)
 	_flash = HURT_FLASH_SECONDS

@@ -283,7 +283,8 @@ func _windup_tint() -> Color:
 
 
 func _physics_process(delta: float) -> void:
-	if has_conceded:
+	# A guest's copy is the host's, drawn (enemy_base.gd's *Online*).
+	if has_conceded or not _in_charge():
 		super(delta)
 		return
 	_glare_timer = maxf(_glare_timer - delta, 0.0)

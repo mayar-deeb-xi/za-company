@@ -135,6 +135,21 @@ class_name EnemyBase
 ## that player on every frame, which is all it ever was before there could be
 ## two (DESIGN.md's Multiplayer, *The rules of a party*).
 ##
+## ## Online: the host's, drawn everywhere
+##
+## Every machine builds the same room, but only the HOST runs it (DESIGN.md's
+## Multiplayer, M3). On a guest none of the above happens: no hunt, no steering,
+## no wind-up, nothing dealt and nothing taken (`_in_charge()`). The body stands
+## and plays what the host's last snapshot said (game/sync/world.gd, through
+## net_state() / apply_net_state()) - where it is, which way it faces, which
+## frame, the tint, the phase and how far into it - and the guest's own clocks
+## carry it smoothly to the next one. Because the phase is the host's, every
+## type's own drawing after `super()` - a warden's field, a brute's ring, a
+## wraith's aura - reads exactly what it reads on the host, and a wind-up that
+## lands there lands here (_net_phase()). A guest's blow is reported to the
+## host by the attacker (player.gd's `landed`) and flashes here at once
+## (net_flash()), since the host's own flash is a round trip away.
+##
 ## ## Seams
 ##
 ## What a touch DOES is the seam between enemy types - the base deals damage on
@@ -380,9 +395,14 @@ var _slid := Vector2.ZERO
 ## Who it is after, and the physics frame that was decided on - see `target()`.
 var _target: Node2D = null
 var _target_frame := -1
+## A guest's: the tint the host last drew this body in - see the header's
+## *Online*.
+var _net_tint := Color.WHITE
 
 
 func _ready() -> void:
+	# In the room's snapshot, on every machine alike (game/sync/world.gd).
+	add_to_group(&"synced")
 	health = max_health
 	_sprite_rest = _sprite.position
 	# Difficulty scales what the world DEALS, applied once at spawn. Health is
@@ -399,6 +419,9 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not _in_charge():
+		_drawn_step(delta)
+		return
 	_mutter(delta)
 	if _flash > 0.0:
 		_flash = maxf(_flash - delta, 0.0)
@@ -467,6 +490,103 @@ func _physics_process(delta: float) -> void:
 		_sprite.modulate = Color.WHITE.lerp(_windup_tint(), _windup_progress())
 	else:
 		_sprite.modulate = _resting_tint()
+
+
+## Whether this machine runs this body: the host's does, offline included. A
+## guest's draws it - see the header's *Online*.
+func _in_charge() -> bool:
+	return not is_inside_tree() or multiplayer.is_server()
+
+
+## One frame of a guest's copy: nothing decided, only carried - its own
+## mutters (overheard, and a different line on each machine is a difference
+## nobody can hear), the guest's own blows' flash and reel, and the clock
+## through the phase, so a wind-up's tint and its field fill smoothly between
+## two snapshots rather than in steps.
+func _drawn_step(delta: float) -> void:
+	_mutter(delta)
+	_flash = maxf(_flash - delta, 0.0)
+	_struck = maxf(_struck - delta, 0.0)
+	_reel(delta)
+	_phase_time += delta
+	if _struck > 0.0:
+		_sprite.modulate = STRUCK_TINT
+	elif _flash > 0.0:
+		_sprite.modulate = HURT_TINT
+	else:
+		_sprite.modulate = _net_tint
+
+
+## What this body looks like now, for the guests: where it is and faces, what
+## its sprite is drawing and in what tint, the phase and how far into it, and
+## its health. Plain values, packed small: twenty times a second, every body in
+## the room. The struck flash is a flag because its tint is brighter than any
+## colour can carry.
+func net_state() -> Array:
+	var flags := int(_sprite.flip_h) | int(touching_player) << 1 \
+		| int(_facing_left) << 2 | int(_struck > 0.0) << 3
+	return [global_position, _sprite.animation, _sprite.frame, flags,
+		_sprite.modulate.to_rgba32(), phase, _phase_time, health, _facing]
+
+
+## Draw what the host sent - see net_state(). The sprite keeps playing between
+## two of these, so its frame is only corrected once it has drifted.
+func apply_net_state(state: Array) -> void:
+	if state.size() < 9:
+		return
+	global_position = state[0]
+	var anim := StringName(state[1])
+	var frame := int(state[2])
+	if _sprite.animation != anim and _sprite.sprite_frames.has_animation(anim):
+		_sprite.play(anim)
+		_sprite.frame = frame
+	elif absi(_sprite.frame - frame) > 1:
+		_sprite.frame = frame
+	if not _sprite.is_playing() and _sprite.sprite_frames.get_animation_loop(_sprite.animation):
+		_sprite.play()
+	var flags := int(state[3])
+	_sprite.flip_h = (flags & 1) != 0
+	touching_player = (flags & 2) != 0
+	_facing_left = (flags & 4) != 0
+	_net_tint = STRUCK_TINT if (flags & 8) != 0 else Color.hex(int(state[4]))
+	var was := phase
+	phase = int(state[5]) as Phase
+	_phase_time = float(state[6])
+	var before := health
+	health = int(state[7])
+	_facing = int(state[8]) as Facing
+	if phase != was:
+		_net_phase(was, phase)
+	elif health < before:
+		_sfx("hurt")
+
+
+## A guest's copy moving from one phase to the next, which is all the
+## moments the cycle has, arriving: the telegraph said out loud, the blow
+## landing (`_strike()`, whose every touch on a player is a no-op here - it is
+## what lands a warden's field and a brute's ring), and a stagger.
+func _net_phase(was: Phase, now: Phase) -> void:
+	if now == Phase.WINDUP:
+		_sfx("windup")
+	elif was == Phase.WINDUP and now == Phase.RECOVER:
+		_strike()
+	elif now == Phase.STAGGER:
+		_sfx("stagger")
+
+
+## A guest's own blow, flashed here at once - the host's flash for it is a
+## round trip away (player.gd's _land_for_host).
+func net_flash() -> void:
+	_flash = HURT_FLASH_SECONDS
+	_struck = STRUCK_SECONDS
+
+
+## Gone from the host's room, on a guest - and the only way an enemy leaves a
+## room is by dying in it, so it goes the way a death goes: its last sound
+## outliving it.
+func net_gone() -> void:
+	_sfx_detached("die")
+	queue_free()
 
 
 ## Who this body is after: the nearest player, kept until another is closer by
@@ -848,7 +968,8 @@ func _resting_tint() -> Color:
 
 
 func take_damage(amount: int) -> void:
-	if health <= 0:
+	# A guest's copy takes nothing: what hurts it is the host's to deal.
+	if not _in_charge() or health <= 0:
 		return
 	health = maxi(health - amount, 0)
 	# The tint itself is applied by _physics_process, which is the one place

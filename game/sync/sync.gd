@@ -31,6 +31,7 @@ extends Node
 ## and who is down. A guest speaks to the host only once welcomed.
 
 const Bodies := preload("res://game/sync/bodies.gd")
+const World := preload("res://game/sync/world.gd")
 const PlayerType := preload("res://game/player/player.gd")
 
 ## Whether this run is an online one. Decided once, when the scene is built:
@@ -44,6 +45,7 @@ var welcomed := false
 ## Untyped: game.gd preloads this file, so this one cannot preload it back.
 var _game
 var _bodies: Bodies
+var _world: World
 ## Where the host is now, for whoever arrives late - and where it is going,
 ## between ordering a door and arriving, so a guest who turns up in that gap
 ## is welcomed to the floor everybody else is about to be on.
@@ -58,6 +60,9 @@ func _ready() -> void:
 	_bodies = Bodies.new()
 	_bodies.name = "Bodies"
 	add_child(_bodies)
+	_world = World.new()
+	_world.name = "World"
+	add_child(_world)
 	if not active:
 		return
 	if is_host():
@@ -71,6 +76,7 @@ func begin(party: Array) -> void:
 	_bodies.track(party)
 	if not active:
 		return
+	_world.track(body_of(Net.my_id()))
 	if is_host():
 		for id in Net.arrived_peers():
 			_on_peer_arrived(id)
@@ -87,10 +93,16 @@ func guests() -> Array[int]:
 	return Net.arrived_peers() if active and multiplayer.is_server() else [] as Array[int]
 
 
-## A call to every guest whose game is up, by name.
-func to_guests(method: StringName, args: Array = []) -> void:
+## A call to every guest whose game is up, by name - on this node, or `on`.
+func to_guests(method: StringName, args: Array = [], on: Node = null) -> void:
+	var node := on if on != null else self
 	for id in guests():
-		callv(&"rpc_id", [id, method] + args)
+		node.callv(&"rpc_id", [id, method] + args)
+
+
+## The floor this machine is standing in, or null mid-swap.
+func level() -> Node:
+	return _game.current_level()
 
 
 func body_of(peer: int) -> PlayerType:

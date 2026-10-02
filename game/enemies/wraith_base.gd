@@ -64,6 +64,10 @@ const DRAIN_RELEASE := 0.08
 
 func _physics_process(delta: float) -> void:
 	super(delta)
+	# A guest's copy feeds by the host's word (touching_player), and keeps its
+	# own count of how long, which is all the aura's spin and pulse read.
+	if not _in_charge() and touching_player:
+		_feed_time += delta
 	# Read once, after the base has settled touching_player for the frame.
 	_aura.set_feeding(touching_player, _feed_time)
 	# The only sound in the game that is a STATE rather than a moment, and it

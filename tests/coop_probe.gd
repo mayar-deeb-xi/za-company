@@ -18,6 +18,8 @@ var answers := {}
 var _asked := 0
 var _since := 0
 var _frames := 0
+## Frames of attack-mashing left, on the guest - helpers.gd's rhythm.
+var _mash := 0
 
 
 func _ready() -> void:
@@ -31,6 +33,12 @@ func _process(_delta: float) -> void:
 	var now := Time.get_ticks_msec()
 	if due > now:
 		OS.delay_msec(due - now)
+	if _mash > 0:
+		if _mash % 8 == 0:
+			_press(KEY_SPACE, true)
+		elif _mash % 8 == 4:
+			_press(KEY_SPACE, false)
+		_mash -= 1
 
 
 ## Ask the machine `peer` something; its answer lands in `answers` under the
@@ -98,12 +106,32 @@ func _answer(what: String, args: Array) -> Variant:
 			return [menu.call("is_paused"), (menu.get_node("%Heading") as Label).text,
 				get_tree().paused]
 		"key":
-			var ev := InputEventKey.new()
-			ev.physical_keycode = int(args[0])
-			ev.keycode = int(args[0])
-			ev.pressed = bool(args[1])
-			Input.parse_input_event(ev)
+			_press(int(args[0]), bool(args[1]))
 			return true
+		"mash":
+			# Ends on a release, so the attack button is never left held.
+			_mash = int(args[0]) / 8 * 8 + 1
+			return true
+		"enemies":
+			# Every synced thing in the room: where it is and what it has left.
+			var out := {}
+			var level := _level(game)
+			if level != null:
+				for node in get_tree().get_nodes_in_group(&"synced"):
+					if level.is_ancestor_of(node) and not node.is_queued_for_deletion():
+						out[String(level.get_path_to(node))] = [
+							(node as Node2D).global_position, node.get("health")]
+			return out
+		"get":
+			# Properties of one node in the room, by its path there.
+			var level := _level(game)
+			var node := level.get_node_or_null(NodePath(String(args[0]))) if level != null else null
+			if node == null:
+				return null
+			var values := []
+			for prop in args[1]:
+				values.append(node.get(String(prop)))
+			return values
 		"teleport":
 			var mine := _body(sync, multiplayer.get_unique_id())
 			if mine != null:
@@ -121,6 +149,14 @@ func _answer(what: String, args: Array) -> Variant:
 		"quit":
 			return true
 	return null
+
+
+func _press(code: int, pressed: bool) -> void:
+	var ev := InputEventKey.new()
+	ev.physical_keycode = code as Key
+	ev.keycode = code as Key
+	ev.pressed = pressed
+	Input.parse_input_event(ev)
 
 
 func _body(sync: Node, peer: int) -> Node2D:
