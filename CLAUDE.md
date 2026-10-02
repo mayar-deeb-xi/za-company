@@ -1335,6 +1335,19 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   CSS that draws the bar in the menu theme's colours, which keeps Godot's own
   shell - and its updates - rather than a copy of it. A new icon is one run
   of build_icon.gd; the favicon follows `icon.svg` by itself.
+- **Under the bar is the DOWNLOAD, not the bar's own number**: `8.0 / 22.9 MB`
+  and the line's speed in MB/s, then `STARTING` while the engine boots, in
+  the menu's Kenney Mini Square (embedded in the preset as base64, since the
+  page cannot read the pack). Godot's bar counts UNPACKED bytes - fetch hands
+  a gzipped body over already inflated - so it says 53.7 MB, and a speed taken
+  from it reads 2.3x the line. The readout is a script in the same
+  `head_include` that wraps `fetch` for the two files in `fileSizes`, counts
+  each off a clone of its response, scales by that file's `Content-Length`
+  (the gzipped size) against its unpacked size, and gives the game the
+  browser's own `fetch` back once the page is gone. Served without the .gz
+  files it says 53.7 MB, which is then the truth. Picked as option A from a
+  preview and shipped verbatim: pixel-identical to it in the same simulated
+  download.
 - All third-party assets are CC0; sources and licenses live in CREDITS.md -
   update it whenever an asset is added.
 
