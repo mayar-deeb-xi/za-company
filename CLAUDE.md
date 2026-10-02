@@ -1317,8 +1317,11 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   who left it on does not land every suite on a floor picker.
 - **The game is playable in a browser** at https://za-company.mayar-deeb.dev:
   the "Web" preset in `export_presets.cfg`, served by the server's Caddy.
-  Getting a build there is the release pipeline's job, not a script's - what
-  a deploy has to do is server/README.md's *The web build*. Never export
+  A RELEASE puts it there and nothing else does: release.yml builds it beside
+  Windows and macOS, tests the server, publishes, then its `deploy` job sends
+  `server/` and the web build to `server/deploy.sh` with a key that can run
+  that script and nothing else (RELEASING.md's *Deploying*), so the site is
+  always the latest release. Never export
   headless from the project while the editor is open: `--export-release` is a
   second editor writing `.godot/`, so export from a copy. The build is
   single-threaded (no SharedArrayBuffer, so no special headers) and the

@@ -21,13 +21,18 @@ A release is **the `VERSION` file changing on `main`**, and nothing else.
 When a push to `main` changes `VERSION`, `.github/workflows/release.yml`:
 
 1. checks the number,
-2. builds the game for Windows and macOS (see below),
+2. builds the game for Windows, macOS and the web, and tests the server's
+   signaling service,
 3. tags that commit `v<number>` (for example `v0.2.0`),
-4. publishes it on the repository's **Releases** page with the builds
-   attached, and every commit since the previous release as the notes.
+4. publishes it on the repository's **Releases** page with the Windows and
+   macOS builds attached, and every commit since the previous release as the
+   notes,
+5. **deploys** it: brings the server's stack up to this commit, then puts the
+   web build live at https://za-company.mayar-deeb.dev.
 
 Nothing is published unless every build succeeds, so a release is never
-missing a platform. Pushes that leave `VERSION` alone never trigger it.
+missing a platform, and the site is never a version nobody can download.
+Pushes that leave `VERSION` alone never trigger it.
 
 ## What a release contains
 
@@ -37,8 +42,8 @@ missing a platform. Pushes that leave `VERSION` alone never trigger it.
 | `TheNewHire-0.2.0-windows-portable.zip` | The same game with nothing to install: unzip and run `TheNewHire.exe`. |
 | `TheNewHire-0.2.0-macos.dmg` | macOS disk image: open it and drag the game to Applications. One build for Intel and Apple Silicon. |
 
-The web build is not attached. It is published to the server instead
-(`tools/web/publish.py`).
+The web build is not attached. It goes to the server instead (see
+*Deploying*), so the site is always the latest release.
 
 **The builds are not signed yet**, so both systems warn the first time the
 game is opened. The release notes tell players what to click:
@@ -75,12 +80,72 @@ The workflow refuses a number lower than the latest release, because that is
 a typo rather than a release. Re-using a number that is already released does
 nothing.
 
+## Deploying
+
+The `deploy` job runs only for a real release, after the Release is up. In
+this order, because the game and signaling change together and a new game must
+never meet an old server:
+
+1. **The server**: the repository's `server/` folder replaces the one on the
+   droplet (its `.env` and the web build are kept), and `docker compose`
+   rebuilds what changed. A run with no server changes restarts nothing.
+2. **The game**: the web build is streamed in beside the live one and swapped
+   in by rename, so a player loading the page mid-deploy gets one whole
+   version or the other.
+3. **The check**: the site's page must be the one just built, and the
+   signaling service must answer.
+
+It logs in with a key of its own, held in the repository secret
+`DEPLOY_SSH_KEY`. On the server that key can do nothing but run
+`server/deploy.sh` (installed as `/usr/local/sbin/za-deploy`), which takes
+`server` or `web` and a tar of it: no shell, no other command, no tunnels. A
+leaked key could put up something this repository would have shipped anyway,
+and nothing more.
+
+### Setting it up (once)
+
+The key already exists and the server already accepts it; GitHub only needs
+the private half.
+
+1. Open `C:\Users\chrol\.ssh\za_company_deploy` in a text editor and copy
+   ALL of it, including the `-----BEGIN` and `-----END` lines.
+2. On GitHub: the repository's **Settings -> Secrets and variables -> Actions
+   -> New repository secret**. Name it `DEPLOY_SSH_KEY`, paste, **Add secret**.
+3. Delete the file, and its `.pub` beside it. GitHub now holds the only copy,
+   and nobody needs it again: a lost key is replaced, never recovered.
+
+Until the secret exists, a release still publishes and then the deploy job
+fails with a message saying the secret is missing. Add it and use *Re-run
+failed jobs* on that run: it deploys the files that run built, for 30 days.
+
+### Replacing the key
+
+If the key may have leaked, or to rotate it:
+
+```sh
+ssh-keygen -t ed25519 -N "" -C "za-company release pipeline" -f za_company_deploy
+```
+
+On the server, replace the line ending in `za-company release pipeline` in
+`/root/.ssh/authorized_keys` with
+`restrict,command="/usr/local/sbin/za-deploy" ` followed by the new `.pub`.
+Then put the new private key in the `DEPLOY_SSH_KEY` secret and delete both
+files.
+
+### If the server is rebuilt
+
+A rebuilt droplet has a new SSH host key, and the deploy refuses it on
+purpose: the key it trusts is pinned in `tools/release/known_hosts`. Replace
+that line with the new server's `/etc/ssh/ssh_host_ed25519_key.pub`, prepare
+the server as `server/README.md` describes, and install the deploy key again.
+
 ## Trying a build without releasing
 
 A push to `develop` that changes what the builds are made of
 (`export_presets.cfg`, the workflow, or anything in `tools/release/`) runs
-the whole build as a **dry run**. It publishes nothing and keeps the files on
-the run's page in the Actions tab for a week. **Actions -> Release -> Run
+the whole build as a **dry run**: Windows, macOS, web and the server's
+checks. It publishes and deploys nothing, and keeps the files on the run's
+page in the Actions tab for a week. **Actions -> Release -> Run
 workflow** on `develop` does the same on demand.
 
 ## If something goes wrong
@@ -90,6 +155,9 @@ workflow** on `develop` does the same on demand.
   stopped an export). Fix it and push again.
 - **Run it again by hand**: Actions -> Release -> *Run workflow* on `main`.
   If the version is already released, it stops without doing anything.
+- **Only the deploy failed**: the Release is out and the site is still on the
+  previous version. Open the run, fix the cause (the message names it: the
+  secret, the host key, or the server), then *Re-run failed jobs*.
 - **Undo a release**: delete it on the Releases page, then delete its tag
   (`git push origin :refs/tags/v0.2.0`).
 

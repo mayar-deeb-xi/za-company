@@ -32,6 +32,8 @@ own apt repository, container logs capped at 3 x 10 MB in
 ufw with exactly the ports below, and root SSH by key only
 (`/etc/ssh/sshd_config.d/10-za-hardening.conf`). Its public IP sits directly
 on eth0, so `EXTERNAL_IP` is the plain address, not the `PUBLIC/PRIVATE` form.
+Since then it has one more key: the release pipeline's, which can run
+`deploy.sh` and nothing else (*The web build* below, and RELEASING.md).
 
 ## Deploying
 
@@ -122,23 +124,16 @@ the REQUEST rather than by the path (see `Caddyfile`): a WebSocket upgrade, on
 any path, and `/healthz` go to signaling, and everything else is a file out of
 `web/game/`.
 
-Putting a build there is the release pipeline's job. Whatever runs it, a
-deploy is four steps, and the server is built around each of them:
-
-1. **Export** the "Web" preset (`export_presets.cfg`) with Godot 4.7.2 and its
-   `web_nothreads_release.zip` template: `--headless --import --path .`, then
-   `--headless --path . --export-release Web <out>/index.html`. Never from the
-   developer's project while the editor is open - a headless export is a
-   second editor writing `.godot/`.
-2. **Gzip** every `.html`, `.js`, `.wasm` and `.pck` to a `.gz` beside it,
-   keeping the originals (39 MB of engine becomes 10; the whole download is
-   about 23 MB). Caddy serves these as they are (`precompressed gzip`) and
-   compresses nothing itself: on one core that is a second of CPU for every
-   player who opens the page. A deploy that skips this still works, at 54 MB.
-3. **Upload** into `/opt/za-company/server/web/game.new`, never into `game/`.
-4. **Swap** it in by rename: `mv game game.old && mv game.new game && rm -rf
-   game.old`, in `web/`. A page loaded mid-deploy gets one whole build or the
-   other, and nothing restarts.
+A release puts a build there (RELEASING.md, *Deploying*): the workflow's `web`
+job exports the "Web" preset on Linux and gzips every `.html`, `.js`, `.wasm`
+and `.pck` beside itself, and its `deploy` job streams the result to
+`deploy.sh web`, which unpacks it into `web/game.new`, refuses it if a file
+is missing, and swaps it in by two renames. A page loaded mid-deploy gets one
+whole build or the other, and nothing restarts. The `.gz` files are made
+there and not here: Caddy serves them as they are (`precompressed gzip`) and
+compresses nothing itself, because on one core that is a second of CPU for
+every player who opens the page (39 MB of engine becomes 10; the whole
+download is about 23 MB).
 
 Three rules on this side hold that up:
 
@@ -149,9 +144,15 @@ Three rules on this side hold that up:
   from build to build, so without it a browser can pair a fresh `index.pck`
   with yesterday's `index.wasm`. `no-cache` revalidates by ETag; a returning
   player downloads nothing that did not change.
-- **A pipeline logs in as root with a key of its own**, added to
-  `/root/.ssh/authorized_keys` - never the developer's key - so it can be
-  revoked without locking anybody out.
+- **The pipeline's key can only run `deploy.sh`.** It is root's, but its
+  line in `/root/.ssh/authorized_keys` is
+  `restrict,command="/usr/local/sbin/za-deploy" ssh-ed25519 ... za-company release pipeline`,
+  so whatever it asks for, the script runs instead, with the request in
+  `SSH_ORIGINAL_COMMAND`: `web` or `server` and a tar on stdin, and nothing
+  else - no shell, no other command, no tunnels. It is never the developer's
+  key, so it is revoked without locking anybody out. `deploy.sh server`
+  installs the newest copy of itself, so this folder is the one place it is
+  written.
 
 Both headers that mark a WebSocket are matched by case-insensitive regex, and
 that is not tidiness: clients disagree on `Upgrade` against `upgrade`, and
@@ -190,20 +191,25 @@ of these have been seen:
   a room. `PARTY_CEILING` here is only a safety cap. Raise it if the game ever
   goes past 8.
 - **Tests**: `cd signaling && pip install websockets==17.1 && python -m unittest test_signaling`.
-- **Updating**: copy this folder up again, then the same `docker compose ...
-  up -d --build` from step 4. Ours is not a git checkout, so from the repo
-  root (the excludes keep the server's own `.env` and the published game):
+  The release workflow runs them too, so a failing test stops a release.
+- **Updating** is a release: the `deploy` job sends this folder to
+  `deploy.sh server`, which mirrors it into `/opt/za-company/server` (keeping
+  `.env` and `web/`) and runs `docker compose --profile tls up -d --build`, so
+  only what changed restarts. Rooms in progress are closed by a signaling
+  restart. Players who are already connected keep playing, because their game
+  traffic never passes through the signaling service.
+- **A changed `Caddyfile` recreates Caddy** rather than reloading it. It is a
+  FILE bind mount, and a file replaced on disk is a new inode the running
+  container never sees, so `caddy reload` would re-read the old one.
+  `deploy.sh` compares the file's hash before and after and recreates the
+  container only when it moved: a second's blip, certificates kept.
+- **By hand**, with your own key and outside a release, the same script does
+  the same thing from the repo root:
 
   ```sh
-  tar -C server --exclude=.env --exclude=web --exclude=__pycache__ -cf - . \
-    | ssh root@za-company.mayar-deeb.dev 'tar -C /opt/za-company/server -xf - --no-same-owner'
+  tar -C server --exclude=./.env --exclude=./web --exclude=__pycache__ -cf - . \
+    | ssh root@za-company.mayar-deeb.dev 'SSH_ORIGINAL_COMMAND=server za-deploy'
   ```
-
-  A change to the `Caddyfile` alone needs no restart: `docker compose
-  --profile tls exec caddy caddy reload --config /etc/caddy/Caddyfile`.
-  Rooms in progress are closed by a signaling restart. Players who are
-  already connected keep playing, because their game traffic never passes
-  through the signaling service.
 - **coturn 4.18** turned the admin CLI and DTLS off by default and stopped
   accepting `--no-dtls`: passing it is "unrecognized option" and a restart
   loop. The one `ERROR CONFIG: Unknown argument:` (with nothing after it) left

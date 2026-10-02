@@ -1,0 +1,5 @@
+# The release server's SSH host key, pinned so the deploy job checks it is
+# talking to OUR server instead of trusting whatever answers first. Copied from
+# the server's own /etc/ssh/ssh_host_ed25519_key.pub; if the droplet is ever
+# rebuilt, its new key goes here (server/README.md, Deploying from a release).
+za-company.mayar-deeb.dev,104.248.45.148 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEzQWi4kWnkdNy3lkBEKz6Vb3Wr98hwyy5Fb9vB+tJcy

@@ -4,7 +4,11 @@
 # VERSION changes on main, this builds the game for Windows (an installer and a
 # portable zip) and macOS (a disk image), tags the commit v<VERSION> and
 # publishes a GitHub Release carrying all three, with every commit since the
-# last release as its notes. Nothing is published unless every build worked.
+# last release as its notes. Nothing is published unless every build worked -
+# and that includes the web build and the server's checks, which are not on
+# the Release page but go out with it: once the Release exists, the deploy job
+# brings the server's stack up to this commit and puts the web build live at
+# https://za-company.mayar-deeb.dev. The site is always the latest release.
 #
 # On develop it is a DRY RUN: a push there that touches what the builds are
 # made of (the presets, this file, tools/release/) builds everything and keeps
@@ -190,8 +194,88 @@ jobs:
           if-no-files-found: error
           retention-days: ${{ needs.plan.outputs.mode == 'release' && 30 || 7 }}
 
+  # The browser build. Not attached to the Release: the deploy job puts it on
+  # the server, which is the only place anybody plays it.
+  web:
+    needs: plan
+    if: needs.plan.outputs.mode != 'skip'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CORE: ${{ needs.plan.outputs.core }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/godot-cache
+          key: godot-${{ env.GODOT_VERSION }}-web-v1
+
+      - name: Fetch Godot and the web template
+        run: echo "GODOT=$(bash tools/release/fetch_godot.sh web ~/godot-cache)" >> "$GITHUB_ENV"
+
+      - name: Stamp the version and import
+        run: bash tools/release/prepare.sh "$GODOT" "$CORE"
+
+      - name: Export
+        run: bash tools/release/export.sh "$GODOT" "Web" build/web/index.html
+
+      - name: Compress
+        # The server sends the .gz files as they are (Caddy's `precompressed
+        # gzip`) and compresses nothing itself: one core cannot afford a second
+        # of CPU per player. 54 MB of build is about 23 MB on the wire.
+        run: |
+          gzip -9 -k -n build/web/*.html build/web/*.js build/web/*.wasm build/web/*.pck
+          ls -la build/web
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web
+          path: build/web/
+          if-no-files-found: error
+          retention-days: ${{ needs.plan.outputs.mode == 'release' && 30 || 7 }}
+
+  # The server's half of the release: its tests and its compose file, checked
+  # here so a broken signaling service stops a release like a failed export.
+  server:
+    needs: plan
+    if: needs.plan.outputs.mode != 'skip'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Test the signaling service
+        working-directory: server/signaling
+        run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install --quiet -r requirements.txt
+          /tmp/venv/bin/python -m unittest -v test_signaling
+
+      - name: Check the compose file
+        # Against a stand-in .env: the real one, with the TURN secret, only
+        # ever lives on the server.
+        working-directory: server
+        run: |
+          sed 's/^TURN_SECRET=.*/TURN_SECRET=ci-only/' .env.example > .env
+          docker compose --profile tls config --quiet
+          rm .env
+
+      - name: Bundle
+        run: |
+          mkdir -p dist
+          tar -C server --exclude=./.env --exclude=./web --exclude=__pycache__ -cf dist/server.tar .
+          tar -tf dist/server.tar
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: server
+          path: dist/server.tar
+          if-no-files-found: error
+          retention-days: ${{ needs.plan.outputs.mode == 'release' && 30 || 7 }}
+
   publish:
-    needs: [plan, windows, macos]
+    needs: [plan, windows, macos, web, server]
     if: needs.plan.outputs.mode == 'release'
     runs-on: ubuntu-latest
     env:
@@ -204,10 +288,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      # By name, not all of them: the web build and the server bundle are
+      # this run's artifacts too, and are deployed rather than attached.
       - uses: actions/download-artifact@v8
         with:
+          name: windows
           path: dist
-          merge-multiple: true
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: macos
+          path: dist
 
       - name: Write release notes
         run: |
@@ -242,3 +333,62 @@ jobs:
           [ "$PRERELEASE" = "true" ] && flags+=(--prerelease)
           gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TAG" \
             --notes-file notes.md "${flags[@]}"
+
+  # Only after the Release exists, so the site never runs a version nobody can
+  # download. Its key can do nothing on the server but run server/deploy.sh,
+  # which takes `server` or `web` and a tar on stdin (server/README.md). If
+  # this job fails the Release is still out: fix the cause and re-run the job.
+  deploy:
+    needs: [plan, publish]
+    if: needs.plan.outputs.mode == 'release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://za-company.mayar-deeb.dev
+    env:
+      HOST: za-company.mayar-deeb.dev
+      VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: web
+          path: web
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: server
+          path: server-bundle
+
+      - name: Load the deploy key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$DEPLOY_SSH_KEY" ]; then
+            echo "::error::The DEPLOY_SSH_KEY secret is not set, so the Release is out but the server was not updated. RELEASING.md, Deploying, says how to add it; then re-run this job."
+            exit 1
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          # The host key is pinned in the repository, never learned on the
+          # day: a deploy must refuse a server that is not ours.
+          cp tools/release/known_hosts ~/.ssh/known_hosts
+          echo "SSH=ssh -i $HOME/.ssh/deploy -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes root@$HOST" >> "$GITHUB_ENV"
+
+      - name: The server first
+        # Signaling and the game change together (a PROTOCOL bump is both), so
+        # the new game must never meet the old server.
+        run: $SSH server < server-bundle/server.tar
+
+      - name: Then the game
+        run: tar -C web -cf - . | $SSH web
+
+      - name: Check it is live
+        run: |
+          curl -fsS --retry 5 --retry-delay 3 "https://$HOST/healthz"
+          curl -fsS "https://$HOST/" -o live.html
+          cmp live.html web/index.html
+          echo "::notice::v$VERSION is live at https://$HOST"

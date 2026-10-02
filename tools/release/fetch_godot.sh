@@ -5,7 +5,10 @@
 # machine, inside an actions/cache of the same folder - so the 1.3 GB template
 # archive is downloaded once per Godot version, not once per release.
 #
-#   tools/release/fetch_godot.sh windows|macos <cache dir>
+#   tools/release/fetch_godot.sh windows|macos|web <cache dir>
+#
+# `web` is the Linux editor and the single-threaded web template, which is
+# what the "Web" preset exports with (variant/thread_support=false).
 #
 # The version is the one the project is built with (CLAUDE.md's Workflow).
 # Changing it here is how CI moves to a new Godot, and the cache key in the
@@ -32,8 +35,13 @@ case "$platform" in
     binary="editor/Godot.app/Contents/MacOS/Godot"
     templates=(templates/macos.zip templates/version.txt)
     ;;
+  web)
+    editor_zip="Godot_v${TAG}_linux.x86_64.zip"
+    binary="editor/Godot_v${TAG}_linux.x86_64"
+    templates=(templates/web_nothreads_release.zip templates/version.txt)
+    ;;
   *)
-    echo "usage: $0 windows|macos <cache dir>" >&2
+    echo "usage: $0 windows|macos|web <cache dir>" >&2
     exit 2
     ;;
 esac
@@ -63,7 +71,11 @@ fi
 case "$platform" in
   windows) dest="$(cygpath -u "$APPDATA")/Godot/export_templates/${GODOT_VERSION}.stable" ;;
   macos)   dest="$HOME/Library/Application Support/Godot/export_templates/${GODOT_VERSION}.stable" ;;
+  web)     dest="${XDG_DATA_HOME:-$HOME/.local/share}/godot/export_templates/${GODOT_VERSION}.stable" ;;
 esac
+# Linux's editor is a bare binary in its zip, and nothing promises the zip kept
+# its executable bit.
+[ "$platform" = web ] && chmod +x "$binary"
 mkdir -p "$dest"
 cp templates/* "$dest/"
 
