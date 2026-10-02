@@ -105,6 +105,10 @@ var _walked := 0.0
 
 
 func _process(delta: float) -> void:
+	# The host's beat. A guest's room gets whoever walks in from the host's
+	# snapshot (game/sync/world.gd), so a second one here would be a twin.
+	if not multiplayer.is_server():
+		return
 	if _npc != null:
 		_cross(delta)
 		return

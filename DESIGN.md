@@ -1058,6 +1058,14 @@ one that FEELS best rather than the one that is safest.
         reported and dealt on the host, and shown at once on the attacker's
         screen. A boss is drawn too, with his bar and his concede; his
         attacks are step 4. `tests/test_coop_world.gd` (17 checks).
+        **Step 3 done (2026-10-02), the rooms**: everything a floor does
+        besides its enemies rides the same snapshot, split by whether a guest
+        can work it out: a CLOCK (the studio, the dolly, the wiring) runs on
+        both and is put right only past a `DRIFT`, since taking every snapshot
+        drags the room back by the trip; DICE (the scrubbers) are the host's
+        and drawn. The host alone walks Ivan and Dominique in, throws the
+        hearts and spends a pickup; an NPC stands and walks where the host's
+        does. `tests/test_coop_rooms.gd` (21 checks).
 - [ ] M4. **The feel.** Remote bodies drawn ~100 ms behind and interpolated;
         the hit-stop visual-only online; effects, numbers and sounds fired
         locally on the host's word.

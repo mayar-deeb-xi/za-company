@@ -86,6 +86,44 @@ var _left := 0.0
 
 func _ready() -> void:
 	_enter(REST)
+	# Online the host's clock is the room's (game/sync/world.gd). A guest's
+	# runs on its own - two clocks counting the same seconds agree - and is
+	# put right only when it has truly come apart from the host's, because a
+	# snapshot is always a little old: taking every one would drag the room
+	# back by the trip, twenty times a second.
+	add_to_group(&"synced")
+
+
+func net_state() -> Array:
+	return [phase, _left]
+
+
+## How far a guest's clock may run from the host's before it is put right, in
+## seconds through the cycle. Past the trip a snapshot takes, short of a
+## difference anybody would see in the lights.
+const DRIFT := 0.25
+
+
+func apply_net_state(state: Array) -> void:
+	if state.size() < 2:
+		return
+	var cycle := rest + lead + take
+	var gap := absf(_into_cycle(int(state[0]), float(state[1])) - _into_cycle(phase, _left))
+	if minf(gap, cycle - gap) <= DRIFT:
+		return
+	_left = float(state[1])
+	if int(state[0]) != phase:
+		phase = int(state[0])
+		phase_changed.emit(phase)
+
+
+## Seconds from the start of a rest to this point in a phase.
+func _into_cycle(at: int, left: float) -> float:
+	var lengths := [rest, lead, take]
+	var before := 0.0
+	for i in at:
+		before += lengths[i]
+	return before + lengths[at] - left
 
 
 func _process(delta: float) -> void:

@@ -52,6 +52,30 @@ size is seen entire, and the screen left over around a smaller room is void.
 That void is deliberate - filling it with the level's own rock was tried and
 looked worse than black.
 
+## Online: every room is the host's
+
+Every machine builds the same level, and the HOST's runs it (DESIGN.md's
+Multiplayer, M3). What a room does besides its enemies reaches a guest by the
+same one snapshot the enemies do (`game/sync/world.gd`: each thing joins the
+`synced` group and answers `net_state()` / `apply_net_state()`), and splits two
+ways by whether a guest can work it out for itself:
+
+- **A CLOCK runs everywhere and is only put right.** The studio's take, the
+  dolly on its rail and every run of wiring are timers counting the same
+  seconds on both machines, so a guest counts its own and takes the host's only
+  when the two have come apart by more than a `DRIFT`. Taking every snapshot
+  would drag the room back by the trip each one took, twenty times a second,
+  which is a stutter; the two clocks agree anyway.
+- **DICE are the host's alone.** A scrubber's turns are thrown on the host, so
+  a guest draws it where the host says and rolls it on along the host's last
+  heading between two snapshots, through nothing.
+
+And four things are the host's to DO: a beat walking anybody in
+(`reinforcements.gd`, `relief.gd`), Ivan throwing his hearts, a pickup being
+spent - a guest's heals nobody, by player.gd's rule - and a door going. What
+they make appears in a guest's room on the next snapshot, made from its scene,
+and what they spend is gone from it on the same one.
+
 ## The shape of a floor
 
 Eight floors are a 34 x 19 rectangle - 544 x 304 px - and that was true of all

@@ -112,6 +112,23 @@ func _ready() -> void:
 	_shape = get_node_or_null("CollisionShape2D") as CollisionShape2D
 	position = from
 	_park()
+	# Every run is one number, the time since the room was built, so a guest
+	# counts its own and is put right only when it has come apart from the
+	# host's (game/sync/world.gd) - the studio's clock has the reason.
+	add_to_group(&"synced")
+
+
+func net_state() -> Array:
+	return [_elapsed]
+
+
+## How far a guest's count may run from the host's before it is put right.
+const DRIFT := 0.25
+
+
+func apply_net_state(state: Array) -> void:
+	if not state.is_empty() and absf(float(state[0]) - _elapsed) > DRIFT:
+		_elapsed = float(state[0])
 
 
 func _process(delta: float) -> void:

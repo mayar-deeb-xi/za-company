@@ -49,7 +49,10 @@ func set_talking(talking: bool) -> void:
 	var finished := _was_talking and not talking
 	_was_talking = talking
 	super.set_talking(talking)
-	if finished and not _given:
+	# The host's to throw: the hearts it makes are in every guest's room by
+	# the next snapshot (game/sync/world.gd), and a pair thrown on a guest
+	# would be gone there by the same one.
+	if finished and not _given and multiplayer.is_server():
 		_given = true
 		Hearts.throw(self, Heads.count(get_tree()) * hearts_per_head, _aim())
 

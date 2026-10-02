@@ -112,9 +112,38 @@ func _ready() -> void:
 	_heading = Vector2.RIGHT.rotated(randf() * TAU)
 	_aim = _heading
 	_next = _heading
+	# Online the host's machine is the room's (game/sync/world.gd): where it
+	# goes is a throw of the dice, and only the host throws them.
+	add_to_group(&"synced")
+
+
+func net_state() -> Array:
+	return [global_position, _heading, _aim, _next, _state, _left]
+
+
+func apply_net_state(state: Array) -> void:
+	if state.size() < 6:
+		return
+	global_position = state[0]
+	_heading = state[1]
+	_aim = state[2]
+	_next = state[3]
+	_state = int(state[4])
+	_left = float(state[5])
 
 
 func _physics_process(delta: float) -> void:
+	# A guest's copy rolls on along the host's last heading between two
+	# snapshots - through nothing, since it bumps nobody here - and swings
+	# its scanner through a turn the same way the host's does.
+	if not multiplayer.is_server():
+		if _state == TURN:
+			_left -= delta
+			_aim = _aim.slerp(_next, clampf(delta / maxf(_left, 0.001), 0.0, 1.0))
+		else:
+			global_position += _heading * speed * delta
+		queue_redraw()
+		return
 	if _state == TURN:
 		velocity = Vector2.ZERO
 		_left -= delta

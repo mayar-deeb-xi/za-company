@@ -25,6 +25,22 @@ var _time := randf() * TAU
 func _ready() -> void:
 	_sprite_rest_y = _sprite.position.y
 	body_entered.connect(_on_body_entered)
+	# Online a pickup is the host's: on a guest the player's heal() refuses it
+	# (player.gd's _world_reaches), the host's copy is the one spent, and the
+	# room's snapshot takes it away here (game/sync/world.gd). Where it is
+	# rides along too, because one Ivan throws is still flying.
+	add_to_group(&"synced")
+
+
+func net_state() -> Array:
+	return [global_position, monitoring]
+
+
+func apply_net_state(state: Array) -> void:
+	if state.size() < 2:
+		return
+	global_position = state[0]
+	monitoring = bool(state[1])
 
 
 func _process(delta: float) -> void:

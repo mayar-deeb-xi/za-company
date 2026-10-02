@@ -1308,6 +1308,11 @@ The host is the truth for everything but where a body is:
   arrive out of order or be missed by a guest still fading in. A guest's
   swing is reported by the attacker (player.gd's `landed`) and dealt on the
   host; a beat (`reinforcements.gd`) is the host's alone.
+- **A room's own moving parts ride the same snapshot** (game/levels/CLAUDE.md's
+  *Online*): a CLOCK - the studio, the dolly, the wiring - runs everywhere and
+  is put right only when it drifts, DICE - the scrubbers - are the host's and
+  drawn, and the host alone walks Ivan and Dominique in, throws the hearts and
+  spends a pickup.
 
 ## Settings
 
@@ -1516,7 +1521,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Thirty-four suites,
+  They drive the real game with synthesized input and exit 0/1. Thirty-five suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1854,6 +1859,14 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     from the scene its snapshot entry carries - and goes when it dies. Every
     enemy but the one a step is about stands still, so a crowd never decides a
     check.
+  - `test_coop_rooms.gd` - the same two machines, and the ROOMS: the studio's
+    clock keeping the host's time on the guest and the dolly rolling where the
+    host's does; the call floor's wiring on the host's count, Ivan walking in
+    on the host and in on the guest with his lines, the hearts he throws there
+    landing on the guest's floor, and one the guest walks onto healing the
+    guest - decided on the host, gone everywhere; and the hub's scrubbers
+    wandering where the host's dice send them. Floors change by the host's own
+    travel, since the walk is test_coop.gd's.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

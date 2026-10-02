@@ -66,6 +66,27 @@ func _ready() -> void:
 	super()
 	_studio = get_tree().get_first_node_in_group("studio")
 	position = from
+	# The host's rig. A guest's runs off the guest's own copy of the clock,
+	# which already keeps step with the host's (studio.gd), so it is put right
+	# only when the two have come apart - and only hurts anybody on the host.
+	add_to_group(&"synced")
+
+
+func net_state() -> Array:
+	return [_along, _towards]
+
+
+## How far along the rail a guest's rig may be from the host's before it is put
+## right: about the distance it runs in the trip a snapshot takes.
+const DRIFT := 0.08
+
+
+func apply_net_state(state: Array) -> void:
+	if state.size() < 2 or absf(float(state[0]) - _along) <= DRIFT:
+		return
+	_along = float(state[0])
+	_towards = float(state[1])
+	position = from.lerp(to, _along)
 
 
 func _process(delta: float) -> void:

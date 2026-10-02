@@ -120,9 +120,36 @@ func _ready() -> void:
 		_:
 			_facing = Facing.DOWN
 	_apply_animation("idle")
+	# Online the host's (game/sync/world.gd): where they stand, walk and face.
+	add_to_group(&"synced")
+
+
+## Where this colleague is and what they are doing, for the guests.
+func net_state() -> Array:
+	return [global_position, _sprite.animation, _sprite.frame, _sprite.flip_h]
+
+
+## What a guest needs set on one who walks in mid-room before they arrive: what
+## they have to say (game/levels/relief.gd sets it before add_child too).
+func net_spawn() -> Dictionary:
+	return {"conversation": conversation}
+
+
+func apply_net_state(state: Array) -> void:
+	if state.size() < 4:
+		return
+	global_position = state[0]
+	var anim := StringName(state[1])
+	if _sprite.animation != anim and _sprite.sprite_frames.has_animation(anim):
+		_sprite.play(anim)
+		_sprite.frame = int(state[2])
+	_sprite.flip_h = bool(state[3])
 
 
 func _physics_process(_delta: float) -> void:
+	# A guest draws them where the host says, and walks them nowhere itself.
+	if not multiplayer.is_server():
+		return
 	if _target == null:
 		velocity = Vector2.ZERO
 		_apply_animation("idle")
