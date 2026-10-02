@@ -8,8 +8,11 @@ extends Node
 ##
 ## The check asks GitHub for the latest release once per run, and only from a
 ## build carrying the `packaged` feature - the installed Windows and macOS
-## games. Never the editor or a test suite (no network in a headless run), and
-## never the web build, which is always the newest by being served.
+## games. Never the editor or a test suite (no network in a headless run),
+## never the web build, which is always the newest by being served, and never
+## a dev build (`dev`, RELEASING.md's Deploying to dev): the next dev deploy is
+## its update, and a release it was pointed at would install beside it as a
+## different app rather than replace it.
 ## `/releases/latest` already skips drafts and pre-releases, so a beta never
 ## nags anyone. Every failure - offline, rate-limited, a malformed answer - is
 ## silence: an update notice is a courtesy, never something to wait on.
@@ -110,7 +113,7 @@ func _ready() -> void:
 		newer_found.emit.call_deferred(_found["version"], _found["url"])
 		return
 	var from := feed()
-	if _asked or (from.is_empty() and not OS.has_feature("packaged")):
+	if _asked or (from.is_empty() and (not OS.has_feature("packaged") or OS.has_feature("dev"))):
 		return
 	_asked = true
 	var http := HTTPRequest.new()

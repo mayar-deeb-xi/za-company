@@ -173,6 +173,13 @@ The same four builds run and gate it exactly as they gate a release, and then:
 Every build in a deploy to dev carries the custom feature `dev`, which is how a
 dev desktop build knows to talk to dev's signaling rather than the live one.
 
+A dev desktop build is also a DIFFERENT APP from the game: "The New Hire
+(dev)", with its own installer `AppId` and macOS bundle id, so it installs
+beside the game rather than over it, keeps its settings in a folder of its
+own, and never offers to update itself to a release. A tester can have both.
+`tools/release/prepare.sh` does the renaming and `installer.iss` takes `/DDev`
+(`docs/environments.md`, #4).
+
 The pre-release is ONE release that each dev deploy replaces, so its links
 never change: `https://github.com/mayar4ki/za-company/releases/download/dev/TheNewHire-dev-windows-setup.exe`,
 `.../TheNewHire-dev-windows-portable.zip` and `.../TheNewHire-dev-macos.dmg`

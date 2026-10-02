@@ -22,6 +22,7 @@ func _tick(frame: int) -> void:
 			_comparisons()
 			_answers()
 			_presets()
+			_dev_identity()
 			_finish()
 
 
@@ -111,6 +112,35 @@ func _presets() -> void:
 			not exclude.contains("addons/*") and not exclude.contains("webrtc"))
 	_check("project: a packaged build is called The New Hire",
 		ProjectSettings.get_setting("application/config/name.packaged", "") == "The New Hire")
+
+
+## A deploy to dev builds a DIFFERENT app, "The New Hire (dev)": prepare.sh
+## rewrites every field holding the game's exact name, plus the bundle id, and
+## refuses the build if one is missing - so a field renamed here fails now
+## rather than at the next dev deploy. The installer's half is a second AppId,
+## which is what installs a dev build beside the game rather than over it.
+func _dev_identity() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(PRESETS)
+	var product := ""
+	var bundle := ""
+	for section in cfg.get_sections():
+		match cfg.get_value(section, "name", ""):
+			"Windows Desktop":
+				product = cfg.get_value(section + ".options", "application/product_name", "")
+			"macOS":
+				bundle = cfg.get_value(section + ".options", "application/bundle_identifier", "")
+	_check("dev: the Windows exe's product name is the one prepare.sh renames (%s)" % product,
+		product == "The New Hire")
+	_check("dev: macOS has a bundle id for prepare.sh to suffix (%s)" % bundle,
+		not bundle.is_empty() and not bundle.ends_with(".dev"))
+	var iss := FileAccess.get_file_as_string("res://tools/release/installer.iss")
+	var ids := RegEx.create_from_string('#define AppGuid "\\{\\{([0-9A-F-]+)\\}"').search_all(iss)
+	_check("dev: the installer has a second AppId (%d found)" % ids.size(),
+		ids.size() == 2 and ids[0].get_string(1) != ids[1].get_string(1))
+	_check("dev: under its own name, and setup uses it",
+		iss.contains("#ifdef Dev") and iss.contains('#define AppName "The New Hire (dev)"')
+		and iss.contains("AppId={#AppGuid}"))
 
 
 ## Whether a comma-separated preset field names `item` exactly.

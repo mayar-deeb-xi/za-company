@@ -10,7 +10,13 @@
 #    is never committed and the repository keeps ONE place the number lives.
 # 2. On a deploy to dev (mode `dev`), adds the custom feature `dev` to every
 #    export preset, so a dev build can tell it is one - `OS.has_feature("dev")`
-#    - and talk to dev's own signaling rather than the live one. Never
+#    - and talk to dev's own signaling rather than the live one. And renames
+#    it: "The New Hire (dev)" and its own macOS bundle id, so to the OS it is
+#    a different app from the game - the name is also what names `user://`,
+#    so a dev build keeps its settings (and one day its saves) in a folder of
+#    its own. The dev name REPLACES the packaged one rather than adding a
+#    `config/name.dev` beside it: a build carrying both features matches both
+#    overrides, and Godot takes whichever line comes first in the file. Never
 #    committed either: in the repository, every build is a release build.
 # 3. Runs the import pass. A fresh clone has no .godot/ at all - nothing
 #    imported, and no extension_list.cfg naming webrtc_native - and an export
@@ -39,6 +45,25 @@ if [ "$mode" = "dev" ]; then
     export_presets.cfg > export_presets.cfg.stamped
   mv export_presets.cfg.stamped export_presets.cfg
   grep -n '^custom_features=' export_presets.cfg
+
+  # Every field that holds the game's exact name - the packaged name in
+  # project.godot, the Windows exe's product name and description - and the
+  # bundle id. The Windows installer's half is `/DDev` (installer.iss).
+  sed -E 's/="The New Hire"$/="The New Hire (dev)"/' project.godot > project.godot.stamped
+  mv project.godot.stamped project.godot
+  sed -E -e 's/="The New Hire"$/="The New Hire (dev)"/' \
+    -e 's/^(application\/bundle_identifier="[^"]+)"$/\1.dev"/' \
+    export_presets.cfg > export_presets.cfg.stamped
+  mv export_presets.cfg.stamped export_presets.cfg
+  # Refuse rather than ship a dev build wearing the game's identity: a
+  # renamed game or bundle id would otherwise slip past both seds silently.
+  if ! grep -q '^config/name.packaged="The New Hire (dev)"$' project.godot \
+    || ! grep -q '^application/product_name="The New Hire (dev)"$' export_presets.cfg \
+    || ! grep -q '^application/bundle_identifier="[^"]*\.dev"$' export_presets.cfg; then
+    echo "::error::prepare.sh could not give the dev build its own name and bundle id" >&2
+    exit 1
+  fi
+  grep -nE '\(dev\)|bundle_identifier' project.godot export_presets.cfg
 fi
 
 # --import exits when the pass is done. Its output is long and almost all

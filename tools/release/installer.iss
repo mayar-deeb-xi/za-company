@@ -3,7 +3,13 @@
 ; WebRTC library beside it):
 ;
 ;   iscc /DAppVersion=0.2.0 /DFileVersion=0.2.0 /DSourceDir=<export folder>
-;        /DOutputDir=<dist> tools\release\installer.iss
+;        /DOutputDir=<dist> [/DDev] tools\release\installer.iss
+;
+; /DDev is a deploy to dev's build (RELEASING.md, Deploying to dev): "The New
+; Hire (dev)" under an AppId of its own, so it installs BESIDE the game rather
+; than over it, in its own folder, with its own Start Menu entry and uninstaller.
+; The exe inside it is already renamed and keeps its settings apart
+; (tools/release/prepare.sh); this is the installer's half of the same thing.
 ;
 ; It installs per user by default - no administrator prompt, the way a game
 ; from the internet is expected to behave - and offers all users as a choice.
@@ -30,14 +36,21 @@
   #define OutputDir "..\..\build\dist"
 #endif
 
-#define AppName "The New Hire"
+; Both AppIds are fixed forever. One is how a new version finds the old one and
+; upgrades it in place instead of installing a second copy beside it; two is how
+; a dev build and the game never find each other at all.
+#ifdef Dev
+  #define AppName "The New Hire (dev)"
+  #define AppGuid "{{1F438815-FA66-4FF3-8911-2BC788C7A2E2}"
+#else
+  #define AppName "The New Hire"
+  #define AppGuid "{{67FAA5DB-86F1-4D4A-AFDD-EA7F55ED67E3}"
+#endif
 #define AppExe "TheNewHire.exe"
 #define Repo "https://github.com/mayar4ki/za-company"
 
 [Setup]
-; Fixed forever. It is how a new version finds the old one and upgrades it in
-; place instead of installing a second copy beside it.
-AppId={{67FAA5DB-86F1-4D4A-AFDD-EA7F55ED67E3}
+AppId={#AppGuid}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}

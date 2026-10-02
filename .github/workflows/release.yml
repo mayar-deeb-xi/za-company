@@ -171,19 +171,26 @@ jobs:
           cp addons/webrtc_native/LICENSE.* build/windows/licenses/
 
       - name: Portable zip
+        # A dev build unzips to a folder of its own name, so it never lands on
+        # top of an unzipped copy of the game (prepare.sh renamed what is in it).
         run: |
-          mkdir -p dist "stage/The New Hire"
-          cp -R build/windows/. "stage/The New Hire/"
-          (cd stage && 7z a -tzip "../dist/TheNewHire-${VERSION}-windows-portable.zip" "The New Hire" >/dev/null)
+          app="The New Hire"
+          if [ "$MODE" = dev ]; then app="The New Hire (dev)"; fi
+          mkdir -p dist "stage/$app"
+          cp -R build/windows/. "stage/$app/"
+          (cd stage && 7z a -tzip "../dist/TheNewHire-${VERSION}-windows-portable.zip" "$app" >/dev/null)
 
       - name: Installer
         shell: pwsh
+        # /DDev: a dev build installs beside the game, never over it (installer.iss).
         run: |
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) {
             choco install innosetup -y --no-progress | Out-Null
           }
-          & $iscc /Q "/DAppVersion=$env:VERSION" "/DFileVersion=$env:CORE" `
+          $dev = @()
+          if ($env:MODE -eq 'dev') { $dev = @('/DDev') }
+          & $iscc /Q @dev "/DAppVersion=$env:VERSION" "/DFileVersion=$env:CORE" `
             "/DSourceDir=$env:GITHUB_WORKSPACE\build\windows" `
             "/DOutputDir=$env:GITHUB_WORKSPACE\dist" tools\release\installer.iss
           if ($LASTEXITCODE -ne 0) { Write-Output "::error::Inno Setup failed ($LASTEXITCODE)"; exit 1 }

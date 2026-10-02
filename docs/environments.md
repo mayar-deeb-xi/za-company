@@ -25,8 +25,10 @@ only with a **release**.
 
 ## When sharing bites
 
-Four things, in the order they will hurt. The first is fixed and the second
-is fixed for signaling, both at the start of M2; the other two are not.
+Four things, in the order they will hurt. The first and the fourth are fixed
+and the second is fixed for signaling, all at the start of M2; the third is
+accepted for now. What was decided about each, and what is still to do, is
+`docs/dev_prod_plan.md`.
 
 ### 1. One signaling service - FIXED at the start of M2
 
@@ -91,7 +93,7 @@ About twenty minutes: the server and workflow side, plus a few clicks in
 **Do it:** soon - it is the only one of the four with no warning before it
 happens.
 
-### 4. Dev and release desktop builds are the same app - bites once there are saves
+### 4. Dev and release desktop builds are the same app - FIXED at the start of M2
 
 **When:** as soon as the game writes save data.
 
@@ -101,13 +103,21 @@ both read and write the same `user://` folder - today only `settings.cfg`,
 tomorrow a save a dev build may have written in a format the release cannot
 read.
 
-**Fix:** dev builds get their own name and identity - "The New Hire (dev)",
-their own installer `AppId` and their own `user://` folder - set by a feature
-tag only dev builds carry. That tag exists now: a deploy to dev stamps `dev`
-into every preset (tools/release/prepare.sh) so a dev build reaches dev's
-signaling, and the identity is the rest of this fix.
+**Fixed:** a dev build is "The New Hire (dev)", a different app to both
+operating systems. On a deploy to dev, tools/release/prepare.sh renames it in
+every field that holds the game's name and gives the macOS bundle id a `.dev`
+suffix, and the installer is built with `/DDev`, which gives it an `AppId` of
+its own - so it installs beside the game, in its own folder, with its own
+Start Menu entry and uninstaller. The name is also what names `user://`
+(`app_userdata/The New Hire (dev)` against the game's `app_userdata/The New
+Hire`), so its settings, and one day its saves, never meet the game's. And a
+dev build never asks GitHub for a newer release: the next dev deploy is its
+update.
 
-**Do it:** before saves exist.
+The dev name REPLACES the packaged one at build time rather than being a
+`config/name.dev` override beside it, and that is measured rather than
+taste: a build carrying both `packaged` and `dev` matches both overrides, and
+Godot 4.7 takes whichever line comes first in the file.
 
 ## What will not bite
 

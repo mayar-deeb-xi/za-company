@@ -41,8 +41,10 @@ checklist. This file says HOW things work; DESIGN.md says WHAT to build.
   a screenshot is not a game asset, so Godot must never import or export one.
   They are real captures (a windowed run, `root.get_texture()`, 1280 x 720 =
   an exact 2x), never mockups. Beside them, `docs/environments.md`: what
-  production and dev share (the signaling service, the server, the deploy
-  key) and when each one needs splitting - read it before M2 or before saves
+  production and dev share (the server, Caddy, coturn, the deploy key) and
+  how each one bites, and `docs/dev_prod_plan.md`: what was decided about
+  each and the plan for what is left - read both before touching `server/`
+  or the release workflow
 
 Placement rules:
 1. A file lives with the feature that owns it. Scripts sit next to their
@@ -1362,13 +1364,26 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   `RELEASING.md`.
 - **The Windows and macOS presets carry the custom feature `packaged`**, and
   two things hang off it: the game is called "The New Hire" there
-  (`config/name.packaged`, from setup_project.gd - the bare `za-company` is
-  what names `user://`, so it stays) and the main menu asks GitHub for a newer
-  release. Every preset lists `VERSION` in `include_filter`, which is how the
+  (`config/name.packaged`, from setup_project.gd) and the main menu asks
+  GitHub for a newer release. **The name is also what names `user://`** - an
+  exported game keeps its settings in `app_userdata/The New Hire`, while the
+  editor and every suite use the bare `za-company`, which is why that one
+  stays. Every preset lists `VERSION` in `include_filter`, which is how the
   menu's footer reads the real number; and the desktop presets exclude
   `addons/za_build/*` rather than the Web preset's `addons/*`, which would
   ship a game that cannot play online. `tests/test_release.gd` reads all of
   that off disk.
+- **A deploy to dev builds a DIFFERENT app, "The New Hire (dev)"**, so a
+  tester can have both and a dev build never overwrites the game, its
+  settings or one day its saves. `tools/release/prepare.sh` adds the `dev`
+  feature, renames every field holding the game's exact name and suffixes the
+  macOS bundle id `.dev` - refusing the build if any of them has moved - and
+  `installer.iss` takes `/DDev` for a second `AppId`. A dev build never asks
+  GitHub for a release. It REPLACES the packaged name rather than adding a
+  `config/name.dev` override, because a build carrying both features matches
+  both and Godot takes whichever line comes first (measured, docs/
+  environments.md #4). The plan for the rest of dev and production is
+  `docs/dev_prod_plan.md`.
 - **The in-game updater is built and switched OFF.** `ui/update/` downloads
   the release file for this OS, checks it against the release's
   `SHA256SUMS.txt` and installs it (Windows: the silent installer, which
@@ -1719,7 +1734,9 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     raises the notice while an older, equal, junk or non-GitHub answer does
     not, `1.0.0` beats `1.0.0-rc.1`, and the export presets still ship VERSION,
     still mark the desktop builds `packaged` and still keep the WebRTC plugin.
-    No network: the answers are handed to the check directly.
+    And that a dev build can still be made a different app: the fields
+    prepare.sh renames are where it looks for them, and the installer has a
+    second `AppId`. No network: the answers are handed to the check directly.
   - `test_updater.gd` - the in-game updater (todo.md Parts A and B): the
     switch is off and a feed turns it on, an installed Windows copy may update
     itself and a portable one keeps the link, the right file is picked per
