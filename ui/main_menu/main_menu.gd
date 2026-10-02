@@ -6,7 +6,9 @@ const CHARACTER_SELECT_SCENE := "res://ui/character_select/character_select.tscn
 ## Typed by preloaded script rather than by `class_name`: global class names come
 ## from a cache the editor writes, which a fresh headless checkout lacks.
 const SettingsPanelType := preload("res://ui/settings/settings_panel.gd")
-const ReleaseCheck := preload("res://ui/main_menu/release_check.gd")
+const ReleaseCheck := preload("res://ui/update/release_check.gd")
+const Updater := preload("res://ui/update/updater.gd")
+const UpdatePanel := preload("res://ui/update/update_panel.tscn")
 
 @onready var _play_button: Button = %PlayButton
 @onready var _mode_button: Button = %ModeButton
@@ -32,6 +34,9 @@ func _ready() -> void:
 	# The footer's version is the VERSION file itself, and an installed build
 	# also asks whether a newer release is out (release_check.gd says when).
 	_version.text = "v" + ReleaseCheck.current()
+	# Nothing can be mid-update on a menu that has just opened, so whatever an
+	# earlier update downloaded has done its job (or never will).
+	Updater.clear_downloads()
 	_update_button.add_theme_font_override(&"font", get_theme_font(&"font", &"Footer"))
 	var check := ReleaseCheck.new()
 	check.name = "ReleaseCheck"
@@ -92,8 +97,20 @@ func _on_quit_confirmed() -> void:
 
 
 ## Shown only once a newer release is known, so a menu with nothing to offer
-## has nothing extra to tab through.
+## has nothing extra to tab through. UPDATE when this copy can update itself
+## (ui/update/updater.gd decides, and says no while its switch is off), GET IT
+## - the release page in the browser - in every other case.
 func _on_newer_release(version: String, url: String) -> void:
-	_update_button.text = "v%s IS OUT - GET IT" % version
+	var in_game := Updater.refusal() == ""
+	_update_button.text = ("v%s IS OUT - UPDATE" if in_game else "v%s IS OUT - GET IT") % version
 	_update_button.visible = true
-	_update_button.pressed.connect(OS.shell_open.bind(url))
+	if in_game:
+		_update_button.pressed.connect(_open_update.bind(version, url))
+	else:
+		_update_button.pressed.connect(OS.shell_open.bind(url))
+
+
+func _open_update(version: String, url: String) -> void:
+	var panel := UpdatePanel.instantiate()
+	add_child(panel)
+	panel.call("open", ReleaseCheck.found(), version, url, _update_button)

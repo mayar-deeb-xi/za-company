@@ -1,0 +1,116 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://ui/update/update_panel.gd" id="1_panel"]
+[ext_resource type="Theme" path="res://ui/theme/menu_theme.tres" id="2_theme"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_track"]
+bg_color = Color(0.227451, 0.223529, 0.254902, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.403922, 0.286275, 0.286275, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
+bg_color = Color(0.92549, 0.466667, 0.239216, 1)
+
+[node name="UpdatePanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_panel")
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.105882, 0.0666667, 0.0980392, 0.88)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
+layout_mode = 2
+
+[node name="Menu" type="VBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Heading" type="Label" parent="CenterContainer/Panel/Menu"]
+layout_mode = 2
+theme_type_variation = &"Heading"
+text = "UPDATE"
+horizontal_alignment = 1
+
+[node name="Rule" type="ColorRect" parent="CenterContainer/Panel/Menu"]
+custom_minimum_size = Vector2(300, 2)
+layout_mode = 2
+size_flags_horizontal = 4
+color = Color(0.431373, 0.701961, 0.615686, 1)
+
+[node name="Gap" type="Control" parent="CenterContainer/Panel/Menu"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="Status" type="Label" parent="CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "DOWNLOADING v0.0.0"
+horizontal_alignment = 1
+
+[node name="Progress" type="ProgressBar" parent="CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 14)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_track")
+theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
+max_value = 1.0
+show_percentage = false
+
+[node name="Detail" type="Label" parent="CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_type_variation = &"Footer"
+text = "0.0 OF 0.0 MB"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="ButtonGap" type="Control" parent="CenterContainer/Panel/Menu"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="CancelButton" type="Button" parent="CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 32)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "CANCEL"
+
+[node name="LinkButton" type="Button" parent="CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(176, 32)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "OPEN DOWNLOAD PAGE"
+
+[node name="CloseButton" type="Button" parent="CenterContainer/Panel/Menu"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(176, 32)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "CLOSE"

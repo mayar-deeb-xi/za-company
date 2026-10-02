@@ -56,7 +56,13 @@ game is opened. The release notes tell players what to click:
 An installed game also checks GitHub for a newer release when its main menu
 opens, and if there is one, shows *v0.3.0 IS OUT - GET IT* in the corner. That
 button opens the release page. The check never runs in the editor, in the
-test suites or in the web build (`ui/main_menu/release_check.gd`).
+test suites or in the web build (`ui/update/release_check.gd`).
+
+**An in-game updater is being built, and is switched off.** When it is on,
+the button reads *UPDATE* and the game downloads, checks and installs the new
+version itself. Until it has passed its test on both Windows and a Mac
+(`todo.md`), every copy keeps the link above. Each release already publishes
+the `SHA256SUMS.txt` it will check downloads against.
 
 ## Making a release
 

@@ -1,16 +1,29 @@
-[ ] In-game updater for Windows and macOS (details below)
+[ ] In-game updater for Windows and macOS, in four parts (details below)
+    [x] Part A - the shared core (owner) - built, on develop
+    [ ] Part B - Windows install (owner) - built, on develop; waits for its
+        rows of the Part D test on a real PC
+    [ ] Part C - macOS install (teammate, needs a Mac) - can start now
+    [ ] Part D - test both, then switch it on (owner + teammate)
 
 # In-game updater: Windows and macOS
 
-**For the agent doing this task.** Read this whole file first, then
-`CLAUDE.md` (the project's rules) and `RELEASING.md` (how releases work
-today). Everything you need is here or in a file this one names. Some
-decisions are already made, and they are marked **decided**: do not reopen
-them without asking the owner.
+**For the agent doing one of these parts.** Read the common sections
+(1-4 and 9) first, then YOUR part. Also read `CLAUDE.md` (the project's
+rules) and `RELEASING.md` (how releases work). Some decisions are already
+made, and they are marked **decided**: do not reopen them without asking the
+owner.
 
-**Needs a Mac.** The final test is on a real Mac (section 7). Do not mark
-this task done, or release it as a normal (non-pre-release) version, until
-that test has passed on a Mac and on Windows.
+**Who does what.**
+
+| Part | Who | What |
+|---|---|---|
+| A | owner | everything both platforms share |
+| B | owner | the Windows install step |
+| C | teammate | the macOS install step; needs a Mac |
+| D | both | the real-machine test, then the switch is turned on |
+
+Part C starts once Part A is on `develop`. It changes ONE file
+(`ui/update/update_install_macos.gd`) and needs nothing from Part B.
 
 ---
 
@@ -31,9 +44,11 @@ browser.
 
 ## 2. Decided (do not reopen)
 
-- **Both platforms or neither.** Windows and macOS must behave the same. If
-  the macOS half cannot be made to work and pass its test, the Windows half
-  does not ship either.
+- **Both platforms or neither.** The updater sits behind ONE switch,
+  `ENABLED` in `ui/update/updater.gd`, and it stays `false` until Part D has
+  passed on both platforms. While it is off, both platforms keep today's
+  notice and link, so a release made in the meantime treats Windows and Mac
+  the same.
 - **No server.** Downloads come straight from the GitHub release. Nothing new
   is hosted anywhere.
 - **The browser link never goes away.** Every failure, refusal or
@@ -45,233 +60,203 @@ browser.
   install, and loading new code into a running game causes subtle bugs.
 - **Only the installed Windows copy updates itself.** The portable zip has no
   installer to upgrade, so it keeps the link.
-- **Only from the main menu**, never during a run. That is already where the
-  check lives.
+- **Only from the main menu**, never during a run.
 - **Builds stay unsigned** for now. Signing is a separate, later task
   (RELEASING.md, "Later: signing").
 - **Never change `VERSION` yourself.** A `VERSION` change on `main` publishes
-  a public release. Testing needs real releases (section 7), so ask the owner for
-  the version numbers to use.
+  a public release. Ask the owner for any version number you need.
 
-## 3. What exists today
+## 3. What exists (before Part A)
 
-Read these before changing anything.
-
-| File | What it does now |
+| File | What it does |
 |---|---|
-| `ui/main_menu/release_check.gd` | Reads the version from `res://VERSION` (`current()`), compares versions (`is_newer()`), asks `https://api.github.com/repos/mayar4ki/za-company/releases/latest` once per run, and emits `newer_found(version, url)`. It only asks when the build has the `packaged` feature, so it never runs in the editor, the tests or the web build. `take(json)` handles the answer and is what the tests call. |
+| `ui/main_menu/release_check.gd` (Part A moved it to `ui/update/`) | Reads `res://VERSION` (`current()`), compares versions (`is_newer()`), asks `https://api.github.com/repos/mayar4ki/za-company/releases/latest` once per run, and emits `newer_found(version, url)`. It only asks when the build has the `packaged` feature, so it never runs in the editor, the tests or the web build. `take(json)` handles the answer and is what the tests call. |
 | `ui/main_menu/main_menu.gd` / `.tscn` | Shows the version in the footer (`%Version`). On `newer_found` it shows `%UpdateButton` ("v0.3.0 IS OUT - GET IT"), which opens the release page in the browser. |
-| `tests/test_release.gd` | Checks all of the above with no network: answers are handed to `take()` directly. It also reads `export_presets.cfg` off disk. |
-| `.github/workflows/release.yml` | When `VERSION` changes on `main`: builds Windows (installer and portable zip) and macOS (`.dmg`), then publishes the release with the files attached. On `develop`, a push that touches the presets, the workflow or `tools/release/` is a **dry run**: it builds everything, keeps the files on the run's page for a week, and publishes nothing. |
-| `tools/release/installer.iss` | The Inno Setup script. Installs per user by default (`PrivilegesRequired=lowest`), and its fixed `AppId` makes a new version upgrade the old one in place. **Never change the `AppId`.** |
-| `tools/release/fetch_godot.sh`, `prepare.sh`, `export.sh` | The build steps the workflow runs. |
-| `export_presets.cfg` | The Windows and macOS presets carry the custom feature `packaged`. Packaged builds are named "The New Hire" (`application/config/name.packaged` in `project.godot`, written by `tools/setup_project.gd`). |
+| `tests/test_release.gd` | Checks the above with no network, and reads `export_presets.cfg` off disk. |
+| `.github/workflows/release.yml` | When `VERSION` changes on `main`, it builds and publishes the release: Windows installer and portable zip, macOS `.dmg`, and the web build and server deploy. On `develop`, a push that touches the presets, the workflow or `tools/release/` is a **dry run**, which builds and publishes nothing. |
+| `tools/release/installer.iss` | Inno Setup script. Installs per user by default, and its fixed `AppId` makes a new version upgrade the old one in place. **Never change the `AppId`.** |
 
-**The release file names are a contract.** The updater will find its file by
-name, so these must not change without updating the updater in the same
-commit:
+**The release file names are a contract.** The updater finds its file by
+name. If a name changes, the updater has to change in the same commit (a test
+enforces this):
 
 - `TheNewHire-<version>-windows-setup.exe`
 - `TheNewHire-<version>-windows-portable.zip`
 - `TheNewHire-<version>-macos.dmg`
 
-## 4. Design
+## 4. The shape of it (the contract between the parts)
 
-### 4a. The release publishes checksums
+All new code lives in `ui/update/`:
 
-In `release.yml`'s `publish` job, before `gh release create`, write
-`SHA256SUMS.txt` (`sha256sum` over everything in `dist/`) and attach it to
-the release. The updater downloads it and refuses to install a file whose
-SHA-256 does not match. Use SHA256SUMS.txt even though GitHub's API may also
-report a digest per file: the checksum file is under our control and is the
-same on every platform.
+| File | Part | Job |
+|---|---|---|
+| `updater.gd` | A | The facade. Holds the `ENABLED` switch, decides whether this copy can update itself, and runs download -> verify -> install. Picks the platform script by `OS.get_name()`. |
+| `update_download.gd` | A | Picks the right file from the release, downloads it and `SHA256SUMS.txt`, and checks the SHA-256. |
+| `update_panel.tscn` / `.gd` | A | The screen shown while updating: progress, cancel, the error state and the browser link. |
+| `update_install_windows.gd` | B | The Windows install step. |
+| `update_install_macos.gd` | C | The macOS install step. Part A ships it as a stub that refuses. |
 
-### 4b. The game side
+**Each platform script has exactly these three members**, all static. The
+facade calls nothing else:
 
-Split into small files, one job each (the owner prefers small files; see
-CLAUDE.md's placement rules). A suggested layout, which you may refine:
+```gdscript
+## The end of the release file this platform downloads.
+const ASSET_SUFFIX := "-windows-setup.exe"   # or "-macos.dmg"
 
-- `ui/update/update_panel.tscn` + `update_panel.gd`: the screen shown while
-  updating, with a progress bar, MB done of MB total, **CANCEL**, and an error
-  state with **OPEN DOWNLOAD PAGE**. It must fit the 640x360 viewport, work
-  from the keyboard, and use the shared theme (`ui/theme/menu_theme.tres`,
-  which is generated by `tools/build_ui_theme.gd`: never hand-edit it).
-  Buttons get their sounds automatically (`autoload/ui_sound.gd`). Where the
-  panel handles Escape, call `UiSound.back()`, as the other screens do.
-- `ui/update/update_download.gd`: picks the right file from the release JSON,
-  downloads it and `SHA256SUMS.txt`, and verifies the hash. Use `HTTPRequest`
-  with `download_file` set (to a file under `OS.get_cache_dir()`), progress
-  from `get_downloaded_bytes()` / `get_body_size()`, and hash the file in
-  chunks with `HashingContext`.
-- `ui/update/update_install_windows.gd` and `update_install_macos.gd`: one per
-  platform (see 4c and 4d).
-- `ui/update/updater.gd`: the facade the menu calls. It answers "can this copy
-  update itself?" (`can_update()`), runs download -> verify -> install, and
-  reports progress and failures.
+## "" when the running copy at `executable_path` can replace itself, else a
+## short reason it cannot (the player gets the browser link instead).
+static func refusal(executable_path: String) -> String
 
-Changes to what exists:
+## Installs the verified download at `package_path` over the copy at
+## `executable_path` and arranges for the new version to start. Returns ""
+## when that is under way - the facade then quits the game - or a reason it
+## failed, which falls back to the browser link.
+static func install(package_path: String, executable_path: String) -> String
+```
 
-- `release_check.gd`: keep the whole release (including `assets`, each with
-  `name`, `browser_download_url` and `size`), not only the tag and URL, so the
-  updater can find its file. Keep `take()` testable without a network.
-- `release_check.gd`'s `is_newer()`: today, two pre-releases of the same
-  version never compare as newer (`0.3.0-beta.2` vs `0.3.0-beta.1` gives
-  false), which would make the section 7 test show no update at all. Give it
-  semver's pre-release ordering: compare the suffix's dot-separated parts,
-  numbers as numbers, so `beta.2 > beta.1` and `beta.10 > beta.9`. Keep
-  `1.0.0 > 1.0.0-rc.1`, and add the new cases to `test_release.gd`'s table.
-- `main_menu.gd`: when the copy can update itself, the button reads
-  **"v0.3.0 IS OUT - UPDATE"** and opens the update panel. Otherwise it keeps
-  today's text and opens the browser link.
-- **Load all of it by `preload`, never `class_name`.** Global class names live
-  in an editor cache that a fresh headless checkout does not have (CLAUDE.md
-  repeats this).
+**The developer test feed.** Starting the game with
+`-- --update-feed=<release API URL>` reads that release instead of
+`/releases/latest`, which skips pre-releases, AND switches the updater on for
+that run whatever `ENABLED` says. It is how Parts B, C and D are tested before
+the switch is on. Players never pass it.
 
-### 4c. Windows
+---
 
-1. **Decide whether this copy is installed.** An Inno Setup install has
-   `unins000.exe` next to the game's exe
-   (`OS.get_executable_path().get_base_dir()`). No uninstaller means a
-   portable copy, which gets the link.
-2. Download `TheNewHire-<version>-windows-setup.exe` and verify it.
-3. Start it with `OS.create_process()` and arguments
-   `/SILENT /SUPPRESSMSGBOXES /NORESTART /RELAUNCH=1`, then quit the game
-   straight away (`get_tree().quit()`), because the installer cannot replace
-   an exe that is still running.
-4. In `installer.iss`:
-   - Add a second `[Run]` entry that relaunches the game **only** when
-     `/RELAUNCH=1` was passed. It needs no `postinstall` or `skipifsilent`
-     flags, plus a `Check:` function in a `[Code]` section that reads
-     `ExpandConstant('{param:RELAUNCH|0}') = '1'`. Keep the existing
-     `postinstall` entry for normal interactive installs.
-   - Add `CloseApplications=yes`, so if the game has not quite exited yet,
-     Setup waits or closes it instead of failing to overwrite it.
-   - `UsePreviousPrivileges` (on by default) makes the update use the same
-     install mode as before. A per-user install updates silently. An
-     all-users install will show Windows' admin prompt (UAC). That is
-     acceptable, but check it in section 7.
-5. Expect, but verify in section 7, that **no "Windows protected your PC"
-   warning** appears. That warning comes from the mark Windows puts on
-   browser downloads, and a file the game writes itself does not carry it.
+## Part A - the shared core (owner)
 
-### 4d. macOS
+1. **The release publishes checksums.** In `release.yml`'s `publish` job,
+   write `dist/SHA256SUMS.txt` (`sha256sum` over the release files) before
+   `gh release create`, so it is attached with them. The updater refuses any
+   file whose SHA-256 does not match it.
+2. **`release_check.gd`:**
+   - Keep the whole release (its `assets`, each with `name` and
+     `browser_download_url`), so the updater can find its file.
+   - Honour `--update-feed`.
+   - **Fix `is_newer()` for pre-releases.** Today `0.3.0-beta.2` vs
+     `0.3.0-beta.1` gives false. Use semver ordering: compare the suffix's
+     dot-separated parts, numbers as numbers, so `beta.2 > beta.1`,
+     `beta.10 > beta.9`, and `1.0.0 > 1.0.0-rc.1` still holds.
+3. **`ui/update/`:** the facade, the download and the panel, as in section 4.
+   - The download goes to `user://updates/`, which is emptied when the game
+     next starts.
+   - Progress comes from `HTTPRequest.get_downloaded_bytes()` /
+     `get_body_size()`, and the hash from `HashingContext`, in chunks.
+   - The panel fits 640x360, works from the keyboard, uses the shared theme,
+     and calls `UiSound.back()` where it handles Escape.
+4. **`update_install_macos.gd` as a stub:** the three members, with
+   `refusal()` returning "the macOS updater is not built yet (todo.md
+   Part C)".
+5. **The main menu:** when the updater is on and `refusal()` is "", the button
+   reads **"v0.3.0 IS OUT - UPDATE"** and opens the panel. Otherwise it keeps
+   today's text and link.
+6. **Tests:** `tests/test_updater.gd`, registered in `tests/run_all.gd` and
+   listed in CLAUDE.md. No network: everything is handed in. Cover:
+   - picking the file per platform;
+   - parsing `SHA256SUMS.txt`;
+   - a matching file passes, and a file with one byte changed is refused;
+   - the switch: off means link only, and the feed overrides it;
+   - the pre-release ordering;
+   - the name contract, by reading `release.yml` off disk for each
+     platform's `ASSET_SUFFIX`;
+   - the panel opening, cancelling and falling back to the link;
+   - nothing left behind in `user://` afterwards.
 
-1. **Decide whether this copy can update itself.** Find the `.app` bundle from
-   `OS.get_executable_path()` (three levels up from
-   `.../The New Hire.app/Contents/MacOS/<binary>`). Fall back to the link when:
-   - the path contains `/AppTranslocation/`. The player ran the game without
-     moving it to Applications, so macOS runs it from a hidden read-only copy.
-   - the path starts with `/Volumes/`. It is running straight from the disk
-     image.
-   - the folder holding the `.app` is not writable (a non-admin account in
-     `/Applications`). Test this by creating and deleting a temporary file
-     there.
-2. Download `TheNewHire-<version>-macos.dmg` and verify it.
-3. Mount it without showing a window (`OS.execute("hdiutil", ["attach",
-   "-nobrowse", "-readonly", "-mountpoint", <temp dir>, <dmg>])`).
-4. Replace the app:
-   1. Copy the new `.app` out of the image next to the old one, under a
-      temporary name (`ditto`).
-   2. Rename the old bundle aside, and the new one into its place.
-   3. Delete the old one.
-   4. Detach the image.
+**Done when:** the suite passes alongside `test_release.gd` and
+`test_menu.gd`, a dry run on `develop` is green, and with `ENABLED` false a
+build behaves exactly as before.
 
-   macOS allows replacing a running app's bundle. The running copy carries on
-   from the old files until it quits.
-5. Remove the quarantine flag from the new bundle, just in case
-   (`xattr -dr com.apple.quarantine <bundle>`). It should not be there,
-   because a file the game downloads itself is not flagged the way a browser
-   download is. Confirm that in section 7.
-6. Relaunch with `OS.create_process("/usr/bin/open", ["-n", <bundle>])` and
-   quit.
-7. **Check first, do not assume:** the exact name of the `.app` inside the
-   `.dmg`. It should be "The New Hire.app", because the bundle is named after
-   `application/config/name`, which the `packaged` override sets. Mount a
-   dry-run `.dmg` and look before you hardcode anything.
+**Status: done.** Everything above is in `ui/update/`, with
+`tests/test_updater.gd` (36 checks) and eight pre-release cases added to
+`test_release.gd`'s table. Two things worth knowing for Part C:
 
-### 4e. A test feed for section 7
+- `release_check.gd` now lives in `ui/update/`: the menu and the updater both
+  read it.
+- `Updater.refusal()` takes the OS name, the executable path and the feed as
+  arguments (with the real ones as defaults), so every case can be tested
+  from any machine. The macOS cases belong in `tests/test_updater.gd`'s
+  `_switch()` / a new `_macos_refusal()`, handing paths in the same way
+  `_windows_refusal()` does.
 
-`/releases/latest` skips pre-releases, so testing an update would otherwise
-require a public, non-test release. Add a developer override instead: a
-command-line argument after `--`, for example
-`--update-feed=https://api.github.com/repos/mayar4ki/za-company/releases/tags/v0.3.0-beta.2`.
-It makes the check read that release instead of `latest`. Players never pass
-it, and it changes nothing else.
+## Part B - Windows install (owner)
 
-## 5. Steps, in order
+`ui/update/update_install_windows.gd`, plus `tools/release/installer.iss`.
 
-Work on `develop`, and commit and push to `develop`. **Never commit to `main`
-directly.**
+- **`refusal()`:** an Inno Setup install has `unins000.exe` next to the
+  game's exe. Without it the copy is portable: "a portable copy updates by
+  download".
+- **`install()`:** start the downloaded setup with `OS.create_process()` and
+  `/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /RELAUNCH=1`.
+  - `/SILENT` shows Setup's own progress window and asks nothing.
+  - The facade quits the game straight after, because Setup cannot replace a
+    running exe.
+- **`installer.iss`:**
+  - `CloseApplications=yes`, so a game that has not quite exited yet is
+    waited for or closed, not a failed overwrite.
+  - A second `[Run]` entry that starts the game with flags
+    `nowait runasoriginaluser` and `Check: ShouldRelaunch`, plus a `[Code]`
+    section where `ShouldRelaunch` is
+    `ExpandConstant('{param:RELAUNCH|0}') = '1'`.
+  - Keep the existing `postinstall` entry for normal installs.
+  - `UsePreviousPrivileges` (on by default) keeps an update in the same mode
+    as the first install: per user updates silently, and all users shows the
+    admin prompt.
 
-1. **Release checksums (4a).** Push to `develop` and confirm that the dry run
-   passes (section 8 says how to watch it). A dry run builds but does not
-   publish, so the checksum code is only exercised by a real release in section 7.
-2. **Pure logic first, with tests:** picking the file from the release JSON,
-   parsing `SHA256SUMS.txt`, verifying a hash, and the `can_update()`
-   decisions. Write the decisions as functions that take paths as arguments,
-   so a test can ask about `/Applications/...`, `/Volumes/...` and
-   `.../AppTranslocation/...` without a Mac.
-3. **The download with progress and cancel**, and the update panel.
-4. **Windows install (4c)**, including the `installer.iss` changes.
-5. **macOS install (4d).**
-6. **Wire it into the main menu, plus the test feed (4e).**
-7. **Dry run on `develop`.** Watch it with the GitHub API (section 8).
-   Then download both builds from the run page's *Artifacts* section, which
-   needs a GitHub login, and check that they start.
-8. **Docs:**
-   - RELEASING.md: rewrite "If there is a new version" as the in-game update,
-     plus the fallback.
-   - CLAUDE.md: the test suite list (and its count), and a note under
-     Workflow.
-   - This file: tick the box at the top when done.
-9. **Real-machine test (section 7).** Only then is the task done.
+**Done when:** a dry run builds the installer with these changes, and the
+Windows rows of the Part D matrix pass on the owner's PC.
 
-Steps 1-8 stay on `develop`. Section 7 is the one exception: it needs two
-real pre-releases, and the workflow only publishes from `main`.
+**Status: built.** `update_install_windows.gd` and the `installer.iss`
+changes are in. What is left is the Windows rows of the Part D matrix, which
+need the two pre-releases.
 
-## 6. Tests
+## Part C - macOS install (teammate, needs a Mac)
 
-All headless, with no network, following `tests/helpers.gd`'s pattern. Read
-how `tests/test_release.gd` hands answers in directly.
+**Change only `ui/update/update_install_macos.gd`.** Replace the stub with
+the real thing, keeping its three members exactly as section 4 defines them.
+If something in Parts A or B looks wrong, tell the owner rather than changing
+it: two people fixing the same file is how a shared core turns into two.
 
-Extend `tests/test_release.gd`, or start `tests/test_updater.gd` if the world
-it needs differs. Then register it in `tests/run_all.gd`'s `SUITES` and list
-it in CLAUDE.md's Testing section. Cover:
+- **First, check rather than assume:** mount a dry-run `.dmg` (from a dry run's
+  *Artifacts*, or a pre-release) and note the exact name of the `.app` inside
+  (expected "The New Hire.app") and of the binary in `Contents/MacOS/`.
+- **`refusal(executable_path)`:** find the bundle (three levels up from
+  `.../The New Hire.app/Contents/MacOS/<binary>`). Refuse, and the player
+  gets the link, when:
+  - the path contains `/AppTranslocation/`. The game was not moved to
+    Applications, so macOS runs it from a hidden read-only copy.
+  - the path starts with `/Volumes/`. It is running from the disk image.
+  - the folder holding the bundle is not writable (a non-admin account). Test
+    by creating and deleting a temporary file there.
+- **`install(package_path, executable_path)`:**
+  1. `hdiutil attach -nobrowse -readonly -mountpoint <temp dir> <dmg>`.
+  2. `ditto` the new `.app` next to the old one under a temporary name.
+  3. Rename the old one aside, rename the new one into place, and delete the
+     old one. macOS allows replacing a running app's bundle.
+  4. `hdiutil detach`.
+  5. `xattr -dr com.apple.quarantine <bundle>`, which should be a no-op.
+  6. `OS.create_process("/usr/bin/open", ["-n", <bundle>])`.
+  7. On any failure, put the old bundle back before returning the reason.
+- **Tests:** add the macOS `refusal()` cases to `tests/test_updater.gd`, as
+  paths handed in, so they run on any machine.
 
-- the right file is picked for each platform from a fake release's `assets`,
-  and nothing is picked when it is missing.
-- `SHA256SUMS.txt` parsing; a matching file passes; a file with one byte
-  changed is refused, and nothing is installed.
-- every `can_update()` case: installed / portable on Windows; Applications /
-  translocated / disk image / read-only on macOS.
-- **the name contract**: read `.github/workflows/release.yml` off disk and
-  check that the file names it produces are exactly the ones the updater
-  looks for.
-- a failed or cancelled download leaves the menu with the browser link still
-  working.
-- anything a test writes, it deletes before finishing. A test must leave no
-  files behind (CLAUDE.md, Testing).
+**Done when:** the macOS rows of the Part D matrix pass on a real Mac.
 
-## 7. The real-machine test (the gate)
+## Part D - test both, then switch it on (owner + teammate)
 
-Ask the owner for two version numbers, and their go-ahead. They will become
-two real, public pre-releases, for example `0.3.0-beta.1` and `0.3.0-beta.2`.
-Both must be built by this branch, so the OLD one already contains the
-updater. This is the one time unfinished work goes to `main`, and only as a
-pre-release: `/releases/latest` skips pre-releases, so no player's game is
-offered them.
-
-1. Merge `develop` into `main` with `VERSION` set to the first, and push. Wait
-   for its release, then do the same for the second.
-2. Install the first. Run it with the test feed pointing at the second:
+1. Ask the owner for two version numbers and the go-ahead. They become two
+   real, public pre-releases, for example `0.3.0-beta.1` and `0.3.0-beta.2`.
+   - Both must contain Parts A, B and C, so the OLD one can already update.
+   - This is the one time unfinished work goes to `main`, and only as a
+     pre-release. `/releases/latest` skips pre-releases, so no player is
+     offered them.
+2. Merge `develop` into `main` with `VERSION` set to the first number, and
+   push. Wait for the release, then do the same for the second.
+3. Install the first, then run it with the feed pointing at the second, e.g.
+   `.../releases/tags/v0.3.0-beta.2`:
    - Windows: `"%LOCALAPPDATA%\Programs\The New Hire\TheNewHire.exe" -- --update-feed=<URL>`
    - macOS: `"/Applications/The New Hire.app/Contents/MacOS/<binary>" -- --update-feed=<URL>`
-     (check the binary's name inside the bundle)
 
-   The `--` matters on both: Godot passes the game only the arguments after
-   it (`OS.get_cmdline_user_args()`).
-3. Work through the matrix. Write the results in the pull request, or in a
-   message to the owner.
+   The `--` matters on both: Godot hands the game only the arguments after it.
+4. Work through the matrix, and record the results for the owner.
 
 | # | Platform | Situation | Expected |
 |---|---|---|---|
@@ -287,25 +272,36 @@ offered them.
 | 10 | macOS | cancel mid-download | old version keeps working |
 | 11 | both | after an update | record whether the "unsigned app" warning appeared again (expected: no) |
 
-Apple Silicon is the priority Mac. Test an Intel Mac too if one is available.
+Apple Silicon is the priority Mac; test an Intel one too if one is available.
 
-## 8. Rules and know-how from this project
+5. **Only when every row passes:**
+   - set `ENABLED := true` in `ui/update/updater.gd`;
+   - update RELEASING.md ("If there is a new version") and CLAUDE.md;
+   - tick the boxes at the top of this file;
+   - the next normal release ships the updater to everyone.
+
+---
+
+## 9. Rules and know-how from this project
 
 - **CLAUDE.md is the rulebook.** Above all:
   - one file per job;
   - snake_case names;
   - scripts sit next to their scenes;
-  - `preload`, not `class_name`;
+  - `preload`, not `class_name`, because global class names live in an
+    editor cache a fresh checkout does not have;
   - don't pre-create empty folders.
+- **Work on `develop`, and commit and push to `develop`.** `main` takes
+  finished work by merge, and Part D is the one exception.
 - **The Godot binary** on the owner's machine is
   `~/OneDrive/Desktop/Godot_v4.7.2-stable_win64_console.exe`.
   - One suite: `--headless --path . --fixed-fps 60 --script res://tests/test_<name>.gd`.
   - All suites: `--headless --path . --script res://tests/run_all.gd`.
 - **Back up `settings.cfg` before running any suite**
-  (`%APPDATA%\Godot\app_userdata\za-company\settings.cfg`). The harness
-  blanks it during a suite and only restores it at the end, so a suite that
-  is killed or hangs loses the developer's settings. Restore from your
-  backup if that happens.
+  (`%APPDATA%\Godot\app_userdata\za-company\settings.cfg` on Windows,
+  `~/Library/Application Support/Godot/app_userdata/za-company/settings.cfg`
+  on a Mac). The harness blanks it during a suite and only restores it at the
+  end, so a suite that is killed or hangs loses the developer's settings.
 - **Run `--import` only while the Godot editor is closed.** Two editors on
   one project corrupt each other.
 - **Never kill a Godot process you did not start.** Other agents and
@@ -315,27 +311,9 @@ Apple Silicon is the priority Mac. Test an Intel Mac too if one is available.
   - `https://api.github.com/repos/mayar4ki/za-company/actions/runs?head_sha=<sha>` finds the run.
   - `.../actions/runs/<id>/jobs` gives each job's steps and result.
   - `.../check-runs/<job id>/annotations` gives the errors.
-- **This machine has no `gh` CLI.** Use the GitHub REST API with `curl`, or
-  the web page.
-- **Two lessons from the first builds:**
-  - The universal macOS build needs `import_etc2_astc` on. It is already set,
-    in `tools/setup_project.gd`.
-  - Godot prints the reason a preset was refused on lines AFTER the `ERROR`
-    line, which is why `export.sh` reports the log's last lines.
+- **The owner's machine has no `gh` CLI.** Use the GitHub REST API with
+  `curl`, or the web page.
 
-## 9. Done when
-
-- [ ] Every row of the section 7 matrix passes on Windows and on a real Mac.
-- [ ] Any failure path leaves the player with the browser link.
-- [ ] The new tests pass, along with `test_release.gd` and `test_menu.gd`.
-      Run the full suite too, and note any suite that was already failing
-      before your changes.
-- [ ] The release publishes `SHA256SUMS.txt`, and the file-name contract is
-      tested.
-- [ ] RELEASING.md and CLAUDE.md describe the new behaviour.
-- [ ] Released as a normal version only after all of the above, and with the
-      owner's go-ahead on the `VERSION` number.
-
-Out of scope, so leave it for later: code signing; store distribution (itch.io,
-Steam); refusing online co-op between different game versions (that belongs
-to the multiplayer plan, DESIGN.md, M2).
+Out of scope, so leave it for later: code signing; store distribution
+(itch.io, Steam); refusing online co-op between different game versions
+(DESIGN.md, Multiplayer, M2).

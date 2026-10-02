@@ -13,11 +13,20 @@ extends Node
 ## `/releases/latest` already skips drafts and pre-releases, so a beta never
 ## nags anyone. Every failure - offline, rate-limited, a malformed answer - is
 ## silence: an update notice is a courtesy, never something to wait on.
+##
+## It lives in ui/update/ rather than with the menu because two features read
+## it: the menu shows what it found, and the updater installs it.
+##
+## A developer can point it at one release instead of the latest by starting
+## the game with `-- --update-feed=<release API URL>` - that is how an update
+## is tested between two pre-releases, which `latest` never returns. A feed
+## also asks from an unpackaged run, so the panel can be tried in the editor.
 
 signal newer_found(version: String, url: String)
 
 const LATEST := "https://api.github.com/repos/mayar4ki/za-company/releases/latest"
 const VERSION_PATH := "res://VERSION"
+const FEED_ARG := "--update-feed="
 const TIMEOUT := 6.0
 
 ## One ask per run: the menu is rebuilt after every game over, and asking again
@@ -31,9 +40,26 @@ static func current() -> String:
 	return text if not text.is_empty() else "dev"
 
 
-## True when `remote` is a later MAJOR.MINOR.PATCH than `local`. On an equal
-## core a release beats its own pre-release (1.0.0 > 1.0.0-rc.1); anything that
-## does not parse is never newer, so a junk answer cannot raise a notice.
+## The release the last answer named as newer - its whole JSON, assets
+## included, which is what the updater picks its download from. Empty until
+## then.
+static func found() -> Dictionary:
+	return _found.get("release", {})
+
+
+## The `--update-feed=` URL this run was started with, or "".
+static func feed(args := OS.get_cmdline_user_args()) -> String:
+	for arg in args:
+		if arg.begins_with(FEED_ARG):
+			return arg.trim_prefix(FEED_ARG)
+	return ""
+
+
+## True when `remote` is later than `local`, by semver: MAJOR.MINOR.PATCH
+## first; on an equal core a release beats its own pre-release
+## (1.0.0 > 1.0.0-rc.1); and two pre-releases compare their suffixes part by
+## part, numbers as numbers (beta.10 > beta.9). Anything that does not parse
+## is never newer, so a junk answer cannot raise a notice.
 static func is_newer(remote: String, local: String) -> bool:
 	var a := _parse(remote)
 	var b := _parse(local)
@@ -42,7 +68,9 @@ static func is_newer(remote: String, local: String) -> bool:
 	for i in 3:
 		if a[i] != b[i]:
 			return a[i] > b[i]
-	return a[3] == "" and b[3] != ""
+	if a[3] == "" or b[3] == "":
+		return a[3] == "" and b[3] != ""
+	return _suffix_order(a[3], b[3]) > 0
 
 
 static func _parse(version: String) -> Array:
@@ -58,18 +86,38 @@ static func _parse(version: String) -> Array:
 	return [int(parts[0]), int(parts[1]), int(parts[2]), suffix]
 
 
+## Semver's pre-release precedence: dot-separated parts left to right, a
+## numeric part below a word, numbers by value, words alphabetically, and a
+## shorter list below a longer one it is the start of (beta < beta.1).
+static func _suffix_order(a: String, b: String) -> int:
+	var x := a.split(".")
+	var y := b.split(".")
+	for i in mini(x.size(), y.size()):
+		if x[i] == y[i]:
+			continue
+		var x_num := x[i].is_valid_int()
+		var y_num := y[i].is_valid_int()
+		if x_num and y_num:
+			return 1 if int(x[i]) > int(y[i]) else -1
+		if x_num != y_num:
+			return -1 if x_num else 1
+		return 1 if x[i] > y[i] else -1
+	return signi(x.size() - y.size())
+
+
 func _ready() -> void:
 	if not _found.is_empty():
 		newer_found.emit.call_deferred(_found["version"], _found["url"])
 		return
-	if _asked or not OS.has_feature("packaged"):
+	var from := feed()
+	if _asked or (from.is_empty() and not OS.has_feature("packaged")):
 		return
 	_asked = true
 	var http := HTTPRequest.new()
 	http.timeout = TIMEOUT
 	add_child(http)
 	http.request_completed.connect(_on_answer)
-	http.request(LATEST, ["Accept: application/vnd.github+json"])
+	http.request(LATEST if from.is_empty() else from, ["Accept: application/vnd.github+json"])
 
 
 func _on_answer(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
@@ -89,5 +137,5 @@ func take(json: String) -> void:
 	var tag := String(release.get("tag_name", ""))
 	var url := String(release.get("html_url", ""))
 	if url.begins_with("https://github.com/") and is_newer(tag, current()):
-		_found = {"version": tag.trim_prefix("v"), "url": url}
+		_found = {"version": tag.trim_prefix("v"), "url": url, "release": release}
 		newer_found.emit(_found["version"], url)

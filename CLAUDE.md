@@ -1286,6 +1286,19 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   `addons/za_build/*` rather than the Web preset's `addons/*`, which would
   ship a game that cannot play online. `tests/test_release.gd` reads all of
   that off disk.
+- **The in-game updater is built and switched OFF.** `ui/update/` downloads
+  the release file for this OS, checks it against the release's
+  `SHA256SUMS.txt` and installs it (Windows: the silent installer, which
+  relaunches the game; macOS: still a stub). It stays behind `ENABLED` in
+  `ui/update/updater.gd` until both platforms pass todo.md's real-machine test
+  (Part D): "both platforms or neither" is the owner's rule, so while it is
+  off every copy gets the browser link. A run started with
+  `-- --update-feed=<release API URL>` reads that release instead of the
+  latest and switches the updater on for that run - the only way to try it
+  now. **The release file names are a contract**: each platform script's
+  `ASSET_SUFFIX` must match what release.yml and installer.iss write, and
+  `tests/test_updater.gd` reads both off disk. The plan, and who builds what,
+  is `todo.md`.
 - Godot binary (not on PATH):
   `~/OneDrive/Desktop/Godot_v4.7.2-stable_win64_console.exe`
 - Quick check: `--headless --path . --quit-after 3`
@@ -1357,7 +1370,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Twenty-eight suites,
+  They drive the real game with synthesized input and exit 0/1. Twenty-nine suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1615,6 +1628,15 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     not, `1.0.0` beats `1.0.0-rc.1`, and the export presets still ship VERSION,
     still mark the desktop builds `packaged` and still keep the WebRTC plugin.
     No network: the answers are handed to the check directly.
+  - `test_updater.gd` - the in-game updater (todo.md Parts A and B): the
+    switch is off and a feed turns it on, an installed Windows copy may update
+    itself and a portable one keeps the link, the right file is picked per
+    platform, `SHA256SUMS.txt` parses in both of sha256sum's modes, a hash
+    match passes and one changed byte is refused, the release file names
+    agree with release.yml and installer.iss, and the panel's states. Nothing
+    is downloaded or installed: what would really install is Part D's, on
+    real machines. It writes its scratch files under `user://test_updater`
+    and removes them.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

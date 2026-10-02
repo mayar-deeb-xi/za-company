@@ -300,6 +300,13 @@ jobs:
           name: macos
           path: dist
 
+      # The in-game updater (ui/update/update_download.gd) refuses any file
+      # whose SHA-256 is not on this list, so it is attached with the files.
+      - name: Checksums
+        run: |
+          (cd dist && sha256sum -- * > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+
       - name: Write release notes
         run: |
           {

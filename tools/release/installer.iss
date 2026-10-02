@@ -7,6 +7,13 @@
 ;
 ; It installs per user by default - no administrator prompt, the way a game
 ; from the internet is expected to behave - and offers all users as a choice.
+;
+; It is also how the game updates itself (ui/update/update_install_windows.gd):
+; the game runs a newer setup with /SILENT ... /RELAUNCH=1 and quits. Setup
+; then upgrades in place under the same AppId, in the same install mode as
+; before (UsePreviousPrivileges, on by default), and /RELAUNCH=1 - ours, read
+; in [Code] below - starts the new version when it is done.
+;
 ; Unsigned, so Windows SmartScreen warns on first run ("More info" -> "Run
 ; anyway"); signing is RELEASING.md's "Later: signing".
 
@@ -47,6 +54,9 @@ PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\{#AppExe}
+; The game quits as it starts an update, but may not be gone the instant Setup
+; reaches its files: close it rather than fail to overwrite a running exe.
+CloseApplications=yes
 OutputDir={#OutputDir}
 OutputBaseFilename=TheNewHire-{#AppVersion}-windows-setup
 Compression=lzma2/max
@@ -64,4 +74,13 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 
 [Run]
+; An ordinary install: the "Launch" box on the last page.
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
+; An update started from inside the game: start it again, silently.
+Filename: "{app}\{#AppExe}"; Flags: nowait runasoriginaluser; Check: ShouldRelaunch
+
+[Code]
+function ShouldRelaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:RELAUNCH|0}') = '1';
+end;

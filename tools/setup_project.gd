@@ -45,7 +45,7 @@ func _initialize() -> void:
 	# Windows and macOS presets) - the bare name is also what names user://, so
 	# renaming it outright would move every developer's saved settings and the
 	# test suites' backup with it. `packaged` is also how the main menu knows to
-	# look for a newer release (ui/main_menu/release_check.gd).
+	# look for a newer release (ui/update/release_check.gd).
 	ProjectSettings.set_setting("application/config/name.packaged", "The New Hire")
 
 	# The macOS build is universal, and Godot refuses to export one for Apple

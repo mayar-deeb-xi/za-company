@@ -10,7 +10,7 @@ extends "res://tests/helpers.gd"
 ## `include_filter` ships a game whose menu says "vdev", and `addons/*` copied
 ## over from the Web preset ships one that cannot play online.
 
-const ReleaseCheck := preload("res://ui/main_menu/release_check.gd")
+const ReleaseCheck := preload("res://ui/update/release_check.gd")
 const PRESETS := "res://export_presets.cfg"
 const DESKTOP := ["Windows Desktop", "macOS"]
 
@@ -46,6 +46,12 @@ func _comparisons() -> void:
 		["0.10.0", "0.9.0", true], ["v0.2.0", "0.1.0", true],
 		["0.1.0", "0.1.0", false], ["0.0.9", "0.1.0", false],
 		["1.0.0", "1.0.0-rc.1", true], ["1.0.0-rc.1", "1.0.0", false],
+		# Pre-releases of one version, which the updater's real-machine test
+		# (todo.md Part D) updates between: semver order, numbers by value.
+		["0.3.0-beta.2", "0.3.0-beta.1", true], ["0.3.0-beta.1", "0.3.0-beta.2", false],
+		["0.3.0-beta.10", "0.3.0-beta.9", true], ["0.3.0-beta.1", "0.3.0-beta", true],
+		["0.3.0-rc.1", "0.3.0-beta.5", true], ["0.3.0-beta.2", "0.3.0-beta.2", false],
+		["0.3.0-beta.1", "0.3.0-1", true], ["0.3.0-1", "0.3.0-beta.1", false],
 		["banana", "0.1.0", false], ["0.2", "0.1.0", false], ["0.2.0", "dev", false],
 	]
 	var wrong := []
