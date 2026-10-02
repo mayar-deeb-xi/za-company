@@ -120,6 +120,11 @@ signal died
 ## one instanced alone in a test - simply never pauses anything.
 signal froze(seconds: float)
 signal shook(strength: float, seconds: float)
+## The host only, and only for a REMOTE body: the world reached it, and its
+## owner's machine has to hear - `struck` and `drained` to show the blow and
+## blink, `slowed` and `shoved` because only the owner moves the body. Health
+## itself travels on `health_changed`, which the host sends to everybody.
+signal reached(what: String, args: Array)
 
 ## Preloaded by path rather than via `class_name`, like the rest of the project.
 const Roster := preload("res://game/player/characters/roster.gd")
@@ -194,6 +199,15 @@ var input_source: InputSource = InputSource.new()
 ## picked and saved - every solo run - and game.gd fills it in for the rest of
 ## a party, who did their own picking.
 var character := ""
+## Online, whose machine this body belongs to: its owner's peer id. 1 offline,
+## where every body - a party on one machine included - is this machine's.
+var peer := 1
+## Whether ANOTHER machine moves this body (DESIGN.md's Multiplayer, M3). A
+## remote body runs none of the player below: it stands where its owner last
+## said and plays what its owner last played (`apply_net_state()`), and the
+## owner's machine is the only one that reads its hands. Set before the body
+## enters the tree.
+var remote := false
 
 var health := MAX_HEALTH
 ## The movement multiplier currently in force and how long is left of it. Public
@@ -291,6 +305,12 @@ func _apply_character() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if remote:
+		# The one clock a remote body keeps is the grace window, and only on
+		# the host, where blows on it are decided. Its blink is the owner's,
+		# and arrives with everything else it draws.
+		_grace = maxf(_grace - delta, 0.0)
+		return
 	# First, so a press is dated to this frame whichever branch below asks.
 	input_source.tick()
 	if _grace > 0.0:
@@ -401,6 +421,37 @@ func _physics_process(delta: float) -> void:
 	# touching the state the stick owns.
 	if _shove_seconds > 0.0:
 		move_and_collide(_shove * delta)
+
+
+## What this body looks like now, for the other machines (game/sync/): where it
+## stands and what its sprite is drawing - the frame, the facing, the tint a
+## slow or a fall gives it and the grace window's blink. The owner's machine
+## sends it; every other draws it with apply_net_state(). Plain values, because
+## it crosses the wire thirty times a second.
+func net_state() -> Array:
+	return [global_position, _sprite.animation, _sprite.frame, _sprite.flip_h,
+		_sprite.modulate.to_rgba32(), _sprite.visible]
+
+
+## Draw what the owner sent. The sprite keeps PLAYING between two of these, so
+## its frame is only corrected when it has drifted, and a frame that fits the
+## picture is never yanked back to the one the message was sent on.
+func apply_net_state(state: Array) -> void:
+	if state.size() < 6:
+		return
+	global_position = state[0]
+	var anim := StringName(state[1])
+	var frame := int(state[2])
+	if _sprite.animation != anim and _sprite.sprite_frames.has_animation(anim):
+		_sprite.play(anim)
+		_sprite.frame = frame
+	elif absi(_sprite.frame - frame) > 1:
+		_sprite.frame = frame
+	if not _sprite.is_playing():
+		_sprite.play()
+	_sprite.flip_h = bool(state[3])
+	_sprite.modulate = Color.hex(int(state[4]))
+	_sprite.visible = bool(state[5])
 
 
 ## The world takes the wheel. Any swing, thrust, charge or heavy in flight is
@@ -770,12 +821,27 @@ func _on_animation_finished() -> void:
 	_apply_animation("idle")
 
 
+## Whether the world on THIS machine may hurt, heal, slow or shove anybody: the
+## host's may, offline included (a host with no guests), and a guest's never.
+## That one rule is the whole of what lets a guest run a room's effects for
+## the look of them - a torch, a fire pillar, a boss's copy - without any of
+## them landing twice: on a guest every one of the five ways the world reaches
+## a player is a no-op, and what the host decided arrives by net_reached() and
+## net_health() instead (DESIGN.md's Multiplayer, *Who decides what*).
+func _world_reaches() -> bool:
+	return multiplayer.is_server()
+
+
 ## A blow: metered by the grace window, and it opens a fresh one.
 func take_damage(amount: int) -> void:
-	if _grace > 0.0 or health <= 0:
+	if not _world_reaches() or _grace > 0.0 or health <= 0:
 		return
 	_grace = _grace_window
 	_lose_health(amount)
+	if remote:
+		# Decided here, on the host; shown where the body is played.
+		reached.emit("struck", [amount, _grace_window])
+		return
 	# The number off the head. Past the grace check on purpose: a blow the
 	# window swallowed cost nothing, and a number for it would say otherwise.
 	DamageNumber.spawn(self, amount)
@@ -801,9 +867,16 @@ func take_damage(amount: int) -> void:
 ## The ticks share one number while it is fresh rather than putting up one each,
 ## so a drain is a trickle of small totals and not a pile of "-1"s.
 func drain(amount: int) -> void:
-	if health <= 0:
+	if not _world_reaches() or health <= 0:
 		return
 	_lose_health(amount)
+	if remote:
+		reached.emit("drained", [amount])
+		return
+	_show_drain(amount)
+
+
+func _show_drain(amount: int) -> void:
 	if is_instance_valid(_drain_number) and _drain_number.call("absorbs"):
 		_drain_number.call("add", amount)
 	else:
@@ -819,6 +892,16 @@ func drain(amount: int) -> void:
 ## wins and the timer refreshes. Two wardens keep you slow for longer, never
 ## make you slower.
 func apply_slow(factor: float, seconds: float) -> void:
+	if not _world_reaches() or health <= 0:
+		return
+	# Decided here and carried by the owner, who is the one moving the body.
+	if remote:
+		reached.emit("slowed", [factor, seconds])
+		return
+	_slow(factor, seconds)
+
+
+func _slow(factor: float, seconds: float) -> void:
 	if health <= 0:
 		return
 	var strength := clampf(factor, MIN_SLOW_FACTOR, 1.0)
@@ -848,6 +931,15 @@ func apply_slow(factor: float, seconds: float) -> void:
 ## stops it, and a velocity big enough to tunnel a 16px wall in one frame is the
 ## one way that guarantee could be lost.
 func shove(direction: Vector2, force: float) -> void:
+	if not _world_reaches() or health <= 0 or direction == Vector2.ZERO:
+		return
+	if remote:
+		reached.emit("shoved", [direction, force])
+		return
+	_push(direction, force)
+
+
+func _push(direction: Vector2, force: float) -> void:
 	if health <= 0 or direction == Vector2.ZERO:
 		return
 	var push := direction.normalized() * minf(force, MAX_SHOVE)
@@ -869,12 +961,50 @@ func _lose_health(amount: int) -> void:
 
 ## Returns false when nothing was healed, so a pickup can stay on the floor
 ## for a player who is already full.
+##
+## A guest's pickups heal nobody, on the rule in _world_reaches(): the host's
+## copy of the heart is the one that is spent, and the health it gives comes
+## back on net_health().
 func heal(amount: int) -> bool:
-	if health >= MAX_HEALTH or health <= 0:
+	if not _world_reaches() or health >= MAX_HEALTH or health <= 0:
 		return false
 	health = mini(health + amount, MAX_HEALTH)
 	health_changed.emit(health, MAX_HEALTH)
 	return true
+
+
+## The host's word on this body's health, on a guest - where nothing else ever
+## changes it. Says so on `health_changed` like any other change, which is all
+## the HUD listens to; what a death MEANS is decided on the host and arrives
+## separately (game.gd), so reaching 0 here ends nothing by itself.
+func net_health(value: int) -> void:
+	if value == health:
+		return
+	health = clampi(value, 0, MAX_HEALTH)
+	health_changed.emit(health, MAX_HEALTH)
+
+
+## What the host's world did to this body, on the owner's machine - `reached`'s
+## other end. A blow shows its number and blinks for the host's grace window,
+## and a slow or a shove is carried here, where the body is moved.
+func net_reached(what: String, args: Array) -> void:
+	match what:
+		"struck":
+			if args.size() < 2:
+				return
+			_grace = float(args[1])
+			DamageNumber.spawn(self, int(args[0]))
+			if health > 0:
+				_sfx("hurt")
+		"drained":
+			if not args.is_empty():
+				_show_drain(int(args[0]))
+		"slowed":
+			if args.size() >= 2:
+				_slow(float(args[0]), float(args[1]))
+		"shoved":
+			if args.size() >= 2:
+				_push(args[0], float(args[1]))
 
 
 ## Back to full, called by game.gd when it respawns the player after a death -

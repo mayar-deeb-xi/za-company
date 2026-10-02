@@ -194,6 +194,23 @@ Two details carry the weight:
   shorter than a frame still swings; a press made mid-charge is spent and gone,
   as a key's is.
 
+**Online the wire did NOT become a third input source**, and that was the call
+worth writing down. A remote body is driven by its OWNER's machine and drawn
+everywhere else (`remote`): it runs none of the player, and stands and plays
+what its owner last sent (`net_state()` / `apply_net_state()`). Replaying the
+owner's keys on every machine instead would have given every machine its own
+version of where that body walked, swung and charged, to be corrected forever;
+sending what the owner's body DID has nothing to disagree about.
+
+And one rule keeps a guest's world honest, which is the other half of the same
+choice: **`_world_reaches()` - on a guest, `take_damage`, `drain`,
+`apply_slow`, `shove` and `heal` are no-ops.** The guest runs the same rooms,
+and its torches, fire and copies can touch its bodies all they like; only the
+host's do anything, and what they did arrives as `net_health()` and
+`net_reached()`. On the host, a blow on a remote body is metered by the HOST's
+grace window and its health sent to everybody, while a slow or a shove is sent
+to the owner, because only the owner moves the body (`reached`).
+
 ## Combat - four moves, one button
 
 The player's side of the fight is four attacks on the one attack button. A

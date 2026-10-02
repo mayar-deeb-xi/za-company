@@ -13,8 +13,7 @@ extends Control
 ##
 ## START is Net's `run_started`, heard on every machine: the rows become
 ## game.gd's `next_party` - this machine's member on the keyboard, everybody
-## else on hands that are still until M3 puts their bodies in step - and the
-## game loads.
+## else drawn where their own machine says they are - and the game loads.
 ##
 ## On the web the ADDRESS is the way in from a phone: `#join=CODE` (and
 ## `&relay` to force the relay, for testing) joins that room on arrival, as
@@ -26,7 +25,6 @@ const GameType := preload("res://game/game.gd")
 const Seat := preload("res://ui/lobby/seat.gd")
 const Heads := preload("res://game/heads.gd")
 const Roster := preload("res://game/player/characters/roster.gd")
-const VirtualInput := preload("res://game/player/virtual_input.gd")
 
 ## Where the name lives: Settings' `online` section, not the settings panel,
 ## which has no room for a fourth row (DESIGN.md's Multiplayer).
@@ -305,17 +303,15 @@ func _copy_link() -> void:
 
 ## Everybody into the run, in the roster's order, which is the same order on
 ## every machine. This machine's member is marked `local` and drives its body
-## from the keyboard; everybody else's body has hands nothing moves yet.
+## from the keyboard; everybody else's body carries its owner's `peer`, and is
+## drawn wherever that machine says it is (game.gd's header, *Online*).
 func _on_run_started(rows: Array) -> void:
 	var me := Net.my_id()
 	var party := []
 	for row: Dictionary in rows:
-		var member := {"character": String(row.get("character", "")),
+		party.append({"character": String(row.get("character", "")),
 			"name": String(row.get("name", "")), "peer": int(row["peer"]),
-			"local": int(row["peer"]) == me}
-		if not member["local"]:
-			member["input"] = VirtualInput.new()
-		party.append(member)
+			"local": int(row["peer"]) == me})
 	GameType.next_party = party
 	get_tree().change_scene_to_file(GAME_SCENE)
 

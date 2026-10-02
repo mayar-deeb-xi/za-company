@@ -1266,9 +1266,38 @@ under it, the relay warning - on the guest's own screen, and against the
 name on the host's - and START for the host. The lobby is a VIEW of Net and
 holds no party state; START is Net's `run_started`, and the lobby turns the
 rows into game.gd's `next_party`: this machine's member marked `local` on the
-keyboard, everybody else's body on hands nothing moves yet (M3 puts them in
-step). The main menu leaves any party it finds on arrival, and a party ending
-under a run (`host_left`) takes that machine back to the menu.
+keyboard, everybody else's carrying its owner's `peer`. The main menu leaves
+any party it finds on arrival, and a party ending under a run (`host_left`)
+takes that machine back to the menu.
+
+**In the run, `game/sync/` keeps the machines in step (M3)**, built by game.gd
+as `Sync` on every machine so both ends sit at one path, and inert offline.
+The host is the truth for everything but where a body is:
+
+- **A body is its owner's**: a member whose `peer` is not this machine's is
+  REMOTE (player.gd's `remote`) - it runs none of the player, and is drawn
+  where its owner says, thirty times a second (`net_state()` /
+  `apply_net_state()`, `game/sync/bodies.gd`), relayed by the host.
+- **The world reaches nobody on a guest** - player.gd's `_world_reaches()`,
+  which makes `take_damage`, `drain`, `apply_slow`, `shove` and `heal` no-ops
+  anywhere but the host. It is the one rule that lets a guest run a room's
+  effects for the look of them without any landing twice. On the host a blow
+  on a remote body is decided there and its health sent to everybody; a slow
+  or a shove is sent to the owner, who carries it (`reached` ->
+  `net_reached()`).
+- **The run is the host's**: deaths, the pool, getting up, the doors (a
+  guest's count but never go) and the end of the run, told to the guests and
+  run there by game.gd's `net_*` functions. Every arrival is a ROOM the host
+  counts, carried on everything only true in one, so a step from the last
+  floor is never drawn on the next.
+- **When to speak**: two machines load at their own speed, so a guest's game
+  tells the host it is up through `Net.arrived()` - Net being the one node both
+  ends always have - and the host opens with a welcome holding the floor, the
+  room, the pool, every body's health and who is down.
+- **Nothing pauses online**: the pause menu and the death screen open over a
+  running game, and game.gd hands this machine's player still hands while one
+  is up. The true hit-stop is solo-only until M4.
+- **A guest leaving takes their body with them** (`net_left`), and their row.
 
 ## Settings
 
@@ -1477,7 +1506,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Thirty-two suites,
+  They drive the real game with synthesized input and exit 0/1. Thirty-three suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1790,6 +1819,21 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     typed - and the party ending sending the run back to a menu that has left
     it. The lobby is a view of Net, so it hosts through `Net.host_local()` and
     tells Net a relay and a code directly, which ENet has neither of.
+  - `test_coop.gd` - TWO machines in one run (M3), and the first suite that is
+    two processes: it hosts, and starts a second Godot (`coop_guest.gd`) that
+    joins over ENet on localhost through the real lobby. Two games in one tree
+    would share every group, so a SubViewport cannot do it. The harness is
+    `tests/coop.gd`: the guest is asked what its machine shows and told what to
+    press through `coop_probe.gd`, at /root/CoopProbe in both, which also holds
+    both processes to the wall clock so their seconds agree, and what the guest
+    prints comes back under `guest|`. It checks the party half: both welcomed
+    to one floor and room, each body walking from its owner, a blow, slow,
+    shove and heal decided on the host and landing on the guest while the
+    guest's own world hurts nobody, down and up on both with one pool, the door
+    waiting for both and the guest arriving in the same room, the pause menu
+    opening over a running game, the end of the run on both, and the guest's
+    body leaving with them. `coop_guest.gd` is not in run_all.gd's list: it is
+    a suite's second machine, never a suite.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

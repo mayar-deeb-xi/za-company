@@ -1032,6 +1032,20 @@ one that FEELS best rather than the one that is safest.
         hazards and beats from the host; the damage flow in the table above;
         spawners for what arrives mid-room; travel, health, lives, the boss bar
         and the floor's music all following the host.
+        In five steps, each leaving solo as it was: (1) the party, (2) the
+        enemies, (3) the rooms - hazards, pickups, Ivan and Dominique, (4) the
+        bosses, (5) talking.
+        **Step 1 done (2026-10-02), the party**: `game/sync/` (built by game.gd
+        as `Sync` on every machine, inert offline); each body drawn from its
+        owner (`remote`, `net_state`); the host deciding health, the pool, down
+        and up, the doors and the end, told to the guests through game.gd's
+        `net_*`; a ROOM count so nothing from the last floor is drawn on the
+        next; `Net.arrived()` so the host speaks to a guest's game only once it
+        is up; nothing pausing online; a guest's body leaving with them. One
+        rule makes a guest's world harmless however much of it runs:
+        player.gd's `_world_reaches()` - on a guest the world hurts, heals,
+        slows and shoves nobody, and the host's word arrives instead.
+        `tests/test_coop.gd` is two processes (29 checks).
 - [ ] M4. **The feel.** Remote bodies drawn ~100 ms behind and interpolated;
         the hit-stop visual-only online; effects, numbers and sounds fired
         locally on the host's word.

@@ -28,6 +28,16 @@ extends Node2D
 ##   through: whoever was waiting to get up gets up on the far side.
 ## - **The room alert is anyone's**: the first of them to walk out of the
 ##   doorway wakes the room for all of them.
+##
+## ## Online
+##
+## Every machine runs this same scene, and one of them - the host - decides
+## (DESIGN.md's Multiplayer, M3). A member with a `peer` that is not this
+## machine's is REMOTE: its body is drawn where its owner says (player.gd's
+## `remote`). Deaths, lives, getting up, the doors and the end of the run are
+## the host's alone; a guest hears them from `Sync` (game/sync/) through the
+## `net_*` functions at the bottom of this file, and runs exactly what the host
+## ran. Offline `Sync` is inert and none of that happens.
 
 const START_LEVEL := "res://game/levels/lobby/lobby.tscn"
 const MENU_SCENE := "res://ui/main_menu/main_menu.tscn"
@@ -75,6 +85,9 @@ const PauseMenuType := preload("res://ui/pause_menu/pause_menu.gd")
 const LevelTitleType := preload("res://ui/level_title/level_title.gd")
 const DialogueType := preload("res://game/dialogue/dialogue_director.gd")
 const SubtitleType := preload("res://ui/subtitle/subtitle.gd")
+const SyncType := preload("res://game/sync/sync.gd")
+const InputSource := preload("res://game/player/input_source.gd")
+const VirtualInput := preload("res://game/player/virtual_input.gd")
 
 @onready var _camera: Camera2D = $Camera2D
 @onready var _fade: ColorRect = $Transition/Fade
@@ -93,6 +106,15 @@ var _players: Array[PlayerType] = []
 ## This machine's, and everybody else's in that order: the HUD's rows.
 var _local: PlayerType
 var _others: Array[PlayerType] = []
+## What each of the others is called on its HUD row, kept so the rows can be
+## built again when somebody leaves.
+var _names := {}
+## The run across machines - see the header. Built on every machine, inert
+## offline.
+var _sync: SyncType
+## This machine's hands, kept aside while an overlay has them (online, where
+## the pause menu no longer stops the game - see _process).
+var _hands: InputSource = null
 ## The bodies that went down in company and are waiting to get up, each with
 ## the number of the wait it is on - so a body got up early by a door, and
 ## felled again, is not stood up a second time by the first wait running out.
@@ -129,6 +151,9 @@ func _ready() -> void:
 	# The party ending under this machine - the host leaving - ends the run
 	# here too. Nothing to do offline, where Net never says it.
 	Net.ended.connect(_on_party_ended)
+	_sync = SyncType.new()
+	_sync.name = "Sync"
+	add_child(_sync)
 	_spawn_party()
 	# Pushed once here so the HUD never starts blank.
 	_hud.set_health(_local.health, PlayerType.MAX_HEALTH)
@@ -143,6 +168,8 @@ func _ready() -> void:
 	var first := next_start if not next_start.is_empty() else START_LEVEL
 	next_start = ""
 	_enter_level(first, &"start")
+	# Last: from here this end exists, so the other one may be spoken to.
+	_sync.begin(_players)
 
 
 ## One body per member of `next_party` - see the header. Each owns its health;
@@ -174,14 +201,21 @@ func _spawn_party() -> void:
 		body.character = String(member.get("character", ""))
 		if member.get("input") != null:
 			body.input_source = member["input"]
+		# Online, everybody's body but this machine's is somebody else's to
+		# move. A party on ONE machine has no peers, and is all this machine's.
+		body.peer = int(member.get("peer", 1))
+		body.remote = member.has("peer") and i != mine
 		add_child(body)
 		# Where game.tscn held it: straight after the background, so the y-sort
 		# breaks ties against the room exactly as it always has.
 		move_child(body, 1 + i)
 		body.health_changed.connect(_on_health_changed.bind(body))
 		body.died.connect(_on_player_died.bind(body))
-		body.froze.connect(_freeze)
-		body.shook.connect(_shake)
+		# The hit feel of a body moved HERE: a remote body's swings are its own
+		# machine's to feel.
+		if not body.remote:
+			body.froze.connect(_freeze)
+			body.shook.connect(_shake)
 		_players.append(body)
 		if i != mine:
 			_others.append(body)
@@ -191,6 +225,7 @@ func _spawn_party() -> void:
 			if shown == "":
 				shown = String(Roster.find(body.character).get("name", body.character))
 			names.append(shown)
+			_names[body] = shown
 	_local = _players[mine]
 	_hud.set_party(names)
 
@@ -212,9 +247,24 @@ func party() -> Array[PlayerType]:
 func _process(delta: float) -> void:
 	_camera.global_position = _camera_target()
 	_apply_shake(delta)
+	_hold_hands(_pause_menu.is_paused() and _sync.active)
 	if not _travelling and not _room_alerted and _anyone_walked_in():
 		_room_alerted = true
 		_alert_room()
+
+
+## Online nothing pauses (DESIGN.md's *The rules of a party*): the pause menu
+## and the death screen are overlays with the room still running behind them,
+## so while one is up this machine's player is handed still hands rather than
+## walking about under the menu's own arrow keys - and handed its own back
+## when it closes.
+func _hold_hands(held: bool) -> void:
+	if held and _hands == null:
+		_hands = _local.input_source
+		_local.input_source = VirtualInput.new()
+	elif not held and _hands != null:
+		_local.input_source = _hands
+		_hands = null
 
 
 ## Whether anybody standing is more than ALERT_RADIUS from where they came in.
@@ -239,7 +289,10 @@ func _apply_zoom() -> void:
 ## Fade out, swap, fade back in. Input is suspended for the whole trip so a key
 ## held through the transition cannot walk the player straight back into the
 ## door they just arrived beside.
-func _travel(level_path: String, spawn: StringName) -> void:
+##
+## `as_room` is the host's count for the floor being entered, on a guest that
+## was told to come (net_travel); the host counts its own.
+func _travel(level_path: String, spawn: StringName, as_room := 0) -> void:
 	if _travelling:
 		return
 	# A door reached mid-conversation ends it: the NPC saying the line is about
@@ -248,12 +301,14 @@ func _travel(level_path: String, spawn: StringName) -> void:
 	_dialogue.stop()
 	_travelling = true
 	_hold_party()
+	# Everybody goes together: the guests are told as the host's fade begins.
+	_sync.travelling(level_path, spawn)
 
 	var out := create_tween()
 	out.tween_property(_fade, "color:a", 1.0, FADE_SECONDS)
 	await out.finished
 
-	_enter_level(level_path, spawn)
+	_enter_level(level_path, spawn, as_room)
 
 	var back := create_tween()
 	back.tween_property(_fade, "color:a", 0.0, FADE_SECONDS)
@@ -309,6 +364,7 @@ func _on_party_ended(_reason: String) -> void:
 func _spend_life() -> int:
 	lives = maxi(lives - 1, 0)
 	_hud.set_lives(lives, MAX_LIVES)
+	_sync.lives_changed(lives)
 	return lives
 
 
@@ -321,11 +377,8 @@ func _spend_life() -> int:
 ## the truth the moment it happens and a second death on the same frame finds
 ## the pool as it really is.
 func _go_down(body: PlayerType) -> void:
-	# A conversation holding this body's wheel is over; anybody else's goes on.
-	if _dialogue.listener() == body:
-		_dialogue.stop()
-	body.knock_down()
-	_hud.set_member_down(_others.find(body), true)
+	_fall(body)
+	_sync.went_down(body)
 	if lives > 0:
 		_spend_life()
 		_wait += 1
@@ -335,6 +388,15 @@ func _go_down(body: PlayerType) -> void:
 			_get_up.bind(body, _wait))
 	elif _getting_up.is_empty() and get_tree().get_nodes_in_group("player").is_empty():
 		_game_over()
+
+
+## A body down where it fell, on whichever machine is drawing it.
+func _fall(body: PlayerType) -> void:
+	# A conversation holding this body's wheel is over; anybody else's goes on.
+	if _dialogue.listener() == body:
+		_dialogue.stop()
+	body.knock_down()
+	_hud.set_member_down(_others.find(body), true)
 
 
 func _get_up(body: PlayerType, wait: int) -> void:
@@ -352,6 +414,7 @@ func _stand_up(body: PlayerType, at: Vector2) -> void:
 	body.global_position = at
 	body.revive()
 	_hud.set_member_down(_others.find(body), false)
+	_sync.stood_up(body, at)
 
 
 ## Where in the row across a spawn marker this body stands - see
@@ -369,6 +432,7 @@ func _game_over() -> void:
 	for body in _players:
 		body.velocity = Vector2.ZERO
 	_pause_menu.show_game_over()
+	_sync.over()
 
 
 ## Death with lives to spare is a fade back to this room's start marker with
@@ -398,7 +462,7 @@ func _respawn() -> void:
 	_travelling = false
 
 
-func _enter_level(level_path: String, spawn: StringName) -> void:
+func _enter_level(level_path: String, spawn: StringName, as_room := 0) -> void:
 	if _level != null:
 		# Detach before freeing: the replacement is added in the same frame and
 		# would otherwise collide with the outgoing level's node name.
@@ -418,7 +482,7 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 	for node in get_tree().get_nodes_in_group("door"):
 		var door := node as DoorType
 		if door != null:
-			door.travelled.connect(_travel)
+			door.travelled.connect(_on_door)
 
 	_watch_boss()
 
@@ -456,6 +520,15 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 	# lobby too. A respawn deliberately does not come through here - dying and
 	# getting up in the same room is not arriving somewhere.
 	_title.show_title(_level.title())
+	_sync.entered(level_path, spawn, as_room)
+
+
+## A door says the party is through. The host's call (DESIGN.md's *The rules
+## of a party*): a guest's doors count who is standing in them like anybody's,
+## and go nowhere - the host's door is the one that moves everybody.
+func _on_door(level_path: String, spawn: StringName) -> void:
+	if _sync.is_host():
+		_travel(level_path, spawn)
 
 
 ## The friendly faces, and the one thing in this scene that is wired as people
@@ -478,7 +551,8 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 ## a body one line AFTER add_child, and it is having no post that makes it an
 ## arrival rather than something placed.
 func _on_node_added(node: Node) -> void:
-	if _room_alerted and node.is_in_group("enemies"):
+	# The enemies are the host's to move, and so are their alerts.
+	if _room_alerted and node.is_in_group("enemies") and _sync.is_host():
 		_alert_arrival.call_deferred(node)
 		return
 	if not node.is_in_group("npcs") or not node.has_signal(&"talk_requested"):
@@ -516,6 +590,10 @@ func _on_talk_requested(npc: Node2D) -> void:
 ## Anything that walks in later is alerted as it arrives (_on_node_added), and
 ## a reinforcement, having no post, keeps coming (enemy_base.alert()).
 func _alert_room() -> void:
+	# The host's room is the one with enemies in it that move; a guest's are
+	# drawn where the host's stand.
+	if not _sync.is_host():
+		return
 	for node in get_tree().get_nodes_in_group("enemies"):
 		if node.has_method("alert"):
 			node.alert()
@@ -654,7 +732,13 @@ func _shake(strength: float, seconds: float) -> void:
 ## stops two people while everything else in the room carries on reads as lag,
 ## not weight. Overlapping stops extend rather than stack, and the timer runs
 ## on unscaled time, or the stop would stretch itself twentyfold.
+##
+## Solo only, for now (DESIGN.md's *Rules that keep it honest*): online the
+## clock is the host's whole world, and stopping it for one player's hit stops
+## it for everybody. M4 brings back a stop that holds only the picture.
 func _freeze(seconds: float) -> void:
+	if _sync.active:
+		return
 	_freeze_token += 1
 	Engine.time_scale = FREEZE_SCALE
 	get_tree().create_timer(seconds, true, false, true).timeout.connect(
@@ -702,3 +786,62 @@ func _apply_shake(delta: float) -> void:
 ## -0.5..0.5, steady within a frame and different the next.
 static func _jitter(a: int, b: int) -> float:
 	return float(absi((a * 73856093) ^ (b * 19349663)) % 1000) / 1000.0 - 0.5
+
+
+# --- the host's word, on a guest (game/sync/sync.gd) -------------------------------
+
+
+## Everybody to another floor. A guest still fading through the last door goes
+## on through this one the moment it lands, rather than being dropped by the
+## latch that keeps one machine from travelling twice.
+func net_travel(level_path: String, spawn: StringName, as_room: int) -> void:
+	while _travelling:
+		await get_tree().process_frame
+	_travel(level_path, spawn, as_room)
+
+
+func net_lives(value: int) -> void:
+	lives = value
+	_hud.set_lives(lives, MAX_LIVES)
+
+
+func net_down(body: PlayerType) -> void:
+	if not body.is_down():
+		_fall(body)
+
+
+## Up at `at`, the host's door. Physics only for a body this machine moves, and
+## not mid-fade, where the fade lets everyone standing go.
+func net_up(body: PlayerType, at: Vector2) -> void:
+	_stand_up(body, at)
+	if not _travelling:
+		body.set_physics_process(true)
+
+
+func net_over() -> void:
+	_game_over()
+
+
+## A member gone from the party, mid-run - on the host when they drop, and on
+## every guest when the host says so. Their body leaves with them; the rows
+## under the hearts close up; and if they were the last one standing, nobody is.
+func net_left(body: PlayerType) -> void:
+	if body == _local:
+		return
+	body.remove_from_group("player")
+	_players.erase(body)
+	_others.erase(body)
+	_names.erase(body)
+	_getting_up.erase(body)
+	_arrived_at.erase(body)
+	var names: Array[String] = []
+	for other in _others:
+		names.append(String(_names.get(other, "")))
+	_hud.set_party(names)
+	for i in _others.size():
+		_hud.set_member_health(i, _others[i].health, PlayerType.MAX_HEALTH)
+		_hud.set_member_down(i, _others[i].is_down())
+	body.queue_free()
+	if _sync.is_host() and _getting_up.is_empty() \
+			and get_tree().get_nodes_in_group("player").is_empty():
+		_game_over()

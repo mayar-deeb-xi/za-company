@@ -209,9 +209,11 @@ func _in_game() -> void:
 	_check("game: this machine's is the host, as the character it picked",
 		_player().get("character") == "reem")
 	var other := current_scene.get_node_or_null("Player2")
-	_check("game: the guest's body, as their character, on hands nothing moves yet",
-		other != null and other.get("character") == "anas"
-			and other.get("input_source").get_script() == load("res://game/player/virtual_input.gd"))
+	_check("game: the guest's body, as their character, drawn where their machine says",
+		other != null and other.get("character") == "anas" and other.get("remote") == true
+			and other.get("peer") == int(_guest.call("my_id")))
+	_check("game: this machine's own body is its own to move",
+		_player().get("remote") == false and _player().get("peer") == 1)
 	var rows: Array = current_scene.get_node("HUD/Hud").call("party_rows")
 	_check("game: the guest's HUD row carries the name they typed",
 		rows.size() == 1 and (rows[0].get_node("Name") as Label).text == "Ivo")

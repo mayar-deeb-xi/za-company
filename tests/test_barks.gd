@@ -40,6 +40,19 @@ var _done := false
 
 
 func _tick(frame: int) -> void:
+	# A fight that never gave him a quiet moment would otherwise run forever.
+	# Generous: everything below lands inside 2600 frames when it works, the
+	# last thousand of which are the settle doing nothing. First, and outside
+	# _drive: a fight that went wrong in a way _drive cannot see - the boss gone
+	# with the room he was in - must still end the run as a FAILURE. Inside
+	# _drive this sat behind its own early return, and a suite that never ends
+	# is worse than one that fails.
+	if frame > 4000 and not _done:
+		_check("barks: the fight reached its end (staggered %d, hurt %d, conceded %d)"
+			% [_staggered_at, _hurt_at, _conceded_at], false)
+		_done = true
+		_finish()
+		return
 	_drive(frame)
 
 	match frame:
@@ -153,9 +166,13 @@ func _drive(frame: int) -> void:
 	# He swings at a player who is standing there taking it, and the fight has
 	# to last long enough for him to get a few swings announced before this
 	# file starts interfering with it. Topping the player up is cheaper than
-	# choreographing a dodge, and nothing here is testing his damage.
+	# choreographing a dodge, and nothing here is testing his damage. Stood back
+	# on the spot each time too: every sweep shoves the player away from his
+	# feet, which is north here, and enough of them in a row walked the player
+	# out through the lobby's door - taking the fight, and him, with the room.
 	if frame > 980 and frame % 120 == 0 and _conceded_at < 0:
 		_player().call("revive")
+		_player().global_position = Vector2(272, 140)
 
 	var phase := int(_boss.get("phase"))
 	var winding_up := phase == 1 and _phase_was != 1
@@ -202,14 +219,6 @@ func _drive(frame: int) -> void:
 	if _conceded_at > 0 and frame == _conceded_at + 60 * 19:
 		_settled()
 
-	# A fight that never gave him a quiet moment would otherwise run forever.
-	# Generous: everything above lands inside 2600 frames when it works,
-	# the last thousand of which are the settle below doing nothing.
-	if frame > 4000 and not _done:
-		_check("barks: the fight reached its end (staggered %d, hurt %d, conceded %d)"
-			% [_staggered_at, _hurt_at, _conceded_at], false)
-		_done = true
-		_finish()
 
 
 func _report() -> void:

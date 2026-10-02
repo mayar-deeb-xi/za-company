@@ -48,6 +48,10 @@ signal ended(reason: String)
 ## The host pressed START. Everybody's machine gets the same rows in the same
 ## order, which is the party's order.
 signal run_started(rows: Array)
+## The host only: a guest's game scene is up and can be spoken to (`arrived()`).
+signal peer_arrived(peer: int)
+## The host only: a guest has left the party, mid-run or not.
+signal peer_left(peer: int)
 
 const SignalClient := preload("res://autoload/net/signal_client.gd")
 const RtcLink := preload("res://autoload/net/rtc_link.gd")
@@ -92,6 +96,8 @@ var _force_relay := false
 var _local := false
 var _clock := 0.0
 var _ping: Node
+## The host only: the guests whose game scene is up - see `arrived()`.
+var _arrived := {}
 
 
 func _ready() -> void:
@@ -267,6 +273,37 @@ func start_run() -> void:
 	var ready := roster().filter(func(row: Dictionary) -> bool:
 		return row.get("route", "...") != "..." and row.get("character", "") != "")
 	_begin_run.rpc(ready)
+
+
+## Said by the run's scene (game/sync/) once it is built, on every machine.
+##
+## Two machines load the game at their own speed, and a message sent to a node
+## that is not there yet is lost - with an error on the far end for it. So the
+## host does not speak to a guest's game until that guest has said this, and
+## the saying goes through HERE because this node is the one thing both ends
+## are certain to have whatever scene either is on.
+func arrived() -> void:
+	if state == State.IN_RUN and not is_host():
+		_arrived_at_host.rpc_id(1)
+
+
+## The host only: the guests whose game is up, in the party's order.
+func arrived_peers() -> Array[int]:
+	var out: Array[int] = []
+	for id in _order:
+		if _arrived.has(id):
+			out.append(id)
+	return out
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _arrived_at_host() -> void:
+	if not is_host():
+		return
+	var id := multiplayer.get_remote_sender_id()
+	if _rows.has(id) and not _arrived.has(id):
+		_arrived[id] = true
+		peer_arrived.emit(id)
 
 
 # --- the roster over the wire -----------------------------------------------------
@@ -489,9 +526,11 @@ func _drop(id: int) -> void:
 	_links.erase(id)
 	_ping.call("forget", id)
 	_order.erase(id)
+	_arrived.erase(id)
 	if _rows.erase(id):
 		roster_changed.emit()
 		_broadcast()
+		peer_left.emit(id)
 
 
 ## Hosting or joining did not happen.
@@ -521,6 +560,7 @@ func _reset() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	_rows.clear()
 	_order.clear()
+	_arrived.clear()
 	_code = ""
 	_ice = {}
 	_force_relay = false

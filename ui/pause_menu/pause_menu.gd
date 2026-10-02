@@ -6,6 +6,11 @@ extends CanvasLayer
 ## Runs with PROCESS_MODE_ALWAYS so it keeps receiving input while the tree is
 ## paused - it has to, or nothing could unpause it. Everything else in the game
 ## scene stays PAUSABLE and freezes.
+##
+## **Online nothing pauses** (DESIGN.md's *The rules of a party*): one player's
+## menu cannot stop the room everybody else is standing in. There the same
+## panel opens over a running game, and game.gd takes this machine's hands
+## away from its player while it is up.
 
 const MAIN_MENU_SCENE := "res://ui/main_menu/main_menu.tscn"
 
@@ -68,7 +73,7 @@ func pause() -> void:
 	_game_over = false
 	_heading.text = "PAUSED"
 	_continue_button.disabled = false
-	get_tree().paused = true
+	get_tree().paused = not Net.is_online()
 	_root.visible = true
 	_continue_button.grab_focus()
 
@@ -79,7 +84,7 @@ func show_game_over() -> void:
 	_game_over = true
 	_heading.text = "YOU DIED"
 	_continue_button.disabled = true
-	get_tree().paused = true
+	get_tree().paused = not Net.is_online()
 	_root.visible = true
 	_menu_button.grab_focus()
 
