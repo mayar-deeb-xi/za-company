@@ -137,6 +137,29 @@ func _initialize() -> void:
 	theme.set_font_size("font_size", "SettingLabel", 16)
 	theme.set_color("font_color", "SettingLabel", TEXT)
 
+	# ---- Text fields -----------------------------------------------------
+	# The lobby's name and room code (ui/lobby/): sunk into the background
+	# rather than raised like a button, so a field reads as somewhere to type,
+	# and the button's own focus colour so the cursor's whereabouts never needs
+	# learning twice.
+	var field := _flat(BG_DEEP, BORDER, 1)
+	field.content_margin_left = 8
+	field.content_margin_right = 8
+	field.content_margin_top = 4
+	field.content_margin_bottom = 4
+	var field_focus := _flat(Color(0, 0, 0, 0), ACCENT_WARM)
+	theme.set_stylebox("normal", "LineEdit", field)
+	theme.set_stylebox("focus", "LineEdit", field_focus)
+	theme.set_stylebox("read_only", "LineEdit", _flat(BG_DEEP, BORDER.darkened(0.3), 1))
+	theme.set_font("font", "LineEdit", mini)
+	theme.set_font_size("font_size", "LineEdit", 16)
+	theme.set_color("font_color", "LineEdit", TEXT)
+	theme.set_color("font_placeholder_color", "LineEdit", TEXT_DIM.darkened(0.2))
+	theme.set_color("font_uneditable_color", "LineEdit", TEXT_DIM)
+	theme.set_color("caret_color", "LineEdit", TEXT)
+	theme.set_color("selection_color", "LineEdit", Color(ACCENT, 0.4))
+	theme.set_constant("caret_width", "LineEdit", 2)
+
 	# ---- Quit dialog -----------------------------------------------------
 	var panel := _flat(SURFACE.darkened(0.35), BORDER)
 	panel.content_margin_left = 20

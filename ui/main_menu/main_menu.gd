@@ -1,7 +1,10 @@
 extends Control
-## Home screen: hands off to the character select, or quits after confirmation.
+## Home screen: hands off to the character select - on to the game, or by way
+## of ONLINE on to the lobby - or quits after confirmation.
 
 const CHARACTER_SELECT_SCENE := "res://ui/character_select/character_select.tscn"
+const LOBBY_SCENE := "res://ui/lobby/lobby.tscn"
+const CharacterSelect := preload("res://ui/character_select/character_select.gd")
 
 ## Typed by preloaded script rather than by `class_name`: global class names come
 ## from a cache the editor writes, which a fresh headless checkout lacks.
@@ -11,6 +14,7 @@ const Updater := preload("res://ui/update/updater.gd")
 const UpdatePanel := preload("res://ui/update/update_panel.tscn")
 
 @onready var _play_button: Button = %PlayButton
+@onready var _online_button: Button = %OnlineButton
 @onready var _mode_button: Button = %ModeButton
 @onready var _settings_button: Button = %SettingsButton
 @onready var _quit_button: Button = %QuitButton
@@ -21,7 +25,11 @@ const UpdatePanel := preload("res://ui/update/update_panel.tscn")
 
 
 func _ready() -> void:
+	# The menu is home: whatever party this machine was in - a run left by the
+	# pause menu, a lobby backed out of - is over by the time it is here.
+	Net.leave()
 	_play_button.pressed.connect(_on_play_pressed)
+	_online_button.pressed.connect(_on_online_pressed)
 	_mode_button.pressed.connect(_on_mode_pressed)
 	_settings_button.pressed.connect(_on_settings_pressed)
 	_quit_button.pressed.connect(_on_quit_pressed)
@@ -64,6 +72,13 @@ func _notification(what: int) -> void:
 
 
 func _on_play_pressed() -> void:
+	get_tree().change_scene_to_file(CHARACTER_SELECT_SCENE)
+
+
+## The same character select as PLAY, told to go on to the lobby rather than
+## the game - the pick is made once, on the screen that already makes it.
+func _on_online_pressed() -> void:
+	CharacterSelect.next_scene = LOBBY_SCENE
 	get_tree().change_scene_to_file(CHARACTER_SELECT_SCENE)
 
 

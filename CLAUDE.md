@@ -1251,6 +1251,23 @@ Four things are load-bearing:
   build (`packaged` and not `dev`), and dev's own for everything else - dev
   builds and the editor, which is develop.
 
+**The way in is the main menu's ONLINE**, under PLAY: the same character
+select (told by its `next_scene` to go on to the lobby rather than the game),
+then `ui/lobby/` - option A of the lobby preview, FOUR SEATS. It is two views
+on one screen. Before a room: your name (kept under Settings' `online`
+section), HOST A ROOM, or a six-letter code and JOIN, with a refusal said in
+words. The room: its code and join link (C copies it), then one seat per
+`MAX_PARTY` in the character select's own cards (`ui/lobby/seat.gd` - your
+seat walks and is marked YOU, an empty one is dashed, somebody still
+connecting is a silhouette), the ping in DESIGN.md's colours with the route
+under it, the relay warning - on the guest's own screen, and against the
+name on the host's - and START for the host. The lobby is a VIEW of Net and
+holds no party state; START is Net's `run_started`, and the lobby turns the
+rows into game.gd's `next_party`: this machine's member marked `local` on the
+keyboard, everybody else's body on hands nothing moves yet (M3 puts them in
+step). The main menu leaves any party it finds on arrival, and a party ending
+under a run (`host_left`) takes that machine back to the menu.
+
 ## Settings
 
 Three autoloads, split by responsibility - `Music` above is a fourth,
@@ -1411,11 +1428,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 - **The web build boots `ui/web_entry/`, not the main menu**
   (`run/main_scene.web` in project.godot, an override desktop never reads),
   because a page has no command line and the ADDRESS is the only argument it
-  gets: `#nettest` and `#join=CODE` open M0's test screen, `ui/net_spike/`,
-  and everything else goes on to the main menu one frame later. That is why
-  the spike lives in `ui/` and not `tools/` - it ships, in the web build,
-  until M0 is signed off and it is deleted. Changing the game's first scene
-  means changing it in BOTH places.
+  gets: `#join=CODE` - the link a host's lobby hands out - opens the lobby
+  (`ui/lobby/`), which joins that room on arrival, and everything else goes
+  on to the main menu one frame later. It is how a phone joins, since a phone
+  cannot type into the web build. M0's test screen, `ui/net_spike/`, used to
+  answer `#nettest` here and is gone: the lobby replaced it in M2. Changing
+  the game's first scene means changing it in BOTH places.
 - **The loading screen is the icon.** The boot splash is `splash.png`,
   written by build_icon.gd beside `icon.svg` from the same picture at 4x,
   because a boot splash takes only a PNG and says so at startup
@@ -1444,7 +1462,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Thirty-one suites,
+  They drive the real game with synthesized input and exit 0/1. Thirty-two suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1740,6 +1758,21 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     WebRTC through a signaling service - is the same Net with another peer;
     it is proved by hand against a local `server/signaling`, since a suite
     cannot count on WebRTC finding a route.
+  - `test_lobby.gd` - the way into online play through the real screens:
+    ONLINE between PLAY and MODE with five buttons in the four-button height,
+    ONLINE opening the character select and the pick opening the lobby; the
+    choice before a room (the default name, HOST focused, a missing code
+    asked for, a code in capitals, a refusal said in words, Escape back to the
+    menu); then a room hosted on ENet the way HOST would online: a local game
+    has no code, one seat per MAX_PARTY with the host's own marked HOST and the
+    rest open, the waiting line alone, START focused; a guest from a
+    SubViewport taking the second seat with their name, route and the ping the
+    host measured; the relay line, the code, the join link and C copying it;
+    and START putting the party into the game - this machine's body as its own
+    pick, the guest's as theirs on still hands, their HUD row by the name they
+    typed - and the party ending sending the run back to a menu that has left
+    it. The lobby is a view of Net, so it hosts through `Net.host_local()` and
+    tells Net a relay and a code directly, which ENet has neither of.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

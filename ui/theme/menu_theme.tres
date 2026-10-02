@@ -76,6 +76,42 @@ border_width_bottom = 2
 border_color = Color(0.43137255, 0.7019608, 0.6156863, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vtev8"]
+content_margin_left = 16.0
+content_margin_top = 7.0
+content_margin_right = 16.0
+content_margin_bottom = 7.0
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.9254902, 0.46666667, 0.23921569, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u41ja"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.105882354, 0.06666667, 0.09803922, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.40392157, 0.28627452, 0.28627452, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hmo5o"]
+content_margin_left = 16.0
+content_margin_top = 7.0
+content_margin_right = 16.0
+content_margin_bottom = 7.0
+bg_color = Color(0.105882354, 0.06666667, 0.09803922, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2827451, 0.20039216, 0.20039216, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_05700"]
 content_margin_left = 28.0
 content_margin_top = 20.0
 content_margin_right = 28.0
@@ -87,7 +123,7 @@ border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.43137255, 0.7019608, 0.6156863, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u41ja"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xg8ig"]
 content_margin_left = 16.0
 content_margin_top = 7.0
 content_margin_right = 16.0
@@ -95,7 +131,7 @@ content_margin_bottom = 7.0
 bg_color = Color(0.40392157, 0.28627452, 0.28627452, 1)
 border_color = Color(0.40392157, 0.28627452, 0.28627452, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hmo5o"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hju0m"]
 content_margin_left = 6.0
 content_margin_top = 6.0
 content_margin_right = 6.0
@@ -107,7 +143,7 @@ border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.43137255, 0.7019608, 0.6156863, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_05700"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jsvpm"]
 content_margin_left = 16.0
 content_margin_top = 7.0
 content_margin_right = 16.0
@@ -149,18 +185,29 @@ Heading/fonts/font = ExtResource("2_wuk8g")
 Label/colors/font_color = Color(0.59607846, 0.47843137, 0.40784314, 1)
 Label/font_sizes/font_size = 16
 Label/fonts/font = ExtResource("1_clep8")
+LineEdit/colors/caret_color = Color(1, 0.972549, 0.88235295, 1)
+LineEdit/colors/font_color = Color(1, 0.972549, 0.88235295, 1)
+LineEdit/colors/font_placeholder_color = Color(0.47686276, 0.38274512, 0.3262745, 1)
+LineEdit/colors/font_uneditable_color = Color(0.59607846, 0.47843137, 0.40784314, 1)
+LineEdit/colors/selection_color = Color(0.43137255, 0.7019608, 0.6156863, 0.4)
+LineEdit/constants/caret_width = 2
+LineEdit/font_sizes/font_size = 16
+LineEdit/fonts/font = ExtResource("1_clep8")
+LineEdit/styles/focus = SubResource("StyleBoxFlat_vtev8")
+LineEdit/styles/normal = SubResource("StyleBoxFlat_u41ja")
+LineEdit/styles/read_only = SubResource("StyleBoxFlat_hmo5o")
 OptionButton/constants/arrow_margin = 6
 OptionButton/font_sizes/font_size = 16
 OptionButton/fonts/font = ExtResource("1_clep8")
-PanelContainer/styles/panel = SubResource("StyleBoxFlat_vtev8")
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_05700")
 PopupMenu/colors/font_color = Color(0.59607846, 0.47843137, 0.40784314, 1)
 PopupMenu/colors/font_hover_color = Color(1, 0.972549, 0.88235295, 1)
 PopupMenu/colors/font_separator_color = Color(0.40392157, 0.28627452, 0.28627452, 1)
 PopupMenu/constants/v_separation = 6
 PopupMenu/font_sizes/font_size = 16
 PopupMenu/fonts/font = ExtResource("1_clep8")
-PopupMenu/styles/hover = SubResource("StyleBoxFlat_u41ja")
-PopupMenu/styles/panel = SubResource("StyleBoxFlat_hmo5o")
+PopupMenu/styles/hover = SubResource("StyleBoxFlat_xg8ig")
+PopupMenu/styles/panel = SubResource("StyleBoxFlat_hju0m")
 SettingLabel/base_type = &"Label"
 SettingLabel/colors/font_color = Color(1, 0.972549, 0.88235295, 1)
 SettingLabel/font_sizes/font_size = 16
@@ -180,4 +227,4 @@ Window/colors/title_color = Color(1, 0.972549, 0.88235295, 1)
 Window/constants/title_height = 28
 Window/font_sizes/title_font_size = 16
 Window/fonts/title_font = ExtResource("1_clep8")
-Window/styles/embedded_border = SubResource("StyleBoxFlat_05700")
+Window/styles/embedded_border = SubResource("StyleBoxFlat_jsvpm")

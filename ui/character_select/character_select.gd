@@ -3,7 +3,8 @@ extends Control
 ## one focusable portrait per roster character, left/right to browse, Enter or
 ## a click to choose. The choice is saved through Settings so the next visit
 ## starts on the same character, then the game scene loads - or, while the
-## development switch is on, the level select (ui/level_select/) does.
+## development switch is on, the level select (ui/level_select/) does, and on
+## the way to online play the lobby does (`next_scene`).
 
 const GAME_SCENE := "res://game/game.tscn"
 const MENU_SCENE := "res://ui/main_menu/main_menu.tscn"
@@ -13,6 +14,12 @@ const LEVEL_SELECT_SCENE := "res://ui/level_select/level_select.tscn"
 
 ## Preloaded by path rather than via `class_name`, like the rest of the project.
 const Roster := preload("res://game/player/characters/roster.gd")
+
+## Where picking somebody goes instead of the game, when the screen that sent
+## the player here asked for it: the main menu's ONLINE sets the lobby, so the
+## pick is made once and online play reuses this screen unchanged. Spent on
+## use - or on backing out - like game.gd's `next_start`.
+static var next_scene := ""
 
 ## 32px frames drawn at a whole multiple, matching the game's pixel scale rules.
 const PORTRAIT_PX := 64
@@ -67,6 +74,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _go_back() -> void:
+	next_scene = ""
 	get_tree().change_scene_to_file(MENU_SCENE)
 
 
@@ -109,8 +117,11 @@ func _make_portrait(entry: Dictionary) -> Button:
 
 func _choose(id: String) -> void:
 	Settings.set_value(&"player", &"character", id)
-	get_tree().change_scene_to_file(
-		LEVEL_SELECT_SCENE if LevelSelect.enabled() else GAME_SCENE)
+	var next := next_scene
+	next_scene = ""
+	if next == "":
+		next = LEVEL_SELECT_SCENE if LevelSelect.enabled() else GAME_SCENE
+	get_tree().change_scene_to_file(next)
 
 
 func _on_portrait_focused(button: Button) -> void:

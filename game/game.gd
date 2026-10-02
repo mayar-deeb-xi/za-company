@@ -30,15 +30,17 @@ extends Node2D
 ##   doorway wakes the room for all of them.
 
 const START_LEVEL := "res://game/levels/lobby/lobby.tscn"
+const MENU_SCENE := "res://ui/main_menu/main_menu.tscn"
 ## Where the NEXT run starts instead, when the development level select
 ## (ui/level_select/) has just named a floor. Spent on use, so the run after it
 ## starts in the lobby again unless the screen is passed through a second time.
 static var next_start := ""
-## Who plays the NEXT run: one Dictionary per member, the first being this
-## machine's, each with an optional `character` (a roster id; empty is the
-## saved pick) and `input` (an input_source.gd; the keyboard by default). Empty
-## is a party of one. Spent on use like `next_start`, and capped at
-## Heads.MAX_PARTY.
+## Who plays the NEXT run: one Dictionary per member, in party order, each with
+## an optional `character` (a roster id; empty is the saved pick), `input` (an
+## input_source.gd; the keyboard by default), `name` (what the HUD calls them)
+## and `local` (this machine's member - the first, when none says so). Empty is
+## a party of one. Spent on use like `next_start`, and capped at
+## Heads.MAX_PARTY. ui/lobby/ fills it from Net's roster when a host starts.
 static var next_party: Array = []
 const FADE_SECONDS := 0.28
 ## The party's lives, ONE pool however many are playing.
@@ -86,9 +88,11 @@ const SubtitleType := preload("res://ui/subtitle/subtitle.gd")
 ## read.
 var lives := MAX_LIVES
 
-## Every member's body, in party order; the first is this machine's.
+## Every member's body, in party order - the same order on every machine.
 var _players: Array[PlayerType] = []
+## This machine's, and everybody else's in that order: the HUD's rows.
 var _local: PlayerType
+var _others: Array[PlayerType] = []
 ## The bodies that went down in company and are waiting to get up, each with
 ## the number of the wait it is on - so a body got up early by a door, and
 ## felled again, is not stood up a second time by the first wait running out.
@@ -122,6 +126,9 @@ func _ready() -> void:
 	# Re-applied live: zoom is reachable from the pause menu, with the game
 	# sitting right behind the panel.
 	Display.changed.connect(_apply_zoom)
+	# The party ending under this machine - the host leaving - ends the run
+	# here too. Nothing to do offline, where Net never says it.
+	Net.ended.connect(_on_party_ended)
 	_spawn_party()
 	# Pushed once here so the HUD never starts blank.
 	_hud.set_health(_local.health, PlayerType.MAX_HEALTH)
@@ -145,12 +152,25 @@ func _ready() -> void:
 func _spawn_party() -> void:
 	var members: Array = next_party if not next_party.is_empty() else [{}]
 	next_party = []
-	for i in mini(members.size(), Heads.MAX_PARTY):
+	members = members.slice(0, Heads.MAX_PARTY)
+	# This machine's member: the one marked `local` - online, where the party is
+	# in the HOST's order on every machine - or the first.
+	var mine := 0
+	for i in members.size():
+		if (members[i] as Dictionary).get("local", false):
+			mine = i
+	var others := 1
+	var names: Array[String] = []
+	for i in members.size():
 		var member: Dictionary = members[i]
 		var body := PlayerScene.instantiate() as PlayerType
-		# The first keeps the name game.tscn gave the one player it used to
+		# This machine's keeps the name game.tscn gave the one player it used to
 		# hold, so a path to it - every suite's - still reaches this machine's.
-		body.name = "Player" if i == 0 else "Player%d" % (i + 1)
+		if i == mine:
+			body.name = "Player"
+		else:
+			others += 1
+			body.name = "Player%d" % others
 		body.character = String(member.get("character", ""))
 		if member.get("input") != null:
 			body.input_source = member["input"]
@@ -163,10 +183,15 @@ func _spawn_party() -> void:
 		body.froze.connect(_freeze)
 		body.shook.connect(_shake)
 		_players.append(body)
-	_local = _players[0]
-	var names: Array[String] = []
-	for body in _players.slice(1):
-		names.append(String(Roster.find(body.character).get("name", body.character)))
+		if i != mine:
+			_others.append(body)
+			# A player's own name online; the character's off it, where nobody
+			# chose one.
+			var shown := String(member.get("name", ""))
+			if shown == "":
+				shown = String(Roster.find(body.character).get("name", body.character))
+			names.append(shown)
+	_local = _players[mine]
 	_hud.set_party(names)
 
 
@@ -175,7 +200,7 @@ func _on_health_changed(health: int, max_health: int, body: PlayerType) -> void:
 	if body == _local:
 		_hud.set_health(health, max_health)
 	else:
-		_hud.set_member_health(_players.find(body) - 1, health, max_health)
+		_hud.set_member_health(_others.find(body), health, max_health)
 
 
 ## The party, for whoever needs every body rather than the standing ones the
@@ -272,6 +297,13 @@ func _on_player_died(body: PlayerType) -> void:
 		_game_over()
 
 
+## Back to the main menu, unpaused: the run was the host's, and the host has
+## gone. Saying so on screen is M5's.
+func _on_party_ended(_reason: String) -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(MENU_SCENE)
+
+
 ## One life out of the pool. Returns how many remain, so the caller chooses
 ## respawn or game over from the same call instead of racing a signal.
 func _spend_life() -> int:
@@ -293,7 +325,7 @@ func _go_down(body: PlayerType) -> void:
 	if _dialogue.listener() == body:
 		_dialogue.stop()
 	body.knock_down()
-	_hud.set_member_down(_players.find(body) - 1, true)
+	_hud.set_member_down(_others.find(body), true)
 	if lives > 0:
 		_spend_life()
 		_wait += 1
@@ -319,7 +351,7 @@ func _get_up(body: PlayerType, wait: int) -> void:
 func _stand_up(body: PlayerType, at: Vector2) -> void:
 	body.global_position = at
 	body.revive()
-	_hud.set_member_down(_players.find(body) - 1, false)
+	_hud.set_member_down(_others.find(body), false)
 
 
 ## Where in the row across a spawn marker this body stands - see

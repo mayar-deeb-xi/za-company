@@ -81,45 +81,56 @@ text = "a dungeon crawl"
 horizontal_alignment = 1
 
 [node name="MenuGap" type="Control" parent="CenterContainer/Menu"]
-custom_minimum_size = Vector2(0, 30)
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
 [node name="PlayButton" type="Button" parent="CenterContainer/Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(176, 40)
+custom_minimum_size = Vector2(176, 36)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "PLAY"
 
 [node name="ButtonGap" type="Control" parent="CenterContainer/Menu"]
-custom_minimum_size = Vector2(0, 10)
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="OnlineButton" type="Button" parent="CenterContainer/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(176, 36)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "ONLINE"
+
+[node name="OnlineGap" type="Control" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
 [node name="ModeButton" type="Button" parent="CenterContainer/Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(176, 40)
+custom_minimum_size = Vector2(176, 36)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "MODE: MEDIUM"
 
 [node name="ModeGap" type="Control" parent="CenterContainer/Menu"]
-custom_minimum_size = Vector2(0, 10)
+custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
 [node name="SettingsButton" type="Button" parent="CenterContainer/Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(176, 40)
+custom_minimum_size = Vector2(176, 36)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "SETTINGS"
 
 [node name="SettingsGap" type="Control" parent="CenterContainer/Menu"]
-custom_minimum_size = Vector2(0, 10)
+custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
 [node name="QuitButton" type="Button" parent="CenterContainer/Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(176, 40)
+custom_minimum_size = Vector2(176, 36)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "QUIT"

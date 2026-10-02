@@ -87,8 +87,8 @@ func _tick(frame: int) -> void:
 			# one tick. It also proves the ordering the whole move cue rests on
 			# - that `_input` sees the press before the viewport resolves focus
 			# navigation, so the two land on one frame and the stamp matches.
-			_check("sfx: arrowing off Play moves focus to Mode",
-				(current_scene.get_node("%ModeButton") as Button).has_focus())
+			_check("sfx: arrowing off Play moves focus to Online",
+				(current_scene.get_node("%OnlineButton") as Button).has_focus())
 			_check("sfx: and ticks exactly once (%d)" % (_plays(&"move") - _move),
 				_plays(&"move") - _move == 1)
 			_check("sfx: moving is not pressing",
@@ -100,8 +100,8 @@ func _tick(frame: int) -> void:
 		12:
 			_check("sfx: a second arrow ticks again (%d)"
 				% (_plays(&"move") - _move), _plays(&"move") - _move == 1)
-			_check("sfx: and lands on Settings",
-				(current_scene.get_node("%SettingsButton") as Button).has_focus())
+			_check("sfx: and lands on Mode",
+				(current_scene.get_node("%ModeButton") as Button).has_focus())
 			_mark_counts()
 			# Pressed rather than a synthesized Enter, and that is the check:
 			# nothing in main_menu.tscn registers itself with UiSound, so a
@@ -113,7 +113,7 @@ func _tick(frame: int) -> void:
 				% (_plays(&"press") - _press), _plays(&"press") - _press == 1)
 			_check("settings: the panel opened", _panel(current_scene).visible)
 			# The other half of the rule, and the one a naive implementation
-			# gets wrong: the panel took focus off the Settings button and gave
+			# gets wrong: the panel took focus off the menu's button and gave
 			# it to the dropdown. Nobody navigated, so nobody should hear a
 			# move on top of the press.
 			_check("sfx: the panel taking focus is not a move (%d)"

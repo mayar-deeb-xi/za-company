@@ -95,6 +95,9 @@ var _ping: Node
 
 
 func _ready() -> void:
+	# Running whatever is paused: the pause menu stops this machine's game, not
+	# the line to everybody else's.
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_ping = Ping.new()
 	_ping.name = "Ping"
 	add_child(_ping)
@@ -114,9 +117,15 @@ func _process(delta: float) -> void:
 		_clock += delta
 		if _clock >= Ping.INTERVAL:
 			_clock = 0.0
+			var moved := false
 			for id: int in _rows:
 				if id != 1:
-					_rows[id]["ping"] = _ping.call("ms", id)
+					var ms: int = _ping.call("ms", id)
+					moved = moved or ms != int(_rows[id].get("ping", -1))
+					_rows[id]["ping"] = ms
+			# This machine's own screen too, not only everybody else's.
+			if moved:
+				roster_changed.emit()
 			_broadcast()
 
 
@@ -253,7 +262,11 @@ func start_run() -> void:
 		return
 	if _signal != null:
 		_signal.send({"op": "start"})
-	_begin_run.rpc(roster())
+	# Only who has said hello: somebody still connecting has no character yet,
+	# and arrives to be told `started` like anybody else who came too late.
+	var ready := roster().filter(func(row: Dictionary) -> bool:
+		return row.get("route", "...") != "..." and row.get("character", "") != "")
+	_begin_run.rpc(ready)
 
 
 # --- the roster over the wire -----------------------------------------------------

@@ -1020,9 +1020,14 @@ one that FEELS best rather than the one that is safest.
         routes and pings, `WIRE` checked in the hello, and START, which is
         signaling protocol 2's `start` shutting the room. `test_net.gd`
         (21 checks) runs it over ENet; the WebRTC road was proved against a
-        local signaling service. Still to come: the lobby screen, ONLINE on
-        the main menu, `#join=CODE` opening the lobby, START into the game,
-        and the spike's deletion.
+        local signaling service. **Then the lobby**: option A of the lobby
+        preview, FOUR SEATS (`ui/lobby/`, picked 2026-10-02), behind ONLINE on
+        the main menu and the character select it reuses; `#join=CODE` opens
+        it on the web; START turns the roster into the party and loads the
+        game, where everybody but this machine's player stands still until
+        M3. The spike is deleted. `test_lobby.gd` (41 checks). What is left
+        of M2 is playing it: a deploy to dev, then two machines through
+        dev's own signaling.
 - [ ] M3. **The world in step.** Players from their owners; enemies, bosses,
         hazards and beats from the host; the damage flow in the table above;
         spawners for what arrives mid-room; travel, health, lives, the boss bar

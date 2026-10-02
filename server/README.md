@@ -202,28 +202,22 @@ that is not tidiness: clients disagree on `Upgrade` against `upgrade`, and
 Caddy's plain `header` wildcard sent the lowercase one the game's
 `index.html` with a 200 instead of a 101.
 
-## Proving it from the game (M0)
+## Proving it from the game
 
-The test screen is `ui/net_spike/net_spike.tscn`, and it is in two places:
-the editor (open it and press F6, Run Current Scene) and the web build, behind
-two addresses nobody is sent to - `https://DOMAIN/#nettest` opens it, and
-`https://DOMAIN/#join=CODE` opens it and joins that room (`&relay` after the
-code forces the relay). The second is how a phone joins, since a phone cannot
-type into the web build. Neither address is in a release until a release
-carries this screen.
+**Today it is the game's own lobby** (M2): the main menu's ONLINE, then
+HOST A ROOM, and the room shows its code and a JOIN LINK (C copies it). A
+second computer types the code and presses JOIN; a phone opens the link,
+`https://DOMAIN/#join=CODE`, which drops it into the lobby and joins as Guest
+(`&relay` after the code forces the relay, to test it). Every seat shows that
+player's ping and route. The editor and every dev build talk to DEV's
+signaling (*Dev's signaling* above), so try it there - a deploy to dev, then
+the dev site or the `dev` pre-release - before a release takes it live.
 
-The way to run the checks is one of each, because it needs nothing installed
-on the second machine and keeps the desktop plugin on the line:
-
-1. Machine A, in the editor: run the screen (SERVER is already ours), type a
-   NAME, press **HOST**. It shows a JOIN LINK; **COPY LINK** and send it to
-   the other device.
-2. Machine B, a second computer or a phone: open that link. It joins on its
-   own, as Guest.
-
-Two desktops work too: both run the screen in the editor, A presses HOST, B
-types the code and presses JOIN. The screen shows each player's ping and
-ROUTE. M0 is signed off when all four of these have been seen:
+**M0 was proved with a throwaway test screen** (`ui/net_spike/`, deleted in
+M2 when the lobby replaced it), one machine of each kind, because that needs
+nothing installed on the second machine and keeps the desktop plugin on the
+line: an editor host showing a JOIN LINK, and a phone or a browser opening
+it. M0 was signed off when all four of these had been seen:
 
 - [x] **Same network** (both machines on one Wi-Fi): connects DIRECT, ping in
       single digits. *Seen 2026-10-02: an editor host and a phone on the same
