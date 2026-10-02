@@ -286,7 +286,7 @@ jobs:
     needs: plan
     if: needs.plan.outputs.mode != 'skip'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 
@@ -321,6 +321,22 @@ jobs:
           mkdir -p dist
           tar -C server --exclude=./.env --exclude=./web --exclude=__pycache__ -cf dist/server.tar .
           tar -tf dist/server.tar
+
+      - name: Rehearse the deploy
+        # On this throwaway runner, at the server's own paths: the previous
+        # release's deploy.sh deploys this bundle (the upgrade the server will
+        # really see), then the copy it installed deploys it again (every
+        # release after, and the hand-off), then a deploy to dev, settle and
+        # the web builds - each checked through Caddy, the way a player
+        # reaches it (tools/release/rehearse_deploy.sh). A deploy.sh that
+        # cannot upgrade the server stops the release here, not there.
+        env:
+          PREVIOUS: ${{ needs.plan.outputs.previous }}
+        run: |
+          if [ -n "$PREVIOUS" ]; then
+            git fetch --no-tags --depth=1 origin "refs/tags/$PREVIOUS:refs/tags/$PREVIOUS"
+          fi
+          bash tools/release/rehearse_deploy.sh dist/server.tar "$PREVIOUS"
 
       - uses: actions/upload-artifact@v7
         with:

@@ -10,9 +10,18 @@
 #   web         a release's web build, swapped into web/game by rename
 #   web-dev     a dev deploy's web build, the same way into web/dev-game - the
 #               dev site, https://dev.DOMAIN, and nothing the live site reads
-#   server      this folder, minus .env and web/, then the stack brought up to it
-#   settle      the end of `server`, run by the copy it just installed: makes
-#               sure dev's signaling exists. Takes no tar, and is safe alone
+#   server      this folder, minus .env and web/, then the stack brought up to
+#               it. Only the hand-off is done by the copy running, which is
+#               the LAST release's: unpack, refuse what is not a server folder,
+#               install the new copy of this file, and let that copy do the
+#               rest (`apply`) - so a change to any of it takes effect in the
+#               release that ships it, not the one after
+#   apply       the rest of `server`, run by the copy `server` just installed,
+#               on the folder it unpacked. Never asked for alone: over SSH it
+#               is given no folder, and refuses
+#   settle      makes sure dev's signaling exists, seeded from the live folder
+#               the first time. The end of `apply`; takes no tar, and is safe
+#               alone
 #   server-dev  a dev deploy's copy of this folder, into DEV, and ONLY its
 #               signaling service started from it: dev's own signaling, which
 #               the dev site talks to (README.md, Dev's signaling). Caddy and
@@ -28,6 +37,7 @@ set -eu
 
 ROOT=/opt/za-company/server
 DEV=/opt/za-company/dev-server
+SELF=/usr/local/sbin/za-deploy
 COMPOSE="docker compose --profile tls"
 
 # Unpack a web build beside the live one in web/<folder>, refuse it if a file
@@ -59,8 +69,9 @@ deploy_web() {
 stage_server() {
 	staging=$(mktemp -d)
 	tar -x -C "$staging" --no-same-owner
-	if [ ! -f "$staging/docker-compose.yml" ] || [ ! -f "$staging/Caddyfile" ]; then
-		echo "za-deploy: refusing a server folder with no docker-compose.yml or Caddyfile" >&2
+	if [ ! -f "$staging/docker-compose.yml" ] || [ ! -f "$staging/Caddyfile" ] \
+		|| [ ! -f "$staging/deploy.sh" ]; then
+		echo "za-deploy: refusing a server folder with no docker-compose.yml, Caddyfile or deploy.sh" >&2
 		rm -rf "$staging"
 		exit 1
 	fi
@@ -101,6 +112,16 @@ up_dev() {
 	echo "za-deploy: dev signaling up on 127.0.0.1:$port"
 }
 
+# Make sure dev's signaling exists: seeded from the live folder the first
+# time, so the dev site's route never points at nothing. After that it is a
+# deploy to dev's to move, and a release leaves it alone.
+settle() {
+	if [ ! -f "$DEV/docker-compose.yml" ]; then
+		mirror "$ROOT" "$DEV"
+		up_dev
+	fi
+}
+
 case "${SSH_ORIGINAL_COMMAND:-}" in
 web)
 	deploy_web game
@@ -109,8 +130,27 @@ web-dev)
 	deploy_web dev-game
 	;;
 server)
+	# The hand-off. The copy running now is whatever the LAST release
+	# installed, so anything it did itself would be done the last release's
+	# way - which is how v0.1.2 put the dev route in the Caddyfile and left
+	# nothing behind it. So it does only what it must before the new copy
+	# exists, and the new copy does the rest. These few lines are the only
+	# ones still a release late: keep them this small. The staging folder
+	# stays this copy's to clean up.
 	staging=$(stage_server)
 	trap 'rm -rf "$staging"' EXIT
+	install -m 0755 "$staging/deploy.sh" "$SELF"
+	SSH_ORIGINAL_COMMAND=apply "$SELF" "$staging"
+	;;
+apply)
+	staging="${1:-}"
+	if [ -z "$staging" ] || [ ! -f "$staging/docker-compose.yml" ]; then
+		echo "za-deploy: 'apply' is the end of 'server', on the folder it unpacked, and is never asked for alone" >&2
+		exit 2
+	fi
+	# tools/release/rehearse_deploy.sh looks for this line: it is how a
+	# rehearsal knows the hand-off really happened.
+	echo "za-deploy: the new copy takes over"
 	before=$(sha256sum "$ROOT/Caddyfile" 2>/dev/null | cut -d' ' -f1 || true)
 	mirror "$staging" "$ROOT"
 	cd "$ROOT"
@@ -122,26 +162,14 @@ server)
 	if [ "$before" != "$(sha256sum Caddyfile | cut -d' ' -f1)" ]; then
 		$COMPOSE up -d --force-recreate caddy
 	fi
-	install -m 0755 deploy.sh /usr/local/sbin/za-deploy
-	# The rest is the NEW copy's to do, not this one's. The script running
-	# now is whatever the last release installed, so anything this release
-	# taught it would otherwise wait a whole release to happen - which is how
-	# v0.1.2 put the dev route in the Caddyfile and left nothing behind it.
-	SSH_ORIGINAL_COMMAND=settle /usr/local/sbin/za-deploy
+	settle
 	docker image prune -f >/dev/null
 	cd "$ROOT"
 	$COMPOSE ps --format '{{.Service}}: {{.Status}}'
 	;;
 settle)
-	# The end of a `server`, run by the copy that step just installed. Safe to
-	# ask for on its own, since all it does is make sure of things: dev's
-	# signaling exists, seeded from the live folder the first time, so the
-	# dev site's route never points at nothing. After that it is a dev
-	# deploy's to move, and a release leaves it alone.
-	if [ ! -f "$DEV/docker-compose.yml" ]; then
-		mirror "$ROOT" "$DEV"
-		up_dev
-	fi
+	# Safe on its own: all it does is make sure of things.
+	settle
 	;;
 server-dev)
 	staging=$(stage_server)

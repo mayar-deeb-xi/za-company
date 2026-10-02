@@ -12,7 +12,7 @@ environments.md.
 |---|---|---|
 | Game code | Deploy to dev: the dev site and the `dev` pre-release | A release |
 | Signaling code (`server/signaling/`) | Deploy to dev: dev's own signaling, rebuilt from `develop` | A release |
-| `server/deploy.sh` | Nowhere yet - item B below is the CI test that changes that | A release, finished by `settle` (item A) |
+| `server/deploy.sh` | The rehearsal on GitHub's throwaway runner (items A and B) | A release, through the hand-off - from the second release after v0.1.2 on |
 | Caddyfile, coturn, and their parts of the compose file | CI checks only (`caddy validate`, `docker compose config`) | A release, which moves production AND dev at once |
 | The `signaling` part of the compose file | Deploy to dev (dev's signaling starts from dev's own copy) | A release |
 | The server's `.env` | Nowhere | Edited by hand on the server, and it moves both |
@@ -62,10 +62,13 @@ else gets push access: the fix is two keys (environments.md #3), about twenty
 minutes.
 
 **5. Caddy and coturn stay shared.** One of each, owned by the release. They
-almost never change, so a second copy for dev is not worth its ports. The one
-change to watch is coturn's flags: nothing tries them before production (a
-flag coturn rejects is a restart loop, which is the relay down). After any
-release that touches the Caddyfile or coturn, watch the `deploy` job and the
+almost never change, so a second copy for dev is not worth its ports. Dev
+cannot try a change to them, but since items A and B the deploy rehearsal
+does: it starts Caddy and coturn on the new Caddyfile and flags on a
+throwaway runner, checks both sites through Caddy, and fails if coturn
+restarts (a flag coturn rejects is a restart loop, which is the relay down).
+It cannot see the server's real certificates or `.env`, so after any release
+that touches the Caddyfile or coturn, still watch the `deploy` job and the
 site.
 
 **6. The compose file: nothing to do.** It defines three services. Dev's
@@ -115,62 +118,95 @@ A dev copy that dev deploys could update was rejected because of what the
 script is: it runs as root on the box that serves production, and its job is
 deleting and replacing folders - `mirror` empties a whole directory except
 `.env` and `web/`. A half-finished copy of it, one wrong path away from
-production's folder, is the thing most able to break production. The two
-items below solve the actual problem without that.
+production's folder, is the thing most able to break production. Items A
+and B below solve the actual problem without that, and are built.
 
 ## To do
 
-### A. `deploy.sh` finishes its own install (`settle`)
+### A and B. The hand-off and the rehearsal - BUILT 2026-10-03
 
-**Status:** built and committed on `develop` (`0b19288`); arrives with the
-next release. Dev's signaling no longer waits on it - a deploy to dev already
-started it (item 1) - so what it buys now is every FUTURE change to the
-script.
+**Status:** built, and rehearsed on a throwaway machine; waiting for its
+first run on GitHub (the next dry run, deploy to dev or release) and then for
+two releases to take it live. See *Done when*.
 
-At the end of `server`, after installing itself, the script runs the NEW copy
-with `settle`, which does whatever the release taught it - today, starting
-dev's signaling if it has never been started (on this server it has, so that
-part is now a no-op). So a change to the script takes effect in the release
-that ships it, not the one after. `settle` only ever makes sure of things, so
-it is safe to run alone.
+**The hand-off** (`server/deploy.sh`). The `server` step is now only the
+hand-off, run by whatever copy the last release installed: unpack the tar,
+refuse it if it is not a server folder (it must now hold `deploy.sh` too),
+install the new `deploy.sh`, and run it as `apply` on the folder it unpacked.
+`apply` - the new copy - does everything else: the mirror, the stack, Caddy,
+`settle`, the cleanup. So a change to any of that takes effect in the release
+that ships it, and the only lines still a release late are the hand-off's
+own, which must stay small. `apply` refuses to run alone: over SSH it is
+never given a folder.
 
-**Done when:** a release ships it and its `deploy` job passes - the new copy
-runs `settle`, and the dev site's `/healthz` still answers `ok dev` after it.
+`settle` (item A) is folded into it: it is the last thing `apply` does, so it
+too runs as the new copy, and it is still a command of its own, safe alone.
 
-### B. An upgrade test for `deploy.sh` in CI
+**The rehearsal** (`tools/release/rehearse_deploy.sh`, the release
+workflow's `server` job, after the bundle is made). On GitHub's throwaway
+runner, at the server's own paths, with `DOMAIN=localhost` so Caddy signs its
+own certificates and nothing asks the internet:
 
-**Status:** not started. About an afternoon. Costs nothing: GitHub's runner
-is the throwaway machine.
+1. The box as the previous release left it: that release's `deploy.sh`
+   installed, and its own server files deployed by it.
+2. This bundle deployed by THAT script - the upgrade the server will really
+   see. Checks: the installed script is now this commit's, the live site's
+   `/healthz` says `ok` and the dev site's says `ok dev`, both through Caddy
+   by name, the way a player reaches them, and coturn stays up on this
+   commit's flags without restarting.
+3. This bundle again, by the copy step 2 installed - every release after,
+   and the only path that runs the hand-off. Checks: the new copy said it
+   took over, and both sites again.
+4. A deploy to dev (and the live signaling CONTAINER is the same one after
+   it, which is the proof a dev deploy leaves production alone), `settle`
+   alone, a web build to each site, and one with no `index.wasm`, which must
+   be refused with the live site untouched.
 
-The test plays a real upgrade on the release's `server` job, where a wrong
-`rm -rf` destroys nothing:
+Any failure fails the `server` job, and `publish`, `deploy` and `deploy-dev`
+all wait for that job - so a script that cannot upgrade the server stops the
+release before anything is published or the server is touched. On failure
+the log carries `docker ps -a` and both stacks' last lines.
 
-1. Let the script's three paths be overridden from the environment -
-   `ROOT`, `DEV`, and where it installs itself (`/usr/local/sbin/za-deploy`,
-   which `settle` also calls). On the server nothing changes: the forced
-   command runs it with sshd's environment, which a client cannot add to
-   (`PermitUserEnvironment` is off, and sshd accepts only `LANG` and `LC_*`
-   from a client), so the overrides exist only for the test.
-   Also let the test leave out the `tls` profile: Caddy cannot get a
-   certificate on a runner, and `caddy validate` already checks its config.
-2. Install the PREVIOUS release's `deploy.sh` (from its tag) into a temp
-   folder, with a `.env` made from `.env.example`, exactly as the server has
-   it.
-3. Pipe this commit's server bundle to it as `server`. Check: production's
-   signaling answers `ok` on 8765, dev's answers `ok dev` on 8766, and the
-   installed script is now this commit's.
-4. Then `server-dev` with the same bundle (dev's still `ok dev`), `settle`
-   alone (changes nothing), and `web` / `web-dev` with a build missing
-   `index.wasm` (refused, and the live folder untouched).
-5. Fail the job on any of it, so a release cannot ship a script that cannot
-   upgrade itself.
+Two things changed from the plan, both for the better. No path in
+`deploy.sh` had to become overridable: the rehearsal uses the server's REAL
+paths, which is safe because the machine is thrown away - and the script
+refuses to run anywhere `GITHUB_ACTIONS` is not `true`, since on a real
+server it would replace `/opt/za-company`. And it checks through Caddy rather
+than straight at the signaling ports, because the v0.1.2 failure was a route
+with nothing behind it, which only a request by name can see.
 
-**Done when:** the test would fail against v0.1.2's change (old script, new
-bundle, no dev signaling) and passes with `settle`.
+**Proven, 2026-10-03,** in a privileged throwaway container on the
+developer's machine (ubuntu 24.04 with its own Docker):
+
+- v0.1.2 -> this commit, and this commit -> itself: all 21 checks pass.
+- v0.1.1's script deploying v0.1.2's files - the release that shipped the
+  502 - FAILS, at "the dev site reaches dev's own signaling", with the 502.
+  So it would have stopped v0.1.2.
+- This commit with `--no-dtls` added to coturn's flags - the 4.18 trap,
+  a restart loop - FAILS, at "coturn stays up on this commit's flags". So a
+  flag coturn rejects now stops a release instead of taking the relay down.
+
+**When it takes effect on the real server:**
+
+| Release | Deployed by | What happens |
+|---|---|---|
+| The next one | v0.1.2's script, which knows nothing of the hand-off | It deploys the old way and installs the new script. The rehearsal has already checked exactly this upgrade |
+| The one after | The new script | The first deploy through the hand-off; its `deploy` log says `za-deploy: the new copy takes over` |
+
+The rehearsal itself starts at once: it runs on every dry run, deploy to dev
+and release from the next one on. One gap: a push to `develop` that changes
+only `server/` does not start a dry run (release.yml's push `paths` do not
+list it), so such a change is first rehearsed by the next dev deploy or
+release - each of which it blocks if it fails.
+
+**Done when:** the rehearsal has passed once on GitHub; the next release's
+`deploy` job passes; and the release after it shows `the new copy takes
+over` in its `deploy` log.
 
 ### C. A memory cap on the signaling containers
 
-**Status:** step 1 done; the cap itself not started. About fifteen minutes.
+**Status:** SKIPPED for now (decided 2026-10-03). Step 1 is done; the cap
+itself is about fifteen minutes whenever it is wanted.
 
 1. ~~Measure first.~~ Done 2026-10-02, `docker stats --no-stream` on the
    server: production's signaling 11.8 MiB, dev's 17.8 MiB, Caddy 20.9 MiB,
@@ -188,8 +224,9 @@ bundle, no dev signaling) and passes with `settle`.
 
 ### D. Check the dev app on real machines
 
-**Status:** waiting for the next deploy to dev after item 3 is pushed. Ten
-minutes, by hand.
+**Status:** SKIPPED for now (decided 2026-10-03). Ten minutes, by hand,
+whenever a tester first installs a dev build - until then, item 3 is checked
+off disk by `tests/test_release.gd` but has never been installed for real.
 
 - **Windows:** install the dev setup on a machine that has the game
   installed. Expect both in the Start Menu and in *Installed apps*, in two

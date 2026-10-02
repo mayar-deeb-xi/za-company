@@ -164,13 +164,13 @@ before production's service has to move (docs/environments.md, #1 and #2).
 - **`/healthz` says which one answered**: `ok` for the live service, `ok dev`
   for dev's, and the dev deploy checks `https://dev.DOMAIN/healthz` says the
   second - the only proof the dev site's route reaches dev's copy.
-- **A release makes sure it exists**: the end of `deploy.sh server` is run by
-  the copy that step has just installed (`settle`), and seeds dev from the
-  live folder if there is no dev yet, so the dev site's route never points at
-  nothing for long; from then on it moves only with a deploy to dev. v0.1.2
-  was released before `settle` existed, and its old installed script put the
-  dev route in the Caddyfile with nothing behind it until the first deploy to
-  dev. By hand: `docker compose -p za-dev ps` in
+- **A release makes sure it exists**: the end of every release's deploy
+  (`settle`) seeds dev from the live folder if there is no dev yet, so the
+  dev site's route never points at nothing for long; from then on it moves
+  only with a deploy to dev. v0.1.2 was released before that existed, and the
+  script that deployed it put the dev route in the Caddyfile with nothing
+  behind it until the first deploy to dev - see *How a release updates this
+  script* below for why. By hand: `docker compose -p za-dev ps` in
   `/opt/za-company/dev-server`, and `docker compose -p za-dev logs -f
   signaling`.
 - **A dev desktop build finds it too**: a deploy to dev stamps the custom
@@ -263,6 +263,26 @@ WebRTC through this server.
   restart. Players who are already connected keep playing, because their game
   traffic never passes through the signaling service. A deploy to dev moves
   dev's signaling and nothing else (*Dev's signaling* above).
+- **How a release updates this script** - `deploy.sh` replaces itself, and
+  the trap in that is that a release is DEPLOYED by the copy the previous
+  release installed. So `server` does only the hand-off: unpack the tar,
+  refuse it if it is not this folder, install the new `deploy.sh`, and run
+  it as `apply` on what was unpacked. Everything else - the mirror, the
+  stack, Caddy, `settle` - is the NEW copy's, so a change to it takes effect
+  in the release that ships it. Only those few hand-off lines are still a
+  release late, which is why they must stay small; and the hand-off itself
+  starts working one release after the release that ships it, because that
+  release is still deployed by v0.1.2's copy, which has never heard of it.
+- **Every deploy is rehearsed before it happens.** The release workflow's
+  `server` job runs `tools/release/rehearse_deploy.sh` on GitHub's throwaway
+  runner, at this server's own paths: the previous release's `deploy.sh`
+  deploys the new bundle (the upgrade this server will really see), the copy
+  it installed deploys it again (every release after, and the hand-off), then
+  a deploy to dev, `settle` alone and the web builds, a broken one included -
+  each checked through Caddy, by name, with `DOMAIN=localhost` so Caddy signs
+  its own certificates. A script that cannot upgrade the server stops the
+  release there. Replayed against v0.1.2 (v0.1.1's script, v0.1.2's files), it
+  fails on the dev site's 502 that release really shipped.
 - **A changed `Caddyfile` recreates Caddy** rather than reloading it. It is a
   FILE bind mount, and a file replaced on disk is a new inode the running
   container never sees, so `caddy reload` would re-read the old one.

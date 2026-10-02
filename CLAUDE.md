@@ -1487,7 +1487,14 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   Windows and macOS, tests the server, publishes, then its `deploy` job sends
   `server/` and the web build to `server/deploy.sh` with a key that can run
   that script and nothing else (RELEASING.md's *Deploying*), so the site is
-  always the latest release. Never export
+  always the latest release. **Every deploy is rehearsed first**:
+  `tools/release/rehearse_deploy.sh`, in the `server` job, plays the previous
+  release's `deploy.sh` upgrading a throwaway runner to this commit at the
+  server's real paths, then this commit's script again, checked through
+  Caddy - and refuses to run anywhere but CI, because on a real box it would
+  replace `/opt/za-company`. `deploy.sh server` is only a HAND-OFF to the
+  copy it installs (`apply`), because a release is deployed by the PREVIOUS
+  release's script (server/README.md, *How a release updates this script*). Never export
   headless from the project while the editor is open: `--export-release` is a
   second editor writing `.godot/`, so export from a copy. The build is
   single-threaded (no SharedArrayBuffer, so no special headers) and the

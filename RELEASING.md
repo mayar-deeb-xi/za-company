@@ -108,6 +108,15 @@ It logs in with a key of its own, held in the repository secret
 leaked key could put up something this repository would have shipped anyway,
 and nothing more.
 
+Before any of that, the `server` job has already **rehearsed the deploy** on
+GitHub's own throwaway machine: the previous release's `deploy.sh` deploying
+this release's server files at the server's real paths, then the new script
+deploying them again, then a deploy to dev and the web builds, each checked
+through Caddy (`tools/release/rehearse_deploy.sh`). If the rehearsal fails,
+nothing is published and the server is not touched. server/README.md's *How
+a release updates this script* says why the previous release's script is the
+one that matters.
+
 ### Setting it up (once)
 
 The key already exists and the server already accepts it; GitHub only needs
@@ -208,7 +217,12 @@ signaling and the steps that fill them live in the server's own files (the
 Caddyfile and `deploy.sh`), and those reach the server only with a release,
 like everything else of the server's. A dev deploy run before then builds and
 publishes the pre-release, and stops at the step the server does not know yet
-with "expected 'web', 'web-dev', ...". `server-dev` arrived after v0.1.1.
+with "expected 'web', 'web-dev', ...". `server-dev` arrived after v0.1.1. A
+release that changes `deploy.sh` itself takes effect in that release - the
+script hands the deploy to its new copy (server/README.md, *How a release
+updates this script*). The hand-off itself starts working one release after
+the release that ships it, because that release is still deployed by
+v0.1.2's script, which has never heard of it.
 
 ## If something goes wrong
 

@@ -21,7 +21,8 @@ Shared: the droplet, its Caddy, coturn, the deploy key, and the workflow
 (`release.yml` builds both with the same jobs). Of the server's own files only
 `signaling/` can reach dev first - a deploy to dev rebuilds dev's copy of it -
 and the Caddyfile, the compose file and `deploy.sh` still reach the server
-only with a **release**.
+only with a **release** - rehearsed first on a throwaway runner, but never
+tried on dev.
 
 ## When sharing bites
 
@@ -62,13 +63,20 @@ down.
 signaling service from `develop` (`deploy.sh server-dev`), so a signaling
 change runs on dev before a release takes it to production.
 
-**Still true for Caddy and coturn.** There is one of each - one pair of 80/443,
-one TURN port - and they are the release's, so the coturn case above would
-still go straight to production. What narrows it: the release's `server` job
-now runs `caddy validate` on the Caddyfile, so a Caddyfile Caddy rejects
-stops the release; nothing yet starts coturn against its new flags before a
-release. Keep those changes small, and watch the `deploy` job and the site
-after a release that touches them.
+**Still true for Caddy and coturn: dev cannot try them.** There is one of
+each - one pair of 80/443, one TURN port - and they are the release's. What
+closes most of the gap instead is the **deploy rehearsal**
+(`tools/release/rehearse_deploy.sh`, in the release's `server` job, 2026-10-03):
+before anything is published, a throwaway runner is upgraded from the
+previous release to this commit at the server's real paths, which starts
+Caddy and coturn on the NEW Caddyfile and flags, and checks both sites
+through Caddy by name and that coturn stays up without restarting. So the
+coturn case above now stops the release instead of reaching production. And
+`deploy.sh` itself is rehearsed the same way - the upgrade the server will
+really see, then the hand-off (docs/dev_prod_plan.md, items A and B). What
+the rehearsal cannot see is the server's own environment - its real
+certificates, its real `.env` - so still watch the `deploy` job and the site
+after a release that touches the Caddyfile or coturn.
 
 ### 3. One deploy key for both - unlikely, high impact, cheap to fix
 
