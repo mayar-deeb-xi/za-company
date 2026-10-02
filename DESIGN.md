@@ -954,8 +954,9 @@ one that FEELS best rather than the one that is safest.
 ### Still to decide, with the default until then
 
 - **Talking**: whoever presses interact is the one talking and the one HR tows;
-  everyone else keeps their hands and reads along. Whether HR's induction and
-  the contract are the whole party's, or the first player's, is open.
+  everyone else keeps their hands and reads along. **Built that way in M3.**
+  Whether HR's induction and the contract are the whole party's, or the first
+  player's, is still open: today they are whoever talked to her.
 - **Reconnecting** to a run after a drop: not in the first version.
 
 ### Build order — each step leaves solo exactly as it was
@@ -1028,7 +1029,7 @@ one that FEELS best rather than the one that is safest.
         M3. The spike is deleted. `test_lobby.gd` (41 checks). What is left
         of M2 is playing it: a deploy to dev, then two machines through
         dev's own signaling.
-- [ ] M3. **The world in step.** Players from their owners; enemies, bosses,
+- [x] M3. **The world in step.** Players from their owners; enemies, bosses,
         hazards and beats from the host; the damage flow in the table above;
         spawners for what arrives mid-room; travel, health, lives, the boss bar
         and the floor's music all following the host.
@@ -1075,6 +1076,18 @@ one that FEELS best rather than the one that is safest.
         carries the attack it belongs to, so an effect that ends with its
         attack does not end on a guest still a snapshot behind - Big Mo's spark,
         Silverman's copy and prism. `tests/test_coop_bosses.gd` (23 checks).
+        **Step 5 done (2026-10-02), talking - and M3 with it**: whoever presses
+        interact talks, on their own machine as ever; the NPC is LENT to them
+        for its length (npc_base.gd's `led_by`), so HR's tour walks with a
+        guest at its front; it is busy for everybody else, who read its lines
+        along on the subtitle; a prompt is the player at that keyboard's, never
+        somebody else's body's; and Ivan's gift stays the host's to throw.
+        `WIRE` went to 2: a build from before this would join a run and not
+        follow it. `tests/test_coop_talk.gd` (18 checks). Five two-machine
+        suites now stand behind M3, 108 checks between them. What M4 inherits:
+        bodies are drawn at their last word (twenty or thirty a second, no
+        interpolation), the hit-stop is off online, and a third machine sees
+        another's numbers and kill bursts only where M3 already put them.
 - [ ] M4. **The feel.** Remote bodies drawn ~100 ms behind and interpolated;
         the hit-stop visual-only online; effects, numbers and sounds fired
         locally on the host's word.

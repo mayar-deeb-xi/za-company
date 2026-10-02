@@ -32,6 +32,7 @@ extends Node
 
 const Bodies := preload("res://game/sync/bodies.gd")
 const World := preload("res://game/sync/world.gd")
+const Talk := preload("res://game/sync/talk.gd")
 const PlayerType := preload("res://game/player/player.gd")
 
 ## Whether this run is an online one. Decided once, when the scene is built:
@@ -46,6 +47,7 @@ var welcomed := false
 var _game
 var _bodies: Bodies
 var _world: World
+var _talk: Talk
 ## Where the host is now, for whoever arrives late - and where it is going,
 ## between ordering a door and arriving, so a guest who turns up in that gap
 ## is welcomed to the floor everybody else is about to be on.
@@ -63,6 +65,9 @@ func _ready() -> void:
 	_world = World.new()
 	_world.name = "World"
 	add_child(_world)
+	_talk = Talk.new()
+	_talk.name = "Talk"
+	add_child(_talk)
 	if not active:
 		return
 	if is_host():
@@ -107,6 +112,20 @@ func level() -> Node:
 
 func body_of(peer: int) -> PlayerType:
 	return _bodies.body_of(peer)
+
+
+## Talking, which game/sync/talk.gd keeps in step: a conversation on this
+## machine began or ended, and a line of it was shown.
+func talk_began(npc: Node) -> void:
+	_talk.began(npc)
+
+
+func talk_ended(npc: Node) -> void:
+	_talk.ended(npc)
+
+
+func spoke(speaker: String, text: String) -> void:
+	_talk.spoke(speaker, text)
 
 
 # --- what the host tells everybody ------------------------------------------------

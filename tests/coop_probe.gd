@@ -166,6 +166,19 @@ func _answer(what: String, args: Array) -> Variant:
 				(sub.get_node("%Line") as Label).text]
 		"shaking":
 			return float(game.get("_shake_left"))
+		"talking":
+			return bool(game.get_node("Dialogue").call("talking")) if game != null else false
+		"stop_talking":
+			game.get_node("Dialogue").call("stop")
+			return true
+		"call":
+			# A method on a node in the room, by its path there.
+			var level := _level(game)
+			var node := level.get_node_or_null(NodePath(String(args[0]))) if level != null else null
+			if node == null:
+				return false
+			node.callv(String(args[1]), args[2])
+			return true
 		"quit":
 			return true
 	return null

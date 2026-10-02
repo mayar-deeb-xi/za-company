@@ -52,6 +52,9 @@ extends Node
 ## reaching into this script.
 signal started(npc: Node2D)
 signal finished(npc: Node2D)
+## A line put up for the listener - so online the rest of the party can read
+## along (game/sync/talk.gd).
+signal spoke(speaker: String, text: String)
 
 ## How far behind the guide the player is led. A little more than the two
 ## bodies' radii, so following reads as following rather than as pushing - and
@@ -157,6 +160,7 @@ func _play(beat: Dictionary) -> void:
 	if beat.has("text"):
 		_speaker = String(beat.get("name", _speaker))
 		_box.say(_speaker, String(beat["text"]), String(beat.get("voice", "")))
+		spoke.emit(_speaker, String(beat["text"]))
 		if beat.has("options"):
 			var options: Array = beat["options"]
 			_box.offer(options.map(func(o): return String(o["text"])))

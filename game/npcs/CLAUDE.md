@@ -142,6 +142,13 @@ Then `talk_requested`, and that is the end of this folder's involvement.
 game.gd wires it to the director. See game/dialogue/CLAUDE.md for the beat
 format and the escort.
 
+**Online the prompt is THIS machine's** - it answers only to a body that is not
+`remote`, because it is a hint to whoever is at this keyboard, and somebody
+else's player standing beside HR is no reason to put it up on your screen. And
+an NPC is drawn where the host says, except while somebody is talking to it:
+`led_by` names the peer whose machine walks it for the length of the
+conversation (game/dialogue/CLAUDE.md's *Online*).
+
 `speaker_name()` falls back to the ROSTER's name rather than to the export,
 and derives which roster entry it is from the frames the scene was built with -
 a display name typed twice is a display name that drifts, and a scene pointing

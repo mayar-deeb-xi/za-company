@@ -98,6 +98,10 @@ var _talking := false
 ## every entry (see the root CLAUDE.md), so this resets with the level, like a
 ## consumed pickup does.
 var _greeted := false
+## Online, who is walking this NPC about: 0 for the host, as for everything in
+## the room, or the peer of whoever is talking to it - their machine leads it
+## for the length of the conversation (game/sync/talk.gd).
+var led_by := 0
 
 
 func _ready() -> void:
@@ -136,7 +140,8 @@ func net_spawn() -> Dictionary:
 
 
 func apply_net_state(state: Array) -> void:
-	if state.size() < 4:
+	# Led from here, it is this machine's to place, not the snapshot's.
+	if state.size() < 4 or (led_by != 0 and led_by == multiplayer.get_unique_id()):
 		return
 	global_position = state[0]
 	var anim := StringName(state[1])
@@ -147,8 +152,9 @@ func apply_net_state(state: Array) -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	# A guest draws them where the host says, and walks them nowhere itself.
-	if not multiplayer.is_server():
+	# Walked by the host - or, while somebody is talking to them, by the
+	# talker's machine. Everybody else draws them where they are told.
+	if not _walked_here():
 		return
 	if _target == null:
 		velocity = Vector2.ZERO
@@ -172,11 +178,21 @@ func _physics_process(_delta: float) -> void:
 	move_and_slide()
 
 
+## Whether this machine walks this NPC - see `led_by`.
+func _walked_here() -> bool:
+	if led_by == 0:
+		return multiplayer.is_server()
+	return led_by == multiplayer.get_unique_id()
+
+
 ## The player is close enough to be spoken to, and nothing else is going on.
 ## `greets` turns arriving in range into the request itself; otherwise the
 ## prompt goes up and the key makes it.
+##
+## THIS machine's player, online: the prompt is a hint to whoever is at this
+## keyboard, so somebody else's body standing here is not a reason to show it.
 func _on_body_entered(body: Node2D) -> void:
-	if not body.is_in_group("player") or conversation == "":
+	if not body.is_in_group("player") or conversation == "" or body.get("remote") == true:
 		return
 	_near = true
 	_refresh_prompt()
@@ -186,7 +202,7 @@ func _on_body_entered(body: Node2D) -> void:
 
 
 func _on_body_exited(body: Node2D) -> void:
-	if not body.is_in_group("player"):
+	if not body.is_in_group("player") or body.get("remote") == true:
 		return
 	_near = false
 	_refresh_prompt()

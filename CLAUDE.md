@@ -1319,6 +1319,11 @@ The host is the truth for everything but where a body is:
   same thing on each guest hears it in `net_event()` (game/bosses/CLAUDE.md's
   *Online*). The host picks a line and tells WHICH, so every machine reads the
   same words and plays the same clip.
+- **Whoever presses the key talks** (game/sync/talk.gd): their machine runs the
+  conversation and leads the NPC - lent to them for its length, so HR's tour
+  works with a guest at its front - it is busy for everybody else, and they
+  read the lines along on the subtitle. The game's own `WIRE` is 2 from here:
+  a build from before the run was in step is refused rather than let into one.
 
 ## Settings
 
@@ -1527,7 +1532,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Thirty-six suites,
+  They drive the real game with synthesized input and exit 0/1. Thirty-seven suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1883,6 +1888,13 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     going through the guest's player there too and solid again after. Each boss
     is made to do the thing under test, the way test_ahmed_moves.gd stages a
     move.
+  - `test_coop_talk.gd` - the same two machines, and TALKING: a prompt comes up
+    only for the player at that keyboard; the guest talks to HR, she is the
+    guest's to lead and busy on the host, the host reads her lines along on its
+    subtitle, she walks on the host's screen where the guest's machine walks
+    her and is the host's again once the guest is done; the host talks to her
+    and she is busy on the guest's machine; and a guest who talks Ivan through
+    is thrown his hearts by the host, landing on the guest's floor.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

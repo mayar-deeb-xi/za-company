@@ -63,8 +63,9 @@ const Heads := preload("res://game/heads.gd")
 const PROTOCOL := 2
 ## The game's own: what a guest says in its hello, and what the host refuses
 ## when it differs. Bump it with anything that changes what the two ends say to
-## each other once they are connected.
-const WIRE := 1
+## each other once they are connected. 2 is M3: the run itself in step
+## (game/sync/), which a build from before it would join and then not follow.
+const WIRE := 2
 ## Ours (server/README.md). The live service is what a RELEASE talks to; dev's
 ## own copy is what dev builds and the editor talk to - see signaling_url().
 const LIVE_SIGNALING := "wss://za-company.mayar-deeb.dev"

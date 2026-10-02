@@ -162,6 +162,10 @@ func _ready() -> void:
 	# see _on_node_added. Connected BEFORE the first level is built, because
 	# building one is what adds the first of them.
 	get_tree().node_added.connect(_on_node_added)
+	# Talking, online: the rest of the party hears of it (game/sync/talk.gd).
+	_dialogue.started.connect(_sync.talk_began)
+	_dialogue.finished.connect(_sync.talk_ended)
+	_dialogue.spoke.connect(_sync.spoke)
 	# The front end's track ends here rather than at the character select, so
 	# it carries over the load and goes out under the first room's fade-in.
 	Music.fade_out()
@@ -825,6 +829,15 @@ func net_up(body: PlayerType, at: Vector2) -> void:
 
 func net_over() -> void:
 	_game_over()
+
+
+## A line somebody else in the party is being told, read along on the
+## subtitle - which takes nobody's hands - for about as long as it takes to
+## read. Not over a conversation of this machine's own, which owns the bottom
+## of the screen.
+func net_line(speaker: String, text: String) -> void:
+	if not _dialogue.talking():
+		_subtitle.show_line(speaker, text, maxf(2.0, text.length() / 13.0))
 
 
 ## A member gone from the party, mid-run - on the host when they drop, and on

@@ -140,6 +140,29 @@ both halves of this - that the box stayed short, and that no line was ever
 taller than the rect drawing it - so rewording a line or changing the font
 size cannot quietly reintroduce either failure.
 
+## Online: whoever pressed the key is the one talking
+
+DESIGN.md's default, and what was built (game/sync/talk.gd): the machine whose
+player pressed interact runs the conversation exactly as it always has - its
+own director, box, choices, and its own player led about by the escort - and
+everybody else keeps their hands and reads along. Three things make that hold:
+
+- **The NPC is lent to the talker.** It is the host's like anything in the
+  room until a conversation starts; then the talker's machine walks it (npc
+  _base.gd's `led_by`) and says where it is, the host draws it there, and the
+  room's snapshot carries it to everybody else. That is the whole of what lets
+  HR's tour work with a guest at the front of it.
+- **It is busy for everybody else** for the length of it - their prompt for it
+  goes and their key does nothing - and on the host that is `set_talking` like
+  any conversation's, which is the edge Ivan's gift hangs off. So a guest who
+  talked him through is thrown the hearts by the host, and they land on every
+  machine.
+- **The rest read along**: the director says each line it puts up (`spoke`),
+  and the other machines show it on the subtitle, which takes nobody's hands.
+
+The director needed one signal for all of that. What two people pressing the
+key at the same moment do is M6's.
+
 ## Overlays are scenes, by path
 
 A beat's `show` takes a scene path and `hide` takes it away. The director never
