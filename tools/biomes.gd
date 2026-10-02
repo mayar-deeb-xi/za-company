@@ -194,10 +194,10 @@ extends RefCounted
 ## its own order, and the two demo biomes are dealt INTO it - the marble hall
 ## between the hub and the innovation lab, hellfire between asset recovery
 ## and the executive floor - so a run still walks through both of them and
-## ends where the story ends, in Khaled's office.
+## ends where the story ends, in Silverman's office.
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
 		"the_hub", "marble_hall", "innovation_lab", "conflict_resolution",
-		"asset_recovery", "hellfire", "executive_floor", "khaled_office"]
+		"asset_recovery", "hellfire", "executive_floor", "silverman_office"]
 
 ## Assembled from the per-floor files at load, keyed by CHAIN name, so every
 ## existing `Biomes.BIOMES[level]` read works exactly as it did when this was

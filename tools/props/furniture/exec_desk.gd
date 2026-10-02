@@ -1,5 +1,5 @@
 extends RefCounted
-## The one desk in Khaled's office, and the point of it is what is NOT on it.
+## The one desk in Silverman's office, and the point of it is what is NOT on it.
 ## Every other desk in the building is buried - the workstation has a cup
 ## nobody washed, the dev desk has a duck and a keyboard, the call station has
 ## a queue counter running. This one is a polished slab with a pen laid square

@@ -447,9 +447,11 @@ changed anywhere was `cut.py` turning that `\n` into a real break on its way to
 the API. What it COSTS is length - his lines run twice as long and stand three
 rows tall - so he says fewer of them (`cue_seconds` 12 against the default 9,
 14 on both attack cues), and anything added to his file has to be short in both
-languages. He is Khaled; the bar still says SILVERMAN, and nothing in his lines
-mentions either fact, on the rule that a name passed up the stairs is the whole
-threat.
+languages. He is Silverman on the bar, on the floor card and in the lines that
+pass you up to him, and nothing in his own lines says what he is to the other
+two, on the rule that a name passed up the stairs is the whole threat. He has
+ONE name - id, folder, floor, bar and every line agree - so unlike Ivo and
+Domimi he is not in *Names on screen are not the ids*.
 
 **A boss makes noise the way he gets a health bar: by owning the files.**
 `game/enemies/enemy_audio.gd` is an `Audio` child holding id -> stream, and
@@ -677,7 +679,7 @@ third beat - see Enemies). At the end of his lines he throws **one heart per
 head**, once per visit, and the count is `game/heads.gd` - the same function a
 second beat's `per_head` reads, which is why that function is a file rather than
 a line in either of them. Six floors have him: call_center, ahmed_office,
-conflict_resolution, asset_recovery, executive_floor and khaled_office - the
+conflict_resolution, asset_recovery, executive_floor and silverman_office - the
 floor before the first boss, and then after every big fight to the roof.
 Everything else about him is npc_base, and `ivan.gd` is the only NPC script in
 the folder.

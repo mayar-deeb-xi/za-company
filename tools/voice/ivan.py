@@ -16,7 +16,7 @@ They cut as one voice into one folder, which is the whole reason the clip names
 are namespaced by floor: nothing dedupes across files, so two floors that both
 called their last clip `eat` would cut once and the second floor would quietly
 play the first floor's read. `call_`, `ahmed_`, `gym_`, `assets_`, `exec_`,
-`khaled_` makes that impossible to do by accident - and every floor really does
+`silverman_` makes that impossible to do by accident - and every floor really does
 end on the same word, so it is not a hypothetical here.
 
 The names are worded rather than numbered for the reason every conversation's
@@ -74,7 +74,7 @@ BEATS = [
     "game/npcs/ivan/after_conflict_resolution.gd",
     "game/npcs/ivan/after_asset_recovery.gd",
     "game/npcs/ivan/after_executive_floor.gd",
-    "game/npcs/ivan/after_khaled_office.gd",
+    "game/npcs/ivan/after_silverman_office.gd",
 ]
 
 ## Levelling. Every mouth in the game sits at -19: a file's own level IS the mix
@@ -113,9 +113,9 @@ TAGS = {
     "exec_kitchen": _LOW,
     "exec_quickly": _HUSHED,
 
-    "khaled_heard": _GRUFF,
-    "khaled_sixteen": _LOW,
-    "khaled_nothing_above": _WARM,
+    "silverman_heard": _GRUFF,
+    "silverman_sixteen": _LOW,
+    "silverman_nothing_above": _WARM,
 }
 
 ## A beat written tomorrow that nobody has directed yet still cuts, in the read

@@ -5,8 +5,8 @@ extends RefCounted
 ## Data only, read by tools/biomes.gd; the key reference lives there.
 
 const BIOME := {
-	"node": "KhaledOffice",
-	"title": "KHALED'S OFFICE",
+	"node": "SilvermanOffice",
+	"title": "SILVERMAN'S OFFICE",
 	# The other half of the executive floor's track - the same file, named
 	# again rather than inherited, because a floor is furnished from its own
 	# data and nothing here reads the floor below. Silverman deliberately
@@ -155,5 +155,5 @@ const BIOME := {
 	# he is on the inside of it with you. East of the desk and off the rug, in
 	# the open floor the fight is fought across.
 	"relief": {"npc": "ivan", "from": "start", "at": Vector2(400, 176),
-		"say": "res://game/npcs/ivan/after_khaled_office.gd"},
+		"say": "res://game/npcs/ivan/after_silverman_office.gd"},
 }

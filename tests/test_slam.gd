@@ -54,7 +54,7 @@ const SECURITY := "res://game/enemies/security/security.tscn"
 ## scripts instead, and the chain is read as built scenes off disk.
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
 		"the_hub", "marble_hall", "innovation_lab", "conflict_resolution",
-		"asset_recovery", "hellfire", "executive_floor", "khaled_office"]
+		"asset_recovery", "hellfire", "executive_floor", "silverman_office"]
 
 ## Open lobby floor, well clear of the reception desk and both doorways.
 const SPOT := Vector2(400, 150)

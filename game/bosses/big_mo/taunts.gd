@@ -9,10 +9,10 @@ extends RefCounted
 ##
 ## ## Nobody says HOW they are related
 ##
-## Big Mo is Ahmed's uncle and Khaled is his brother, and not one line in the
+## Big Mo is Ahmed's uncle and Silverman is his brother, and not one line in the
 ## game says so. A name is the whole threat - this man knows the next one and
 ## can reach him - and spelling out the blood turns three bosses into a soap
-## opera. So he says "Ahmed" and he says "Khaled", and that is all he says.
+## opera. So he says "Ahmed" and he says "Silverman", and that is all he says.
 ##
 ## ## He is the opposite of Ahmed, on purpose
 ##
@@ -117,9 +117,9 @@ const LINES := {
 	],
 
 	# The end, and it passes you up the building exactly as Ahmed passed you to
-	# him. Khaled is the name on the top floor.
+	# him. Silverman is the name on the top floor.
 	"concede": [
-		{"text": "I'm escalating this. To Khaled.",
+		{"text": "I'm escalating this. To Silverman.",
 			"voice": VOICE + "concede_1.wav"},
 	],
 }

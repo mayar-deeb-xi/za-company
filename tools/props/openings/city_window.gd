@@ -10,7 +10,7 @@ extends RefCounted
 ## the END of the chain: a level with a floor above it has a doorway cut
 ## through its north wall, and a panoramic window drawn across that doorway
 ## would glaze the way out. The first draft carried a 96 px hole for exactly
-## that reason, and lost it the moment Khaled's office became the last room.
+## that reason, and lost it the moment Silverman's office became the last room.
 ## Anything fitting this to a floor with a north door has to put the hole back.
 ##
 ## The sky and the city are fixed colours, like fire and hearts and coffee. A

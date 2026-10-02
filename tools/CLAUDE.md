@@ -56,7 +56,7 @@ floor's to decline - an empty `columns` layout, `"hazard": "none"`, and
 `"heart": true`, `"dolly"` or `"scrubbers"` left unsaid - and the generator
 then deletes that level's column.tscn, torch.tscn, health_item.tscn,
 dolly.tscn or scrubber.tscn rather than
-leave a scene nothing points at. The gym and Khaled's office decline the lot,
+leave a scene nothing points at. The gym and Silverman's office decline the lot,
 and both have an empty `fixtures/` folder to show for it.
 
 **And a shelf that does not exist yet is made by putting the first file on

@@ -31,7 +31,7 @@ const SAYS := {
 	"conflict_resolution": "res://game/npcs/ivan/after_conflict_resolution.gd",
 	"asset_recovery": "res://game/npcs/ivan/after_asset_recovery.gd",
 	"executive_floor": "res://game/npcs/ivan/after_executive_floor.gd",
-	"khaled_office": "res://game/npcs/ivan/after_khaled_office.gd",
+	"silverman_office": "res://game/npcs/ivan/after_silverman_office.gd",
 }
 const SAY: String = SAYS["call_center"]
 
@@ -297,7 +297,7 @@ func _baked() -> void:
 		"conflict_resolution": Vector2(412, 144),
 		"asset_recovery": Vector2(80, 180),
 		"executive_floor": Vector2(324, 196),
-		"khaled_office": Vector2(400, 176),
+		"silverman_office": Vector2(400, 176),
 	}
 	for name in floors:
 		var room := (load("res://game/levels/%s/%s.tscn" % [name, name])

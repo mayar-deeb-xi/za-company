@@ -1,5 +1,5 @@
 extends RefCounted
-## DESIGN.md's face-down sticky note, on the desk in Khaled's office. It is
+## DESIGN.md's face-down sticky note, on the desk in Silverman's office. It is
 ## shelved with the signs because it IS one - the only one in the game turned
 ## over, and the only thing written on a wall or a desk anywhere in this
 ## building that the player cannot read yet. What shows through the back of it

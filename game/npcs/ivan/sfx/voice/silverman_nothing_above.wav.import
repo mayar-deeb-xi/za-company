@@ -3,12 +3,12 @@
 importer="wav"
 type="AudioStreamWAV"
 uid="uid://ctaji5v7cali7"
-path="res://.godot/imported/khaled_nothing_above.wav-379f20bd590d8c63551b340f61a80e9a.sample"
+path="res://.godot/imported/silverman_nothing_above.wav-ed72828de3328902124cf2c9a098c131.sample"
 
 [deps]
 
-source_file="res://game/npcs/ivan/sfx/voice/khaled_nothing_above.wav"
-dest_files=["res://.godot/imported/khaled_nothing_above.wav-379f20bd590d8c63551b340f61a80e9a.sample"]
+source_file="res://game/npcs/ivan/sfx/voice/silverman_nothing_above.wav"
+dest_files=["res://.godot/imported/silverman_nothing_above.wav-ed72828de3328902124cf2c9a098c131.sample"]
 
 [params]
 

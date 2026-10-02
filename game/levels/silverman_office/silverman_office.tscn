@@ -1,28 +1,28 @@
 [gd_scene format=4 uid="uid://cgm8u7oh8o5e8"]
 
 [ext_resource type="Script" path="res://game/levels/level.gd" id="1_0psmc"]
-[ext_resource type="TileSet" path="res://game/levels/khaled_office/tileset.tres" id="2_ehf36"]
-[ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/openings/city_window.tscn" id="3_apq2v"]
-[ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/furniture/chair.tscn" id="4_usd7h"]
-[ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/furniture/exec_desk.tscn" id="5_kkrdu"]
-[ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/signs/sticky_note.tscn" id="6_w5afp"]
-[ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/furniture/plant.tscn" id="7_djto5"]
-[ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/furniture/table.tscn" id="8_keke3"]
-[ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/markings/rug.tscn" id="9_amvgg"]
-[ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/furniture/sofa.tscn" id="10_83wwc"]
-[ext_resource type="PackedScene" path="res://game/levels/khaled_office/props/furniture/bar_cart.tscn" id="11_m63ni"]
+[ext_resource type="TileSet" path="res://game/levels/silverman_office/tileset.tres" id="2_ehf36"]
+[ext_resource type="PackedScene" path="res://game/levels/silverman_office/props/openings/city_window.tscn" id="3_apq2v"]
+[ext_resource type="PackedScene" path="res://game/levels/silverman_office/props/furniture/chair.tscn" id="4_usd7h"]
+[ext_resource type="PackedScene" path="res://game/levels/silverman_office/props/furniture/exec_desk.tscn" id="5_kkrdu"]
+[ext_resource type="PackedScene" path="res://game/levels/silverman_office/props/signs/sticky_note.tscn" id="6_w5afp"]
+[ext_resource type="PackedScene" path="res://game/levels/silverman_office/props/furniture/plant.tscn" id="7_djto5"]
+[ext_resource type="PackedScene" path="res://game/levels/silverman_office/props/furniture/table.tscn" id="8_keke3"]
+[ext_resource type="PackedScene" path="res://game/levels/silverman_office/props/markings/rug.tscn" id="9_amvgg"]
+[ext_resource type="PackedScene" path="res://game/levels/silverman_office/props/furniture/sofa.tscn" id="10_83wwc"]
+[ext_resource type="PackedScene" path="res://game/levels/silverman_office/props/furniture/bar_cart.tscn" id="11_m63ni"]
 [ext_resource type="PackedScene" path="res://game/bosses/silverman/silverman.tscn" id="12_knaxp"]
 [ext_resource type="Script" path="res://game/bosses/silverman/silverman.gd" id="13_itswt"]
-[ext_resource type="PackedScene" path="res://game/levels/khaled_office/door.tscn" id="14_2kcvy"]
+[ext_resource type="PackedScene" path="res://game/levels/silverman_office/door.tscn" id="14_2kcvy"]
 [ext_resource type="Script" path="res://game/levels/door_base.gd" id="15_blxhl"]
-[ext_resource type="Texture2D" path="res://game/levels/khaled_office/doorway_back.tres" id="16_drahl"]
+[ext_resource type="Texture2D" path="res://game/levels/silverman_office/doorway_back.tres" id="16_drahl"]
 [ext_resource type="Script" path="res://game/levels/reinforcements.gd" id="17_dc42r"]
 [ext_resource type="Script" path="res://game/levels/relief.gd" id="18_6dh1p"]
 
-[node name="KhaledOffice" type="Node2D" unique_id=1698801012]
+[node name="SilvermanOffice" type="Node2D" unique_id=1698801012]
 y_sort_enabled = true
 script = ExtResource("1_0psmc")
-display_name = "KHALED'S OFFICE"
+display_name = "SILVERMAN'S OFFICE"
 music = "res://assets/music/finale_loop.wav"
 
 [node name="Floor" type="TileMapLayer" parent="." unique_id=1924229391]
@@ -130,4 +130,4 @@ waves = [{
 [node name="Relief" type="Node2D" parent="." unique_id=1683752708]
 script = ExtResource("18_6dh1p")
 at = Vector2(400, 176)
-say = "res://game/npcs/ivan/after_khaled_office.gd"
+say = "res://game/npcs/ivan/after_silverman_office.gd"

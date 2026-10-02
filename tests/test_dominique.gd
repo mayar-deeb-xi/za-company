@@ -32,7 +32,7 @@ const OFFICE_BOY := "res://game/enemies/office_boy/office_boy.tscn"
 ## notice, not something it should quietly absorb.
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
 	"the_hub", "marble_hall", "innovation_lab", "conflict_resolution",
-	"asset_recovery", "hellfire", "executive_floor", "khaled_office"]
+	"asset_recovery", "hellfire", "executive_floor", "silverman_office"]
 
 ## The three floors that carry a briefing, and what each one is for. Read back
 ## off disk at the end: everything above this builds its own beat, so without

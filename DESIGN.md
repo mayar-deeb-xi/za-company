@@ -10,7 +10,7 @@ Status legend: [ ] not started · [x] done. Update statuses as steps land.
 ## Premise
 
 First day at the company. Your laptop connects to nothing: the WiFi password
-changes weekly and only Khaled (top floor, calendar booked until 2031) knows
+changes weekly and only Silverman (top floor, calendar booked until 2031) knows
 it. You climb the building floor by floor. Tone is affectionate workplace
 comedy — these are real colleagues; jokes stay warm, never mean.
 
@@ -93,7 +93,7 @@ are counted in):
 | 9 | asset_recovery | 10 | 10 `office_boy`, four knots |
 | 10 | hellfire | 10 | 6 `regular` + 3 `wraith` + 1 `warden` (placed) |
 | 11 | executive_floor | 11 | 7 `regular` + 2 `wraith` + 2 `warden` (placed) |
-| 12 | khaled_office | 0 | final boss arena - SILVERMAN placed, beat live |
+| 12 | silverman_office | 0 | final boss arena - SILVERMAN placed, beat live |
 
 Three of those are decisions rather than transcriptions of the floor list above.
 **The innovation lab, which had no mechanic assigned, becomes the first
@@ -161,7 +161,7 @@ clears and stays clear.
       - **F8 Big Mo** — 1 `office_boy` at 96 HP and again at 48. It lands on
         the floor's own idea: the corner rush already makes the edges dangerous,
         and a body arriving mid-rhythm is a body you have to fit into a rhythm.
-      - **F12 Khaled** — held until he exists. His three phases already fold in
+      - **F12 Silverman** — held until he exists. His three phases already fold in
         a `call_center` slow pulse and `social_media` drain, so whether real
         bodies would say the same thing twice is a question for the built fight.
 - [x] **Every floor but the lobby has a beat.** Reversed from "nowhere else
@@ -306,7 +306,7 @@ straight door-to-door walk stays safe.
 **This list is in chain order.** `tools/biomes.gd`'s `CHAIN` is the floor plan
 the game actually walks, and the numbers below match it: lobby ->
 content_studio -> call_center -> ahmed_office -> the_hub -> innovation_lab ->
-conflict_resolution -> asset_recovery -> executive_floor -> khaled_office.
+conflict_resolution -> asset_recovery -> executive_floor -> silverman_office.
 The two demo biomes are dealt into that order rather than parked on the end
 of it - `marble_hall` sits between F5 and F6, `hellfire` between F8 and F9 -
 and they are deliberately not in this list, because they are placeholders
@@ -665,7 +665,7 @@ names the room, and the fiction carries which floor it is.
   the floor's late beat - one more `warden` at 4 kills, arriving at the
   chokepoint, which is the only legal way to put a body there.
   Ivan arrives at (324, 196) once the room is clear.
-- [x] **F10 Khaled's Office** (FINAL): penthouse, city window, one desk, one
+- [x] **F10 Silverman's Office** (FINAL): penthouse, city window, one desk, one
   face-down sticky note. Wide open arena. South door seals behind you.
   Dominique waits outside ("Whatever happens up there… CC me."). Ivan.
   **Built**: the only ramp in the game with no warmth anywhere in it -
@@ -686,7 +686,7 @@ names the room, and the fiction carries which floor it is.
     penthouse is the END of the chain: a level with a floor above it has a
     doorway cut through its north wall, and a panoramic window drawn across
     that doorway would glaze the way out. It carried a 96 px hole for exactly
-    that reason until Khaled's office became the last room. The sky and the
+    that reason until Silverman's office became the last room. The sky and the
     city are fixed colours; only the frame and the sill take the room's.
   - `exec_desk`, and the point of it is what is NOT on it: every other desk in
     the building is buried, and this one is a mirror-polished slab with a pen
@@ -704,7 +704,7 @@ names the room, and the fiction carries which floor it is.
   rug comes out platinum on slate.
   Ivan arrives at (400, 176) once the room is clear - though on this floor
   "clear" waits on a boss who does not exist yet.
-  **Still to add**: Khaled, and the south door sealing behind you, which is a
+  **Still to add**: Silverman, and the south door sealing behind you, which is a
   `can_travel()` override on this level's own script.
 
 ## Bosses — overrides on enemy_base.gd's cycle, built in this order
@@ -779,7 +779,7 @@ unlocks.
   his hands come down. boss_base plays `concede_side` at zero health and the
   row has to exist; replacing it is adding frames to poses.gd and nothing
   else.
-- [ ] **KHALED — 288 HP solo (+96 a head), F10.** Smooth = never hurries; each phase announced by
+- [ ] **SILVERMAN — 288 HP solo (+96 a head), F10.** Smooth = never hurries; each phase announced by
   adjusting his cuffs:
   - P1 "The Handshake" (192→128): single strikes, 0.8s telegraph, 20 dmg,
     gliding movement. Standard interrupts. The fair phase.
@@ -805,15 +805,15 @@ unlocks.
   change never land together. It is the one boss floor with no door to lock: the
   penthouse ends the chain, so there is no north wall to cut and beating him
   opens nothing.
-  **Settled: Silverman IS Khaled, and the bar still says SILVERMAN.** There is
-  no boss above him and no rename coming. The floor announces itself as
-  KHALED'S OFFICE, his bar says SILVERMAN, and the two never meet on screen -
-  `title()` reads the scene's filename and the floor card reads the biome, so
-  neither had to learn about the other. Nothing in the game says he is Khaled;
-  it is the rule the other two already follow, that a name passed up the stairs
-  is the whole threat and the blood is never spelled out. Big Mo escalates
-  "to Khaled", the player walks into KHALED'S OFFICE, and the man waiting there
-  does not introduce himself.
+  **Settled: he is Silverman, and it is his office.** There is no boss above
+  him and no rename coming. The floor announces itself as SILVERMAN'S OFFICE,
+  his bar says SILVERMAN, and the two never meet in code - `title()` reads the
+  scene's filename and the floor card reads the biome, so neither had to learn
+  about the other. What he is to the other two is never said; it is the rule
+  they already follow, that a name passed up the stairs is the whole threat and
+  the blood is never spelled out. Big Mo escalates "to Silverman", the player
+  walks into SILVERMAN'S OFFICE, and the man waiting there does not introduce
+  himself.
   **He talks, and he says everything twice** - Swedish, then the same thing in
   English. Twenty lines across nine cues in `silverman/taunts.gd`, voiced by a
   Swedish voice reading both halves in one take. He is the gracious one: he
@@ -827,18 +827,18 @@ unlocks.
 
 ## Ending — two codes, two jobs
 
-Khaled's concession speech, then:
+Silverman's concession speech, then:
 
 1. **WiFi password** (closes the story; the sticky note):
    `ZA-C0MPANY-Wi-Fi!2026` — fictional, part of the joke.
 2. **Discount code** (the real reward): "The WiFi gets you connected. This —
    this is because you impressed me." A REAL redeemable discount code for the
    company's product, shown only on beating the game. Placeholder
-   `KHALED-APPROVED`; keep it as ONE constant in the ending scene so marketing
+   `SILVERMAN-APPROVED`; keep it as ONE constant in the ending scene so marketing
    can rotate it without touching anything else.
 
 Smash cut: desk, laptop connected, notification "Welcome to the team 🎉 —
-Khaled". Dominique: "Password changes Monday. The discount doesn't." Credits.
+Silverman". Dominique: "Password changes Monday. The discount doesn't." Credits.
 
 ## Multiplayer — online co-op, one player hosts
 
@@ -1011,14 +1011,14 @@ one that FEELS best rather than the one that is safest.
         room rather than resetting it. **ALL TEN ROOMS EXIST**, in chain
         order: F1 the lobby, F2 the content studio, F3 the call center, F5 the
         hub, F6 the innovation lab, F7 the gym, F8 asset recovery, F9 the
-        executive floor and F10 Khaled's office are dressed, and F4 Ahmed's
+        executive floor and F10 Silverman's office are dressed, and F4 Ahmed's
         office is a room waiting for its boss. Every one of them is empty of
         enemies except F8, which has its four office boys - the cast goes in
         by hand, floor by floor.
         The two demo biomes are not on the end of the chain any more - they
         are dealt INTO the building, `marble_hall` between F5 and F6 and
         `hellfire` between F8 and F9, so a run walks all ten floors in
-        DESIGN.md's own order and ends where the story ends, in Khaled's
+        DESIGN.md's own order and ends where the story ends, in Silverman's
         office. Both are still demo rooms and both still hold the only fights
         above asset recovery, which is what keeps the flow suite's enemy checks
         somewhere real while the reskins are unbuilt.
@@ -1073,7 +1073,7 @@ one that FEELS best rather than the one that is safest.
 - [x] 5. Boss plumbing: locked north door (done: game/levels/boss_door.gd),
         defeat -> concede -> unlock (done: boss_base.gd), boss HP bar on HUD
         (done: ui/hud/boss_bar.gd, found by group so every boss gets one).
-- [ ] 6. Bosses in order Ahmed -> Big Mo -> Khaled (each adds one idea:
+- [ ] 6. Bosses in order Ahmed -> Big Mo -> Silverman (each adds one idea:
         summons; multi-hit rhythm; phases). Ahmed is built, less his summon.
 - [ ] 7. Ending: sticky-note screen, discount code constant, credits.
 - [x] 8. Tests: new `tests/test_bosses.gd` suite (one suite = one world);

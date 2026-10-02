@@ -542,7 +542,7 @@ beats is the shape of its lesson restated:
 | F11 executive_floor | 4 kills | 1 `warden` + 2 `regular` | +1 `regular` | chokepoint |
 | | 9 kills | `regular` + drain | +1 `regular` | south |
 | | 13 kills | 2 `regular` | +1 `regular` | chokepoint |
-| F12 khaled_office | 0.75 / 0.5 / 0.25 of HP | 2 drains / **slow**+boy / 2 drains+boy | +drain / +boy / +drain | south |
+| F12 silverman_office | 0.75 / 0.5 / 0.25 of HP | 2 drains / **slow**+boy / 2 drains+boy | +drain / +boy / +drain | south |
 
 Five of those rows carry something worth knowing:
 
@@ -610,7 +610,7 @@ have one:
 | F8 conflict_resolution | (412, 144) | ringside, after Big Mo |
 | F9 asset_recovery | (80, 180) | the heaviest `per_head` in the game deserves the matching heal |
 | F11 executive_floor | (324, 196) | the exam floor, last stop before the roof |
-| F12 khaled_office | (400, 176) | the finale |
+| F12 silverman_office | (400, 176) | the finale |
 
 **He is an arrival, not a placement, and that is the whole design.** Standing him
 in the room from the first frame would put a solid 64px body inside an

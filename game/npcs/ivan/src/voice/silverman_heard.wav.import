@@ -3,12 +3,12 @@
 importer="wav"
 type="AudioStreamWAV"
 uid="uid://d336j60tmw2gx"
-path="res://.godot/imported/khaled_heard.wav-37797c88ea0c8df00f98125d148ac5d7.sample"
+path="res://.godot/imported/silverman_heard.wav-0c5ef8d4d5b0f9d1fed0058cf138b694.sample"
 
 [deps]
 
-source_file="res://game/npcs/ivan/src/voice/khaled_heard.wav"
-dest_files=["res://.godot/imported/khaled_heard.wav-37797c88ea0c8df00f98125d148ac5d7.sample"]
+source_file="res://game/npcs/ivan/src/voice/silverman_heard.wav"
+dest_files=["res://.godot/imported/silverman_heard.wav-0c5ef8d4d5b0f9d1fed0058cf138b694.sample"]
 
 [params]
 

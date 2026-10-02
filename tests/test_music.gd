@@ -41,10 +41,10 @@ extends "res://tests/helpers.gd"
 
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
 	"the_hub", "marble_hall", "innovation_lab", "conflict_resolution",
-	"asset_recovery", "hellfire", "executive_floor", "khaled_office"]
+	"asset_recovery", "hellfire", "executive_floor", "silverman_office"]
 
 const EXEC := "res://game/levels/executive_floor/executive_floor.tscn"
-const PENTHOUSE := "res://game/levels/khaled_office/khaled_office.tscn"
+const PENTHOUSE := "res://game/levels/silverman_office/silverman_office.tscn"
 const FINALE := "res://assets/music/finale_loop.wav"
 const LOBBY := "res://assets/music/lobby_loop.wav"
 
@@ -59,7 +59,7 @@ const RATE := 24000
 const SCORED := {
 	"lobby": LOBBY,
 	"executive_floor": FINALE,
-	"khaled_office": FINALE,
+	"silverman_office": FINALE,
 }
 
 ## A door transition is two fades plus travel (~40 frames), and a handoff

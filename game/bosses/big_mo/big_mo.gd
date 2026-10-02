@@ -147,8 +147,8 @@ const HIT_STOP_HOOK := 1.3
 ## moment: his floor cues a reinforcement beat at `at_boss_fraction: 0.5`, so the
 ## fire and the south door open together.
 ##
-## One flip rather than a ladder. DESIGN.md gives the ladder to Khaled, and two
-## bosses making the same argument is one boss too many.
+## One flip rather than a ladder. DESIGN.md gives the ladder to Silverman, and
+## two bosses making the same argument is one boss too many.
 ##
 ## He does NOT get stronger here. Every number in this file is still the
 ## number it was, because 24 / 17 / 36 and the heavy's 24 are exact combo

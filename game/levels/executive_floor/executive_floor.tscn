@@ -282,7 +282,7 @@ script = ExtResource("22_7r32h")
 position = Vector2(272, 8)
 monitorable = false
 script = ExtResource("26_qanjr")
-target_level = "res://game/levels/khaled_office/khaled_office.tscn"
+target_level = "res://game/levels/silverman_office/silverman_office.tscn"
 art = ExtResource("27_jh54b")
 
 [node name="Return" type="Area2D" parent="Props" unique_id=107324465 groups=["door"] instance=ExtResource("25_4qq01")]

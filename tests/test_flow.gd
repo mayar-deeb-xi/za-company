@@ -912,11 +912,11 @@ func _tick(frame: int) -> void:
 			_key(KEY_W, true)
 		1241:
 			_key(KEY_W, false)
-			_check("door: the chain continues on into Khaled's office (got %s)"
+			_check("door: the chain continues on into Silverman's office (got %s)"
 				% ("<none>" if _level() == null else _level().name),
-				_level() != null and _level().name == "KhaledOffice")
+				_level() != null and _level().name == "SilvermanOffice")
 			_check("title: the penthouse announces itself (got '%s')"
-				% _title_text(), _title_text() == "KHALED'S OFFICE")
+				% _title_text(), _title_text() == "SILVERMAN'S OFFICE")
 			# DESIGN.md asks for a wide open arena, and this is what one is:
 			# nothing SOLID anywhere in the middle of the room. The rug there
 			# blocks nothing, and every other prop is against a wall - so the

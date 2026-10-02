@@ -48,7 +48,7 @@ extends "res://tests/helpers.gd"
 
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",
 	"the_hub", "marble_hall", "innovation_lab", "conflict_resolution",
-	"asset_recovery", "hellfire", "executive_floor", "khaled_office"]
+	"asset_recovery", "hellfire", "executive_floor", "silverman_office"]
 
 const CALL_CENTER := "res://game/levels/call_center/call_center.tscn"
 const GUARD := "res://game/enemies/office_boy/office_boy.tscn"

@@ -665,7 +665,7 @@ and never comes back down. **Half was already a moment**: his floor cues
 `at_boss_fraction: 0.5`, so a `call_center` and a `social_media` come in through
 the south door on the same frame the fire does.
 
-**One flip, not a ladder**, because DESIGN.md gives the ladder to Khaled and
+**One flip, not a ladder**, because DESIGN.md gives the ladder to Silverman and
 two bosses making the same argument is one boss too many.
 
 The eruption is 0.95 s and **every beat of the fire is a frame boundary** in
@@ -777,11 +777,11 @@ are. Three things about the set are decisions rather than transcription:
 - **He is the answer to a line the floor below already set up.** Ahmed asks
   "Do you know who Big Mo is?" when hurt and goes down saying "I'm telling
   Big Mo", so the first thing this man says is "So you're the one who upset
-  Ahmed" and the last is "I'm escalating this. To Khaled." The chain of
+  Ahmed" and the last is "I'm escalating this. To Silverman." The chain of
   command IS the boss order, and each concede hands you up it.
 
   **Nobody in the building ever says HOW they are related, and that is the
-  rule rather than an omission.** Big Mo is Ahmed's uncle and Khaled is
+  rule rather than an omission.** Big Mo is Ahmed's uncle and Silverman is
   Big Mo's brother; the family tree is the reason the three of them are the
   three bosses, and stating it out loud turns a threat into a soap opera. A
   name passed up the stairs already says everything the player needs - that
@@ -1048,13 +1048,13 @@ phase boundaries (two thirds and a third), at any party size:
 one thing to read at a time was the whole argument for the arena being empty,
 and it applies just as much to two clocks running on the same health bar.
 
-**He is Khaled, and the bar still says SILVERMAN.** That was the open question
-here and it is closed: there is no boss above him and no rename coming - the
-man in KHALED'S OFFICE is Khaled, and SILVERMAN is what the fight is called.
-The two never meet on screen, because `title()` reads the scene's filename and
-the floor card reads the biome, so neither had to learn about the other. His
-own lines are written knowing who he is; nothing in them says so, on the rule
-Big Mo's file already set (see What he says).
+**He is Silverman, and it is his office.** That was the open question here and
+it is closed: there is no boss above him and no rename coming. The bar says
+SILVERMAN because `title()` reads the scene's filename, the floor card says
+SILVERMAN'S OFFICE because it reads the biome, and Big Mo's concede passes you
+up to him by the same name - three readers, one name, none of them told about
+the others. What he is to the rest of the family nothing in his lines says, on
+the rule Big Mo's file already set (see What he says).
 
 ### He says everything twice
 
@@ -1104,7 +1104,7 @@ Twenty lines across nine cues in `silverman/taunts.gd`, cut by
 
 - **He is gracious, and that is what makes him the third boss.** Ahmed is
   entitled and loud and sure this is HR's fault; Big Mo is procedural, booking
-  the room and noting your feedback; Khaled is PLEASED TO MEET YOU. He
+  the room and noting your feedback; Silverman is PLEASED TO MEET YOU. He
   compliments you on arriving, he thanks you for hitting him, and he is going
   to kill you anyway. There is not one insult in the file and the only thing he
   ever says about himself is how much time he has. Two men of one family

@@ -6,7 +6,7 @@ extends "res://game/bosses/big_mo/brush.gd"
 ## `at_boss_fraction: 0.5`, so a call_center and a social_media walk in through
 ## the south door on the same frame. The fire goes up as the door opens.
 ##
-## It is ONE flip, not a phase ladder - DESIGN.md gives the ladder to Khaled,
+## It is ONE flip, not a phase ladder - DESIGN.md gives the ladder to Silverman,
 ## and two bosses making the same argument is one boss too many. He never comes
 ## back down.
 ##

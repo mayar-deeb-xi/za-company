@@ -84,8 +84,5 @@ KEEP = {}
 ## a clip back and compares; without these the same rows would be flagged
 ## forever, and a check that always fails the same way stops being read.
 ##
-## - "Khaled" has no settled English spelling and scribe picks its own
 ## - scribe writes digits for spoken number words
-SPELLINGS = {
-    "khaled": "khalid",
-}
+SPELLINGS = {}
