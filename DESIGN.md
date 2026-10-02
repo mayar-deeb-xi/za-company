@@ -1066,6 +1066,15 @@ one that FEELS best rather than the one that is safest.
         and drawn. The host alone walks Ivan and Dominique in, throws the
         hearts and spends a pickup; an NPC stands and walks where the host's
         does. `tests/test_coop_rooms.gd` (21 checks).
+        **Step 4 done (2026-10-02), the bosses**: drawn like any enemy, with his
+        bar, concede and theme following, and what each boss's effects read off
+        him in his own snapshot. What a snapshot cannot carry is a MOMENT, told
+        by the host and heard on each guest (`_tell` / `net_event`): his lines
+        (the host picks, and tells which, so every machine plays the same clip),
+        his sounds and shakes, Ahmed's every effect through `_spawn_fx` - which
+        carries the attack it belongs to, so an effect that ends with its
+        attack does not end on a guest still a snapshot behind - Big Mo's spark,
+        Silverman's copy and prism. `tests/test_coop_bosses.gd` (23 checks).
 - [ ] M4. **The feel.** Remote bodies drawn ~100 ms behind and interpolated;
         the hit-stop visual-only online; effects, numbers and sounds fired
         locally on the host's word.

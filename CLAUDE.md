@@ -1313,6 +1313,12 @@ The host is the truth for everything but where a body is:
   is put right only when it drifts, DICE - the scrubbers - are the host's and
   drawn, and the host alone walks Ivan and Dominique in, throws the hearts and
   spends a pickup.
+- **A MOMENT is told, not pictured**: what a snapshot cannot carry because it
+  is over by the next one - a boss's line, his every sound and shake, a fire he
+  throws, Silverman's copy and his prism's fan - the host `_tell()`s, and the
+  same thing on each guest hears it in `net_event()` (game/bosses/CLAUDE.md's
+  *Online*). The host picks a line and tells WHICH, so every machine reads the
+  same words and plays the same clip.
 
 ## Settings
 
@@ -1521,7 +1527,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Thirty-five suites,
+  They drive the real game with synthesized input and exit 0/1. Thirty-six suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1867,6 +1873,16 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     guest - decided on the host, gone everywhere; and the hub's scrubbers
     wandering where the host's dice send them. Floors change by the host's own
     travel, since the walk is test_coop.gd's.
+  - `test_coop_bosses.gd` - the same two machines, and the BOSSES: Ahmed's bar
+    up on the guest by his name, the line he shouts the line the guest reads,
+    the fire he throws thrown on the guest's copy of him, the chair he sits in
+    staying under him there (an effect that ends with its attack must not find
+    the guest a snapshot behind), a shake shaking the guest's camera, his
+    health and his concede following; Big Mo going up; Silverman's copy on the
+    guest's floor, the prism's fan the one the host measured, and his crossing
+    going through the guest's player there too and solid again after. Each boss
+    is made to do the thing under test, the way test_ahmed_moves.gd stages a
+    move.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

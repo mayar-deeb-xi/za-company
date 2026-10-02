@@ -146,6 +146,26 @@ func _answer(what: String, args: Array) -> Variant:
 			mine.call("drain", int(args[0]))
 			mine.call("heal", int(args[0]))
 			return int(mine.get("health"))
+		"children":
+			# How many children of a node in the room run one script.
+			var level := _level(game)
+			var node := level.get_node_or_null(NodePath(String(args[0]))) if level != null else null
+			var count := 0
+			if node != null:
+				for child in node.get_children():
+					var script: Script = child.get_script()
+					if script != null and script.resource_path == String(args[1]):
+						count += 1
+			return count
+		"boss_bar":
+			var bar := game.get_node("HUD/Hud").get_node("%BossBar") as Control
+			return [bar.visible, (bar.get_node("%BossName") as Label).text]
+		"subtitle":
+			var sub := game.get_node("Subtitle/BossSubtitle")
+			return [sub.call("showing"), (sub.get_node("%Speaker") as Label).text,
+				(sub.get_node("%Line") as Label).text]
+		"shaking":
+			return float(game.get("_shake_left"))
 		"quit":
 			return true
 	return null

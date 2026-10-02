@@ -197,9 +197,13 @@ func _concede() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	# A guest's copy is the host's, drawn (enemy_base.gd's *Online*).
+	# A guest's copy is the host's, drawn (enemy_base.gd's *Online*) - and
+	# the chair's spin, which flips fourteen times a second and would only
+	# alias against twenty snapshots, is spun here off the host's own clock.
 	if not _in_charge():
 		super(delta)
+		if attack == "chair" and phase == Phase.WINDUP:
+			_sprite.flip_h = int(floorf(_phase_time * 14.0)) % 2 == 1
 		return
 	_wave_timer = maxf(_wave_timer - delta, 0.0)
 	_leap_timer = maxf(_leap_timer - delta, 0.0)
@@ -401,17 +405,75 @@ func _jolt(kind: String, facing: float) -> void:
 ## One thrown-off effect, pinned to `anchor` on the floor. Under his body
 ## (just after FloorFire) unless `over`, in which case on top of everything
 ## he draws.
+##
+## Every effect he has comes through here, which is what makes them one moment
+## to tell the guests rather than seven: the same script, anchor, facing and
+## props, thrown on their copy of him too. It carries the attack it belongs to,
+## because an effect that ends with its attack (the chair, the leap's mark)
+## must not find a guest still a snapshot behind and end on its first frame.
 func _spawn_fx(script: GDScript, anchor: Vector2, over: bool, props := {}) -> Node2D:
+	var node := _throw_fx(script, anchor, over, _dir(), props)
+	_tell("fx", [script.resource_path, anchor, over, _dir(), props, attack, int(phase), _leaping])
+	return node
+
+
+func _throw_fx(script: GDScript, anchor: Vector2, over: bool, dir: float,
+		props: Dictionary) -> Node2D:
 	var node: Node2D = script.new()
 	node.set("boss", self)
 	node.set("anchor", anchor)
-	node.set("dir", _dir())
+	node.set("dir", dir)
 	for key in props:
 		node.set(key, props[key])
 	add_child(node)
 	if not over:
 		move_child(node, 1)
 	return node
+
+
+## His snapshot: a boss's, and the four things his effects read off him that
+## nothing else carries - how high he is, whether he is in the air, and the
+## chair: rolling, and which way.
+func net_state() -> Array:
+	var state := super()
+	state.append_array([_z, _leaping, _charging, _chair_dir])
+	return state
+
+
+func apply_net_state(state: Array) -> void:
+	super(state)
+	if has_conceded or state.size() < NET_OWN + 4:
+		return
+	_leaping = bool(state[NET_OWN + 1])
+	_charging = bool(state[NET_OWN + 2])
+	_chair_dir = state[NET_OWN + 3]
+	_set_height(float(state[NET_OWN]))
+
+
+## His moments, on a guest: an effect thrown, and the chair going and crashing.
+func net_event(what: String, args: Array) -> void:
+	match what:
+		"fx":
+			if args.size() < 8 or has_conceded:
+				return
+			attack = String(args[5])
+			phase = int(args[6]) as Phase
+			_leaping = bool(args[7])
+			var node := _throw_fx(load(String(args[0])) as GDScript, args[1],
+				bool(args[2]), float(args[3]), args[4])
+			if node.get_script() == ChairRun:
+				_chair_fx = node
+		"chair_launch":
+			_chair_dir = args[0]
+			_charging = true
+			if is_instance_valid(_chair_fx):
+				_chair_fx.call("launch", _chair_dir)
+		"chair_crash":
+			_charging = false
+			if is_instance_valid(_chair_fx):
+				_chair_fx.call("crash")
+		_:
+			super(what, args)
 
 
 # --- the leap ----------------------------------------------------------------
@@ -484,6 +546,7 @@ func _launch_chair() -> void:
 	_chair_hit.clear()
 	if is_instance_valid(_chair_fx):
 		_chair_fx.call("launch", _chair_dir)
+	_tell("chair_launch", [_chair_dir])
 
 
 ## Spun up on the wind-up - the picture flipping fourteen times a second - then
@@ -515,6 +578,7 @@ func _crash() -> void:
 	_sfx("chair_hit")
 	if is_instance_valid(_chair_fx):
 		_chair_fx.call("crash")
+	_tell("chair_crash")
 	_jolt("crash", signf(_chair_dir.x) if _chair_dir.x != 0.0 else _dir())
 
 

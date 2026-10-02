@@ -559,12 +559,40 @@ func _begin_shell() -> void:
 ## A hit on the shell. Nothing lands, and he answers it straight away.
 func _block() -> void:
 	_sfx("block")
-	var spark := BlockSpark.new()
-	get_parent().add_child(spark)
-	spark.global_position = global_position + CHEST
+	_spark(global_position + CHEST)
+	_tell("spark", [global_position + CHEST])
 	_shell = -1.0
 	_open = -1.0
 	_begin_attack("counter")
+
+
+func _spark(at: Vector2) -> void:
+	var spark := BlockSpark.new()
+	get_parent().add_child(spark)
+	spark.global_position = at
+
+
+## His snapshot: a boss's, and the two things his own effects read off him -
+## the fire he keeps, and his hit-stop, which is his sprite's speed.
+func net_state() -> Array:
+	var state := super()
+	state.append_array([is_raging, _sprite.speed_scale])
+	return state
+
+
+func apply_net_state(state: Array) -> void:
+	super(state)
+	if has_conceded or state.size() < NET_OWN + 2:
+		return
+	is_raging = bool(state[NET_OWN])
+	_sprite.speed_scale = float(state[NET_OWN + 1])
+
+
+func net_event(what: String, args: Array) -> void:
+	if what == "spark" and not args.is_empty():
+		_spark(args[0])
+	else:
+		super(what, args)
 
 
 ## Pressed against him, measured from feet to feet - the clinch's whole trigger.

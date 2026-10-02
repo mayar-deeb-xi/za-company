@@ -1117,6 +1117,46 @@ Twenty lines across nine cues in `silverman/taunts.gd`, cut by
   and throw it away. The crossing gets no cue at all - it never runs through
   `_begin_attack`, and a man who announces his own dash is hurrying.
 
+## Online: drawn from the host, and told the moments
+
+A boss is an enemy, so on a guest he is the host's, drawn (game/enemies/
+CLAUDE.md's *Online*): his snapshot carries what any enemy's does, plus
+whether he has conceded, his max health (it grew per head on the host) and the
+attack in hand - so his bar, his concede, the door upstairs and his theme all
+follow with nothing of their own. Everything a boss draws off his SPRITE (the
+axe's fire, the Bell, the Rage, the Glare) is right on a guest for free,
+because the sprite is the host's. What his own effects read off HIM goes in
+his own snapshot after `NET_OWN`: Ahmed's height and chair, Big Mo's kept fire
+and his hit-stop (his sprite's speed), Silverman's crossing and his herald.
+
+What a snapshot cannot carry is a MOMENT, because by the next picture it is
+over - so the host `_tell()`s it and his copy on each guest hears it in
+`net_event()` (game/sync/world.gd's *A moment*):
+
+- **Lines**: the host picks one and tells the guests WHICH, so every machine
+  puts the same words up and plays the same clip (`enemy_lines.say_exact`). A
+  guest's boss says nothing of his own accord.
+- **Sounds and shakes**: every one of a boss's sounds is the host's to make and
+  tell, because his moments are not phases a guest could read them off. The
+  one exception is what he makes while he is still being BUILT - Ahmed's axe
+  starts burning with him on every machine, before any guest is in the room to
+  be told.
+- **What he throws**: Ahmed's every effect goes through `_spawn_fx`, so that
+  one call is the moment, and it carries the attack it belongs to - an effect
+  that ends with its attack (the chair, the leap's mark) must not find a guest
+  a snapshot behind and end on its first frame. The chair's launch and crash,
+  Big Mo's block spark, Silverman's copy and the prism's fan (measured once, on
+  the host, walls and all) are moments of their own. What an effect thrown on a
+  guest does to anybody is nothing - player.gd's rule - so only the host's
+  burns.
+
+And Silverman crosses THROUGH the guest's player on the guest too: his drawn
+body is moved there twenty times a second, and without the collision
+exception the host gives him it would shoulder that player aside.
+
+Adding a boss, then, adds to his snapshot what his effects read off him, and
+`_tell`s any moment his effects need that the snapshot does not carry.
+
 ## Adding a boss
 
 1. `game/bosses/<id>/poses.gd` - body ASCII, legs, `ORDER`, `ANIMS`, `LOOPS`.

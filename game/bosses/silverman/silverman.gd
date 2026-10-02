@@ -461,11 +461,19 @@ func _forward_of(body: Node2D) -> float:
 ## One copy, in the room rather than under him - a thing parented to the boss
 ## would drift with him, and the whole point is that he stands still while it
 ## goes. It is handed the damage the base already scaled for this attack.
+##
+## Cast on every machine alike - only the host's copy can hurt anybody, by
+## player.gd's rule - so a guest sees it set off the moment he casts it.
 func _cast_copy() -> void:
+	_copy(global_position, contact_damage, -1.0 if _facing_left else 1.0)
+	_tell("copy", [global_position, contact_damage, -1.0 if _facing_left else 1.0])
+
+
+func _copy(at: Vector2, damage: int, facing: float) -> void:
 	var copy := Copy.new()
 	get_parent().add_child(copy)
-	copy.global_position = global_position
-	copy.cast(self, contact_damage, -1.0 if _facing_left else 1.0)
+	copy.global_position = at
+	copy.cast(self, damage, facing)
 
 
 # --- the prism ---------------------------------------------------------------
@@ -487,6 +495,8 @@ func _aim_prism() -> void:
 		var a := prism_from + prism_span * float(i) / float(PRISM_SAMPLES - 1)
 		_prism_lengths[i] = _wall_distance(prism_chest(), Vector2.from_angle(a), PRISM_REACH)
 	prism_casts += 1
+	# The fan a guest draws is this one, measured here: walls and all.
+	_tell("prism", [prism_from, prism_span, prism_casts, _prism_lengths])
 
 
 ## Where the light comes out of him, in the world.
@@ -737,6 +747,50 @@ func _solid_again() -> void:
 		if is_instance_valid(body):
 			remove_collision_exception_with(body)
 	_dash_excepted.clear()
+
+
+## His snapshot: a boss's, and the three his effects read off him - the
+## crossing, the travel inside it, and a phase being announced.
+func net_state() -> Array:
+	var state := super()
+	state.append_array([dashing, dash_moving, herald])
+	return state
+
+
+## On a guest he crosses THROUGH the party exactly as he does on the host, or
+## his drawn body, moved there twenty times a second, would shoulder this
+## machine's player out of the way.
+func apply_net_state(state: Array) -> void:
+	super(state)
+	if has_conceded or state.size() < NET_OWN + 3:
+		return
+	var was := dashing
+	dashing = bool(state[NET_OWN])
+	dash_moving = bool(state[NET_OWN + 1])
+	herald = float(state[NET_OWN + 2])
+	if dashing and not was:
+		for node in get_tree().get_nodes_in_group("player"):
+			var body := node as Node2D
+			if body != null:
+				_dash_excepted.append(body)
+				add_collision_exception_with(body)
+	elif was and not dashing:
+		_solid_again()
+
+
+func net_event(what: String, args: Array) -> void:
+	match what:
+		"copy":
+			if args.size() >= 3:
+				_copy(args[0], int(args[1]), float(args[2]))
+		"prism":
+			if args.size() >= 4:
+				prism_from = float(args[0])
+				prism_span = float(args[1])
+				_prism_lengths = args[3]
+				prism_casts = int(args[2])
+		_:
+			super(what, args)
 
 
 func _on_animation_finished() -> void:

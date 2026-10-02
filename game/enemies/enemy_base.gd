@@ -558,7 +558,13 @@ func apply_net_state(state: Array) -> void:
 	if phase != was:
 		_net_phase(was, phase)
 	elif health < before:
-		_sfx("hurt")
+		_net_hurt()
+
+
+## Hurt on the host and not staggered, arriving on a guest: the grunt. A boss
+## has his own, said by the host - see boss_base.gd.
+func _net_hurt() -> void:
+	_sfx("hurt")
 
 
 ## A guest's copy moving from one phase to the next, which is all the
@@ -572,6 +578,22 @@ func _net_phase(was: Phase, now: Phase) -> void:
 		_strike()
 	elif now == Phase.STAGGER:
 		_sfx("stagger")
+
+
+## Tell the guests a MOMENT, if this is the host and there are any - a line,
+## an effect, a sound (game/sync/world.gd's *A moment*). Through the `sync`
+## group, so a body that tells never learns who carries it: offline nobody is
+## in it to hear, and nothing happens.
+func _tell(what: String, args: Array = []) -> void:
+	if _in_charge() and is_inside_tree():
+		get_tree().call_group(&"sync", &"tell", self, what, args)
+
+
+## A moment the host told, arriving on a guest's copy - see `_tell`. A plain
+## enemy has none of its own: every moment its cycle has is a phase, and the
+## snapshot already carries those.
+func net_event(_what: String, _args: Array) -> void:
+	pass
 
 
 ## A guest's own blow, flashed here at once - the host's flash for it is a

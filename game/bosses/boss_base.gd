@@ -115,6 +115,9 @@ var has_conceded := false
 var _damage_scale := 1.0
 var _spotted := false
 var _out_of_reach := 0.0
+## Whether he has finished being built - see `_sfx`. Set a frame after _ready,
+## so a boss's own _ready (which runs after this one) still counts as building.
+var _built := false
 
 func _ready() -> void:
 	# Before super(), which is where health is filled from max_health.
@@ -123,6 +126,11 @@ func _ready() -> void:
 	# Read once at spawn, like the base's contact_damage: the mode cannot
 	# change mid-fight, and each attack applies it when it is chosen.
 	_damage_scale = Difficulty.damage_scale()
+	# A shake is a moment: online the host's goes to the guests' cameras too.
+	if _in_charge():
+		shook.connect(func(strength: float, seconds: float) -> void:
+			_tell("shook", [strength, seconds]))
+	set_deferred("_built", true)
 
 
 func _physics_process(delta: float) -> void:
@@ -136,13 +144,14 @@ func _physics_process(delta: float) -> void:
 		_watch_player(delta)
 
 
-## A boss's snapshot is an enemy's and two more things the HUD reads: whether
-## he has given in, and the health he has to give - which grew per head on the
-## host when he was built, and is the host's number either way.
+## A boss's snapshot is an enemy's and three more things: whether he has given
+## in and the health he has to give - which grew per head on the host when he
+## was built - for the HUD, and the attack in hand, which his effects read.
 func net_state() -> Array:
 	var state := super()
 	state.append(has_conceded)
 	state.append(max_health)
+	state.append(attack)
 	return state
 
 
@@ -150,21 +159,85 @@ func net_state() -> Array:
 ## so on `health_changed`, and his giving in is the same `_concede()` the host
 ## ran - the bar comes down, the theme goes and the door upstairs hears it.
 func apply_net_state(state: Array) -> void:
-	if state.size() < 11 or has_conceded:
+	if state.size() < 12 or has_conceded:
 		return
 	var before := health
 	max_health = int(state[10])
 	super(state)
+	attack = String(state[11])
 	if health != before:
 		health_changed.emit(health, max_health)
 	if bool(state[9]):
 		_concede()
 
 
-## A boss's moments are his own attacks', not the base's one swing: what his
-## wind-ups and blows look like on a guest arrives with his effects (M3 step 4).
+## Index of the first thing a boss adds to the snapshot after boss_base's.
+const NET_OWN := 12
+
+
+## A boss's moments are his own attacks', not the base's one swing, and they
+## arrive as moments (net_event) rather than being read off a phase.
 func _net_phase(_was: Phase, _now: Phase) -> void:
 	pass
+
+
+## And so does every grunt: the host says which.
+func _net_hurt() -> void:
+	pass
+
+
+## The moments every boss has, arriving on a guest - his lines, his shakes and
+## his sounds. A boss adds his own on top and hands the rest down.
+func net_event(what: String, args: Array) -> void:
+	match what:
+		"said":
+			if _lines != null and args.size() >= 2:
+				var line := _lines.say_exact(String(args[0]), int(args[1]))
+				if not line.is_empty():
+					said.emit(title(), String(line["text"]), float(line["seconds"]))
+		"shook":
+			if args.size() >= 2:
+				shook.emit(float(args[0]), float(args[1]))
+		"sfx":
+			super._sfx(String(args[0]))
+		"loop":
+			super._sfx_loop(String(args[0]))
+		"fade":
+			super._sfx_fade(String(args[0]), float(args[1]))
+		"detached":
+			super._sfx_detached(String(args[0]))
+
+
+## A boss's every sound is a moment the host has, so online it is the host's
+## to make and tell. A guest makes only what is made while he is still being
+## BUILT - Ahmed's burning axe starts with him, on every machine, before any
+## guest is in the room to be told of it.
+func _sfx(id: String) -> void:
+	if _in_charge():
+		super(id)
+		_tell("sfx", [id])
+	elif not _built:
+		super(id)
+
+
+func _sfx_loop(id: String) -> void:
+	if _in_charge():
+		super(id)
+		_tell("loop", [id])
+	elif not _built:
+		super(id)
+
+
+func _sfx_fade(id: String, seconds: float) -> void:
+	if _in_charge():
+		super(id, seconds)
+		_tell("fade", [id, seconds])
+
+
+func _sfx_detached(id: String) -> void:
+	if _in_charge():
+		super(id)
+		_tell("detached", [id])
 
 
 ## The two things worth saying that no step of the cycle is in a position to
@@ -375,11 +448,16 @@ func _concede() -> void:
 ## `said` is emitted rather than a subtitle being poked, for the third time in
 ## this file and for the third identical reason: he shouts, and never learns
 ## who is listening. game.gd is.
+##
+## Online the host picks the line and tells the guests WHICH, so every machine
+## puts the same words up and plays the same clip (net_event). A guest says
+## nothing of its own accord.
 func _say(cue: String) -> bool:
-	if _lines == null:
+	if _lines == null or not _in_charge():
 		return false
 	var line := _lines.say(cue)
 	if line.is_empty():
 		return false
 	said.emit(title(), String(line["text"]), float(line["seconds"]))
+	_tell("said", [cue, int(line["pick"])])
 	return true

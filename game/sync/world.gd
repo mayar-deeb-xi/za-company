@@ -30,6 +30,16 @@ extends Node
 ## (DESIGN.md's *Who decides what*): a guest's player reports each blow it lands
 ## (player.gd's `landed`) by path, and the host deals it. On the guest's own
 ## screen it lands at once, on the benefit of the doubt.
+##
+## ## A moment
+##
+## What a snapshot cannot carry is a MOMENT - a line a boss shouts, a fire he
+## throws, a shake, a sound - because by the next picture it is over. So a
+## synced thing on the host may also `tell()` the guests one, reliably, and the
+## same thing on each guest hears it in net_event(). It is reached through the
+## `sync` group (enemy_base.gd's `_tell`), so nothing that tells knows this file
+## exists, and a body named in a moment travels as WHO it is rather than as an
+## object: a player as their peer, anything in the room as its path.
 
 ## What a thing does to be in the snapshot: join this group and answer
 ## net_state() / apply_net_state(). Optionally net_spawn(), the properties a
@@ -45,6 +55,7 @@ var _frame := 0
 
 func _ready() -> void:
 	_sync = get_parent()
+	add_to_group(&"sync")
 
 
 ## The body this machine moves: on a guest, its blows are reported from here.
@@ -124,6 +135,68 @@ func _make(level: Node, path: String, made: Array) -> Node:
 		node.set(key, props[key])
 	parent.add_child(node)
 	return node
+
+
+# --- a moment --------------------------------------------------------------------
+
+
+## The host: `node` has something to tell the guests - see the header.
+func tell(node: Node, what: String, args: Array) -> void:
+	if not _sync.active or not _sync.is_host() or _sync.guests().is_empty():
+		return
+	var level: Node = _sync.level()
+	if level == null or not level.is_ancestor_of(node):
+		return
+	var wired := []
+	for arg in args:
+		wired.append(_wire(arg, level))
+	_sync.to_guests(&"_event", [_sync.room, String(level.get_path_to(node)), what, wired], self)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _event(room: int, path: String, what: String, args: Array) -> void:
+	if room != _sync.room:
+		return
+	var level: Node = _sync.level()
+	var node := level.get_node_or_null(NodePath(path)) if level != null else null
+	if node == null or not node.has_method("net_event"):
+		return
+	var unwired := []
+	for arg in args:
+		unwired.append(_unwire(arg, level))
+	node.call("net_event", what, unwired)
+
+
+## A body as WHO it is, which means the same on both ends: a player by their
+## peer, anything in the room by its path there. Everything else as it is, and
+## a dictionary's values the same way.
+func _wire(value: Variant, level: Node) -> Variant:
+	if value is Dictionary:
+		var out := {}
+		for key in value:
+			out[key] = _wire(value[key], level)
+		return out
+	if value is Node:
+		var node := value as Node
+		if node.is_in_group("player") or node.get("peer") != null and node.has_method("net_state"):
+			return {"__peer": int(node.get("peer"))}
+		if level.is_ancestor_of(node):
+			return {"__path": String(level.get_path_to(node))}
+		return null
+	return value
+
+
+func _unwire(value: Variant, level: Node) -> Variant:
+	if value is Dictionary:
+		if value.has("__peer"):
+			return _sync.body_of(int(value["__peer"]))
+		if value.has("__path"):
+			return level.get_node_or_null(NodePath(String(value["__path"])))
+		var out := {}
+		for key in value:
+			out[key] = _unwire(value[key], level)
+		return out
+	return value
 
 
 # --- a guest's swing ---------------------------------------------------------------

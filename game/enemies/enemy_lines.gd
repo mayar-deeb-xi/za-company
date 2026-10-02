@@ -127,8 +127,23 @@ func say(cue: String) -> Dictionary:
 	if not forced and (_held > 0.0 or float(_cooldown.get(cue, 0.0)) > 0.0):
 		return {}
 
-	var pick := _pick(cue, choices.size())
-	var line: Dictionary = choices[pick]
+	return _speak(cue, _pick(cue, choices.size()))
+
+
+## THAT line - the one another machine picked (online, a boss's lines are the
+## host's: game/bosses/boss_base.gd). No cooldown or hold is asked: the host
+## already asked them, and this mouth only has to say what it was told.
+func say_exact(cue: String, pick: int) -> Dictionary:
+	var choices: Array = _lines.get(cue, [])
+	if pick < 0 or pick >= choices.size():
+		return {}
+	return _speak(cue, pick)
+
+
+## One line said: its clip played and its timers set. Returns {"text",
+## "seconds", "pick"} - the pick so it can be said again elsewhere.
+func _speak(cue: String, pick: int) -> Dictionary:
+	var line: Dictionary = (_lines.get(cue, []) as Array)[pick]
 	var text := String(line.get("text", ""))
 	if text == "":
 		return {}
@@ -140,7 +155,7 @@ func say(cue: String) -> Dictionary:
 	# Never shorter than the line itself: a cooldown under the hold would let a
 	# cue queue up behind its own subtitle.
 	_cooldown[cue] = maxf(float(cooldowns.get(cue, cue_seconds)), seconds)
-	return {"text": text, "seconds": seconds}
+	return {"text": text, "seconds": seconds, "pick": pick}
 
 
 ## A different line from the one this cue used last, while there is one.
