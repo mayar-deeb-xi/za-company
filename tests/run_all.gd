@@ -29,7 +29,7 @@ const SUITES := ["test_menu", "test_flow", "test_combat", "test_arc", "test_hit_
 	"test_dialogue", "test_ivan", "test_dominique", "test_enemy_sfx",
 	"test_player_sfx", "test_studio", "test_surge", "test_scrubber",
 	"test_steering", "test_dogleg", "test_music", "test_ui_sound", "test_alert",
-	"test_level_select"]
+	"test_level_select", "test_release"]
 
 
 func _initialize() -> void:

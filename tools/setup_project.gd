@@ -40,6 +40,14 @@ func _initialize() -> void:
 	ProjectSettings.set_setting("application/boot_splash/use_filter", false)
 	ProjectSettings.set_setting("application/boot_splash/bg_color", Color("1b1119"))
 
+	# What a player sees the game called: the window title, the .app, the
+	# Start Menu entry. Only for builds carrying the `packaged` feature (the
+	# Windows and macOS presets) - the bare name is also what names user://, so
+	# renaming it outright would move every developer's saved settings and the
+	# test suites' backup with it. `packaged` is also how the main menu knows to
+	# look for a newer release (ui/main_menu/release_check.gd).
+	ProjectSettings.set_setting("application/config/name.packaged", "The New Hire")
+
 	# Physical keycodes so WASD stays positional on non-QWERTY layouts.
 	ProjectSettings.set_setting("input/move_up", _action([_key(KEY_W), _key(KEY_UP)]))
 	ProjectSettings.set_setting("input/move_down", _action([_key(KEY_S), _key(KEY_DOWN)]))

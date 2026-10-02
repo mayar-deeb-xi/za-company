@@ -1,39 +1,60 @@
 # A release is a change to VERSION reaching main, and nothing else is.
 #
 # Pushing and merging into main is ordinary work and publishes nothing. The day
-# VERSION changes on main, this tags that commit v<VERSION> and publishes a
-# GitHub Release listing every commit since the last one. The rest of the flow
-# (develop -> main, bumping the number) is RELEASING.md.
+# VERSION changes on main, this builds the game for Windows (an installer and a
+# portable zip) and macOS (a disk image), tags the commit v<VERSION> and
+# publishes a GitHub Release carrying all three, with every commit since the
+# last release as its notes. Nothing is published unless every build worked.
+#
+# On develop it is a DRY RUN: a push there that touches what the builds are
+# made of (the presets, this file, tools/release/) builds everything and keeps
+# the files on the run's page for a week, and publishes nothing. That is how a
+# packaging change is tried without spending a version number on it.
+#
+# The rest of the flow (develop -> main, bumping the number) is RELEASING.md.
 
 name: Release
 
 on:
   push:
-    branches: [main]
-    paths: [VERSION]
-  # Re-run by hand from the Actions tab. Harmless when the version is already
-  # out: it stops at "already released" rather than publishing it twice.
+    branches: [main, develop]
+    paths:
+      - VERSION
+      - export_presets.cfg
+      - .github/workflows/release.yml
+      - tools/release/**
+  # Re-run by hand from the Actions tab: on main it releases if VERSION is not
+  # out yet (and stops at "already released" if it is); anywhere else it is a
+  # dry run.
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: release
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
-jobs:
-  release:
-    # A manual run from another branch must not tag that branch.
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # every tag and commit, for the notes and the checks
+env:
+  GODOT_VERSION: "4.7.2"
 
-      - name: Read and check VERSION
-        id: version
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.plan.outputs.mode }}
+      version: ${{ steps.plan.outputs.version }}
+      core: ${{ steps.plan.outputs.core }}
+      tag: ${{ steps.plan.outputs.tag }}
+      previous: ${{ steps.plan.outputs.previous }}
+      prerelease: ${{ steps.plan.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # every tag, for the checks below
+
+      - name: Read VERSION and decide what this run is
+        id: plan
         run: |
           version="$(tr -d ' \t\r\n' < VERSION)"
           if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
@@ -41,37 +62,165 @@ jobs:
             exit 1
           fi
           tag="v$version"
+          core="${version%%-*}"
+          latest="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1)"
+          {
+            echo "version=$version"
+            echo "core=$core"
+            echo "tag=$tag"
+            echo "previous=$latest"
+            [[ "$version" == *-* ]] && echo "prerelease=true" || echo "prerelease=false"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::notice::Dry run on ${GITHUB_REF#refs/heads/}: building $version, publishing nothing"
+            echo "mode=build" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
             echo "::notice::$tag is already released - nothing to do"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "mode=skip" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           # A lower number than one already out is a typo, not a release.
           # Compared on MAJOR.MINOR.PATCH alone: sort -V ranks 1.0.0 BELOW
           # 1.0.0-rc.1, which is backwards for releasing 1.0.0 after its rc.
-          latest="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1)"
           if [ -n "$latest" ]; then
-            core_new="${version%%-*}"
             core_old="${latest#v}"; core_old="${core_old%%-*}"
-            top="$(printf '%s\n%s\n' "$core_old" "$core_new" | sort -V | tail -n1)"
-            if [ "$core_new" != "$core_old" ] && [ "$top" != "$core_new" ]; then
+            top="$(printf '%s\n%s\n' "$core_old" "$core" | sort -V | tail -n1)"
+            if [ "$core" != "$core_old" ] && [ "$top" != "$core" ]; then
               echo "::error file=VERSION::$version is lower than the latest release $latest"
               exit 1
             fi
           fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "previous=$latest" >> "$GITHUB_OUTPUT"
-          # A -suffix (1.2.0-beta.1) is marked pre-release on GitHub.
-          [[ "$version" == *-* ]] && echo "prerelease=true" >> "$GITHUB_OUTPUT" || true
+          echo "mode=release" >> "$GITHUB_OUTPUT"
+
+  windows:
+    needs: plan
+    if: needs.plan.outputs.mode != 'skip'
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
+    env:
+      VERSION: ${{ needs.plan.outputs.version }}
+      CORE: ${{ needs.plan.outputs.core }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/godot-cache
+          key: godot-${{ env.GODOT_VERSION }}-windows-v1
+
+      - name: Fetch Godot and the Windows template
+        run: echo "GODOT=$(bash tools/release/fetch_godot.sh windows ~/godot-cache)" >> "$GITHUB_ENV"
+
+      - name: Stamp the version and import
+        run: bash tools/release/prepare.sh "$GODOT" "$CORE"
+
+      - name: Export
+        run: bash tools/release/export.sh "$GODOT" "Windows Desktop" build/windows/TheNewHire.exe
+
+      - name: Licences beside the binaries
+        # The WebRTC library ships next to the exe, so its licences do too
+        # (CREDITS.md). They are also inside the game's data on both platforms.
+        run: |
+          mkdir -p build/windows/licenses
+          cp addons/webrtc_native/LICENSE.* build/windows/licenses/
+
+      - name: Portable zip
+        run: |
+          mkdir -p dist "stage/The New Hire"
+          cp -R build/windows/. "stage/The New Hire/"
+          (cd stage && 7z a -tzip "../dist/TheNewHire-${VERSION}-windows-portable.zip" "The New Hire" >/dev/null)
+
+      - name: Installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress | Out-Null
+          }
+          & $iscc /Q "/DAppVersion=$env:VERSION" "/DFileVersion=$env:CORE" `
+            "/DSourceDir=$env:GITHUB_WORKSPACE\build\windows" `
+            "/DOutputDir=$env:GITHUB_WORKSPACE\dist" tools\release\installer.iss
+          if ($LASTEXITCODE -ne 0) { Write-Output "::error::Inno Setup failed ($LASTEXITCODE)"; exit 1 }
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: dist/*
+          if-no-files-found: error
+          retention-days: ${{ needs.plan.outputs.mode == 'release' && 30 || 7 }}
+
+  macos:
+    needs: plan
+    if: needs.plan.outputs.mode != 'skip'
+    runs-on: macos-latest
+    timeout-minutes: 40
+    env:
+      VERSION: ${{ needs.plan.outputs.version }}
+      CORE: ${{ needs.plan.outputs.core }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/godot-cache
+          key: godot-${{ env.GODOT_VERSION }}-macos-v1
+
+      - name: Fetch Godot and the macOS template
+        run: echo "GODOT=$(bash tools/release/fetch_godot.sh macos ~/godot-cache)" >> "$GITHUB_ENV"
+
+      - name: Stamp the version and import
+        run: bash tools/release/prepare.sh "$GODOT" "$CORE"
+
+      - name: Export the disk image
+        run: |
+          bash tools/release/export.sh "$GODOT" "macOS" build/macos/TheNewHire.dmg
+          mkdir -p dist
+          cp build/macos/TheNewHire.dmg "dist/TheNewHire-${VERSION}-macos.dmg"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macos
+          path: dist/*
+          if-no-files-found: error
+          retention-days: ${{ needs.plan.outputs.mode == 'release' && 30 || 7 }}
+
+  publish:
+    needs: [plan, windows, macos]
+    if: needs.plan.outputs.mode == 'release'
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.plan.outputs.tag }}
+      PREVIOUS: ${{ needs.plan.outputs.previous }}
+      PRERELEASE: ${{ needs.plan.outputs.prerelease }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
 
       - name: Write release notes
-        if: steps.version.outputs.skip != 'true'
-        env:
-          PREVIOUS: ${{ steps.version.outputs.previous }}
-          TAG: ${{ steps.version.outputs.tag }}
         run: |
           {
+            echo "## Download"
+            echo
+            echo "- **Windows**: \`TheNewHire-*-windows-setup.exe\` installs it (or take the portable \`.zip\`)."
+            echo "  Windows may say *Windows protected your PC* - click **More info**, then **Run anyway**."
+            echo "- **macOS**: open \`TheNewHire-*-macos.dmg\` and drag the game to Applications."
+            echo "  The first time, macOS will refuse to open it: go to **System Settings -> Privacy & Security** and click **Open Anyway**."
+            echo
+            echo "Third-party components, their licences and where their source is: [CREDITS.md](https://github.com/${GITHUB_REPOSITORY}/blob/${TAG}/CREDITS.md)."
+            echo
             if [ -n "$PREVIOUS" ]; then
               echo "## Changes since $PREVIOUS"
               echo
@@ -81,19 +230,15 @@ jobs:
             else
               echo "## First release"
               echo
-              echo "The first versioned build of THE NEW HIRE: $(git rev-list --count HEAD) commits of history up to this point."
+              echo "$(git rev-list --count HEAD) commits of history up to this point."
             fi
           } > notes.md
           cat notes.md
+          ls -la dist
 
       - name: Publish the release
-        if: steps.version.outputs.skip != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.version.outputs.tag }}
-          PRERELEASE: ${{ steps.version.outputs.prerelease }}
         run: |
           flags=()
           [ "$PRERELEASE" = "true" ] && flags+=(--prerelease)
-          gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" \
+          gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "$TAG" \
             --notes-file notes.md "${flags[@]}"

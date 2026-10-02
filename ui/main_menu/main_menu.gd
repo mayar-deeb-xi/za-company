@@ -6,6 +6,7 @@ const CHARACTER_SELECT_SCENE := "res://ui/character_select/character_select.tscn
 ## Typed by preloaded script rather than by `class_name`: global class names come
 ## from a cache the editor writes, which a fresh headless checkout lacks.
 const SettingsPanelType := preload("res://ui/settings/settings_panel.gd")
+const ReleaseCheck := preload("res://ui/main_menu/release_check.gd")
 
 @onready var _play_button: Button = %PlayButton
 @onready var _mode_button: Button = %ModeButton
@@ -13,6 +14,8 @@ const SettingsPanelType := preload("res://ui/settings/settings_panel.gd")
 @onready var _quit_button: Button = %QuitButton
 @onready var _quit_confirm: ConfirmationDialog = %QuitConfirm
 @onready var _settings: SettingsPanelType = %SettingsPanel
+@onready var _version: Label = %Version
+@onready var _update_button: Button = %UpdateButton
 
 
 func _ready() -> void:
@@ -25,6 +28,15 @@ func _ready() -> void:
 	# on its last frame. Closing the tab is the web build's way out.
 	_quit_button.visible = not OS.has_feature("web")
 	_show_mode()
+
+	# The footer's version is the VERSION file itself, and an installed build
+	# also asks whether a newer release is out (release_check.gd says when).
+	_version.text = "v" + ReleaseCheck.current()
+	_update_button.add_theme_font_override(&"font", get_theme_font(&"font", &"Footer"))
+	var check := ReleaseCheck.new()
+	check.name = "ReleaseCheck"
+	check.newer_found.connect(_on_newer_release)
+	add_child(check)
 
 	# Idempotent on the track: coming back from the character select or out of
 	# a finished run finds it already playing and leaves it alone.
@@ -77,3 +89,11 @@ func _on_quit_pressed() -> void:
 
 func _on_quit_confirmed() -> void:
 	get_tree().quit()
+
+
+## Shown only once a newer release is known, so a menu with nothing to offer
+## has nothing extra to tab through.
+func _on_newer_release(version: String, url: String) -> void:
+	_update_button.text = "v%s IS OUT - GET IT" % version
+	_update_button.visible = true
+	_update_button.pressed.connect(OS.shell_open.bind(url))

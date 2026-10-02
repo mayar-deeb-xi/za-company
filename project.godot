@@ -18,6 +18,7 @@ boot_splash/stretch_mode=0
 boot_splash/use_filter=false
 boot_splash/image="res://splash.png"
 config/icon="res://icon.svg"
+config/name.packaged="The New Hire"
 
 [autoload]
 

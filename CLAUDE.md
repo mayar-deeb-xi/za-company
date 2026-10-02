@@ -1271,9 +1271,21 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 
 - **Commit and push to `develop`; `main` takes a finished feature by merging
   `develop` into it.** A release is the `VERSION` file changing on `main` and
-  nothing else - `.github/workflows/release.yml` then tags `v<VERSION>` and
-  publishes a GitHub Release. So never bump `VERSION` as a side effect of
-  other work; it is the user's call. The whole flow: `RELEASING.md`.
+  nothing else - `.github/workflows/release.yml` then builds the Windows
+  installer + portable zip and the macOS .dmg on GitHub's machines, tags
+  `v<VERSION>` and publishes a GitHub Release carrying them. So never bump
+  `VERSION` as a side effect of other work; it is the user's call. A push to
+  `develop` touching the presets, the workflow or `tools/release/` is a dry
+  run of all of it. The whole flow: `RELEASING.md`.
+- **The Windows and macOS presets carry the custom feature `packaged`**, and
+  two things hang off it: the game is called "The New Hire" there
+  (`config/name.packaged`, from setup_project.gd - the bare `za-company` is
+  what names `user://`, so it stays) and the main menu asks GitHub for a newer
+  release. Every preset lists `VERSION` in `include_filter`, which is how the
+  menu's footer reads the real number; and the desktop presets exclude
+  `addons/za_build/*` rather than the Web preset's `addons/*`, which would
+  ship a game that cannot play online. `tests/test_release.gd` reads all of
+  that off disk.
 - Godot binary (not on PATH):
   `~/OneDrive/Desktop/Godot_v4.7.2-stable_win64_console.exe`
 - Quick check: `--headless --path . --quit-after 3`
@@ -1329,7 +1341,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Twenty-seven suites,
+  They drive the real game with synthesized input and exit 0/1. Twenty-eight suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1581,6 +1593,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     fits 640x360, backs out by Escape, starts the run on the floor picked and
     then forgets it. It is the one suite that switches the dev setting ON,
     in memory only.
+  - `test_release.gd` - the game's half of a release: the menu's footer shows
+    the VERSION file, an unpackaged run never asks GitHub, a newer release
+    raises the notice while an older, equal, junk or non-GitHub answer does
+    not, `1.0.0` beats `1.0.0-rc.1`, and the export presets still ship VERSION,
+    still mark the desktop builds `packaged` and still keep the WebRTC plugin.
+    No network: the answers are handed to the check directly.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).
@@ -1624,9 +1642,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 - Adopt gdUnit4 only once there is real unit-testable logic beyond what the
   suites cover in passing (inventory, save data) - not for scene wiring, which
   is the hard part here and which no framework drives.
-- `tests/`, `tools/` and `addons/` are excluded from every export preset (the
-  "Web" one is the first), and so is every `.wav` under a `src/` folder - the
-  untouched exports, 125 MB that nothing in the game loads. All three folders
-  are editor-side only; the plugin in `addons/` preloads `tools/`, so
-  exporting one without the other breaks the build. A new preset copies the
-  Web one's `exclude_filter`.
+- `tests/` and `tools/` are excluded from every export preset, and so is every
+  `.wav` under a `src/` folder - the untouched exports, 125 MB that nothing in
+  the game loads. Of `addons/`, `za_build` is always excluded (it preloads
+  `tools/`, so shipping one without the other breaks the build) and
+  `webrtc_native` must ship on desktop or online play is gone: the Windows and
+  macOS presets exclude `addons/za_build/*`, while the Web preset may drop all
+  of `addons/*`, because a browser build gets WebRTC from the browser and
+  that GDExtension declares no web library anyway. A new DESKTOP preset copies
+  the Windows one's `exclude_filter`, never the Web one's.

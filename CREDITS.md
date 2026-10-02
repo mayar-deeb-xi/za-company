@@ -476,3 +476,12 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   their source is (https://github.com/paullouisageneau/libdatachannel and
   https://github.com/paullouisageneau/libjuice) in the game's credits or
   readme. The game's own code is unaffected - MPL is per file.
+
+## Windows installer
+- Built with **Inno Setup** by Jordan Russell and Martijn Laan
+  (https://jrsoftware.org/isinfo.php), from `tools/release/installer.iss`, on
+  GitHub's build machines - nothing of it is in the repository.
+- Licence: the Inno Setup License, a modified BSD-style licence that permits
+  distributing installers made with it, commercially included. Each
+  `*-windows-setup.exe` contains Inno Setup's own setup code, so it is a
+  credit owed by every release, not only by the repository.
