@@ -135,6 +135,16 @@ compresses nothing itself, because on one core that is a second of CPU for
 every player who opens the page (39 MB of engine becomes 10; the whole
 download is about 23 MB).
 
+**The dev site is the same thing in a folder of its own.**
+`https://dev.DOMAIN` (an A record beside the first) serves `web/dev-game/`,
+which a deploy to dev (RELEASING.md, *Deploying to dev*) fills through
+`deploy.sh web-dev` by the same two renames. Both sites are one Caddyfile
+importing the same two snippets - the signaling routes and the game - so the
+dev site cannot drift from the live one, and the only differences are its
+folder and a `X-Robots-Tag: noindex` header. It shares the live signaling
+service; the day a protocol change needs dev to have its own, that is a second
+`signaling` container on another port and one line in the dev site's block.
+
 Three rules on this side hold that up:
 
 - **`web/` is mounted, not `web/game`.** A bind mount follows the directory it
@@ -148,8 +158,8 @@ Three rules on this side hold that up:
   line in `/root/.ssh/authorized_keys` is
   `restrict,command="/usr/local/sbin/za-deploy" ssh-ed25519 ... za-company release pipeline`,
   so whatever it asks for, the script runs instead, with the request in
-  `SSH_ORIGINAL_COMMAND`: `web` or `server` and a tar on stdin, and nothing
-  else - no shell, no other command, no tunnels. It is never the developer's
+  `SSH_ORIGINAL_COMMAND`: `web`, `web-dev` or `server` and a tar on stdin,
+  and nothing else - no shell, no other command, no tunnels. It is never the developer's
   key, so it is revoked without locking anybody out. `deploy.sh server`
   installs the newest copy of itself, so this folder is the one place it is
   written.

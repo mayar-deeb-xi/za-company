@@ -1276,7 +1276,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   `v<VERSION>` and publishes a GitHub Release carrying them. So never bump
   `VERSION` as a side effect of other work; it is the user's call. A push to
   `develop` touching the presets, the workflow or `tools/release/` is a dry
-  run of all of it. The whole flow: `RELEASING.md`.
+  run of all of it. **A deploy to dev** is that run started by hand on
+  `develop` with its box ticked, and never automatic: the same gated builds,
+  then the rolling `dev` pre-release (files always named `dev`, never
+  "latest", so no player or update check is offered it) and
+  https://dev.za-company.mayar-deeb.dev. It never moves the live site, the
+  server's stack or `VERSION`. The whole flow: `RELEASING.md`.
 - **The Windows and macOS presets carry the custom feature `packaged`**, and
   two things hang off it: the game is called "The New Hire" there
   (`config/name.packaged`, from setup_project.gd - the bare `za-company` is

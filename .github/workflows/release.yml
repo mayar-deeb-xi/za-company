@@ -15,6 +15,14 @@
 # the files on the run's page for a week, and publishes nothing. That is how a
 # packaging change is tried without spending a version number on it.
 #
+# DEPLOY TO DEV is the same run started by hand on develop with its box ticked
+# (never on its own: develop takes too many half-finished pushes). The same
+# builds gate it the same way, and then the Windows and macOS files replace the
+# rolling `dev` pre-release - one stable link per file, never "latest", so no
+# player or in-game update check is ever offered it - and the web build
+# replaces https://dev.za-company.mayar-deeb.dev. Nothing a release owns moves:
+# not the live site, not the server's stack, not a version number.
+#
 # The rest of the flow (develop -> main, bumping the number) is RELEASING.md.
 
 name: Release
@@ -29,8 +37,13 @@ on:
       - tools/release/**
   # Re-run by hand from the Actions tab: on main it releases if VERSION is not
   # out yet (and stops at "already released" if it is); anywhere else it is a
-  # dry run.
+  # dry run - or, with the box ticked, a deploy to dev.
   workflow_dispatch:
+    inputs:
+      deploy_dev:
+        description: "Deploy to dev: replace the dev pre-release and the dev site (not on main)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -59,6 +72,8 @@ jobs:
 
       - name: Read VERSION and decide what this run is
         id: plan
+        env:
+          DEPLOY_DEV: ${{ inputs.deploy_dev }}
         run: |
           version="$(tr -d ' \t\r\n' < VERSION)"
           if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
@@ -68,14 +83,31 @@ jobs:
           tag="v$version"
           core="${version%%-*}"
           latest="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1)"
+
+          dev=false
+          if [ "$DEPLOY_DEV" = "true" ]; then
+            if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+              echo "::error::Deploy to dev builds develop (or another branch), not main: on main a release is a VERSION change (RELEASING.md)."
+              exit 1
+            fi
+            dev=true
+          fi
           {
-            echo "version=$version"
+            # A dev build's files are named `dev` rather than a number, so the
+            # rolling pre-release's download links never change. Its numeric
+            # core still stamps the exe and the .app.
+            if $dev; then echo "version=dev"; else echo "version=$version"; fi
             echo "core=$core"
             echo "tag=$tag"
             echo "previous=$latest"
             [[ "$version" == *-* ]] && echo "prerelease=true" || echo "prerelease=false"
           } >> "$GITHUB_OUTPUT"
 
+          if $dev; then
+            echo "::notice::Deploy to dev from ${GITHUB_REF#refs/heads/} at ${GITHUB_SHA:0:7}: the dev pre-release and https://dev.za-company.mayar-deeb.dev"
+            echo "mode=dev" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
             echo "::notice::Dry run on ${GITHUB_REF#refs/heads/}: building $version, publishing nothing"
             echo "mode=build" >> "$GITHUB_OUTPUT"
@@ -370,20 +402,10 @@ jobs:
           path: server-bundle
 
       - name: Load the deploy key
+        # If this fails, the Release is out but the server is not updated.
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-        run: |
-          if [ -z "$DEPLOY_SSH_KEY" ]; then
-            echo "::error::The DEPLOY_SSH_KEY secret is not set, so the Release is out but the server was not updated. RELEASING.md, Deploying, says how to add it; then re-run this job."
-            exit 1
-          fi
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
-          chmod 600 ~/.ssh/deploy
-          # The host key is pinned in the repository, never learned on the
-          # day: a deploy must refuse a server that is not ours.
-          cp tools/release/known_hosts ~/.ssh/known_hosts
-          echo "SSH=ssh -i $HOME/.ssh/deploy -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes root@$HOST" >> "$GITHUB_ENV"
+        run: bash tools/release/load_deploy_key.sh
 
       - name: The server first
         # Signaling and the game change together (a PROTOCOL bump is both), so
@@ -399,3 +421,90 @@ jobs:
           curl -fsS "https://$HOST/" -o live.html
           cmp live.html web/index.html
           echo "::notice::v$VERSION is live at https://$HOST"
+
+  # A deploy to dev, after every build worked: the Windows and macOS files
+  # replace the rolling `dev` pre-release. One release, its files always named
+  # `dev`, so each download link stays the same from one dev build to the next.
+  # Marked pre-release and never latest, so GitHub's "latest" - which is what
+  # the in-game update check asks for - is always the real release.
+  publish-dev:
+    needs: [plan, windows, macos, web, server]
+    if: needs.plan.outputs.mode == 'dev'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows
+          path: dist
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: macos
+          path: dist
+
+      # The same list a release carries, so the in-game updater can be tried
+      # against this build with --update-feed=<this release's API URL>.
+      - name: Checksums
+        run: |
+          (cd dist && sha256sum -- * > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+
+      - name: Replace the dev pre-release
+        run: |
+          {
+            echo "**Not a release.** A build of \`${GITHUB_REF_NAME}\` at ${GITHUB_SHA:0:7}, for testing. The next dev deploy replaces it, and players are never offered it."
+            echo
+            echo "- Play it in a browser: https://dev.za-company.mayar-deeb.dev"
+            echo "- Built $(date -u '+%Y-%m-%d %H:%M UTC'), last change: $(git log -1 --format='%s')"
+            echo
+            echo "The builds are not signed - see a release's notes for what Windows and macOS ask the first time."
+          } > notes.md
+          cat notes.md
+          # Delete and recreate rather than edit: the tag must move to this
+          # commit, and a release whose tag is gone is a draft nobody sees.
+          gh release delete dev --cleanup-tag --yes 2>/dev/null || true
+          # And a tag a half-finished earlier run left behind, which `create`
+          # would otherwise reuse - at the old commit.
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/dev" 2>/dev/null || true
+          gh release create dev dist/* --target "$GITHUB_SHA" --title "dev build" \
+            --notes-file notes.md --prerelease --latest=false
+
+  # And the web build onto the dev site. Only `web-dev`: the dev site has its
+  # own folder on the server, and a dev deploy has no way to touch the live
+  # site or the stack, which stay the latest release's.
+  deploy-dev:
+    needs: [plan, publish-dev]
+    if: needs.plan.outputs.mode == 'dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: dev
+      url: https://dev.za-company.mayar-deeb.dev
+    env:
+      HOST: za-company.mayar-deeb.dev
+      DEV_SITE: https://dev.za-company.mayar-deeb.dev
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: web
+          path: web
+
+      - name: Load the deploy key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: bash tools/release/load_deploy_key.sh
+
+      - name: The dev site
+        run: tar -C web -cf - . | $SSH web-dev
+
+      - name: Check it is live
+        run: |
+          curl -fsS "$DEV_SITE/" -o live.html
+          cmp live.html web/index.html
+          echo "::notice::${GITHUB_SHA:0:7} is live at $DEV_SITE"

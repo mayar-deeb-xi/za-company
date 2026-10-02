@@ -154,6 +154,43 @@ checks. It publishes and deploys nothing, and keeps the files on the run's
 page in the Actions tab for a week. **Actions -> Release -> Run
 workflow** on `develop` does the same on demand.
 
+## Deploying to dev
+
+To try `develop` without a release - or hand it to a tester - deploy it to
+dev: **Actions -> Release -> Run workflow**, branch `develop`, tick **Deploy
+to dev**, **Run workflow**. It never runs on its own, because `develop` takes
+many half-finished pushes and a dev site that changes under every one of them
+is a dev site nobody can test.
+
+The same four builds run and gate it exactly as they gate a release, and then:
+
+| What | Where |
+|---|---|
+| The web build | https://dev.za-company.mayar-deeb.dev |
+| Windows installer, portable zip, macOS disk image | the **`dev` pre-release** on the Releases page |
+
+The pre-release is ONE release that each dev deploy replaces, so its links
+never change: `https://github.com/mayar4ki/za-company/releases/download/dev/TheNewHire-dev-windows-setup.exe`,
+`.../TheNewHire-dev-windows-portable.zip` and `.../TheNewHire-dev-macos.dmg`
+always fetch the newest dev build, with no GitHub account needed. Its notes
+say which commit it is. It is marked *Pre-release* and never *latest*, which
+is the whole of what keeps it away from players: the Releases page's "latest",
+its download links and the game's own update check all skip it.
+
+What a dev deploy never touches: the live site, the server's stack and
+`VERSION`. The dev site shares the live signaling service (until a protocol
+change gives dev its own), carries a `noindex` header so search engines leave
+it alone, and is otherwise the live site in a folder of its own on the same
+server (`deploy.sh web-dev`, server/README.md).
+
+Ticking the box on `main` is refused: there, a release is a `VERSION` change.
+
+**The first release after this was added is what switches it on.** The dev
+site and the `web-dev` step live in the server's own files (the Caddyfile and
+`deploy.sh`), and those reach the server with a release, like everything else
+of the server's. Until then a dev deploy builds and publishes the pre-release,
+and stops at the dev site with "expected 'web' or 'server'".
+
 ## If something goes wrong
 
 - **The run failed**: open it in the Actions tab. The error at the top of the

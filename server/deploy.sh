@@ -7,7 +7,9 @@
 # so whatever that key asks to run, THIS runs instead, with the asked-for
 # command in SSH_ORIGINAL_COMMAND and a tar of what to deploy on stdin:
 #
-#   web      the exported web build, swapped into web/game by rename
+#   web      a release's web build, swapped into web/game by rename
+#   web-dev  a dev deploy's web build, the same way into web/dev-game - the
+#            dev site, https://dev.DOMAIN, and nothing the live site reads
 #   server   this folder, minus .env and web/, then the stack brought up to it
 #
 # Nothing else is accepted: a leaked deploy key can replace the game or the
@@ -20,26 +22,36 @@ set -eu
 ROOT=/opt/za-company/server
 COMPOSE="docker compose --profile tls"
 
-case "${SSH_ORIGINAL_COMMAND:-}" in
-web)
+# Unpack a web build beside the live one in web/<folder>, refuse it if a file
+# is missing, then swap it in by two renames in the folder Caddy mounts (web/,
+# never the build's own - README), so a page loaded mid-deploy gets one whole
+# build or the other.
+deploy_web() {
+	folder="$1"
 	mkdir -p "$ROOT/web"
 	cd "$ROOT/web"
-	rm -rf game.new game.old
-	mkdir game.new
-	tar -x -C game.new --no-same-owner
+	rm -rf "$folder.new" "$folder.old"
+	mkdir "$folder.new"
+	tar -x -C "$folder.new" --no-same-owner
 	for f in index.html index.js index.wasm index.pck; do
-		if [ ! -s "game.new/$f" ]; then
+		if [ ! -s "$folder.new/$f" ]; then
 			echo "za-deploy: refusing a web build with no $f" >&2
-			rm -rf game.new
+			rm -rf "$folder.new"
 			exit 1
 		fi
 	done
-	# Two renames in the folder Caddy mounts (web/, never game/ - README), so
-	# a page loaded mid-deploy gets one whole build or the other.
-	if [ -d game ]; then mv game game.old; fi
-	mv game.new game
-	rm -rf game.old
-	echo "za-deploy: web build live ($(du -sh game | cut -f1))"
+	if [ -d "$folder" ]; then mv "$folder" "$folder.old"; fi
+	mv "$folder.new" "$folder"
+	rm -rf "$folder.old"
+	echo "za-deploy: $folder live ($(du -sh "$folder" | cut -f1))"
+}
+
+case "${SSH_ORIGINAL_COMMAND:-}" in
+web)
+	deploy_web game
+	;;
+web-dev)
+	deploy_web dev-game
 	;;
 server)
 	staging=$(mktemp -d)
@@ -69,7 +81,7 @@ server)
 	$COMPOSE ps --format '{{.Service}}: {{.Status}}'
 	;;
 *)
-	echo "za-deploy: expected 'web' or 'server' with a tar on stdin, got '${SSH_ORIGINAL_COMMAND:-}'" >&2
+	echo "za-deploy: expected 'web', 'web-dev' or 'server' with a tar on stdin, got '${SSH_ORIGINAL_COMMAND:-}'" >&2
 	exit 2
 	;;
 esac
