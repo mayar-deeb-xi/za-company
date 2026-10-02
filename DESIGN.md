@@ -960,7 +960,7 @@ one that FEELS best rather than the one that is safest.
 
 ### Build order — each step leaves solo exactly as it was
 
-- [ ] M0. **Spike, thrown away afterwards.** `webrtc-native` on 4.7, two
+- [x] M0. **Spike, thrown away afterwards.** `webrtc-native` on 4.7, two
         machines on two networks, through signaling + coturn on our server:
         connects direct, falls back to relay when direct is blocked, and the
         two-stage ask really tells them apart. If the plugin does not hold up,
@@ -975,11 +975,14 @@ one that FEELS best rather than the one that is safest.
         TURN running FAILS, as it must. That last check caught the design's
         one mistake: filtering only the guest's candidates is not enough,
         because ICE learns a peer-reflexive address from the first check that
-        arrives, so it now filters both ends (rtc_link.gd's header). **The
-        server is up** (za-company.mayar-deeb.dev) and two of server/README.md's
-        four checks pass against it - the forced relay and leaving, both
-        ways. **Left:** the other two, which need two machines on one Wi-Fi,
-        then on two networks (a phone hotspot).
+        arrives, so it now filters both ends (rtc_link.gd's header).
+        **Signed off 2026-10-02** against the live server
+        (za-company.mayar-deeb.dev): all four of server/README.md's checks -
+        the same Wi-Fi and two networks with an editor host and a phone
+        joining by link, the forced relay, and leaving both ways - plus a
+        desktop host on the plugin and a browser guest talking to each other.
+        **The plugin holds up, so ENet is not needed.** The spike stays until
+        M2 takes its three pieces into the `Net` autoload, then goes.
 - [ ] M1. **A party on ONE machine, no network.** The player reads an *input
         source* instead of `Input` (yours is the keyboard; later, the wire);
         game.gd spawns one player per member instead of owning `$Player`;
@@ -992,6 +995,9 @@ one that FEELS best rather than the one that is safest.
         their pings, START for the host. New suite `test_net.gd` runs a host
         and a guest in one process, each in its own SubViewport so the two
         copies of a room do not collide with each other, over ENet localhost.
+        **First**, give dev its own signaling and its own server deploy
+        (docs/environments.md, #1 and #2): M2 changes the protocol, and dev
+        cannot test that against production's service.
 - [ ] M3. **The world in step.** Players from their owners; enemies, bosses,
         hazards and beats from the host; the damage flow in the table above;
         spawners for what arrives mid-room; travel, health, lives, the boss bar

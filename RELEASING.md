@@ -178,7 +178,9 @@ is the whole of what keeps it away from players: the Releases page's "latest",
 its download links and the game's own update check all skip it.
 
 What a dev deploy never touches: the live site, the server's stack and
-`VERSION`. The dev site shares the live signaling service (until a protocol
+`VERSION`. What dev and production still SHARE - the signaling service, the
+server, the deploy key - and when each of those will need splitting is
+`docs/environments.md`. The dev site shares the live signaling service (until a protocol
 change gives dev its own), carries a `noindex` header so search engines leave
 it alone, and is otherwise the live site in a folder of its own on the same
 server (`deploy.sh web-dev`, server/README.md).

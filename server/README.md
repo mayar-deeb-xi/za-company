@@ -192,10 +192,13 @@ Two desktops work too: both run the screen in the editor, A presses HOST, B
 types the code and presses JOIN. The screen shows each player's ping and
 ROUTE. M0 is signed off when all four of these have been seen:
 
-- [ ] **Same network** (both machines on one Wi-Fi): connects DIRECT, ping in
-      single digits.
-- [ ] **Different networks** (a phone on mobile data, or one machine on a
-      phone hotspot): connects DIRECT, ping in the tens.
+- [x] **Same network** (both machines on one Wi-Fi): connects DIRECT, ping in
+      single digits. *Seen 2026-10-02: an editor host and a phone on the same
+      Wi-Fi, by the join link.*
+- [x] **Different networks** (a phone on mobile data, or one machine on a
+      phone hotspot): connects DIRECT, ping in the tens. *Seen 2026-10-02: the
+      same host and the phone on mobile data, rejoining the same room; coturn
+      held no relay allocation afterwards.*
 - [x] **Relay, forced**: tick FORCE RELAY on B before JOIN. It connects RELAY,
       B shows "Connected through relay", A shows the warning against B's name,
       and coturn holds the allocation. coturn 4.18 logs nothing per session at
@@ -206,9 +209,9 @@ ROUTE. M0 is signed off when all four of these have been seen:
 - [x] **Leaving**: closing A's window shows THE HOST LEFT on B, and closing B
       shows B leaving on A. *Seen 2026-10-02 on the live server, both ways.*
 
-The two left need two machines, and one of them off the first one's network:
-on one machine through the live server, DIRECT measured 7-12 ms, which is the
-loopback rather than a Wi-Fi. The mixed pair is proved on one machine too: an
+**M0 is signed off (2026-10-02)**: all four seen through the live server. On
+one machine, DIRECT measured 7-12 ms, which is the loopback rather than a
+Wi-Fi; the two real-network checks were an editor host and a phone. The mixed pair is proved on one machine too: an
 editor host with the desktop plugin and a browser joining by the link connect
 DIRECT, and RELAY with `&relay`, so a browser and a desktop speak the same
 WebRTC through this server.
