@@ -134,6 +134,25 @@ class SocketTest(unittest.IsolatedAsyncioTestCase):
             await host.close()
             self.assertEqual(await self.recv(guest), {"op": "closed", "reason": "host_left"})
 
+    async def test_health_names_its_stage(self):
+        # The live service says "ok"; dev's own copy says so, which is how a
+        # deploy proves the dev site's route reaches dev's copy and not ours.
+        class Request:
+            path = "/healthz"
+
+        class Connection:
+            def respond(self, status, body):
+                return status, body
+
+        saved = main.STAGE
+        try:
+            main.STAGE = ""
+            self.assertEqual(main.health(Connection(), Request())[1], "ok\n")
+            main.STAGE = "dev"
+            self.assertEqual(main.health(Connection(), Request())[1], "ok dev\n")
+        finally:
+            main.STAGE = saved
+
     async def test_wrong_protocol_and_junk(self):
         async with connect(self.url) as ws:
             await ws.send(json.dumps({"op": "host", "v": 99, "name": "H", "max": 2}))

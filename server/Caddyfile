@@ -1,18 +1,19 @@
-# The signaling service: any WebSocket upgrade, whatever its path, so the
-# game still connects to plain wss://DOMAIN, plus its health check.
-# Matched by regex because both headers are case-insensitive and clients
-# disagree: Chrome sends "Upgrade", Node sends "upgrade", and the plain
-# `header` matcher's wildcard sent the second one the game's index.html.
+# A signaling service, on the loopback port given: any WebSocket upgrade,
+# whatever its path, so the game still connects to plain wss://DOMAIN, plus
+# its health check. Matched by regex because both headers are
+# case-insensitive and clients disagree: Chrome sends "Upgrade", Node sends
+# "upgrade", and the plain `header` matcher's wildcard sent the second one the
+# game's index.html.
 (signaling) {
 	@signal {
 		header_regexp Connection (?i)\bupgrade\b
 		header_regexp Upgrade (?i)^websocket$
 	}
 	handle @signal {
-		reverse_proxy 127.0.0.1:{$SIGNAL_PORT}
+		reverse_proxy 127.0.0.1:{args[0]}
 	}
 	handle /healthz {
-		reverse_proxy 127.0.0.1:{$SIGNAL_PORT}
+		reverse_proxy 127.0.0.1:{args[0]}
 	}
 }
 
@@ -32,15 +33,17 @@
 
 # The game: always the latest release.
 {$SIGNAL_DOMAIN} {
-	import signaling
+	import signaling {$SIGNAL_PORT}
 	import game /srv/web/game
 }
 
 # The dev site: whatever the last dev deploy built from develop
-# (RELEASING.md, Deploying to dev). Same signaling as the game - one service
-# until a protocol change gives dev its own - and kept out of search results.
+# (RELEASING.md, Deploying to dev), talking to dev's OWN signaling - a second
+# copy of the service, built from develop too, so a protocol change is tried
+# before production's moves (README.md, Dev's signaling). Kept out of search
+# results.
 dev.{$SIGNAL_DOMAIN} {
-	import signaling
+	import signaling {$DEV_SIGNAL_PORT}
 	header X-Robots-Tag "noindex, nofollow"
 	import game /srv/web/dev-game
 }

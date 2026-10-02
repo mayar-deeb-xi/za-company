@@ -166,8 +166,12 @@ The same four builds run and gate it exactly as they gate a release, and then:
 
 | What | Where |
 |---|---|
+| Dev's own signaling service, built from `develop` | behind https://dev.za-company.mayar-deeb.dev |
 | The web build | https://dev.za-company.mayar-deeb.dev |
 | Windows installer, portable zip, macOS disk image | the **`dev` pre-release** on the Releases page |
+
+Every build in a deploy to dev carries the custom feature `dev`, which is how a
+dev desktop build knows to talk to dev's signaling rather than the live one.
 
 The pre-release is ONE release that each dev deploy replaces, so its links
 never change: `https://github.com/mayar4ki/za-company/releases/download/dev/TheNewHire-dev-windows-setup.exe`,
@@ -177,21 +181,27 @@ say which commit it is. It is marked *Pre-release* and never *latest*, which
 is the whole of what keeps it away from players: the Releases page's "latest",
 its download links and the game's own update check all skip it.
 
-What a dev deploy never touches: the live site, the server's stack and
-`VERSION`. What dev and production still SHARE - the signaling service, the
-server, the deploy key - and when each of those will need splitting is
-`docs/environments.md`. The dev site shares the live signaling service (until a protocol
-change gives dev its own), carries a `noindex` header so search engines leave
-it alone, and is otherwise the live site in a folder of its own on the same
-server (`deploy.sh web-dev`, server/README.md).
+What a dev deploy never touches: the live site, its signaling, Caddy, coturn
+and `VERSION`. What dev and production still SHARE - the server, Caddy and
+coturn, the deploy key - and when each of those will need splitting is
+`docs/environments.md`. The dev site has its own signaling
+(`deploy.sh server-dev`, server/README.md's *Dev's signaling*), carries a
+`noindex` header so search engines leave it alone, and is otherwise the live
+site in a folder of its own on the same server (`deploy.sh web-dev`).
+
+A change to the Caddyfile, the compose file or coturn's flags can NOT be tried
+on dev: there is one of each and they are the release's. A deploy to dev tries
+a signaling change; the release's `server` job checks the Caddyfile with Caddy
+itself and the compose file with Compose.
 
 Ticking the box on `main` is refused: there, a release is a `VERSION` change.
 
-**The first release after this was added is what switches it on.** The dev
-site and the `web-dev` step live in the server's own files (the Caddyfile and
-`deploy.sh`), and those reach the server with a release, like everything else
-of the server's. Until then a dev deploy builds and publishes the pre-release,
-and stops at the dev site with "expected 'web' or 'server'".
+**A step a deploy to dev needs arrives with a release.** The dev site, its
+signaling and the steps that fill them live in the server's own files (the
+Caddyfile and `deploy.sh`), and those reach the server only with a release,
+like everything else of the server's. A dev deploy run before then builds and
+publishes the pre-release, and stops at the step the server does not know yet
+with "expected 'web', 'web-dev', ...". `server-dev` arrived after v0.1.1.
 
 ## If something goes wrong
 

@@ -14,6 +14,9 @@ services:
       TURN_PORT: ${TURN_PORT:-3478}
       TURN_SECRET: ${TURN_SECRET:?set TURN_SECRET in .env}
       PARTY_CEILING: ${PARTY_CEILING:-8}
+      # Empty here; "dev" for dev's own copy, which deploy.sh starts from this
+      # same file as a second project (README.md, Dev's signaling).
+      STAGE: ${STAGE:-}
     # Loopback only: the outside world reaches it through the TLS proxy, so
     # it is never plain ws:// on the public interface.
     ports:
@@ -71,6 +74,8 @@ services:
     environment:
       SIGNAL_DOMAIN: ${DOMAIN}
       SIGNAL_PORT: ${SIGNAL_PORT:-8765}
+      # Dev's own signaling, which the dev site's block proxies to instead.
+      DEV_SIGNAL_PORT: ${DEV_SIGNAL_PORT:-8766}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       # The web build. The FOLDER is mounted rather than web/game itself, so a

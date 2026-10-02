@@ -11,19 +11,24 @@ is deployed is RELEASING.md (*Deploying* and *Deploying to dev*).
 | Windows and macOS files | a versioned GitHub Release (`v0.1.1`) | the rolling `dev` pre-release |
 | Started by | `VERSION` changing on `main` | Run workflow on `develop`, *Deploy to dev* ticked |
 | Server folder | `web/game/` | `web/dev-game/` |
+| Signaling | `server`, port 8765, the release's `server/` | `za-dev`, port 8766, the dev deploy's `server/` |
+| Desktop builds can tell | (no `dev` feature) | `OS.has_feature("dev")` |
 
-Separate: the web builds, the desktop builds, and what starts each deploy.
+Separate: the web builds, the desktop builds, the signaling service, and what
+starts each deploy.
 
-Shared: the droplet, its Caddy, the signaling service, coturn, the deploy key,
-and the workflow (`release.yml` builds both with the same jobs). The server's
-own files - Caddyfile, compose file, signaling, `deploy.sh` - only ever reach
-the server with a **release**, so dev can never get a server change first.
+Shared: the droplet, its Caddy, coturn, the deploy key, and the workflow
+(`release.yml` builds both with the same jobs). Of the server's own files only
+`signaling/` can reach dev first - a deploy to dev rebuilds dev's copy of it -
+and the Caddyfile, the compose file and `deploy.sh` still reach the server
+only with a **release**.
 
 ## When sharing bites
 
-Four things, in the order they will hurt. None of them is fixed yet.
+Four things, in the order they will hurt. The first is fixed and the second
+is fixed for signaling, both at the start of M2; the other two are not.
 
-### 1. One signaling service - bites at M2
+### 1. One signaling service - FIXED at the start of M2
 
 **When:** the first time the signaling protocol changes, which M2 (the `Net`
 autoload and the lobby) will do several times.
@@ -34,13 +39,13 @@ changed by a release - so dev cannot test multiplayer work before it ships.
 The other way round is no better: release the new service, and the dev site
 breaks until dev catches up.
 
-**Fix:** a second `signaling` container for dev on the same droplet, on its
-own port, and one line in the dev site's Caddy block pointing at it. coturn
-stays shared (see below). About 40 MB of memory.
+**Fixed:** a second `signaling` container for dev on the same droplet - its
+own compose project, `za-dev`, on port 8766 - and the dev site's Caddy block
+pointing at it. coturn stays shared (see below). About 40 MB of memory. Its
+`/healthz` says `ok dev`, which is how a deploy to dev proves the dev site
+reaches it (server/README.md, *Dev's signaling*).
 
-**Do it:** at the start of M2.
-
-### 2. Server changes cannot be tried anywhere first - bites at any release
+### 2. Server changes cannot be tried anywhere first - FIXED for signaling
 
 **When:** any release that changes Caddy, coturn or signaling.
 
@@ -51,26 +56,32 @@ case: coturn 4.18 rejects `--no-dtls`, which a config check passes and coturn
 answers with a restart loop. Shipped in a release, that is production's relay
 down.
 
-**Fix:** the dev stack from #1, deployed by a deploy to dev - so a server
-change runs on dev before a release takes it to production. Same work as #1;
-do them together.
+**Fixed for signaling:** a deploy to dev rebuilds dev's copy of the
+signaling service from `develop` (`deploy.sh server-dev`), so a signaling
+change runs on dev before a release takes it to production.
 
-**Until then:** keep server changes small, and watch the `deploy` job and the
-site after a release that touches `server/`.
+**Still true for Caddy and coturn.** There is one of each - one pair of 80/443,
+one TURN port - and they are the release's, so the coturn case above would
+still go straight to production. What narrows it: the release's `server` job
+now runs `caddy validate` on the Caddyfile, so a Caddyfile Caddy rejects
+stops the release; nothing yet starts coturn against its new flags before a
+release. Keep those changes small, and watch the `deploy` job and the site
+after a release that touches them.
 
 ### 3. One deploy key for both - unlikely, high impact, cheap to fix
 
 **When:** any time, by accident.
 
-**What happens:** the `DEPLOY_SSH_KEY` secret can run all three of
-`deploy.sh`'s commands - `web`, `web-dev` and `server` - and a workflow on any
+**What happens:** the `DEPLOY_SSH_KEY` secret can run all four of
+`deploy.sh`'s commands - `web`, `web-dev`, `server` and `server-dev` - and a workflow on any
 branch can read it. One careless edit to the dev jobs on `develop` could
 deploy to production with no release.
 
 **Fix:** two keys.
 
 - A **dev key** whose `authorized_keys` line gives `deploy.sh` an argument
-  that only allows `web-dev`, stored in the `dev` GitHub environment.
+  that only allows `web-dev` and `server-dev`, stored in the `dev` GitHub
+  environment.
 - The **production key** as now, moved into the `production` environment,
   with that environment's *Deployment branches* set to `main` only.
 
@@ -92,7 +103,9 @@ read.
 
 **Fix:** dev builds get their own name and identity - "The New Hire (dev)",
 their own installer `AppId` and their own `user://` folder - set by a feature
-tag only dev builds carry.
+tag only dev builds carry. That tag exists now: a deploy to dev stamps `dev`
+into every preset (tools/release/prepare.sh) so a dev build reaches dev's
+signaling, and the identity is the rest of this fix.
 
 **Do it:** before saves exist.
 
@@ -101,7 +114,7 @@ tag only dev builds carry.
 - **One coturn.** TURN relays bytes and never reads them, so it does not care
   which build it carries. Dev testers share its 40 relay slots, which at this
   scale is nothing.
-- **One droplet.** The dev site is static files; even a dev signaling
+- **One droplet.** The dev site is static files, and dev's signaling
   container is about 40 MB.
 - **One workflow file.** That one is a strength: a dev build is exactly what a
   release would build from the same commit, and every dry run checks both

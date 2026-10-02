@@ -140,10 +140,39 @@ download is about 23 MB).
 which a deploy to dev (RELEASING.md, *Deploying to dev*) fills through
 `deploy.sh web-dev` by the same two renames. Both sites are one Caddyfile
 importing the same two snippets - the signaling routes and the game - so the
-dev site cannot drift from the live one, and the only differences are its
-folder and a `X-Robots-Tag: noindex` header. It shares the live signaling
-service; the day a protocol change needs dev to have its own, that is a second
-`signaling` container on another port and one line in the dev site's block.
+dev site cannot drift from the live one, and the differences are its folder,
+a `X-Robots-Tag: noindex` header and the port its signaling routes go to:
+dev's own (below).
+
+## Dev's signaling
+
+The dev site talks to a signaling service of its OWN: a second copy of
+`signaling/`, built from `develop`, so a protocol change can be played on dev
+before production's service has to move (docs/environments.md, #1 and #2).
+
+- **One more container, nothing else.** `deploy.sh server-dev` mirrors a
+  deploy to dev's copy of this folder into `/opt/za-company/dev-server` and
+  starts ONLY its `signaling` service from it, as a compose project of its own
+  (`za-dev`), on `127.0.0.1:${DEV_SIGNAL_PORT}` (8766), with the live `.env`
+  for its secrets and `STAGE=dev`. About 40 MB.
+- **coturn and Caddy are shared, and stay the release's.** TURN relays bytes it
+  never reads, so dev's logins use the same secret against the same coturn;
+  there is one Caddy because there is one pair of 80/443. So a dev deploy can
+  try a SIGNALING change first, and a change to the Caddyfile, the compose file
+  or coturn's flags still reaches the server only with a release. The
+  release's `server` job validates the Caddyfile with Caddy itself before then.
+- **`/healthz` says which one answered**: `ok` for the live service, `ok dev`
+  for dev's, and the dev deploy checks `https://dev.DOMAIN/healthz` says the
+  second - the only proof the dev site's route reaches dev's copy.
+- **The first release that carries it starts it**, from its own copy, so the
+  dev site's route never points at nothing; from then on it moves only with a
+  deploy to dev. By hand: `docker compose -p za-dev ps` in
+  `/opt/za-company/dev-server`, and `docker compose -p za-dev logs -f
+  signaling`.
+- **A dev desktop build finds it too**: a deploy to dev stamps the custom
+  feature `dev` into every export preset (tools/release/prepare.sh), so the
+  game can ask `OS.has_feature("dev")`. A web build needs nothing - it talks to
+  the signaling beside the page it was served from.
 
 Three rules on this side hold that up:
 
@@ -158,8 +187,8 @@ Three rules on this side hold that up:
   line in `/root/.ssh/authorized_keys` is
   `restrict,command="/usr/local/sbin/za-deploy" ssh-ed25519 ... za-company release pipeline`,
   so whatever it asks for, the script runs instead, with the request in
-  `SSH_ORIGINAL_COMMAND`: `web`, `web-dev` or `server` and a tar on stdin,
-  and nothing else - no shell, no other command, no tunnels. It is never the developer's
+  `SSH_ORIGINAL_COMMAND`: `web`, `web-dev`, `server` or `server-dev` and a
+  tar on stdin, and nothing else - no shell, no other command, no tunnels. It is never the developer's
   key, so it is revoked without locking anybody out. `deploy.sh server`
   installs the newest copy of itself, so this folder is the one place it is
   written.
@@ -231,7 +260,8 @@ WebRTC through this server.
   `.env` and `web/`) and runs `docker compose --profile tls up -d --build`, so
   only what changed restarts. Rooms in progress are closed by a signaling
   restart. Players who are already connected keep playing, because their game
-  traffic never passes through the signaling service.
+  traffic never passes through the signaling service. A deploy to dev moves
+  dev's signaling and nothing else (*Dev's signaling* above).
 - **A changed `Caddyfile` recreates Caddy** rather than reloading it. It is a
   FILE bind mount, and a file replaced on disk is a new inode the running
   container never sees, so `caddy reload` would re-read the old one.

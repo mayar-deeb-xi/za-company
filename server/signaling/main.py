@@ -56,6 +56,10 @@ PUBLIC_HOST = os.environ.get("PUBLIC_HOST", "localhost")
 TURN_PORT = int(os.environ.get("TURN_PORT", "3478"))
 TURN_SECRET = os.environ.get("TURN_SECRET", "")
 TURN_TTL = int(os.environ.get("TURN_TTL", str(24 * 3600)))
+# Which copy of this service this is: empty for the live one, "dev" for dev's
+# own (server/README.md, Dev's signaling). Only ever said by /healthz, so a
+# deploy can prove the dev site really reaches dev's copy - both answer "ok".
+STAGE = os.environ.get("STAGE", "").strip()
 
 log = logging.getLogger("signaling")
 ROOMS = Rooms(
@@ -160,7 +164,7 @@ async def handler(ws) -> None:
 def health(connection, request):
     # Plain HTTP for a load balancer or `curl`; anything else is the WebSocket.
     if request.path == "/healthz":
-        return connection.respond(HTTPStatus.OK, "ok\n")
+        return connection.respond(HTTPStatus.OK, f"ok {STAGE}\n" if STAGE else "ok\n")
     return None
 
 

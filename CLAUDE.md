@@ -34,6 +34,9 @@ checklist. This file says HOW things work; DESIGN.md says WHAT to build.
   never scans or exports it; deploying it is `server/README.md`. The plan it
   serves is DESIGN.md's *Multiplayer*. Its Caddy also SERVES the game's web
   build, on the same domain as the signaling: https://za-company.mayar-deeb.dev
+  - and dev has a signaling service of its own beside it, built from
+  `develop`, which the dev site and every dev build talk to (server/README.md's
+  *Dev's signaling*)
 - `docs/` - the images `README.md` shows, `.gdignore`d on `server/`'s terms:
   a screenshot is not a game asset, so Godot must never import or export one.
   They are real captures (a windowed run, `root.get_texture()`, 1280 x 720 =
@@ -1301,9 +1304,13 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   run of all of it. **A deploy to dev** is that run started by hand on
   `develop` with its box ticked, and never automatic: the same gated builds,
   then the rolling `dev` pre-release (files always named `dev`, never
-  "latest", so no player or update check is offered it) and
-  https://dev.za-company.mayar-deeb.dev. It never moves the live site, the
-  server's stack or `VERSION`. The whole flow: `RELEASING.md`.
+  "latest", so no player or update check is offered it), dev's own
+  signaling rebuilt from `develop`'s `server/`, and
+  https://dev.za-company.mayar-deeb.dev. Its builds carry the custom feature
+  `dev` (stamped by tools/release/prepare.sh, never committed), which is how a
+  dev desktop build knows to talk to dev's signaling. It never moves the live
+  site, its signaling, Caddy, coturn or `VERSION`. The whole flow:
+  `RELEASING.md`.
 - **The Windows and macOS presets carry the custom feature `packaged`**, and
   two things hang off it: the game is called "The New Hire" there
   (`config/name.packaged`, from setup_project.gd - the bare `za-company` is
