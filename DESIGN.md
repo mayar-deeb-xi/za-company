@@ -973,9 +973,11 @@ one that FEELS best rather than the one that is safest.
         TURN running FAILS, as it must. That last check caught the design's
         one mistake: filtering only the guest's candidates is not enough,
         because ICE learns a peer-reflexive address from the first check that
-        arrives, so it now filters both ends (rtc_link.gd's header). **Left:**
-        the four checks in server/README.md, on the real server across two
-        real networks.
+        arrives, so it now filters both ends (rtc_link.gd's header). **The
+        server is up** (za-company.mayar-deeb.dev) and two of server/README.md's
+        four checks pass against it - the forced relay and leaving, both
+        ways. **Left:** the other two, which need two machines on one Wi-Fi,
+        then on two networks (a phone hotspot).
 - [ ] M1. **A party on ONE machine, no network.** The player reads an *input
         source* instead of `Input` (yours is the keyboard; later, the wire);
         game.gd spawns one player per member instead of owning `$Player`;

@@ -176,11 +176,19 @@ of these have been seen:
       single digits.
 - [ ] **Different networks** (put one machine on a phone hotspot): connects
       DIRECT, ping in the tens.
-- [ ] **Relay, forced**: tick FORCE RELAY on B before JOIN. It connects RELAY,
+- [x] **Relay, forced**: tick FORCE RELAY on B before JOIN. It connects RELAY,
       B shows "Connected through relay", A shows the warning against B's name,
-      and coturn's log shows the allocation.
-- [ ] **Leaving**: closing A's window shows THE HOST LEFT on B, and closing B
-      shows B leaving on A.
+      and coturn holds the allocation. coturn 4.18 logs nothing per session at
+      its default level, so look at its relay ports instead, while B is on:
+      `ss -uanp | grep turnserver` shows one port in 49160-49200 per side.
+      *Seen 2026-10-02 on the live server, both copies on one machine: RELAY
+      at 247-269 ms, both warnings, two new relay ports.*
+- [x] **Leaving**: closing A's window shows THE HOST LEFT on B, and closing B
+      shows B leaving on A. *Seen 2026-10-02 on the live server, both ways.*
+
+The two left need two machines, and one of them off the first one's network:
+on one machine through the live server, DIRECT measured 10-11 ms, which is the
+loopback rather than a Wi-Fi.
 
 ## Changing things later
 
