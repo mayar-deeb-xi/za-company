@@ -82,7 +82,12 @@ const GUARD_R := {"ex": 17, "ey": 12, "gx": 15, "gy": -6}
 
 ## Sheet order: one row per animation. `rage` sits with the fight rather than
 ## with the ending - it is something he DOES at 72, not how he stops.
-const ORDER := ["idle", "walk", "jab", "hook", "rush", "rage", "concede"]
+##
+## Everything after `concede` arrived later and is LAST on purpose:
+## tools/build_bosses.gd paints only the rows the PNG is too short to hold, so a
+## new row anywhere else would land on a row somebody may have drawn into.
+const ORDER := ["idle", "walk", "jab", "hook", "rush", "rage", "concede",
+	"uppercut", "shell", "open", "counter", "clinch", "flurry"]
 
 ## A frame carries:
 ##   dur     seconds it holds
@@ -213,9 +218,119 @@ const ANIMS := {
 			"L": {"ex": -16, "ey": 14, "gx": -14, "gy": 10},
 			"R": {"ex": 16, "ey": 14, "gx": 14, "gy": 10}},
 	],
+	# UPPERCUT - the hook's twin, and its opposite. Same 0.70 s and the same
+	# rear glove, so neither guess is the safe one; what tells them apart is
+	# WHERE that glove goes. The hook cocks it up and out; this drops it to the
+	# hip and sinks him two rows, then brings it up the middle. Wide and short
+	# against narrow and long - step back from one, step aside from the other.
+	"uppercut": [
+		{"dur": 0.18, "phase": "w", "dy": 1, "legs": [1, 1], "stance": 1,
+			"L": GUARD_L, "R": {"ex": 18, "ey": 13, "gx": 17, "gy": 4, "gs": 5}},
+		{"dur": 0.26, "phase": "w", "dy": 2, "hdy": 1, "legs": [1, 1], "stance": 2,
+			"L": {"ex": -17, "ey": 12, "gx": -14, "gy": -7},
+			"R": {"ex": 17, "ey": 14, "gx": 13, "gy": 10, "gs": 5}},
+		{"dur": 0.26, "phase": "w", "dy": 3, "hdy": 1, "legs": [2, 2], "stance": 2,
+			"L": {"ex": -17, "ey": 12, "gx": -14, "gy": -7},
+			"R": {"ex": 16, "ey": 14, "gx": 10, "gy": 12, "gs": 6}},
+		{"dur": 0.08, "phase": "s", "impact": true, "dy": -2, "hdy": -2, "legs": [-1, -1],
+			"L": GUARD_L, "R": {"ex": 12, "ey": -2, "gx": 5, "gy": -17, "gs": 8}},
+		{"dur": 0.14, "phase": "r", "dy": -1,
+			"L": GUARD_L, "R": {"ex": 14, "ey": 0, "gx": 9, "gy": -14, "gs": 7}},
+		{"dur": 0.20, "phase": "r",
+			"L": GUARD_L, "R": {"ex": 17, "ey": 8, "gx": 14, "gy": -6}},
+		{"dur": 0.16, "phase": "r", "L": GUARD_L, "R": GUARD_R},
+	],
+	# SHELL - both gloves over the face, head tucked. Not an attack: a stance he
+	# holds for SHELL_SECONDS, looping this bob, and every hit on it is blocked.
+	"shell": [
+		{"dur": 0.20, "hdy": 1,
+			"L": {"ex": -13, "ey": 10, "gx": -5, "gy": -11, "gs": 6},
+			"R": {"ex": 13, "ey": 10, "gx": 5, "gy": -11, "gs": 6}},
+		{"dur": 0.20, "dy": 1, "hdy": 2,
+			"L": {"ex": -13, "ey": 11, "gx": -5, "gy": -10, "gs": 6},
+			"R": {"ex": 13, "ey": 11, "gx": 5, "gy": -10, "gs": 6}},
+	],
+	# OPEN - the shell waited out: guard on the floor, head rolling. The punish
+	# window, looped for OPEN_SECONDS.
+	"open": [
+		{"dur": 0.20, "dy": 1, "hdx": -1, "blink": true,
+			"L": {"ex": -17, "ey": 14, "gx": -16, "gy": 9},
+			"R": {"ex": 17, "ey": 14, "gx": 16, "gy": 9}},
+		{"dur": 0.20, "dy": 2, "hdy": 1,
+			"L": {"ex": -17, "ey": 14, "gx": -15, "gy": 10},
+			"R": {"ex": 17, "ey": 14, "gx": 15, "gy": 10}},
+		{"dur": 0.20, "dy": 1, "hdx": 1, "blink": true,
+			"L": {"ex": -17, "ey": 14, "gx": -16, "gy": 9},
+			"R": {"ex": 17, "ey": 14, "gx": 16, "gy": 9}},
+		{"dur": 0.20, "dy": 2, "hdy": 1,
+			"L": {"ex": -17, "ey": 14, "gx": -15, "gy": 10},
+			"R": {"ex": 17, "ey": 14, "gx": 15, "gy": 10}},
+	],
+	# COUNTER - what hitting the shell earns: the hook with the wind-up cut to
+	# 0.15 s, out of the shell rather than out of the guard. The blow and the
+	# recover are the hook's own frames.
+	"counter": [
+		{"dur": 0.07, "phase": "w", "dx": 2, "hdx": 1,
+			"L": GUARD_L, "R": {"ex": 21, "ey": 8, "gx": 22, "gy": -9, "gs": 6}},
+		{"dur": 0.08, "phase": "w", "dx": 3, "hdx": 1,
+			"L": GUARD_L, "R": {"ex": 22, "ey": 7, "gx": 24, "gy": -11, "gs": 6}},
+		{"dur": 0.08, "phase": "s", "impact": true, "dx": -2, "hdx": -1,
+			"L": GUARD_L, "R": {"ex": 14, "ey": -2, "gx": -2, "gy": -8, "gs": 7}},
+		{"dur": 0.14, "phase": "r", "dx": -2,
+			"L": GUARD_L, "R": {"ex": 6, "ey": 2, "gx": -10, "gy": -4}},
+		{"dur": 0.20, "phase": "r", "dx": -1,
+			"L": GUARD_L, "R": {"ex": 17, "ey": 12, "gx": 10, "gy": -2}},
+		{"dur": 0.16, "phase": "r", "L": GUARD_L, "R": GUARD_R},
+	],
+	# CLINCH - the arms thrown wide are the tell, then they close round you on
+	# the impact frame, then the heave. The throw itself is carried through the
+	# recover by the boss script, a frame the picture already shows.
+	"clinch": [
+		{"dur": 0.15, "phase": "w", "stance": 1,
+			"L": {"ex": -20, "ey": 8, "gx": -24, "gy": -3, "gs": 5},
+			"R": {"ex": 20, "ey": 8, "gx": 24, "gy": -3, "gs": 5}},
+		{"dur": 0.15, "phase": "w", "dy": 1, "stance": 2,
+			"L": {"ex": -19, "ey": 7, "gx": -15, "gy": 2, "gs": 5},
+			"R": {"ex": 19, "ey": 7, "gx": 15, "gy": 2, "gs": 5}},
+		{"dur": 0.10, "phase": "s", "impact": true, "dy": 1, "stance": 2,
+			"L": {"ex": -17, "ey": 8, "gx": -6, "gy": 4, "gs": 5},
+			"R": {"ex": 17, "ey": 8, "gx": 6, "gy": 4, "gs": 5}},
+		{"dur": 0.16, "phase": "r", "dx": 3, "hdx": 2, "dy": -1, "legs": [-2, 1], "stance": 3,
+			"L": {"ex": -4, "ey": -2, "gx": 12, "gy": -14, "gs": 5},
+			"R": {"ex": 22, "ey": -3, "gx": 24, "gy": -13, "gs": 5}},
+		{"dur": 0.24, "phase": "r", "dx": 1, "L": GUARD_L, "R": GUARD_R},
+	],
+	# FLURRY - raging only. Two frames of loading (the gloves grow), then five
+	# straight punches alternating hands, FLURRY_GAP apart, while he marches.
+	# The first lands on the impact frame like any blow; the boss script lands
+	# the other four through the recover, each on the frame that throws it -
+	# punch k at 0.30 + 0.2 k, every one of them a frame boundary below.
+	"flurry": [
+		{"dur": 0.15, "phase": "w", "dy": 1, "stance": 1,
+			"L": {"ex": -17, "ey": 12, "gx": -14, "gy": -4, "gs": 6},
+			"R": {"ex": 17, "ey": 12, "gx": 14, "gy": -4, "gs": 6}},
+		{"dur": 0.15, "phase": "w", "dy": 1, "stance": 1,
+			"L": {"ex": -16, "ey": 12, "gx": -13, "gy": -4, "gs": 7},
+			"R": {"ex": 16, "ey": 12, "gx": 13, "gy": -4, "gs": 7}},
+		{"dur": 0.10, "phase": "s", "impact": true, "legs": [-2, 1], "stance": 2, "R": GUARD_R,
+			"L": {"ex": -12, "ey": 4, "gx": -6, "gy": -2, "gs": 9}},
+		{"dur": 0.10, "phase": "r", "stance": 1, "L": GUARD_L, "R": GUARD_R},
+		{"dur": 0.10, "phase": "r", "legs": [1, -2], "stance": 2, "L": GUARD_L,
+			"R": {"ex": 12, "ey": 4, "gx": 6, "gy": -2, "gs": 9}},
+		{"dur": 0.10, "phase": "r", "stance": 1, "L": GUARD_L, "R": GUARD_R},
+		{"dur": 0.10, "phase": "r", "legs": [-2, 1], "stance": 2, "R": GUARD_R,
+			"L": {"ex": -12, "ey": 4, "gx": -6, "gy": -2, "gs": 9}},
+		{"dur": 0.10, "phase": "r", "stance": 1, "L": GUARD_L, "R": GUARD_R},
+		{"dur": 0.10, "phase": "r", "legs": [1, -2], "stance": 2, "L": GUARD_L,
+			"R": {"ex": 12, "ey": 4, "gx": 6, "gy": -2, "gs": 9}},
+		{"dur": 0.10, "phase": "r", "stance": 1, "L": GUARD_L, "R": GUARD_R},
+		{"dur": 0.10, "phase": "r", "legs": [-2, 1], "stance": 2, "R": GUARD_R,
+			"L": {"ex": -12, "ey": 4, "gx": -6, "gy": -2, "gs": 9}},
+		{"dur": 0.12, "phase": "r", "L": GUARD_L, "R": GUARD_R},
+	],
 }
 
-const LOOPS := {"idle": true, "walk": true}
+const LOOPS := {"idle": true, "walk": true, "shell": true, "open": true}
 
 ## Base speed the sheet is sliced at; each frame's `dur` becomes a duration
 ## multiplier on it, so the sheet carries the attack's own timing.

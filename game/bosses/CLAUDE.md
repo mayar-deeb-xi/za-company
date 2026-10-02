@@ -529,15 +529,75 @@ His pieces:
 - **`tools/bosses/big_mo.gd` paints from those measurements.** Same seed-once
   contract as Ahmed's. The canvas lands at a FIXED offset in the cell, never
   centred per frame, or the body jitters between frames of a row.
-- **Four attacks, but a RHYTHM rather than a menu** (`big_mo.gd`): jab, jab,
-  hook, three times through, then `breath_seconds`. The corner rush breaks the
-  pattern for a player who kites - and the dash IS its wind-up, with the blow
-  on the last running frame, so he connects on arrival rather than swinging
-  halfway there. There is no STRIKE phase to hang travel on: enemy_base fires
-  the blow at the end of WINDUP and goes straight to RECOVER.
+- **A RHYTHM rather than a menu** (`big_mo.gd`): jab, jab, then the big one,
+  then `breath_seconds`. The corner rush breaks the pattern for a player who
+  kites - and the dash IS its wind-up, with the blow on the last running
+  frame, so he connects on arrival rather than swinging halfway there. There
+  is no STRIKE phase to hang travel on: enemy_base fires the blow at the end of
+  WINDUP and goes straight to RECOVER.
 - **Commit is per attack.** `COMMIT` sets `commit_fraction` as each attack
-  begins, which is the only way to have uninterruptible jabs and an
-  interruptible hook off a base that has one dial.
+  begins - the base has one dial. Read the dial the right way round: it is how
+  much of the wind-up can STILL be interrupted, so 0.0 is committed from the
+  first frame and 1.0 is interruptible the whole way. The jab and the rush sit
+  at 1.0 under an older comment calling them uninterruptible; they are short
+  enough that it rarely shows, but the number says the opposite of the note.
+
+### The reads - what was added after the first fight was played
+
+The fight as first built was one string thrown forever, and a recording of it
+showed the whole of it in six seconds: step back from the hook, hit him in the
+breath, repeat. Four additions changed that, picked from an artifact that
+recorded the real fight and previewed each candidate with his real painter.
+**Every damage number on the original three attacks is unchanged**, and so is
+his health: the additions are questions, not numbers.
+
+- **Hook OR uppercut.** The third beat is a slot `_finisher()` fills, random
+  but never more than `FINISHER_RUN` (2) of one running. Same 0.70 s, same 18,
+  same commit, so neither guess is the safe one - and opposite ANSWERS: the
+  hook is his `Touch` circle (wide and short, step BACK), the uppercut is a
+  lane straight out the way he faces (`UPPERCUT_REACH` 44 by
+  `UPPERCUT_HALF_WIDTH` 8 - narrow and long, step ASIDE). The tell is the rear
+  glove (up and out, or down to the hip with a sink) and the Bell: a ring on
+  the floor and side chevrons for the hook, a LANE on the floor and chevrons
+  arriving from top and bottom, in bone rather than hot white, for the
+  uppercut. The lane the Bell draws is read off the boss's own constants.
+- **Shell Up**, for mashing. `SHELL_HITS` (3) hits inside `SHELL_WINDOW` (1.2
+  s), landed while he is not mid-wind-up, and he covers for `SHELL_SECONDS`
+  (0.8). A hit on the shell never reaches boss_base - no health, no flash, no
+  stagger - throws `block_spark.gd`, and starts the **counter**: a hook cut to
+  a 0.15 s wind-up, its own row, 12, commit 0.0. A shell nobody hits drops his
+  guard for `OPEN_SECONDS`, rooted and hittable. `SHELL_COOLDOWN` 6 s. Shell
+  and open are STANCES, not attacks - `attack` is "" through both, which is
+  why the interrupt economy never sees them and the Bell stays dark. He says
+  a `shell` line if he has one and borrows `hurt` ("Noted.") until he does.
+- **Clinch & Throw**, for standing on him. Feet within `CLINCH_RANGE` (14 px,
+  closer than any punch needs) for `CLINCH_AFTER` (0.8 s) and the next beat is
+  the clinch: arms thrown wide is the 0.30 s tell, 8 damage, commit 0.0. The
+  timer keeps counting THROUGH his punches, because his breath alone is
+  shorter than 0.8 s and a hug that only counted between strings could never
+  be caught. The throw is a shove HELD for `THROW_SECONDS` rather than one
+  shove, because player.gd caps one push at 70 (about 17 px) and refreshes
+  rather than stacks - held, it is about 45 px, clear of his reach.
+- **Burning Flurry**, raging only. Every other string is five straight
+  punches `FLURRY_GAP` (0.2 s) apart, each one a frame boundary in poses.gd:
+  the first lands on the impact frame like any blow and `_run_flurry` lands
+  the other four through the recover while he marches at `FLURRY_MARCH` (55 -
+  faster than his walk, or he punches himself out of reach by the third). Each
+  shoves you back; the grace window decides how many of the 4s hurt. Then the
+  big one with no breath between, and the breath itself drops to
+  `RAGE_BREATH` (0.4) - the lever the rage note always named. No hit-stop on
+  the flurry: five holds in a second would slide the punches off their frames.
+
+The six new rows went on the END of `ORDER`, so build_bosses.gd painted rows
+7-12 onto the sheet and left 0-6 alone. The new attacks have no sounds of
+their own yet: his scene's `sounds` map points each new id at the nearest
+existing clip (the uppercut at the hook's, the clinch at the rush's, the
+flurry and the block at the jab's), which keeps every cue audible and
+test_bosses.gd's "every attack has a telegraph and an impact" true without an
+import pass. Bespoke takes are `tools/sfx/make.py`'s job and cost credits. The
+same goes for lines: `uppercut`, `counter`, `clinch`, `flurry` and `shell` have
+none and are silent, which is legal. `tests/test_big_mo_moves.gd` is the
+suite.
 
 One consequence worth knowing: the player's grace window is 0.5 s on MEDIUM
 and his two jabs are closer together than that, so the second one is often

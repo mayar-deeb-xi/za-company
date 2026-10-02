@@ -229,25 +229,9 @@ func _tick(frame: int) -> void:
 				% ("all eight" if unvoiced.is_empty() else str(unvoiced)),
 				unvoiced.is_empty())
 
-			# Big Mo on the same terms, derived from HIS attacks. He is the
-			# second boss to own sounds, which is what makes this a contract
-			# rather than a note about Ahmed: three attacks, not four, plus the
-			# two the rage brought with it.
-			var maudio: Node = _m.get_node_or_null("Audio")
-			_check("bosses: Big Mo carries his own sounds too (%s)" % maudio,
-				maudio != null)
-			var msounds: Dictionary = maudio.get("sounds") if maudio != null else {}
-			var mquiet: Array = []
-			for id in ["jab", "hook", "rush"]:
-				for part in ["_windup", "_hit"]:
-					if not msounds.has(id + part):
-						mquiet.append(id + part)
-			for id in ["rage", "fire", "hurt", "stagger", "concede"]:
-				if not msounds.has(id):
-					mquiet.append(id)
-			_check("bosses: every punch is voiced, and so is the fire (%s)"
-				% ("all eleven" if mquiet.is_empty() else str(mquiet)),
-				mquiet.is_empty())
+			# (Big Mo's own sounds are checked at 570, once he exists - this
+			# arm used to ask him two frames before he was built, and the null
+			# that came back aborted every check below it without a FAIL.)
 			# Null here is the un-imported checkout the header warns about -
 			# the fight above all passed either way, which is the point, but
 			# a developer who HAS imported should be told if one went missing.
@@ -297,6 +281,27 @@ func _tick(frame: int) -> void:
 				_m.get("health") == 216)
 			_check("bosses: he is a boss and an enemy",
 				_m.is_in_group("bosses") and _m.is_in_group("enemies"))
+			# His sounds on Ahmed's terms, derived from HIS attacks - read off
+			# his own DAMAGE table, so an attack added there without a telegraph
+			# and an impact fails here rather than playing silent. Plus the two
+			# the rage brought with it, the base's three, and the block.
+			var maudio: Node = _m.get_node_or_null("Audio")
+			_check("bosses: Big Mo carries his own sounds too (%s)" % maudio,
+				maudio != null)
+			var msounds: Dictionary = maudio.get("sounds") if maudio != null else {}
+			var mquiet: Array = []
+			var mattacks: Array = (_m.get_script() as GDScript)\
+				.get_script_constant_map()["DAMAGE"].keys()
+			for id in mattacks:
+				for part in ["_windup", "_hit"]:
+					if not msounds.has(id + part):
+						mquiet.append(id + part)
+			for id in ["rage", "fire", "hurt", "stagger", "concede", "block"]:
+				if not msounds.has(id):
+					mquiet.append(id)
+			_check("bosses: every punch is voiced, and so is the fire (%s)"
+				% ("all %d" % msounds.size() if mquiet.is_empty() else str(mquiet)),
+				mquiet.is_empty())
 			_check("bosses: he squares up front on, on the side-only rig (%s)"
 				% _sprite_of(_m).animation, _sprite_of(_m).animation == &"idle_side")
 			# Drawn at 2x density, so his sheet is halved back in the scene -
@@ -322,8 +327,11 @@ func _tick(frame: int) -> void:
 				% ("all matched" if _m_anim_mismatch == "" else _m_anim_mismatch),
 				_m_anim_mismatch == "")
 		980:
-			_check("bosses: he throws jab, jab, hook in that order (%s)" % str(_mseq),
-				_mseq.size() >= 3 and _mseq.slice(0, 3) == ["jab", "jab", "hook"])
+			# The third beat is a READ - hook or uppercut - so what is fixed is the
+			# two jabs in front of it and that it is one of the two.
+			_check("bosses: he throws jab, jab, then the big one (%s)" % str(_mseq),
+				_mseq.size() >= 3 and _mseq.slice(0, 2) == ["jab", "jab"]
+					and _mseq[2] in ["hook", "uppercut"])
 			_check("bosses: the combination has hurt the player (%s)"
 				% _player().get("health"), _player().get("health") < 100)
 			_check("bosses: every blow he finishes shakes the room (%d, %d thrown)"

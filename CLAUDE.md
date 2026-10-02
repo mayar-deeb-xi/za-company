@@ -456,8 +456,10 @@ half of the audio that is not standing anywhere in particular.
 
 game/bosses/CLAUDE.md has all of it, and the three fights are three different
 SHAPES on the one cycle: Ahmed a menu (the attack suits the range), Big Mo a
-rhythm (jab, jab, hook), Silverman a ladder (three phases, each adding a
-mechanic, interrupts narrowing to none).
+rhythm (jab, jab, then a hook OR an uppercut, which want opposite answers -
+plus a shell, a clinch and a raging flurry that each punish a kind of greed),
+Silverman a ladder (three phases, each adding a mechanic, interrupts
+narrowing to none).
 
 Which enemies a room gets is per-biome data (type + position), and positions
 keep every sight radius clear of the WALK, spawns and both stands - the way
@@ -1277,7 +1279,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Twenty-six suites,
+  They drive the real game with synthesized input and exit 0/1. Twenty-seven suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1330,6 +1332,16 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     really slows the room, really lets it go, and is asked for by signal like
     the shake. Its own suite because every stage needs him fighting ONE way,
     which is the opposite of test_bosses.gd running the fight he picks.
+  - `test_big_mo_moves.gd` - Big Mo's four later additions on the same
+    terms, a FRESH Big Mo per stage: a string is jab, jab, then a hook or an
+    uppercut and never three of one running; the uppercut reaches 30 px down
+    his line and misses one step aside, while the hook is the other way round;
+    three quick hits shell him, a hit on the shell is blocked (no health off)
+    and countered for 12 by an attack that cannot be mashed out of, and a
+    shell waited out opens his guard to hits and does not come back inside its
+    cooldown; pressed against him he clinches, costs 8 and throws you clear of
+    his reach; raging, every other string is the flurry, the breath is 0.4,
+    and the flurry walks you back while he marches after you.
   - `test_rage.gd` - Big Mo going up at 72 and staying up: that it fires at
     half health and not before, fires once, roots and silences him without
     letting him be staggered, never comes back down, and that every beat of

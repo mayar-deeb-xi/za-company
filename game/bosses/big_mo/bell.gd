@@ -37,9 +37,21 @@ extends "res://game/bosses/big_mo/brush.gd"
 ## the hook is only enormous if the two jabs before it were not.
 
 ## Which glove each attack is thrown with. The rush is a shoulder rather than a
-## punch, so it has no glove to hang anything on and anchors on his chest.
-const ARM := {"jab": "L", "hook": "R", "rush": ""}
+## punch, so it has no glove to hang anything on and anchors on his chest, and
+## so does the clinch, which is both arms at once. The flurry alternates, so its
+## anchor is whichever glove the current frame has thrown (`_anchor`).
+const ARM := {"jab": "L", "hook": "R", "uppercut": "R", "rush": "",
+	"counter": "R", "clinch": "", "flurry": "L"}
 const CHEST := Vector2(0.0, -13.0)
+
+## The two that get the jab's small treatment rather than the full one: the jab
+## because there are two of them before every big one, the flurry because
+## there are five of them in a second.
+const LIGHT := ["jab", "flurry"]
+
+## The uppercut's floor lane, which IS its reach - big_mo.gd's UPPERCUT_REACH
+## and UPPERCUT_HALF_WIDTH, read off the boss rather than restated.
+const LANE_ALPHA := 0.55
 
 ## How long each piece runs after the blow lands.
 const FLASH_SECONDS := 0.11
@@ -71,8 +83,9 @@ func _draw() -> void:
 	if _sprite == null or _boss == null:
 		return
 	var anim := _anim()
-	# Only the three attacks draw anything. Idle, walk and the concede are the
-	# same early return, which is what keeps a beaten boss dark.
+	# Only the attacks draw anything. Idle, walk, the concede and the two
+	# stances - shell and open - are the same early return, which is what keeps
+	# a beaten boss dark and a guarding one quiet.
 	if not ARM.has(anim):
 		return
 	_flip = _sprite.flip_h
@@ -98,6 +111,9 @@ func _draw() -> void:
 ## has no glove to hang anything on and anchors on his chest.
 func _anchor(anim: String, frame: Dictionary) -> Vector2:
 	var key: String = ARM[anim]
+	if anim == "flurry":
+		key = "R" if float(frame.get("R", {}).get("gs", 0)) > \
+			float(frame.get("L", {}).get("gs", 0)) else "L"
 	if key == "" or frame.get(key, {}).is_empty():
 		return CHEST
 	return _glove(frame, key)
@@ -107,11 +123,36 @@ func _anchor(anim: String, frame: Dictionary) -> Vector2:
 
 
 ## The floor tightening under him as he loads. The jab does not get one; see
-## the header for why it gets so little.
+## the header for why it gets so little. The uppercut gets a LANE instead of a
+## ring, and that is half its tell: the ring says "get out of the circle" and
+## the lane says "get off the line", which are the two opposite answers.
 func _draw_ground(anim: String, since: float, loading: float) -> void:
-	if since >= 0.0 or anim == "jab":
+	if since >= 0.0 or anim in LIGHT:
+		return
+	if anim == "uppercut":
+		_lane(loading)
 		return
 	_ring(0.0, 0.0, 12.0 + 6.0 * loading, 0.4, Color(HOT, 0.2 + 0.5 * loading))
+
+
+## The uppercut's reach drawn on the floor, filling from his feet outwards as
+## he loads - edges first, so it reads as a lane from the first frame.
+func _lane(loading: float) -> void:
+	var k: Dictionary = (_boss.get_script() as GDScript).get_script_constant_map()
+	var reach: float = k["UPPERCUT_REACH"]
+	var half: float = k["UPPERCUT_HALF_WIDTH"]
+	var back: float = k["UPPERCUT_BACK"]
+	var col := Color(HOT, 0.15 + LANE_ALPHA * loading)
+	var tip := -back + (reach + back) * loading
+	var x := -back
+	while x <= tip:
+		_put(x, -half, col)
+		_put(x, half, col)
+		if int(x) % 4 == 0:
+			_put(x, 0.0, Color(col, col.a * 0.5))
+		x += 1.0
+	for y in range(int(-half), int(half) + 1):
+		_put(tip, float(y), col)
 
 
 # --- burst: over the body ----------------------------------------------------
@@ -124,9 +165,12 @@ func _draw_burst(anim: String, frame: Dictionary, since: float) -> void:
 	if since < 0.0:
 		return
 	var at := _anchor(anim, frame)
-	if anim == "jab":
-		if since < JAB_RING_SECONDS:
-			var jk := since / JAB_RING_SECONDS
+	if anim in LIGHT:
+		# The flurry rings once per punch: time since the latest one, on the
+		# same 0.2 s grid poses.gd throws them on.
+		var s := fmod(since, 0.2) if anim == "flurry" else since
+		if s < JAB_RING_SECONDS:
+			var jk := s / JAB_RING_SECONDS
 			_ring(at.x, at.y, 4.0 + 40.0 * jk, 1.0, Color(BONE, 1.0 - jk))
 		return
 	if since >= BURST_SECONDS:
@@ -159,16 +203,19 @@ func _draw_screen(anim: String, since: float, loading: float) -> void:
 	var world := maxf(1.0, xf.get_scale().x)
 
 	if since < 0.0:
-		if anim == "jab":
-			# The jab's entire announcement.
+		if anim in LIGHT:
+			# The jab's entire announcement, and the flurry's.
 			draw_rect(Rect2(roundf(at.x - chunk * 10.0), roundf(view.y - chunk * 2.0),
 				chunk * 20.0 * loading, chunk), Color(GLOVE, 0.25 + 0.4 * loading))
 			return
 		_vignette(view, chunk, 0.06 + 0.3 * loading)
-		_chevrons(at, view, chunk, world, loading)
+		if anim == "uppercut":
+			_rising(at, view, chunk, world, loading)
+		else:
+			_chevrons(at, view, chunk, world, loading)
 	else:
 		# The jab's impact is the small ring in `burst`, and nothing else.
-		if anim == "jab":
+		if anim in LIGHT:
 			return
 		if since < FLASH_SECONDS:
 			draw_rect(Rect2(Vector2.ZERO, view),
@@ -214,3 +261,25 @@ func _chevrons(at: Vector2, view: Vector2, chunk: float, world: float,
 			var x := roundf(x0 - side * d)
 			draw_rect(Rect2(x, roundf(y0 - d * 0.85), chunk, chunk), col)
 			draw_rect(Rect2(x, roundf(y0 + d * 0.85), chunk, chunk), col)
+
+
+## The uppercut's chevrons: the hook's two, turned on end. They arrive from the
+## top and bottom of the frame instead of the sides, and in BONE instead of HOT,
+## so the two 0.70 s wind-ups never share a telegraph - the direction the arrows
+## travel is the direction the punch does, and the direction you step is across
+## it.
+func _rising(at: Vector2, view: Vector2, chunk: float, world: float,
+		loading: float) -> void:
+	var cx := at.x
+	var cy := at.y - world * 13.0
+	for side: float in [-1.0, 1.0]:
+		var y0 := cy + side * view.y * 0.55 * (1.0 - loading)
+		for i in 9:
+			var alpha := (0.5 - float(i) * 0.045) * loading
+			if alpha <= FAINT:
+				continue
+			var d := float(i) * chunk
+			var col := Color(BONE, alpha)
+			var y := roundf(y0 + side * d)
+			draw_rect(Rect2(roundf(cx - d * 0.85), y, chunk, chunk), col)
+			draw_rect(Rect2(roundf(cx + d * 0.85), y, chunk, chunk), col)

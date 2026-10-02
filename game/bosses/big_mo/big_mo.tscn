@@ -46,8 +46,15 @@ music = "res://assets/music/big_mo_theme_loop.wav"
 [node name="Audio" type="Node2D" parent="."]
 script = ExtResource("5_audio")
 sounds = {
+"block": ExtResource("7_jab_hit"),
+"clinch_hit": ExtResource("11_rush_hit"),
+"clinch_windup": ExtResource("10_rush_windup"),
 "concede": ExtResource("16_concede"),
+"counter_hit": ExtResource("9_hook_hit"),
+"counter_windup": ExtResource("6_jab_windup"),
 "fire": ExtResource("13_fire"),
+"flurry_hit": ExtResource("7_jab_hit"),
+"flurry_windup": ExtResource("6_jab_windup"),
 "hook_hit": ExtResource("9_hook_hit"),
 "hook_windup": ExtResource("8_hook_windup"),
 "hurt": ExtResource("14_hurt"),
@@ -56,7 +63,9 @@ sounds = {
 "rage": ExtResource("12_rage"),
 "rush_hit": ExtResource("11_rush_hit"),
 "rush_windup": ExtResource("10_rush_windup"),
-"stagger": ExtResource("15_stagger")
+"stagger": ExtResource("15_stagger"),
+"uppercut_hit": ExtResource("9_hook_hit"),
+"uppercut_windup": ExtResource("8_hook_windup")
 }
 
 [node name="Lines" type="Node2D" parent="."]
