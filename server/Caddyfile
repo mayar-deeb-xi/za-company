@@ -1,3 +1,29 @@
 {$SIGNAL_DOMAIN} {
-	reverse_proxy 127.0.0.1:{$SIGNAL_PORT}
+	# The signaling service: any WebSocket upgrade, whatever its path, so the
+	# game still connects to plain wss://DOMAIN, plus its health check.
+	# Matched by regex because both headers are case-insensitive and clients
+	# disagree: Chrome sends "Upgrade", Node sends "upgrade", and the plain
+	# `header` matcher's wildcard sent the second one the game's index.html.
+	@signal {
+		header_regexp Connection (?i)\bupgrade\b
+		header_regexp Upgrade (?i)^websocket$
+	}
+	handle @signal {
+		reverse_proxy 127.0.0.1:{$SIGNAL_PORT}
+	}
+	handle /healthz {
+		reverse_proxy 127.0.0.1:{$SIGNAL_PORT}
+	}
+
+	# Everything else is the web build of the game (README.md, The web build).
+	# Every file keeps its name from build to build, so a browser must ask
+	# again each visit (no-cache revalidates by ETag; it does not mean no
+	# caching), or a new index.pck meets a stale index.wasm.
+	handle {
+		root * /srv/web/game
+		header Cache-Control "no-cache"
+		file_server {
+			precompressed gzip
+		}
+	}
 }

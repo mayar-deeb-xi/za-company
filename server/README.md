@@ -12,10 +12,26 @@ other.
   and TURN, the relay that carries the game's traffic only when no direct
   route exists.
 - **caddy** (optional): serves the signaling service over secure `wss://` with
-  a free automatic Let's Encrypt certificate.
+  a free automatic Let's Encrypt certificate, and serves the **web build of
+  the game** on the same domain (see *The web build* below).
 
 The plan this serves is DESIGN.md, *Multiplayer*. Godot never sees this folder
 (`.gdignore`), so none of it is ever exported with the game.
+
+## Our server
+
+`za-company.mayar-deeb.dev` (A record on Vercel DNS, no AAAA) is a DigitalOcean
+droplet, `104.248.45.148`: Frankfurt, Ubuntu 24.04, one vCPU, 512 MB. Log in
+with `ssh root@za-company.mayar-deeb.dev` (key only; passwords are refused).
+This folder lives at `/opt/za-company/server`, with its `.env` beside it.
+
+What the droplet was given before anything ran on it: a 1 GB swapfile (512 MB
+with no swap cannot reliably build an image), Docker and Compose from Docker's
+own apt repository, container logs capped at 3 x 10 MB in
+`/etc/docker/daemon.json` (coturn logs every relay, and the disk is 8.7 GB),
+ufw with exactly the ports below, and root SSH by key only
+(`/etc/ssh/sshd_config.d/10-za-hardening.conf`). Its public IP sits directly
+on eth0, so `EXTERNAL_IP` is the plain address, not the `PUBLIC/PRIVATE` form.
 
 ## Deploying
 
@@ -32,6 +48,7 @@ you control, and a public IP.
 | 3478 | UDP + TCP | STUN and TURN |
 | 49160-49200 | UDP | relayed traffic: one port per relayed player |
 | 80, 443 | TCP | only if Caddy handles TLS (step 4) |
+| 443 | UDP | HTTP/3, with Caddy; browsers fall back to TCP without it |
 
 If you change the relay range in `.env`, open the same range here.
 
@@ -97,6 +114,50 @@ Then open
 `turn:DOMAIN:3478` with that username and password, and press *Gather
 candidates*. A line of type `relay` means TURN works.
 
+## The web build
+
+The same Caddy serves the game itself, so `https://DOMAIN` opens it in a
+browser and `wss://DOMAIN` is still the signaling service. One domain, split by
+the REQUEST rather than by the path (see `Caddyfile`): a WebSocket upgrade, on
+any path, and `/healthz` go to signaling, and everything else is a file out of
+`web/game/`.
+
+Putting a build there is the release pipeline's job. Whatever runs it, a
+deploy is four steps, and the server is built around each of them:
+
+1. **Export** the "Web" preset (`export_presets.cfg`) with Godot 4.7.2 and its
+   `web_nothreads_release.zip` template: `--headless --import --path .`, then
+   `--headless --path . --export-release Web <out>/index.html`. Never from the
+   developer's project while the editor is open - a headless export is a
+   second editor writing `.godot/`.
+2. **Gzip** every `.html`, `.js`, `.wasm` and `.pck` to a `.gz` beside it,
+   keeping the originals (39 MB of engine becomes 10; the whole download is
+   about 23 MB). Caddy serves these as they are (`precompressed gzip`) and
+   compresses nothing itself: on one core that is a second of CPU for every
+   player who opens the page. A deploy that skips this still works, at 54 MB.
+3. **Upload** into `/opt/za-company/server/web/game.new`, never into `game/`.
+4. **Swap** it in by rename: `mv game game.old && mv game.new game && rm -rf
+   game.old`, in `web/`. A page loaded mid-deploy gets one whole build or the
+   other, and nothing restarts.
+
+Three rules on this side hold that up:
+
+- **`web/` is mounted, not `web/game`.** A bind mount follows the directory it
+  was given, so a mounted `game/` swapped by rename would go on serving the old
+  build forever.
+- **Every file is `Cache-Control: no-cache`.** Godot's files keep their names
+  from build to build, so without it a browser can pair a fresh `index.pck`
+  with yesterday's `index.wasm`. `no-cache` revalidates by ETag; a returning
+  player downloads nothing that did not change.
+- **A pipeline logs in as root with a key of its own**, added to
+  `/root/.ssh/authorized_keys` - never the developer's key - so it can be
+  revoked without locking anybody out.
+
+Both headers that mark a WebSocket are matched by case-insensitive regex, and
+that is not tidiness: clients disagree on `Upgrade` against `upgrade`, and
+Caddy's plain `header` wildcard sent the lowercase one the game's
+`index.html` with a 200 instead of a 101.
+
 ## Proving it from the game (M0)
 
 The test screen is `tools/net_spike/net_spike.tscn`. Open it in the editor
@@ -129,7 +190,22 @@ of these have been seen:
   a room. `PARTY_CEILING` here is only a safety cap. Raise it if the game ever
   goes past 8.
 - **Tests**: `cd signaling && pip install websockets==17.1 && python -m unittest test_signaling`.
-- **Updating**: `git pull`, then the same `docker compose ... up -d --build`
-  from step 4. Rooms in progress are closed by the restart. Players who are
+- **Updating**: copy this folder up again, then the same `docker compose ...
+  up -d --build` from step 4. Ours is not a git checkout, so from the repo
+  root (the excludes keep the server's own `.env` and the published game):
+
+  ```sh
+  tar -C server --exclude=.env --exclude=web --exclude=__pycache__ -cf - . \
+    | ssh root@za-company.mayar-deeb.dev 'tar -C /opt/za-company/server -xf - --no-same-owner'
+  ```
+
+  A change to the `Caddyfile` alone needs no restart: `docker compose
+  --profile tls exec caddy caddy reload --config /etc/caddy/Caddyfile`.
+  Rooms in progress are closed by a signaling restart. Players who are
   already connected keep playing, because their game traffic never passes
   through the signaling service.
+- **coturn 4.18** turned the admin CLI and DTLS off by default and stopped
+  accepting `--no-dtls`: passing it is "unrecognized option" and a restart
+  loop. The one `ERROR CONFIG: Unknown argument:` (with nothing after it) left
+  in its log is not one of ours: it appears with nothing but
+  `-n --log-file=stdout --no-tls`, and is harmless.

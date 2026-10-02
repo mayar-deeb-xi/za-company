@@ -32,7 +32,8 @@ checklist. This file says HOW things work; DESIGN.md says WHAT to build.
 - `server/` - the online back end that runs on OUR server, never the game:
   a signaling service and coturn, in Docker. Python, `.gdignore`d so Godot
   never scans or exports it; deploying it is `server/README.md`. The plan it
-  serves is DESIGN.md's *Multiplayer*
+  serves is DESIGN.md's *Multiplayer*. Its Caddy also SERVES the game's web
+  build, on the same domain as the signaling: https://za-company.mayar-deeb.dev
 - `docs/` - the images `README.md` shows, `.gdignore`d on `server/`'s terms:
   a screenshot is not a game asset, so Godot must never import or export one.
   They are real captures (a windowed run, `root.get_texture()`, 1280 x 720 =
@@ -1300,6 +1301,17 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   project.godot, off by default (switching it off removes the line), never
   shown by a release export, and held off by `tests/helpers.gd` so a developer
   who left it on does not land every suite on a floor picker.
+- **The game is playable in a browser** at https://za-company.mayar-deeb.dev:
+  the "Web" preset in `export_presets.cfg`, served by the server's Caddy.
+  Getting a build there is the release pipeline's job, not a script's - what
+  a deploy has to do is server/README.md's *The web build*. Never export
+  headless from the project while the editor is open: `--export-release` is a
+  second editor writing `.godot/`, so export from a copy. The build is
+  single-threaded (no SharedArrayBuffer, so no special headers) and the
+  WebRTC GDExtension excludes itself (`exclude_tags = ["web"]`), since a
+  browser has WebRTC built in. QUIT is hidden on the main and pause menus
+  there (`OS.has_feature("web")`), because quitting a tab freezes it on its
+  last frame rather than closing it.
 - All third-party assets are CC0; sources and licenses live in CREDITS.md -
   update it whenever an asset is added.
 
@@ -1601,6 +1613,9 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 - Adopt gdUnit4 only once there is real unit-testable logic beyond what the
   suites cover in passing (inventory, save data) - not for scene wiring, which
   is the hard part here and which no framework drives.
-- `tests/`, `tools/` and `addons/` must be excluded from export presets when
-  we set up exports. All three are editor-side only; the plugin in `addons/`
-  preloads `tools/`, so exporting one without the other breaks the build.
+- `tests/`, `tools/` and `addons/` are excluded from every export preset (the
+  "Web" one is the first), and so is every `.wav` under a `src/` folder - the
+  untouched exports, 125 MB that nothing in the game loads. All three folders
+  are editor-side only; the plugin in `addons/` preloads `tools/`, so
+  exporting one without the other breaks the build. A new preset copies the
+  Web one's `exclude_filter`.

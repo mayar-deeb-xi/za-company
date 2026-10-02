@@ -21,6 +21,9 @@ func _ready() -> void:
 	_settings_button.pressed.connect(_on_settings_pressed)
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_quit_confirm.confirmed.connect(_on_quit_confirmed)
+	# A browser tab cannot be quit: the engine stops and leaves the page frozen
+	# on its last frame. Closing the tab is the web build's way out.
+	_quit_button.visible = not OS.has_feature("web")
 	_show_mode()
 
 	# Idempotent on the track: coming back from the character select or out of

@@ -38,9 +38,10 @@ services:
       - --static-auth-secret=${TURN_SECRET}
       - --external-ip=${EXTERNAL_IP:?set EXTERNAL_IP in .env}
       - --fingerprint
-      - --no-cli
+      # The admin CLI and DTLS are both off unless asked for since 4.18, which
+      # rejects --no-dtls outright ("unrecognized option" and a restart loop)
+      # and logs --no-cli as an error.
       - --no-tls
-      - --no-dtls
       - --no-multicast-peers
       # Never relay INTO a private network: an open path from the internet to
       # the server's own LAN, Docker networks and cloud metadata is the classic
@@ -58,7 +59,8 @@ services:
       # Bytes per second per session: a 2D game at 60 Hz is a fraction of this.
       - --max-bps=262144
 
-  # Optional: terminates TLS for wss:// with an automatic Let's Encrypt cert.
+  # Optional: terminates TLS for wss:// with an automatic Let's Encrypt cert,
+  # and serves the web build of the game from ./web on the same domain.
   # Leave it off if nginx/Traefik/another Caddy already owns 80/443 on this box
   # and point that at 127.0.0.1:${SIGNAL_PORT} instead (README.md).
   caddy:
@@ -71,6 +73,10 @@ services:
       SIGNAL_PORT: ${SIGNAL_PORT:-8765}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # The web build. The FOLDER is mounted rather than web/game itself, so a
+      # deploy can swap game/ out by renaming it: a bind mount of the game
+      # directory would keep serving the old one after the rename.
+      - ./web:/srv/web:ro
       - caddy_data:/data
       - caddy_config:/config
 

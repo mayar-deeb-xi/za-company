@@ -31,6 +31,8 @@ func _ready() -> void:
 	_menu_button.pressed.connect(_on_main_menu_pressed)
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_quit_confirm.confirmed.connect(_on_quit_confirmed)
+	# The main menu's reason: quitting a browser tab freezes it, it does not close.
+	_quit_button.visible = not OS.has_feature("web")
 	_root.visible = false
 
 
