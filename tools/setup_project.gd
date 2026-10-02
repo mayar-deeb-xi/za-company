@@ -48,6 +48,12 @@ func _initialize() -> void:
 	# look for a newer release (ui/main_menu/release_check.gd).
 	ProjectSettings.set_setting("application/config/name.packaged", "The New Hire")
 
+	# The macOS build is universal, and Godot refuses to export one for Apple
+	# Silicon unless the project imports ETC2/ASTC as well as S3TC/BPTC. It
+	# costs nothing here: every texture in the game imports lossless (pixel
+	# art), so there is no VRAM-compressed texture for a second format to copy.
+	ProjectSettings.set_setting("rendering/textures/vram_compression/import_etc2_astc", true)
+
 	# Physical keycodes so WASD stays positional on non-QWERTY layouts.
 	ProjectSettings.set_setting("input/move_up", _action([_key(KEY_W), _key(KEY_UP)]))
 	ProjectSettings.set_setting("input/move_down", _action([_key(KEY_S), _key(KEY_DOWN)]))

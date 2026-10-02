@@ -18,7 +18,11 @@ mkdir -p "$(dirname "$out")"
 status=0
 "$godot" --headless --path . --export-release "$preset" "$out" > export.log 2>&1 || status=$?
 if [ "$status" -ne 0 ] || [ ! -s "$out" ]; then
-  echo "::error::export '$preset' failed (exit $status): $(grep -E 'ERROR|error|Error' export.log | tail -n 8 | tr '\n' ' ')"
+  # The reason for a refused preset is on the lines AFTER its ERROR line,
+  # untagged ("Cannot export for universal ... if ETC2 ASTC ... is disabled"),
+  # so the summary is the log's last real lines rather than only its ERRORs.
+  reason="$(grep -vE '^\[ *[0-9]+% \]|^\s*$' export.log | tail -n 12 | tr '\n' ' ')"
+  echo "::error::export '$preset' failed (exit $status): $reason"
   tail -n 40 export.log
   exit 1
 fi
