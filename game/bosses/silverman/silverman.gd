@@ -222,10 +222,13 @@ var _dash_time := 0.0
 var _dash_from := Vector2.ZERO
 var _dash_dir := 1.0
 var _dash_cool := 0.0
-var _dash_hit := false
-## The body he is crossing through, while he is crossing it. Held so the
-## exception can be dropped again from either end - the arrival or a concede.
-var _dash_excepted: Node2D
+## Whom this crossing has already gone through, so each is struck once.
+var _dash_hits := {}
+## The bodies he is crossing through, while he is crossing them - every player
+## standing when he set off, since a party can be anywhere on the line. Held so
+## the exceptions can be dropped again from either end - the arrival or a
+## concede.
+var _dash_excepted: Array[Node2D] = []
 var _dash_damage := DASH_DAMAGE
 
 var _glare_timer := 0.0
@@ -344,7 +347,7 @@ func _pick_attack() -> String:
 ## opens from CHASE the same way and for the same reason.
 func _advance_phase() -> void:
 	if phase == Phase.CHASE and not touching_player and not dashing:
-		var player := get_tree().get_first_node_in_group("player") as Node2D
+		var player := target()
 		if player != null and _distance_to_player() <= sight_radius:
 			var id := _pick_attack()
 			if id != "":
@@ -473,7 +476,7 @@ func _aim_prism() -> void:
 	var dir := _prism_dir
 	_prism_dir = -dir
 	var to_player := Vector2.LEFT if _facing_left else Vector2.RIGHT
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := target()
 	if player != null:
 		to_player = (player.global_position + PRISM_BODY) - prism_chest()
 	prism_from = to_player.angle() - dir * PRISM_LEAD
@@ -557,20 +560,25 @@ func _wall_distance(from: Vector2, dir: Vector2, reach: float) -> float:
 
 ## Third phase only, and outside the cycle entirely. Health is an integer, so
 ## the rate is banked and spent in whole points with the remainder carried -
-## the wraith's arrangement, because it is the same idea.
+## the wraith's arrangement, because it is the same idea. A ROOM, so it reaches
+## everybody standing in it rather than only the one he is after; the bank is
+## his, and each of them pays the same point when it is spent.
 func _chill(delta: float) -> void:
 	if tier() < 3:
 		return
-	var player := get_tree().get_first_node_in_group("player") as Node2D
-	if player == null or not player.has_method("drain"):
-		return
-	if player.global_position.distance_to(global_position) > chill_radius:
+	var cold: Array[Node2D] = []
+	for node in get_tree().get_nodes_in_group("player"):
+		var player := node as Node2D
+		if player != null and player.has_method("drain") 				and player.global_position.distance_to(global_position) <= chill_radius:
+			cold.append(player)
+	if cold.is_empty():
 		return
 	_owed += delta * _chill_rate
 	var points := int(_owed)
 	if points > 0:
 		_owed -= points
-		player.call("drain", points)
+		for player in cold:
+			player.call("drain", points)
 
 
 # --- the crossing ------------------------------------------------------------
@@ -582,7 +590,7 @@ func _chill(delta: float) -> void:
 func _consider_dash() -> void:
 	if _dash_cool > 0.0 or phase != Phase.CHASE:
 		return
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := target()
 	if player == null:
 		return
 	var to_player := player.global_position - global_position
@@ -591,18 +599,22 @@ func _consider_dash() -> void:
 		return
 	dashing = true
 	dash_moving = false
-	_dash_hit = false
+	_dash_hits.clear()
 	_dash_time = 0.0
 	_dash_from = global_position
 	_dash_dir = signf(to_player.x) if absf(to_player.x) > 0.01 else 1.0
 	# THROUGH, which is a thing two solid bodies do not do on their own: his
 	# own move_and_slide() collided with the player and stopped him dead 11 px
 	# short, so the pass-through was a boss walking into you and halting. An
-	# exception for the one body he is crossing, dropped the moment he arrives
-	# - the arena's walls still stop him, which is the whole reason this is an
-	# exception and not a collision mask.
-	_dash_excepted = player
-	add_collision_exception_with(player)
+	# exception for the bodies he is crossing, dropped the moment he arrives -
+	# the arena's walls still stop him, which is the whole reason this is an
+	# exception and not a collision mask. Every player rather than the one he
+	# is after, or a second one standing on the line stops him dead instead.
+	for node in get_tree().get_nodes_in_group("player"):
+		var body := node as Node2D
+		if body != null:
+			_dash_excepted.append(body)
+			add_collision_exception_with(body)
 	# The picture, on the frame the crossing starts rather than the frame
 	# after. `_dash_step` does not run until the next physics step, so without
 	# this he spends one frame crossing the room in his idle pose.
@@ -640,20 +652,19 @@ func _dash_step(delta: float) -> void:
 		_solid_again()
 
 
-## He passes through whoever is on the line, once per crossing. Metered by the
-## player's grace window like any blow - it goes in through take_damage() and
-## is nothing special on the way.
+## He passes through whoever is on the line, each of them once per crossing.
+## Metered by the player's grace window like any blow - it goes in through
+## take_damage() and is nothing special on the way.
 func _pass_through() -> void:
-	if _dash_hit:
-		return
-	var player := get_tree().get_first_node_in_group("player") as Node2D
-	if player == null or not player.has_method("take_damage"):
-		return
-	if player.global_position.distance_to(global_position) > dash_reach:
-		return
-	_dash_hit = true
-	player.call("take_damage", _dash_damage)
-	shook.emit(SHAKE["dash"], SHAKE_SECONDS)
+	for node in get_tree().get_nodes_in_group("player"):
+		var player := node as Node2D
+		if player == null or _dash_hits.has(player) or not player.has_method("take_damage"):
+			continue
+		if player.global_position.distance_to(global_position) > dash_reach:
+			continue
+		_dash_hits[player] = true
+		player.call("take_damage", _dash_damage)
+		shook.emit(SHAKE["dash"], SHAKE_SECONDS)
 
 
 func _beat_at(seconds: float) -> Dictionary:
@@ -673,7 +684,7 @@ static func _total_of(beats: Array) -> float:
 
 
 func _distance_to_player() -> float:
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := target()
 	if player == null:
 		return INF
 	return player.global_position.distance_to(global_position)
@@ -716,16 +727,15 @@ func _concede() -> void:
 	super()
 
 
-## He is only allowed through one body for the half second he is crossing it.
+## He is only allowed through the party for the half second he is crossing.
 ## Called from both ends - the arrival and a concede mid-flight - because a
 ## boss left permanently able to walk through the player is a boss you can
 ## never corner.
 func _solid_again() -> void:
-	if _dash_excepted == null:
-		return
-	if is_instance_valid(_dash_excepted):
-		remove_collision_exception_with(_dash_excepted)
-	_dash_excepted = null
+	for body in _dash_excepted:
+		if is_instance_valid(body):
+			remove_collision_exception_with(body)
+	_dash_excepted.clear()
 
 
 func _on_animation_finished() -> void:

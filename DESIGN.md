@@ -907,7 +907,7 @@ one that FEELS best rather than the one that is safest.
 - **An enemy goes for the nearest player, and sticks.** It changes target only
   when another player is clearly closer (by a margin, so two players at the
   same distance do not make it twitch). One function in enemy_base answers
-  "who am I after", and every one of the seventeen
+  "who am I after", and every one of the fifteen
   `get_first_node_in_group("player")` lookups in the bosses and enemies goes
   through it.
 - **Each machine's camera follows its own player**, at its own zoom. Nothing
@@ -983,12 +983,27 @@ one that FEELS best rather than the one that is safest.
         desktop host on the plugin and a browser guest talking to each other.
         **The plugin holds up, so ENet is not needed.** The spike stays until
         M2 takes its three pieces into the `Net` autoload, then goes.
-- [ ] M1. **A party on ONE machine, no network.** The player reads an *input
+- [x] M1. **A party on ONE machine, no network.** The player reads an *input
         source* instead of `Input` (yours is the keyboard; later, the wire);
         game.gd spawns one player per member instead of owning `$Player`;
         the sticky nearest target; the shared pool; the waiting door; the room
         alert per player; a HUD for N. `heads.gd` starts counting for real.
         New suite `test_party.gd`, two players driven by synthesized sources.
+        **Done 2026-10-02**, with all thirty suites green: game.gd's
+        `next_party` (one member when nothing says otherwise, which is solo),
+        `game/player/input_source.gd` and `virtual_input.gd`, enemy_base's
+        `target()` (nearest, `RETARGET_MARGIN` 24 px) behind all fifteen
+        lookups, `lives` on game.gd, `door_count.gd`'s "1/2", the HUD's party
+        rows, and `MAX_PARTY` moved into heads.gd as the one constant. Two
+        rules came out of building it. **A body that is DOWN leaves the
+        `player` group**, which is the whole of how the world stops seeing it:
+        enemies, hazards, pickups, doors and the head count all already went
+        through that group, so none of them learned what "down" is. And an
+        AREA is not a target: Silverman's cold room and crossing and Big Mo's
+        heave reach everyone standing in them. Down is dimmed and gets up at
+        the door after 3 s; a door that goes while someone waits to get up
+        stands them up on the far side. Who TALKS stays this machine's player,
+        the default under *Still to decide*.
 - [ ] M2. **The `Net` autoload and the lobby.** Host, join by code, leave;
         the party roster (peer, name, character); the ping heartbeat. ONLINE
         on the main menu opens `ui/lobby/`: the host's code, the players and

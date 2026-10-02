@@ -201,7 +201,9 @@ var _clock := 0.0
 var _pressed := 0.0
 var _clinch_cooldown := 0.0
 var _throwing := 0.0
-var _throw_dir := Vector2.ZERO
+## Who the heave caught and which way each of them is going: everybody standing
+## in the clinch when it lands, so a party pressed against him goes flying too.
+var _throws := {}
 ## Raging: the next string is a flurry; and after a flurry, the big one at once.
 var _flurry_due := false
 var _flurry_left := 0
@@ -316,11 +318,14 @@ func _strike() -> void:
 func _touch_strike(player: Node2D) -> void:
 	super(player)
 	if attack == "clinch" and player.has_method("shove"):
-		_throw_dir = player.global_position - global_position
-		if _throw_dir.length() < 0.5:
-			_throw_dir = Vector2(_dir(), 0.0)
+		var away := player.global_position - global_position
+		if away.length() < 0.5:
+			away = Vector2(_dir(), 0.0)
+		if _throwing <= 0.0:
+			_throws.clear()
+		_throws[player] = away
 		_throwing = THROW_SECONDS
-		player.call("shove", _throw_dir, THROW_FORCE)
+		player.call("shove", away, THROW_FORCE)
 
 
 ## In reach: the next beat of the combination, unless he is still breathing
@@ -564,7 +569,7 @@ func _block() -> void:
 ## caught; but the clinch itself only opens between punches (`_advance_phase`).
 ## His punches stop at `stop_distance`, so nobody is this close by accident.
 func _watch_pressed(delta: float) -> void:
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := target()
 	if player == null or _erupting() or _guarding() or attack == "clinch" \
 			or global_position.distance_to(player.global_position) > CLINCH_RANGE:
 		_pressed = 0.0
@@ -577,9 +582,9 @@ func _carry_throw(delta: float) -> void:
 	if _throwing <= 0.0:
 		return
 	_throwing = maxf(_throwing - delta, 0.0)
-	var player := get_tree().get_first_node_in_group("player") as Node2D
-	if player != null and player.has_method("shove"):
-		player.call("shove", _throw_dir, THROW_FORCE)
+	for player in _throws:
+		if is_instance_valid(player) and (player as Node).is_in_group("player"):
+			player.call("shove", _throws[player], THROW_FORCE)
 
 
 ## The flurry's other four punches, each on the frame that throws it, and the

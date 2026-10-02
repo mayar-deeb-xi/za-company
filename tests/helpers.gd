@@ -111,6 +111,12 @@ func _sprite() -> AnimatedSprite2D:
 	return current_scene.get_node("Player/AnimatedSprite2D")
 
 
+## The party's lives. game.gd's rather than the player's: they are one pool
+## however many are playing.
+func _lives() -> Variant:
+	return current_scene.get("lives")
+
+
 func _camera() -> Camera2D:
 	return current_scene.get_node("Camera2D")
 

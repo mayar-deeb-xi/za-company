@@ -131,25 +131,68 @@ Three things about it are decisions:
   number, two drain ticks adding up on one, the blow's number gone by the next
   blow, and a fading drain number refusing a later tick.
 
-The player also owns its lives (`MAX_LIVES`, 3): each death spends one via
-`lose_life()`, whose return value lets game.gd choose respawn or game over from
-one call instead of racing a second signal. With lives left, death fades back
-to the current level's `start` spawn at full health - losing a room. The last
+**The lives are NOT the player's: they are the party's, one pool** (`lives` and
+`MAX_LIVES` 3 on game.gd), because a party shares them (DESIGN.md's
+Multiplayer). The body only says it fell (`died`); game.gd decides what that
+costs. ALONE, each death spends one, and with lives left the room fades back to
+the current level's `start` spawn at full health - losing a room. The last
 death raises the pause overlay as a death screen (`show_game_over()`): heading
 YOU DIED, CONTINUE disabled, Escape swallowed (nothing to resume back into),
 the room frozen and visible behind the dim. MAIN MENU and QUIT are the only
-exits, and a new run instantiates a fresh player, so lives reset by
-construction.
+exits, and a new run builds a fresh party, so lives reset by construction.
+
+**In company a death stops nobody else's game**, so it is not a fade: the body
+goes DOWN where it fell (`knock_down()`), dimmed (`DOWN_TINT`), physics and
+collision off, and - the whole trick - OUT of the `player` group. Everything in
+the world reaches the player through that group, so leaving it is leaving the
+fight: enemies stop picking the body, hazards, drains and pickups stop touching
+it, a door stops waiting for it and game/heads.gd stops counting it, and none
+of them had to learn what down means. The pool pays a life at once, and the
+body gets up at the room's `start` door `GET_UP_SECONDS` (3) later through the
+same `revive()` a solo respawn uses, which puts it back in the group. With the
+pool empty it stays down, and the run ends when nobody is standing and nobody
+is about to be. `is_down()` is the readout.
 
 The HUD (`ui/hud/`, instanced by game.tscn) is deliberately dumb: game.gd wires
-`health_changed`/`lives_changed` to it and pushes starting values, and it
-renders whatever it is fed - a bar with a percentage label, plus one heart icon
-per possible life (spent ones dim rather than vanish, so max lives stays
-readable). HUD heart icons are drawn at runtime in hud.gd from the same 9x8
-mask as build_biomes.gd's heal pickup - kept in step by hand. Since game.tscn
-never re-instantiates the player, health and lives carry across door
+`health_changed` to it, pushes starting values and pushes the pool whenever it
+moves, and it renders whatever it is fed - a bar with a percentage label, plus
+one heart icon per possible life (spent ones dim rather than vanish, so max
+lives stays readable). The big bar is THIS machine's player; the rest of a
+party get a row each under the hearts (`set_party()`), a small bar and a name,
+dimmed while they are down - and a party of one gets no rows, so solo the HUD
+is what it always was. HUD heart icons are drawn at runtime in hud.gd from the
+same 9x8 mask as build_biomes.gd's heal pickup - kept in step by hand. Since
+game.gd never re-instantiates a party's bodies, health carries across door
 transitions for free; and since levels ARE re-instantiated, a consumed heal
 pickup is back on the next visit - rooms keep no state yet.
+
+## The hands - an input source, not `Input`
+
+The player never reads `Input`. It asks its `input_source` three things - where
+the stick points, whether attack is held, whether attack went down THIS physics
+frame - and `game/player/input_source.gd`, the one it gets by default, answers
+them off the keyboard exactly as player.gd used to itself. That is the seam a
+party needed: two bodies in one room cannot both be driven by one keyboard, so
+whatever answers those three questions can move a player -
+`game/player/virtual_input.gd` (a stick and a button set by code: the suites'
+second player) today, the wire later. game.gd hands a member its source, and
+its `character` (a roster id; empty is the saved pick), before the body enters
+the tree.
+
+Two details carry the weight:
+
+- **Asked live, never sampled once a frame.** The button is also read when an
+  attack animation ends, which is an idle-frame callback, and an answer
+  sampled at the last physics frame would be stale there - deciding wrongly
+  whether a held button flows into the charge or a released one ends the
+  combo. The keyboard source therefore asks `Input` at the moment of asking,
+  which keeps solo exactly what it was.
+- **A synthesized press is DATED.** `Input`'s just-pressed is true for the one
+  physics frame after the key went down, even if it came back up first. So
+  `virtual_input.hold(true)` only marks a press as owed, and `tick()` - called
+  at the top of every physics frame - stamps it with that frame's number. A tap
+  shorter than a frame still swings; a press made mid-charge is spent and gone,
+  as a key's is.
 
 ## Combat - four moves, one button
 

@@ -145,9 +145,7 @@ func _physics_process(delta: float) -> void:
 ## complain about yet. It is standing just outside his swing and staying there
 ## that earns "come here".
 func _watch_player(delta: float) -> void:
-	# Group + method, like everything else that reaches across: nothing here
-	# names the player's script.
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := target()
 	if player == null:
 		return
 	if global_position.distance_to(player.global_position) > sight_radius:

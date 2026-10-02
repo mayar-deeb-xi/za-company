@@ -7,7 +7,7 @@ folders are documented in `tools/CLAUDE.md`.
 
 ## The host and the room
 
-`game/game.tscn` is a host, not a room: it owns the player, camera, HUD, fade
+`game/game.tscn` is a host, not a room: it owns the party, camera, HUD, fade
 and pause menu, and swaps one `Level` child underneath them. A level owns only
 its own tiles, props and spawn markers, and answers three questions -
 `bounds()` for how much world there is, `spawn_position(name)` for where to
@@ -30,8 +30,20 @@ is not a transformation of "MarbleHall" that any rule gets right everywhere
 the start of a run announce the lobby too, and what keeps a respawn silent -
 dying and getting up in the same room is not arriving somewhere.
 
+**The party is spawned, not placed.** game.tscn holds no player: game.gd builds
+one body per member from `next_party` - a party of one, the saved pick on the
+keyboard, unless something says otherwise - and the first is THIS machine's,
+named `Player` as the one fixed child used to be. Each is moved into the tree
+straight after the background, where that child sat, so the y-sort breaks ties
+against the room as it always has. A door or a spawn stands the party in a row
+across the marker, `PARTY_SPACING` (12 px) apart, which is nothing at all for a
+party of one. The lives are the party's single pool on game.gd, and a death in
+company is a body DOWN rather than a fade - see game/player/CLAUDE.md's Health.
+`tests/test_party.gd` owns all of it.
+
 The camera lives on game.tscn, not on the player, and game.gd decides per axis:
-it follows the player where the level is bigger than the screen, and centres on
+it follows THIS machine's player where the level is bigger than the screen -
+whoever else is in the room - and centres on
 the level where it already fits, showing the room whole. Camera2D's own limits
 are deliberately unused - they cannot express the second case, and asked to keep
 a 544 px room inside a 640 px view they contradict themselves and jam the camera
@@ -136,9 +148,9 @@ They exist because the alternative was four test files agreeing with each
 other by hand about a shape only one floor has, and because a rule this old
 should be answerable by the room it is about. Nothing inside `game/` reads
 them any more. game.gd's **room alert** used to - it fired when the player
-stepped off the walk - and now does not: it fires the first frame the player
-is more than `ALERT_RADIUS` (3 tiles, 48 px) from the spawn marker they came
-in on, so the doorway is the only safe ground and the walk between the doors
+stepped off the walk - and now does not: it fires the first frame ANY player
+is more than `ALERT_RADIUS` (3 tiles, 48 px) from the spot they came in on, so
+the doorway is the only safe ground and the walk between the doors
 wakes the room like anywhere else. Every enemy in the room is `alert()`ed once
 (game/enemies/CLAUDE.md, The leash), and every reinforcement that walks in
 after that is alerted on its way in. `tests/test_alert.gd` owns it.
@@ -289,6 +301,20 @@ fires during the transition, where game.gd is still `_travelling` and drops it.
 Without re-arming on `body_exited`, the door ahead of you is spent before you
 ever walk to it and the chain dead-ends at the second room, which is invisible
 in a two-level chain where nobody ever arrives and then walks on.
+
+**A door waits for the party.** It goes only once every STANDING player is in
+its threshold, and until then puts the count over it ("1/2", `door_count.gd`,
+in the damage numbers' 3x5 digits and `top_level` so the south door's half
+turn does not stand it on its head). Standing is the `player` group, which a
+body that is down has left, so the door neither waits for one nor counts one -
+game.gd carries everybody through, and whoever was waiting to get up gets up on
+the far side. It asks every frame somebody is in it rather than only when
+somebody arrives, because the party can become complete without anybody
+moving: the one still out in the room goes down. Solo, one player is the whole
+party and the door goes the moment they step in, as it always did. The one
+thing the polling changes is a LOCKED door (`boss_door.gd` with `LOCKED` on): it
+now opens on a player already standing in it when the boss concedes, rather
+than waiting for them to step off and on again.
 
 ## Dressing
 
@@ -751,8 +777,9 @@ Three things follow from that and are worth knowing before touching it:
   given is the doorway it came through. It still gives up on a player it has
   lost, unless the room alert has fired - then it keeps coming, because
   giving up would only leave it standing wherever it stopped.
-- **Which makes it the one place head count can live.** `_head_count()` returns
-  1 today and multiplies the group when a second player exists. It obeys the
+- **Which makes it the one place head count can live.** The count is
+  game/heads.gd's - every STANDING member of the party - read as the group sets
+  off, and each head past the first adds the beat's `per_head`. It obeys the
   rule `Difficulty` already obeys - scale what the world sends, never what it is
   made of - so more players means more BODIES, never a tougher one, for the same
   reason no difficulty mode touches the 24/17/36 breakpoints.

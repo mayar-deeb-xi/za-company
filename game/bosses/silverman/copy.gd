@@ -77,9 +77,10 @@ func _process(delta: float) -> void:
 
 ## At the player, and through them exactly once. It goes in via take_damage(),
 ## so the grace window meters it against everything else in the room like any
-## other blow - a copy of him is not a special case.
+## other blow - a copy of him is not a special case. Which player is HIS
+## answer, asked every frame: a copy of him is after whoever he is after.
 func _walk(delta: float) -> void:
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := _boss.call("target") as Node2D
 	if player == null:
 		return
 	var to_player := player.global_position - global_position

@@ -1,20 +1,57 @@
 extends Node2D
-## Gameplay host. Owns the player, the camera, the HUD and the pause menu, and
+## Gameplay host. Owns the party, the camera, the HUD and the pause menu, and
 ## swaps one Level child in and out beneath them.
 ##
-## The player node is never re-instantiated, so anything it accumulates - facing,
-## and later health or inventory - survives a door transition for free, and the
-## pause menu is not duplicated per map.
+## The party's bodies are never re-instantiated, so anything they accumulate -
+## facing, health - survives a door transition for free, and the pause menu is
+## not duplicated per map.
 ##
 ## Escape is handled by the PauseMenu child, which pauses the tree instead of
 ## leaving the scene. Leaving for the main menu is one of its options.
+##
+## ## The party
+##
+## One body per member, spawned here from `next_party` - and when nothing has
+## said otherwise that is ONE member, the saved pick on the keyboard, which is
+## every solo run (DESIGN.md's Multiplayer, M1). The first member is THIS
+## machine's: the camera follows them and the HUD's big bar is theirs, while
+## the rest get a row each under the hearts. Solo is a party of one and plays
+## exactly as it did when this scene owned a single `$Player`:
+##
+## - **Lives are one pool**, `lives`, held here because they are nobody's own.
+## - **A death alone** fades the room and puts the body back at the door, as it
+##   always has. **A death in company** is no reason to stop anybody else's
+##   game: the body goes DOWN where it fell (player.gd's knock_down), the pool
+##   pays a life, and it gets up at the door `GET_UP_SECONDS` later. With the
+##   pool empty it stays down, and the run ends when nobody is standing.
+## - **A door waits for everyone standing** (door_base.gd) and carries the rest
+##   through: whoever was waiting to get up gets up on the far side.
+## - **The room alert is anyone's**: the first of them to walk out of the
+##   doorway wakes the room for all of them.
 
 const START_LEVEL := "res://game/levels/lobby/lobby.tscn"
 ## Where the NEXT run starts instead, when the development level select
 ## (ui/level_select/) has just named a floor. Spent on use, so the run after it
 ## starts in the lobby again unless the screen is passed through a second time.
 static var next_start := ""
+## Who plays the NEXT run: one Dictionary per member, the first being this
+## machine's, each with an optional `character` (a roster id; empty is the
+## saved pick) and `input` (an input_source.gd; the keyboard by default). Empty
+## is a party of one. Spent on use like `next_start`, and capped at
+## Heads.MAX_PARTY.
+static var next_party: Array = []
 const FADE_SECONDS := 0.28
+## The party's lives, ONE pool however many are playing.
+const MAX_LIVES := 3
+## How long a body that went down in company lies there before it gets up at
+## the door. Long enough to be a cost - the room carries on without you - and
+## short enough that nobody puts the controller down.
+const GET_UP_SECONDS := 3.0
+## How far apart the party is stood when a door or a spawn puts them down, in a
+## row across the marker. Wider than two bodies (10 px) so nobody arrives
+## standing in anybody, and narrow enough that four of them (36 px) stay inside
+## the 54 px walk every floor keeps clear.
+const PARTY_SPACING := 12.0
 ## How far from where they came in the player may stand before the room knows
 ## they are there - see _alert_room(). Three tiles, measured from the spot the
 ## door put them on rather than from the door itself, because every spawn marker
@@ -28,13 +65,15 @@ const ALERT_RADIUS := 3 * 16.0
 const LevelType := preload("res://game/levels/level.gd")
 const DoorType := preload("res://game/levels/door_base.gd")
 const PlayerType := preload("res://game/player/player.gd")
+const PlayerScene := preload("res://game/player/player.tscn")
+const Roster := preload("res://game/player/characters/roster.gd")
+const Heads := preload("res://game/heads.gd")
 const HudType := preload("res://ui/hud/hud.gd")
 const PauseMenuType := preload("res://ui/pause_menu/pause_menu.gd")
 const LevelTitleType := preload("res://ui/level_title/level_title.gd")
 const DialogueType := preload("res://game/dialogue/dialogue_director.gd")
 const SubtitleType := preload("res://ui/subtitle/subtitle.gd")
 
-@onready var _player: PlayerType = $Player
 @onready var _camera: Camera2D = $Camera2D
 @onready var _fade: ColorRect = $Transition/Fade
 @onready var _hud: HudType = $HUD/Hud
@@ -43,13 +82,26 @@ const SubtitleType := preload("res://ui/subtitle/subtitle.gd")
 @onready var _dialogue: DialogueType = $Dialogue
 @onready var _subtitle: SubtitleType = $Subtitle/BossSubtitle
 
+## The party's lives - see the header. Public as the readout tests and the HUD
+## read.
+var lives := MAX_LIVES
+
+## Every member's body, in party order; the first is this machine's.
+var _players: Array[PlayerType] = []
+var _local: PlayerType
+## The bodies that went down in company and are waiting to get up, each with
+## the number of the wait it is on - so a body got up early by a door, and
+## felled again, is not stood up a second time by the first wait running out.
+var _getting_up := {}
+var _wait := 0
+
 var _level: LevelType
 var _travelling := false
 ## Whether this room's one-time alert (see _alert_room) has already fired.
 ## Reset on every arrival, like everything else a room carries no state across.
 var _room_alerted := false
-## Where the player came into this room - the centre of the ALERT_RADIUS.
-var _arrived_at := Vector2.ZERO
+## Where each body came into this room - the centres of the ALERT_RADIUS.
+var _arrived_at := {}
 ## World-space extent of the level on screen now; drives the camera.
 var _bounds := Rect2()
 ## Camera shake: world pixels of throw, and how much of it is left to spend.
@@ -70,19 +122,10 @@ func _ready() -> void:
 	# Re-applied live: zoom is reachable from the pause menu, with the game
 	# sitting right behind the panel.
 	Display.changed.connect(_apply_zoom)
-	# The player owns its health and lives; game.gd only wires them to the HUD
-	# and decides what a death means. Pushed once here so the HUD never starts
-	# blank.
-	_player.health_changed.connect(_hud.set_health)
-	_player.lives_changed.connect(_hud.set_lives)
-	_player.died.connect(_on_player_died)
-	# The player's blows ask for the hit-stop and the shake on exactly a boss's
-	# terms (see _watch_boss): it says a blow landed, this owns the clock and
-	# the camera.
-	_player.froze.connect(_freeze)
-	_player.shook.connect(_shake)
-	_hud.set_health(_player.health, PlayerType.MAX_HEALTH)
-	_hud.set_lives(_player.lives, PlayerType.MAX_LIVES)
+	_spawn_party()
+	# Pushed once here so the HUD never starts blank.
+	_hud.set_health(_local.health, PlayerType.MAX_HEALTH)
+	_hud.set_lives(lives, MAX_LIVES)
 	# Every friendly face in the game, wired once here rather than per room -
 	# see _on_node_added. Connected BEFORE the first level is built, because
 	# building one is what adds the first of them.
@@ -95,13 +138,67 @@ func _ready() -> void:
 	_enter_level(first, &"start")
 
 
+## One body per member of `next_party` - see the header. Each owns its health;
+## game.gd only wires it to the HUD and decides what a death means, and its
+## blows ask for the hit-stop and the shake on exactly a boss's terms (see
+## _watch_boss): it says a blow landed, this owns the clock and the camera.
+func _spawn_party() -> void:
+	var members: Array = next_party if not next_party.is_empty() else [{}]
+	next_party = []
+	for i in mini(members.size(), Heads.MAX_PARTY):
+		var member: Dictionary = members[i]
+		var body := PlayerScene.instantiate() as PlayerType
+		# The first keeps the name game.tscn gave the one player it used to
+		# hold, so a path to it - every suite's - still reaches this machine's.
+		body.name = "Player" if i == 0 else "Player%d" % (i + 1)
+		body.character = String(member.get("character", ""))
+		if member.get("input") != null:
+			body.input_source = member["input"]
+		add_child(body)
+		# Where game.tscn held it: straight after the background, so the y-sort
+		# breaks ties against the room exactly as it always has.
+		move_child(body, 1 + i)
+		body.health_changed.connect(_on_health_changed.bind(body))
+		body.died.connect(_on_player_died.bind(body))
+		body.froze.connect(_freeze)
+		body.shook.connect(_shake)
+		_players.append(body)
+	_local = _players[0]
+	var names: Array[String] = []
+	for body in _players.slice(1):
+		names.append(String(Roster.find(body.character).get("name", body.character)))
+	_hud.set_party(names)
+
+
+## This machine's player is the big bar; everybody else is a row under it.
+func _on_health_changed(health: int, max_health: int, body: PlayerType) -> void:
+	if body == _local:
+		_hud.set_health(health, max_health)
+	else:
+		_hud.set_member_health(_players.find(body) - 1, health, max_health)
+
+
+## The party, for whoever needs every body rather than the standing ones the
+## `player` group holds - tests, and the day a scoreboard lists them.
+func party() -> Array[PlayerType]:
+	return _players
+
+
 func _process(delta: float) -> void:
 	_camera.global_position = _camera_target()
 	_apply_shake(delta)
-	if not _travelling and not _room_alerted \
-			and _player.global_position.distance_to(_arrived_at) > ALERT_RADIUS:
+	if not _travelling and not _room_alerted and _anyone_walked_in():
 		_room_alerted = true
 		_alert_room()
+
+
+## Whether anybody standing is more than ALERT_RADIUS from where they came in.
+func _anyone_walked_in() -> bool:
+	for body in _players:
+		if not body.is_down() and _arrived_at.has(body) \
+				and body.global_position.distance_to(_arrived_at[body]) > ALERT_RADIUS:
+			return true
+	return false
 
 
 ## Zoom decides how much world fits on screen, which in turn decides whether
@@ -125,8 +222,7 @@ func _travel(level_path: String, spawn: StringName) -> void:
 	# under someone else's control.
 	_dialogue.stop()
 	_travelling = true
-	_player.set_physics_process(false)
-	_player.velocity = Vector2.ZERO
+	_hold_party()
 
 	var out := create_tween()
 	out.tween_property(_fade, "color:a", 1.0, FADE_SECONDS)
@@ -138,13 +234,31 @@ func _travel(level_path: String, spawn: StringName) -> void:
 	back.tween_property(_fade, "color:a", 0.0, FADE_SECONDS)
 	await back.finished
 
-	_player.set_physics_process(true)
+	_release_party()
 	_travelling = false
 
 
-## Each death spends one of the player's lives. While any remain, dying costs
-## the ground covered in this room; the last one ends the run.
-func _on_player_died() -> void:
+## Every body frozen for a fade, and only the standing ones let go after it: a
+## body that is down stays as still as it fell.
+func _hold_party() -> void:
+	for body in _players:
+		body.set_physics_process(false)
+		body.velocity = Vector2.ZERO
+
+
+func _release_party() -> void:
+	for body in _players:
+		if not body.is_down():
+			body.set_physics_process(true)
+
+
+## Each death spends one of the party's lives. Alone, while any remain, dying
+## costs the ground covered in this room, and the last one ends the run. In
+## company see _go_down.
+func _on_player_died(body: PlayerType) -> void:
+	if _players.size() > 1:
+		_go_down(body)
+		return
 	# Dying hands the body back before anything else does anything with it -
 	# a respawn moves the player, and a conversation still holding the wheel
 	# would keep walking them back towards whoever was talking.
@@ -152,18 +266,76 @@ func _on_player_died() -> void:
 	# And whatever the boss was shouting goes with it: the player is about to
 	# be somewhere the line was not said.
 	_subtitle.clear()
-	if _player.lose_life() > 0:
+	if _spend_life() > 0:
 		_respawn()
 	else:
 		_game_over()
 
 
+## One life out of the pool. Returns how many remain, so the caller chooses
+## respawn or game over from the same call instead of racing a signal.
+func _spend_life() -> int:
+	lives = maxi(lives - 1, 0)
+	_hud.set_lives(lives, MAX_LIVES)
+	return lives
+
+
+## A death in company. Nobody else's game stops for it: the body goes down
+## where it fell, and the pool pays for it to get up at the door a few seconds
+## later - or, with the pool empty, it stays down. The run ends only when
+## nobody is standing and nobody is about to be.
+##
+## The life is spent NOW rather than when the body gets up, so the hearts say
+## the truth the moment it happens and a second death on the same frame finds
+## the pool as it really is.
+func _go_down(body: PlayerType) -> void:
+	# A conversation holding this body's wheel is over; anybody else's goes on.
+	if _dialogue.listener() == body:
+		_dialogue.stop()
+	body.knock_down()
+	_hud.set_member_down(_players.find(body) - 1, true)
+	if lives > 0:
+		_spend_life()
+		_wait += 1
+		_getting_up[body] = _wait
+		# Paused with the game: the pause menu must not be a way to skip it.
+		get_tree().create_timer(GET_UP_SECONDS, false).timeout.connect(
+			_get_up.bind(body, _wait))
+	elif _getting_up.is_empty() and get_tree().get_nodes_in_group("player").is_empty():
+		_game_over()
+
+
+func _get_up(body: PlayerType, wait: int) -> void:
+	if not is_instance_valid(body) or _getting_up.get(body, -1) != wait:
+		return
+	_getting_up.erase(body)
+	_stand_up(body, _level.spawn_position(&"start") + _slot(body))
+	# Mid-fade the party is frozen, and the fade lets everyone standing go.
+	if not _travelling:
+		body.set_physics_process(true)
+
+
+## Back on their feet at `at`, full health, in the fight again.
+func _stand_up(body: PlayerType, at: Vector2) -> void:
+	body.global_position = at
+	body.revive()
+	_hud.set_member_down(_players.find(body) - 1, false)
+
+
+## Where in the row across a spawn marker this body stands - see
+## PARTY_SPACING. Nothing for a party of one, who stands on the marker itself.
+func _slot(body: PlayerType) -> Vector2:
+	var i := _players.find(body)
+	return Vector2((i - (_players.size() - 1) / 2.0) * PARTY_SPACING, 0.0).round()
+
+
 ## The run is over: the pause overlay comes up as a death screen (YOU DIED,
 ## CONTINUE disabled) with the room still visible behind it, frozen by the
-## tree pause. Leaving through MAIN MENU builds a fresh player next run, so
+## tree pause. Leaving through MAIN MENU builds a fresh party next run, so
 ## health and lives reset by construction.
 func _game_over() -> void:
-	_player.velocity = Vector2.ZERO
+	for body in _players:
+		body.velocity = Vector2.ZERO
 	_pause_menu.show_game_over()
 
 
@@ -176,21 +348,21 @@ func _respawn() -> void:
 	while _travelling:
 		await get_tree().process_frame
 	_travelling = true
-	_player.set_physics_process(false)
-	_player.velocity = Vector2.ZERO
+	_local.set_physics_process(false)
+	_local.velocity = Vector2.ZERO
 
 	var out := create_tween()
 	out.tween_property(_fade, "color:a", 1.0, FADE_SECONDS)
 	await out.finished
 
-	_player.global_position = _level.spawn_position(&"start")
-	_player.revive()
+	_local.global_position = _level.spawn_position(&"start")
+	_local.revive()
 
 	var back := create_tween()
 	back.tween_property(_fade, "color:a", 0.0, FADE_SECONDS)
 	await back.finished
 
-	_player.set_physics_process(true)
+	_local.set_physics_process(true)
 	_travelling = false
 
 
@@ -226,8 +398,19 @@ func _enter_level(level_path: String, spawn: StringName) -> void:
 	_unfreeze()
 	_subtitle.clear()
 
-	_player.global_position = _level.spawn_position(spawn)
-	_arrived_at = _player.global_position
+	# The whole party is carried through, standing or not, in a row across the
+	# marker; anybody who was waiting to get up gets up here, at this room's
+	# door, which is exactly where the wait would have put them.
+	var marker := _level.spawn_position(spawn)
+	_arrived_at.clear()
+	for body in _players:
+		var at := marker + _slot(body)
+		if _getting_up.has(body):
+			_getting_up.erase(body)
+			_stand_up(body, at)
+		else:
+			body.global_position = at
+		_arrived_at[body] = at
 
 	# Frame the new level before the first frame of it is drawn, then drop the
 	# smoothing history - otherwise the camera glides across from wherever the
@@ -272,7 +455,10 @@ func _on_node_added(node: Node) -> void:
 		node.connect(&"talk_requested", _on_talk_requested)
 
 
-func _alert_arrival(node: Node) -> void:
+## Untyped on purpose: by the time a deferred call lands the body may already
+## be gone - killed on the frame it walked in - and a freed object cannot be
+## converted to a Node, so a typed parameter fails before the check can run.
+func _alert_arrival(node) -> void:
 	if is_instance_valid(node) and node.has_method("roaming") \
 			and node.call("roaming") and node.has_method("alert"):
 		node.call("alert")
@@ -281,9 +467,11 @@ func _alert_arrival(node: Node) -> void:
 func _on_talk_requested(npc: Node2D) -> void:
 	# Declined while the room is changing under everyone's feet: the fade is
 	# already running and the NPC is about to be freed with the level.
-	if _travelling:
+	if _travelling or _local.is_down():
 		return
-	_dialogue.talk(npc, _player)
+	# This machine's player, who is the one with a key to press. Who talks in a
+	# party is still DESIGN.md's open question; this is its default.
+	_dialogue.talk(npc, _local)
 
 
 ## The one push a room gets, fired once by _process the moment the player is
@@ -407,7 +595,9 @@ func _camera_target() -> Vector2:
 	var view := get_viewport_rect().size / _camera.zoom
 	var half := view * 0.5
 	var centre := _bounds.get_center()
-	var target := _player.global_position
+	# This machine's player, whoever else is in the room: each machine's camera
+	# follows its own, so no floor is ever too big for a party.
+	var target := _local.global_position
 	if view.x >= _bounds.size.x:
 		target.x = centre.x
 	else:

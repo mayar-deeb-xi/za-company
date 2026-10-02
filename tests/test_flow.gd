@@ -199,8 +199,8 @@ func _tick(frame: int) -> void:
 				_player().get("health") == 100 and _fill().size.x == 66.0
 					and _percent().text == "100%")
 			_check("hud: three full hearts to start (%s lives, %d icons)"
-				% [_player().get("lives"), _hearts().get_child_count()],
-				_player().get("lives") == 3 and _hearts().get_child_count() == 3
+				% [_lives(), _hearts().get_child_count()],
+				_lives() == 3 and _hearts().get_child_count() == 3
 					and _heart_tex(0) == _heart_tex(2))
 			_check("level: floor 1 has nothing in it that hurts",
 				_level().get_node_or_null("Props/Torch") == null)
@@ -247,8 +247,8 @@ func _tick(frame: int) -> void:
 				% [_fill().size.x, _percent().text],
 				_fill().size.x == 66.0 and _percent().text == "100%")
 			_check("death: one life spent, hud dims the last heart (%s left)"
-				% _player().get("lives"),
-				_player().get("lives") == 2
+				% _lives(),
+				_lives() == 2
 					and _heart_tex(0) == _heart_tex(1)
 					and _heart_tex(2) != _heart_tex(0))
 			_check("death: fade cleared",
@@ -1011,19 +1011,19 @@ func _tick(frame: int) -> void:
 			(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
 		1363:
 			_check("lives: a new run starts with all three again (%s)"
-				% _player().get("lives"),
+				% _lives(),
 				current_scene.scene_file_path == "res://game/game.tscn"
-					and _player().get("lives") == 3)
+					and _lives() == 3)
 			_player().call("take_damage", 9999)
 		1416:
 			_check("lives: first death respawns with two left (%s, health %s)"
-				% [_player().get("lives"), _player().get("health")],
-				_player().get("lives") == 2 and _player().get("health") == 100)
+				% [_lives(), _player().get("health")],
+				_lives() == 2 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
 		1466:
 			_check("lives: second death respawns with one left (%s)"
-				% _player().get("lives"),
-				_player().get("lives") == 1 and _player().get("health") == 100)
+				% _lives(),
+				_lives() == 1 and _player().get("health") == 100)
 			_player().call("take_damage", 9999)
 		1516:
 			_check("game over: the last death raises the death screen, paused",

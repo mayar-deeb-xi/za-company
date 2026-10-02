@@ -225,7 +225,7 @@ func _physics_process(delta: float) -> void:
 ## they come close, so it measures somebody avoiding him rather than the walk
 ## in.
 func _watch_distance(delta: float) -> void:
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := target()
 	if player == null or touching_player \
 			or global_position.distance_to(player.global_position) > sight_radius:
 		_kept_away = 0.0
@@ -280,7 +280,7 @@ func _advance_phase() -> void:
 func _ranged_pick() -> String:
 	if _ranged_timer > 0.0:
 		return ""
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := target()
 	if player == null:
 		return ""
 	var rel := player.global_position - global_position
@@ -439,7 +439,7 @@ func _take_off() -> void:
 	_leaping = true
 	_leap_from = global_position
 	var to := Vector2.ZERO
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := target()
 	if player != null:
 		to = (player.global_position - global_position).limit_length(LEAP_RANGE)
 	_leap_to = global_position + to
@@ -471,7 +471,7 @@ func leap_shadow() -> float:
 
 ## The chair goes the way the player was when it went, and keeps going.
 func _launch_chair() -> void:
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := target()
 	_chair_dir = Vector2(_dir(), 0.0)
 	if player != null and player.global_position != global_position:
 		_chair_dir = (player.global_position - global_position).normalized()

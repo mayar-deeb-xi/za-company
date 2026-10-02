@@ -13,8 +13,25 @@ extends Control
 ## The boss bar is its own scene under the same folder and this script only
 ## forwards to it, so game.gd still has one thing to talk to and neither bar
 ## has to know the other exists.
+##
+## **The rest of the party is a row each under the hearts** - a small bar and a
+## name - built by `set_party()` from whatever game.gd hands it. The big bar is
+## always THIS machine's player and the hearts are the party's one pool, so a
+## party of one is given no rows and the HUD is exactly what it always was.
 
 const FILL_WIDTH := 66.0
+## A party row: where the first one sits, how far apart they are, and the width
+## of the fill inside its 1px border.
+const ROW_TOP := 33.0
+const ROW_STEP := 9.0
+const ROW_FILL := 40.0
+const BORDER := Color(0.0784314, 0.0862745, 0.109804, 1)
+const BACK := Color(0.168627, 0.027451, 0.0509804, 1)
+const FILL := Color(0.847059, 0.196078, 0.235294, 1)
+const TEXT := Color(0.937255, 0.941176, 0.960784, 1)
+## A row whose player is down: still listed, so nobody wonders where they went.
+const DOWN_ALPHA := 0.4
+const FONT := preload("res://assets/fonts/KenneyPixel.ttf")
 
 ## Preloaded rather than reached for by class_name, like every other typed
 ## node in the game: global class names live in an editor-written cache.
@@ -41,6 +58,37 @@ const HEART := [
 
 @onready var _heart_full := _heart_texture(true)
 @onready var _heart_empty := _heart_texture(false)
+
+## One Control per party row, in slot order; its fill is the child named Fill.
+var _rows: Array[Control] = []
+
+
+## The rest of the party, one row per name, in the order game.gd keeps them.
+## Rebuilt whole rather than patched, because it is asked once per run.
+func set_party(names: Array) -> void:
+	for row in _rows:
+		row.queue_free()
+	_rows.clear()
+	for i in names.size():
+		_rows.append(_party_row(i, String(names[i])))
+
+
+func set_member_health(slot: int, health: int, max_health: int) -> void:
+	if slot < 0 or slot >= _rows.size():
+		return
+	var fill := _rows[slot].get_node("Fill") as ColorRect
+	fill.size.x = roundf(ROW_FILL * float(health) / float(max_health))
+
+
+func set_member_down(slot: int, down: bool) -> void:
+	if slot < 0 or slot >= _rows.size():
+		return
+	_rows[slot].modulate.a = DOWN_ALPHA if down else 1.0
+
+
+## The party rows, for tests: one Control each, in slot order.
+func party_rows() -> Array[Control]:
+	return _rows
 
 
 func set_health(health: int, max_health: int) -> void:
@@ -75,6 +123,40 @@ func set_boss_health(health: int, max_health: int) -> void:
 
 func clear_boss() -> void:
 	_boss_bar.hide_boss()
+
+
+## A small bar in a 1px border with a name beside it - the big bar's colours
+## and font at a party member's size.
+func _party_row(slot: int, label: String) -> Control:
+	var row := Control.new()
+	row.name = "Member%d" % (slot + 1)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.position = Vector2(8.0, ROW_TOP + ROW_STEP * slot)
+	add_child(row)
+	for part in [["Border", Vector2.ZERO, Vector2(ROW_FILL + 2.0, 6.0), BORDER],
+			["Back", Vector2.ONE, Vector2(ROW_FILL, 4.0), BACK],
+			["Fill", Vector2.ONE, Vector2(ROW_FILL, 4.0), FILL]]:
+		var rect := ColorRect.new()
+		rect.name = part[0]
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		rect.position = part[1]
+		rect.size = part[2]
+		rect.color = part[3]
+		row.add_child(rect)
+	var name_label := Label.new()
+	name_label.name = "Name"
+	name_label.text = label
+	name_label.position = Vector2(ROW_FILL + 6.0, -2.0)
+	name_label.size = Vector2(80.0, 10.0)
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_override("font", FONT)
+	name_label.add_theme_font_size_override("font_size", 16)
+	name_label.add_theme_color_override("font_color", TEXT)
+	name_label.add_theme_color_override("font_shadow_color", BORDER)
+	name_label.add_theme_constant_override("shadow_offset_x", 1)
+	name_label.add_theme_constant_override("shadow_offset_y", 1)
+	row.add_child(name_label)
+	return row
 
 
 func _heart_texture(full: bool) -> Texture2D:

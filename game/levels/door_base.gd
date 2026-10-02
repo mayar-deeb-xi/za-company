@@ -12,8 +12,20 @@ class_name DoorBase
 ## The doorway sits in a gap cut through the wall ring, so the scene carries its
 ## own `Seal` body across that gap: the map stays closed whether or not the
 ## transition fires, and that same body is what keeps a locked door solid.
+##
+## **A door waits for the party.** It goes only once every STANDING player is
+## in the doorway, and says so meanwhile ("1/2", door_count.gd). Standing is
+## the `player` group: a body that is down has left it (player.gd's
+## knock_down), so the door neither waits for one nor counts one, and game.gd
+## carries it through with everybody else. Solo, one player in the doorway is
+## the whole party and the door goes the moment they step in, as it always has.
 
 signal travelled(level_path: String, spawn: StringName)
+
+const DoorCount := preload("res://game/levels/door_count.gd")
+## Where the count stands, from the door's origin and turned with it: into the
+## room, past the threshold, so it is in front of whoever is waiting.
+const COUNT_AT := Vector2(0, 30)
 
 @export_file("*.tscn") var target_level: String
 ## Name of the Marker2D under the destination level's Spawns node.
@@ -26,19 +38,28 @@ signal travelled(level_path: String, spawn: StringName)
 ## frozen on the player for that whole fade, so nothing can leave the threshold
 ## while the latch matters.
 var _used := false
+## The party members standing in the doorway now.
+var _inside := {}
+var _count: DoorCount
 
 
 func _ready() -> void:
 	$Sprite2D.texture = art
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
+	_count = DoorCount.new()
+	_count.name = "Count"
+	_count.top_level = true
+	_count.z_index = 50
+	_count.visible = false
+	add_child(_count)
 
 
 func _on_body_entered(body: Node2D) -> void:
-	if _used or not can_travel() or not body.is_in_group("player"):
+	if not body.is_in_group("player"):
 		return
-	_used = true
-	travelled.emit(target_level, target_spawn)
+	_inside[body] = true
+	_consider()
 
 
 ## Stepping off the threshold re-arms the door, and the case that needs it is
@@ -49,8 +70,38 @@ func _on_body_entered(body: Node2D) -> void:
 ## drops it - so without re-arming, the door ahead of you is spent before you
 ## ever walk to it, and the chain dead-ends at the second room.
 func _on_body_exited(body: Node2D) -> void:
+	# Out of the count whether or not it is still a player: one that went down
+	# standing here left the group first, and still has to leave the doorway.
+	_inside.erase(body)
 	if body.is_in_group("player"):
 		_used = false
+	_consider()
+
+
+## Asked every frame somebody is waiting, and not only when somebody arrives,
+## because the party can become complete without anyone moving: the one player
+## still out in the room goes down, and everyone left is already here.
+func _physics_process(_delta: float) -> void:
+	if not _inside.is_empty():
+		_consider()
+
+
+func _consider() -> void:
+	var here := 0
+	for body in _inside.keys():
+		if not is_instance_valid(body):
+			_inside.erase(body)
+		elif (body as Node).is_in_group("player"):
+			here += 1
+	var standing := get_tree().get_nodes_in_group("player").size()
+	if here == 0 or here >= standing:
+		_count.visible = false
+	else:
+		_count.global_position = to_global(COUNT_AT).round()
+		_count.show_count(here, standing)
+	if here > 0 and here >= standing and not _used and can_travel():
+		_used = true
+		travelled.emit(target_level, target_spawn)
 
 
 ## Override point for locked doors: return false and the player walks into the

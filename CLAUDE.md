@@ -66,12 +66,30 @@ BEFORE touching anything: the maps, the invariants and the gotchas.
 
 ## Levels
 
-`game/game.tscn` is a host, not a room: it owns the player, camera, HUD, fade
+`game/game.tscn` is a host, not a room: it owns the party, camera, HUD, fade
 and pause menu, and swaps one `Level` child underneath them. A level owns only
 its own tiles, props and spawn markers, and answers three questions -
 `bounds()` for how much world there is, `spawn_position(name)` for where to
 stand, and `title()` for what to call itself. Nothing in game.gd names a
 specific map beyond `START_LEVEL`.
+
+**The party is spawned, not placed: solo is a party of one.** game.tscn holds no
+player - game.gd builds one body per member of `next_party` (one, the saved
+pick on the keyboard, unless something says otherwise) and the first is THIS
+machine's, still named `Player`: the camera follows it and the HUD's big bar is
+its health, while anyone else gets a row under the hearts. Four rules make a
+party, and each is a no-op for one (DESIGN.md's Multiplayer, M1):
+**the lives are ONE pool** on game.gd, not the player's; **a death in company is
+a body DOWN**, not a fade - out of the `player` group, which is how everything
+in the world already stops seeing it - and it gets up at the door 3 s later on
+the pool's life, or stays down with the pool empty, and the run ends when
+nobody is standing; **a door waits for everyone standing** and says "1/2"; and
+**the room alert is anyone's**. The player reads an *input source* rather than
+`Input` (game/player/CLAUDE.md's *The hands*), which is how a second body is
+driven, and an enemy goes for the nearest player and sticks (`target()`,
+game/enemies/CLAUDE.md). `game/heads.gd` counts the standing party and holds
+`MAX_PARTY` (4), the only place a party size is written down.
+`tests/test_party.gd` owns all of it.
 
 Its **CanvasLayer stack is now stated rather than defaulted**, because things
 below the HUD have started arriving: -1 background, 0 the world, **1 a boss's
@@ -185,7 +203,8 @@ truth; adding a character is one roster entry, then build_characters.gd - the
 sheet row is the shared body, recoloured by the entry's recipe. Enemies deliberately do NOT share a sheet - each owns its
 own, seeded once from a frozen body copy (see game/enemies/CLAUDE.md).
 
-The player owns its health and its lives (`MAX_LIVES` 3). **Four ways the
+The player owns its health; the lives (`MAX_LIVES` 3) are the party's single
+pool on game.gd. **Four ways the
 world reaches it, and the splits are the thing to get right**: a *blow*
 (`take_damage()`) is metered by the grace window and opens one - that window is
 per-difficulty and is secretly the CROWD dial; a *drain* (`drain()`) knows its
@@ -317,9 +336,10 @@ still gives up, it just has no mark to be held near or to return to). Full ratio
 game/enemies/CLAUDE.md's The leash.
 
 **The one other way to be noticed is the ROOM ALERT, and it fires once per
-visit.** The first frame the player stands more than 3 tiles (48 px,
-`ALERT_RADIUS`) from where they came in - the spawn marker the door put them
-on, not the door itself, which every marker stands 3.5+ tiles inside - game.gd
+visit.** The first frame ANY player stands more than 3 tiles (48 px,
+`ALERT_RADIUS`) from where they came in - their place at the spawn marker the
+door put them on, not the door itself, which every marker stands 3.5+ tiles
+inside - game.gd
 calls `alert()` on every enemy in the room: a sighting without the sight, so
 each one walks the player's way and then the leash above decides everything,
 unchanged. **The doorway is the only safe ground; the walk between the doors
@@ -1385,7 +1405,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Twenty-nine suites,
+  They drive the real game with synthesized input and exit 0/1. Thirty suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1652,6 +1672,21 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     is downloaded or installed: what would really install is Part D's, on
     real machines. It writes its scratch files under `user://test_updater`
     and removes them.
+  - `test_party.gd` - a party of two on one machine: the keyboard drives this
+    machine's player and `virtual_input.gd` drives the second. One body per
+    member, each its own character, in a row across the marker; the keyboard
+    moves only its own and a synthesized press is dated like a key's (a tap
+    shorter than a frame still swings); the SECOND player walking out wakes the
+    room; an enemy takes the nearest, holds through a near-tie, turns for
+    somebody clearly closer and then sticks; the second's HUD row and a boss
+    counting both heads; a death in company going down with no fade, paying the
+    one pool and getting up at the door; the door saying "1/2", then going when
+    the one still out in the room goes down, with the body waiting to get up
+    getting up on the far side and the overtaken wait doing nothing; and the
+    end - the pool empty, a death staying down, and the run over only when
+    nobody is standing and nobody is about to be. Its own suite because every
+    other one is a party of one, and must stay that way to prove solo did not
+    move.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

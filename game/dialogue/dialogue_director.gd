@@ -100,6 +100,12 @@ func talking() -> bool:
 	return _running
 
 
+## Who is being talked at, or null. game.gd asks when a party member goes
+## down, because only THEIR conversation ends with them.
+func listener() -> Node2D:
+	return _player if _running else null
+
+
 ## Start `npc`'s conversation, with `player` as the one being talked at.
 ## Silently declines when one is already running or has only just ended, which
 ## is the whole of the re-entry guard: the box consumes its own keypresses, and

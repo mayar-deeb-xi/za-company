@@ -21,6 +21,19 @@ grace window meters the pressure, exactly like hazards. Stats (`max_health`,
 `has_method`, doors ignore them (door_base.gd filters on the `player` group),
 and each type lives in `game/enemies/<type>/`.
 
+**Who it is after is ONE function, `target()`**: the nearest player, and it
+sticks - it turns only for somebody closer by `RETARGET_MARGIN` (24 px, a tile
+and a half), so two players at about the same distance do not make it twitch
+between them. Every lookup in the base and in all three bosses asks it, and
+Silverman's copy asks HIM, so a copy is after whoever he is after. It is
+decided once per physics frame and remembered, which gives a boss asking from
+four places one answer, and a body that is down has left the `player` group so
+it is never picked. With one player it is that player on every frame, which is
+all `get_first_node_in_group("player")` ever was. What is NOT a target is an
+AREA: Silverman's cold room and his crossing, and Big Mo's heave out of the
+clinch, reach every player standing in them, the way a strike already reached
+everyone in its Touch shape. `tests/test_party.gd` checks the stickiness.
+
 **An arrived enemy stops rather than keeps pressing.** Driving on into the
 player buys no ground - two CharacterBody2Ds block at the sum of their radii,
 10 px for everything so far - it only grinds the bodies together and slides the

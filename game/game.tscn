@@ -1,7 +1,6 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://game/game.gd" id="1_game"]
-[ext_resource type="PackedScene" path="res://game/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://ui/pause_menu/pause_menu.tscn" id="3_pause"]
 [ext_resource type="PackedScene" path="res://ui/hud/hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" path="res://ui/level_title/level_title.tscn" id="5_title"]
@@ -22,9 +21,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.0470588, 0.0431373, 0.0627451, 1)
-
-[node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(272, 240)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position_smoothing_enabled = true

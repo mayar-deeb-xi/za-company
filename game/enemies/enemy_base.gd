@@ -125,6 +125,16 @@ class_name EnemyBase
 ## jammed on the way back is a body that can be parked off its mark for the
 ## rest of the run, which is the one thing the leash exists to prevent.
 ##
+## ## Who it is after
+##
+## The NEAREST player, and it sticks: `target()` is the one answer to "who am
+## I after", and everything here and in every boss asks it rather than taking
+## the first body in the `player` group. It changes its mind only when another
+## player is closer by `RETARGET_MARGIN`, so two people standing about the same
+## distance away do not make it twitch between them. With one player it is
+## that player on every frame, which is all it ever was before there could be
+## two (DESIGN.md's Multiplayer, *The rules of a party*).
+##
 ## ## Seams
 ##
 ## What a touch DOES is the seam between enemy types - the base deals damage on
@@ -275,6 +285,12 @@ const SIDESTEP_LIMIT := 3
 ## body re-acquiring halfway there and jamming on the same corner again.
 const GIVE_UP_SECONDS := 3.0
 
+## How much closer another player has to be before this body turns from the
+## one it is after - see the header's *Who it is after*. A tile and a half:
+## past jitter between two people standing side by side, well short of
+## anybody being able to hold an enemy's attention from across the room.
+const RETARGET_MARGIN := 24.0
+
 const HURT_FLASH_SECONDS := 0.15
 const HURT_TINT := Color(1.0, 0.4, 0.4)
 ## The blow's first three frames are WHITE, before the red tint above takes
@@ -361,6 +377,9 @@ var _sidestep_dir := Vector2.ZERO
 var _failed := 0
 var _gave_up := 0.0
 var _slid := Vector2.ZERO
+## Who it is after, and the physics frame that was decided on - see `target()`.
+var _target: Node2D = null
+var _target_frame := -1
 
 
 func _ready() -> void:
@@ -398,9 +417,7 @@ func _physics_process(delta: float) -> void:
 	if post == Vector2.INF and not _roaming and _leashes():
 		post = global_position
 
-	# Group + method rather than type, like hazards and pickups: nothing here
-	# names the player's script.
-	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var player := target()
 	var advancing := false
 	velocity = Vector2.ZERO
 	if _hunt(player, delta):
@@ -450,6 +467,40 @@ func _physics_process(delta: float) -> void:
 		_sprite.modulate = Color.WHITE.lerp(_windup_tint(), _windup_progress())
 	else:
 		_sprite.modulate = _resting_tint()
+
+
+## Who this body is after: the nearest player, kept until another is closer by
+## `RETARGET_MARGIN` - see the header's *Who it is after*. Null in a room with
+## nobody standing in it. Decided once per physics frame and remembered, so a
+## boss asking it from four places in one frame gets one answer, and asked
+## before this frame's step has run it still answers this frame rather than the
+## last.
+##
+## Group + method rather than type, like hazards and pickups: nothing here names
+## the player's script, and a body that is down has left the group (player.gd's
+## knock_down), so it is never picked.
+func target() -> Node2D:
+	var frame := Engine.get_physics_frames()
+	if frame == _target_frame:
+		return _target if is_instance_valid(_target) else null
+	_target_frame = frame
+	var held: Node2D = null
+	if is_instance_valid(_target) and _target.is_in_group("player"):
+		held = _target
+	var nearest: Node2D = null
+	var best := INF
+	for node in get_tree().get_nodes_in_group("player"):
+		var body := node as Node2D
+		if body == null:
+			continue
+		var distance := global_position.distance_to(body.global_position)
+		if distance < best:
+			best = distance
+			nearest = body
+	if held == null or nearest == held \
+			or global_position.distance_to(held.global_position) - best > RETARGET_MARGIN:
+		_target = nearest
+	return _target
 
 
 ## Whether this enemy is coming for the player this frame, and the whole of when

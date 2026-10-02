@@ -25,9 +25,10 @@ extends Control
 const SignalClient := preload("res://ui/net_spike/signal_client.gd")
 const RtcLink := preload("res://ui/net_spike/rtc_link.gd")
 
-## The party size. Moves to the Net autoload in M2 and stays the ONE place the
-## game writes a party size down; the server only ever caps it.
-const MAX_PARTY := 4
+## The party size is the game's (game/heads.gd's MAX_PARTY, the ONE place it is
+## written down), so the spike opens a room the size a real party is; the
+## server only ever caps it.
+const Heads := preload("res://game/heads.gd")
 const PROTOCOL := 1
 const SETTINGS := &"online"
 ## Ours (server/README.md). On the web the page's own host wins, so a build
@@ -107,7 +108,7 @@ func _process(delta: float) -> void:
 func _host() -> void:
 	if not _connect_signal():
 		return
-	_signal.send({"op": "host", "v": PROTOCOL, "name": _name.text, "max": MAX_PARTY})
+	_signal.send({"op": "host", "v": PROTOCOL, "name": _name.text, "max": Heads.MAX_PARTY})
 	_say("asking %s for a room" % _url.text)
 
 

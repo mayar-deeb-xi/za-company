@@ -74,9 +74,6 @@ const HEAVY_POWER := 24
 ## 28/s. The combo stays the right answer to one enemy and the heavy to a
 ## crowd, which is the invariant - not the 1.0 itself.
 const CHARGE_SECONDS := 0.75
-## How many times health can hit zero before the run ends. The player node is
-## built fresh by each new game scene, so a new run starts full again.
-const MAX_LIVES := 3
 ## Grace period after a hit - set per difficulty mode from Difficulty at spawn.
 ## It meters ALL blows: hazards and enemies push damage with no timers of their
 ## own and this window is what turns that pressure into discrete hits. It is
@@ -90,6 +87,9 @@ const MIN_SLOW_FACTOR := 0.2
 ## How a slowed character reads. Cold, and deliberately a tint rather than the
 ## blink the grace window owns, so being hurt and being slowed never look alike.
 const SLOW_TINT := Color(0.6, 0.75, 1.0)
+## How a body that is DOWN reads (knock_down): still there, so the party can
+## see where they fell, and plainly not in the fight.
+const DOWN_TINT := Color(0.55, 0.55, 0.65, 0.45)
 
 ## Ceiling on a single shove, in pixels per second. Below the walking speed of
 ## 90 on purpose: a push has to be something you feel and then walk out of, not
@@ -111,7 +111,8 @@ const SHOVE_SECONDS := 0.5
 const LEAD_STOP := 6.0
 
 signal health_changed(health: int, max_health: int)
-signal lives_changed(lives: int, max_lives: int)
+## Health hit zero. What that MEANS is game.gd's: lives are the party's pool,
+## not this body's, so the body only says it fell.
 signal died
 ## The hit feel, asked of game.gd on exactly a boss's terms: the player says a
 ## blow landed and how hard, and whatever owns the clock and the camera holds
@@ -122,6 +123,7 @@ signal shook(strength: float, seconds: float)
 
 ## Preloaded by path rather than via `class_name`, like the rest of the project.
 const Roster := preload("res://game/player/characters/roster.gd")
+const InputSource := preload("res://game/player/input_source.gd")
 const PlayerAudio := preload("res://game/player/player_audio.gd")
 const Arc := preload("res://game/player/arc.gd")
 const ChargeRing := preload("res://game/player/charge_ring.gd")
@@ -184,8 +186,16 @@ enum Facing { DOWN, UP, SIDE }
 ## branch anywhere - so a fresh checkout runs before anybody has imported a WAV.
 @onready var _audio: PlayerAudio = get_node_or_null("Audio")
 
+## What drives this body: the stick and the attack button are asked of it and
+## never of `Input` directly (input_source.gd). The keyboard unless whoever
+## spawns the body hands it other hands before it enters the tree.
+var input_source: InputSource = InputSource.new()
+## Which of the cast this body is, by roster id. Empty means the one the player
+## picked and saved - every solo run - and game.gd fills it in for the rest of
+## a party, who did their own picking.
+var character := ""
+
 var health := MAX_HEALTH
-var lives := MAX_LIVES
 ## The movement multiplier currently in force and how long is left of it. Public
 ## because they are a readout: the sprite tint reads them now and a HUD status
 ## icon would read the same pair.
@@ -266,7 +276,12 @@ func _ready() -> void:
 ## Every character shares the same animation set, so becoming one is a frames
 ## swap. An unknown saved id keeps the scene's default look rather than crashing.
 func _apply_character() -> void:
-	var id: String = Settings.get_value(&"player", &"character", Roster.DEFAULT_ID)
+	var id := character
+	if id == "":
+		id = Settings.get_value(&"player", &"character", Roster.DEFAULT_ID)
+	# Kept, so whoever puts a name to this body (the HUD's party rows) reads
+	# the same answer the frames were picked by.
+	character = id
 	var path := Roster.frames_path(id)
 	if path != "" and path != _sprite.sprite_frames.resource_path:
 		_sprite.sprite_frames = load(path)
@@ -276,6 +291,8 @@ func _apply_character() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# First, so a press is dated to this frame whichever branch below asks.
+	input_source.tick()
 	if _grace > 0.0:
 		_grace = maxf(_grace - delta, 0.0)
 		# Blink for as long as the grace lasts, so a hit reads on the character
@@ -306,14 +323,14 @@ func _physics_process(delta: float) -> void:
 		_scripted_step(delta)
 		return
 
-	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var direction := input_source.move()
 
-	if Input.is_action_pressed("attack"):
+	if input_source.attack_held():
 		_hold += delta
 	else:
 		_hold = 0.0
 
-	if not _charging and Input.is_action_just_pressed("attack"):
+	if not _charging and input_source.attack_pressed():
 		if _attack == "":
 			_start_attack(_combo_next if _combo_grace > 0.0 else "attack")
 		else:
@@ -339,7 +356,7 @@ func _physics_process(delta: float) -> void:
 			# well, and the ring flares on the frame it does.
 			_end_charge(true)
 			_start_attack("heavy")
-		elif not Input.is_action_pressed("attack"):
+		elif not input_source.attack_held():
 			# Let go early and nothing happened, so nothing flashes: the ring
 			# is dropped rather than flared. The hum is faded rather than cut,
 			# because an early release loses nothing (the press's swing already
@@ -725,7 +742,7 @@ func _on_animation_finished() -> void:
 	# Still holding when an attack ends (and nothing buffered) flows into the
 	# charge stance; a tap has long since released by now.
 	if _buffered == "" and finished != "wildfire" \
-			and Input.is_action_pressed("attack"):
+			and input_source.attack_held():
 		_charging = true
 		# NOT zero: the button has been down since before this attack started,
 		# and that time is part of the charge. This one line is what stops the
@@ -860,15 +877,8 @@ func heal(amount: int) -> bool:
 	return true
 
 
-## One life gone. Returns how many remain, so game.gd can choose respawn or
-## game over from the same call instead of racing a second signal.
-func lose_life() -> int:
-	lives = maxi(lives - 1, 0)
-	lives_changed.emit(lives, MAX_LIVES)
-	return lives
-
-
-## Back to full, called by game.gd when it respawns the player after a death.
+## Back to full, called by game.gd when it respawns the player after a death -
+## and back into the fight, if a party death had taken them out of it.
 func revive() -> void:
 	health = MAX_HEALTH
 	_grace = 0.0
@@ -876,10 +886,52 @@ func revive() -> void:
 	# still slowed by whatever killed you is a second punishment for one death.
 	slow_factor = 1.0
 	slow_seconds = 0.0
-	# So does whatever the player was mid-way through with the attack button.
-	# Without this, a death during the charge stance respawns a player still
-	# rooted in it - or, released during the fade, popping a wildfire at the
-	# spawn - and a death mid-swing carries a live attack across the fade.
+	_drop_hands()
+	_sprite.visible = true
+	_sprite.modulate = Color.WHITE
+	if not is_in_group("player"):
+		add_to_group("player")
+		$CollisionShape2D.set_deferred("disabled", false)
+	health_changed.emit(health, MAX_HEALTH)
+
+
+## DOWN: a death in a party. The body stays where it fell, dimmed, while it
+## waits to get up - or for good, once the party's lives are spent - and
+## nothing in the world can see it, by way of the rule everything already
+## keeps: the world reaches the player through the `player` group, so leaving
+## the group is leaving the fight. Enemies stop picking it, hazards, drains and
+## pickups stop touching it, a door stops waiting for it, and a head count stops
+## counting it - none of them had to learn what "down" is.
+##
+## A SOLO death never comes here. With nobody else in the room the room fades
+## over it and the body is put back at the door (game.gd), as it always was.
+func knock_down() -> void:
+	remove_from_group("player")
+	set_physics_process(false)
+	velocity = Vector2.ZERO
+	_shove_seconds = 0.0
+	slow_factor = 1.0
+	slow_seconds = 0.0
+	_grace = 0.0
+	_drop_hands()
+	_sprite.visible = true
+	_sprite.modulate = DOWN_TINT
+	# Deferred: a death lands inside somebody's physics step - a strike, an
+	# area, a drain - and a shape cannot change while queries are flushing.
+	# Off at all because a body nobody can see must not still stand in a doorway.
+	$CollisionShape2D.set_deferred("disabled", true)
+
+
+## Whether this body is out of the fight - see knock_down().
+func is_down() -> bool:
+	return not is_in_group("player")
+
+
+## Whatever the player was mid-way through with the attack button, dropped.
+## Without it, a death during the charge stance respawns a player still rooted
+## in it - or, released during the fade, popping a wildfire at the spawn - and
+## a death mid-swing carries a live attack across the fade.
+func _drop_hands() -> void:
 	_attack = ""
 	_buffered = ""
 	_hold = 0.0
@@ -888,9 +940,6 @@ func revive() -> void:
 	_swing_hits.clear()
 	_sfx_stop("charge")
 	_apply_animation("idle")
-	_sprite.visible = true
-	_sprite.modulate = Color.WHITE
-	health_changed.emit(health, MAX_HEALTH)
 
 
 ## One sound, if the scene gave this body an `Audio` child and that child has
