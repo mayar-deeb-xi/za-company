@@ -161,21 +161,31 @@ Caddy's plain `header` wildcard sent the lowercase one the game's
 
 ## Proving it from the game (M0)
 
-The test screen is `tools/net_spike/net_spike.tscn`. Open it in the editor
-and press F6 (Run Current Scene). Run it on two machines, each with the project
-checked out and Godot 4.7.2:
+The test screen is `ui/net_spike/net_spike.tscn`, and it is in two places:
+the editor (open it and press F6, Run Current Scene) and the web build, behind
+two addresses nobody is sent to - `https://DOMAIN/#nettest` opens it, and
+`https://DOMAIN/#join=CODE` opens it and joins that room (`&relay` after the
+code forces the relay). The second is how a phone joins, since a phone cannot
+type into the web build. Neither address is in a release until a release
+carries this screen.
 
-1. Both: set SERVER to `wss://DOMAIN` and type a NAME.
-2. Machine A: press **HOST** and read out the code.
-3. Machine B: type the code and press **JOIN**.
+The way to run the checks is one of each, because it needs nothing installed
+on the second machine and keeps the desktop plugin on the line:
 
-The screen shows each player's ping and ROUTE. M0 is signed off when all four
-of these have been seen:
+1. Machine A, in the editor: run the screen (SERVER is already ours), type a
+   NAME, press **HOST**. It shows a JOIN LINK; **COPY LINK** and send it to
+   the other device.
+2. Machine B, a second computer or a phone: open that link. It joins on its
+   own, as Guest.
+
+Two desktops work too: both run the screen in the editor, A presses HOST, B
+types the code and presses JOIN. The screen shows each player's ping and
+ROUTE. M0 is signed off when all four of these have been seen:
 
 - [ ] **Same network** (both machines on one Wi-Fi): connects DIRECT, ping in
       single digits.
-- [ ] **Different networks** (put one machine on a phone hotspot): connects
-      DIRECT, ping in the tens.
+- [ ] **Different networks** (a phone on mobile data, or one machine on a
+      phone hotspot): connects DIRECT, ping in the tens.
 - [x] **Relay, forced**: tick FORCE RELAY on B before JOIN. It connects RELAY,
       B shows "Connected through relay", A shows the warning against B's name,
       and coturn holds the allocation. coturn 4.18 logs nothing per session at
@@ -187,8 +197,11 @@ of these have been seen:
       shows B leaving on A. *Seen 2026-10-02 on the live server, both ways.*
 
 The two left need two machines, and one of them off the first one's network:
-on one machine through the live server, DIRECT measured 10-11 ms, which is the
-loopback rather than a Wi-Fi.
+on one machine through the live server, DIRECT measured 7-12 ms, which is the
+loopback rather than a Wi-Fi. The mixed pair is proved on one machine too: an
+editor host with the desktop plugin and a browser joining by the link connect
+DIRECT, and RELAY with `&relay`, so a browser and a desktop speak the same
+WebRTC through this server.
 
 ## Changing things later
 

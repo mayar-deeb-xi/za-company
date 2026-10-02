@@ -5,22 +5,34 @@ extends Control
 ## game, no lobby - deleted once M0 is signed off, when signal_client.gd,
 ## rtc_link.gd and ping.gd move into the `Net` autoload for M2.
 ##
-## Run it in two copies of the game on two machines:
-##   <godot> --path . res://tools/net_spike/net_spike.tscn
+## It lives in ui/ rather than tools/ because it SHIPS, in the web build only
+## and only behind an address nobody is sent to: ui/web_entry/ opens it for
+## https://DOMAIN/#nettest, and https://DOMAIN/#join=CODE opens it and joins
+## that room - which is how a phone joins, since a phone cannot type into the
+## web build. The host shows that link and copies it. A browser is the second
+## machine without installing anything, and a phone on mobile data is the
+## second network; hosting from the editor keeps the desktop plugin on the line.
+##
+## Run it in two copies of the game on two machines (F6 in the editor):
+##   <godot> --path . res://ui/net_spike/net_spike.tscn
 ## or headless, which is how it is checked on one machine:
 ##   ... -- --signal=ws://127.0.0.1:8765 --host --quit-after=15
 ##   ... -- --signal=ws://127.0.0.1:8765 --join=CODE --quit-after=12
-## Add --force-relay on the guest to skip the direct attempt, which is how the
-## relay is proved on purpose rather than waited for.
+## Add --force-relay on the guest (or `&relay` after the code in the link) to
+## skip the direct attempt, which is how the relay is proved on purpose rather
+## than waited for.
 
-const SignalClient := preload("res://tools/net_spike/signal_client.gd")
-const RtcLink := preload("res://tools/net_spike/rtc_link.gd")
+const SignalClient := preload("res://ui/net_spike/signal_client.gd")
+const RtcLink := preload("res://ui/net_spike/rtc_link.gd")
 
 ## The party size. Moves to the Net autoload in M2 and stays the ONE place the
 ## game writes a party size down; the server only ever caps it.
 const MAX_PARTY := 4
 const PROTOCOL := 1
 const SETTINGS := &"online"
+## Ours (server/README.md). On the web the page's own host wins, so a build
+## served from anywhere else talks to the signaling beside it.
+const SERVER := "wss://za-company.mayar-deeb.dev"
 
 @onready var _ping: Node = $Ping
 
@@ -43,6 +55,9 @@ var _name: LineEdit
 var _code: LineEdit
 var _relay: CheckBox
 var _status: Label
+var _link: Label
+var _copy: Button
+var _join_link := ""
 var _table: Label
 var _log: Label
 var _lines: PackedStringArray = []
@@ -52,8 +67,10 @@ func _ready() -> void:
 	_build_ui()
 	var args := _args()
 	_remember = not args.has("signal")
-	_url.text = args.get("signal", Settings.get_value(SETTINGS, &"signal_url", "wss://play.example.com"))
-	_name.text = args.get("name", Settings.get_value(SETTINGS, &"name", "Player"))
+	_url.text = args.get("signal", Settings.get_value(SETTINGS, &"signal_url", _default_server()))
+	# Whoever arrives by a link cannot type a name on a phone.
+	var nobody := "Guest" if args.has("join") else "Player"
+	_name.text = args.get("name", Settings.get_value(SETTINGS, &"name", nobody))
 	_relay.button_pressed = args.has("force-relay")
 	if args.has("quit-after"):
 		_quit_at = float(args["quit-after"])
@@ -135,6 +152,7 @@ func _on_signal(msg: Dictionary) -> void:
 			_status.text = "HOSTING - code %s" % msg["code"]
 			_say("room %s open; give a friend the code" % msg["code"])
 			_ice = msg["ice"]
+			_show_link(String(msg["code"]))
 		"joined":
 			_my_id = int(msg["id"])
 			_mp = WebRTCMultiplayerPeer.new()
@@ -264,7 +282,51 @@ static func _args() -> Dictionary:
 			out[bare] = true
 		else:
 			out[bare.left(cut)] = bare.substr(cut + 1)
+	out.merge(_link_args())
 	return out
+
+
+## A page has no command line, so on the web the address is one:
+## `#join=K7Q2PX` joins that room and `&relay` after it forces the relay.
+static func _link_args() -> Dictionary:
+	var out := {}
+	if not OS.has_feature("web"):
+		return out
+	var hash := String(JavaScriptBridge.eval("window.location.hash", true))
+	for part in hash.trim_prefix("#").split("&", false):
+		if part.begins_with("join="):
+			out["join"] = part.substr(5).strip_edges().to_upper()
+		elif part == "relay":
+			out["force-relay"] = true
+	return out
+
+
+## Our server, except on a page served over https, where the signaling is the
+## page's own host (the Caddyfile puts them on one domain). A page served from
+## a plain-http test server talks to ours.
+static func _default_server() -> String:
+	if OS.has_feature("web"):
+		var page := String(JavaScriptBridge.eval("window.location.protocol + '//' + window.location.host", true))
+		if page.begins_with("https://"):
+			return "wss://" + page.trim_prefix("https://")
+	return SERVER
+
+
+## What a second machine opens to join this room: the signaling's own domain
+## with the code in the address (ui/web_entry/ reads it). A phone cannot type
+## into the web build, so for a phone this link IS the way in.
+func _show_link(code: String) -> void:
+	var secure := _url.text.begins_with("wss://")
+	var host := _url.text.trim_prefix("wss://").trim_prefix("ws://").trim_suffix("/")
+	_join_link = "%s://%s/#join=%s" % ["https" if secure else "http", host, code]
+	_link.text = "JOIN LINK  %s" % _join_link
+	_copy.visible = true
+	_say("join link: %s" % _join_link)
+
+
+func _copy_link() -> void:
+	DisplayServer.clipboard_set(_join_link)
+	_say("join link copied")
 
 
 func _build_ui() -> void:
@@ -295,6 +357,13 @@ func _build_ui() -> void:
 	_status = _small_label("NOT CONNECTED")
 	_status.add_theme_font_size_override(&"font_size", 16)
 	box.add_child(_status)
+	var share := HBoxContainer.new()
+	box.add_child(share)
+	_link = _small_label("")
+	share.add_child(_link)
+	_copy = _button("COPY LINK", _copy_link)
+	_copy.visible = false
+	share.add_child(_copy)
 	_table = _small_label("")
 	box.add_child(_table)
 	_log = _small_label("")

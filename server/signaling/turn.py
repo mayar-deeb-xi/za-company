@@ -10,7 +10,7 @@ whole internet the day anybody looked.
 
 STUN and TURN go out as TWO lists rather than one, because the client connects
 twice on purpose: STUN only first, and TURN only if that fails, which is how a
-relayed connection is known to be one (see tools/net_spike/rtc_link.gd).
+relayed connection is known to be one (see ui/net_spike/rtc_link.gd).
 TURN is UDP only: the game's WebRTC is libdatachannel over libjuice, and
 libjuice's TURN client does not do TCP.
 """

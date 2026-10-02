@@ -12,6 +12,7 @@ config_version=5
 
 config/name="za-company"
 run/main_scene="uid://baccfre32cs6j"
+run/main_scene.web="res://ui/web_entry/web_entry.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0.105882354, 0.06666667, 0.09803922, 1)
 boot_splash/stretch_mode=0

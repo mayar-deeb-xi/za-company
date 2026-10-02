@@ -1342,6 +1342,14 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   browser has WebRTC built in. QUIT is hidden on the main and pause menus
   there (`OS.has_feature("web")`), because quitting a tab freezes it on its
   last frame rather than closing it.
+- **The web build boots `ui/web_entry/`, not the main menu**
+  (`run/main_scene.web` in project.godot, an override desktop never reads),
+  because a page has no command line and the ADDRESS is the only argument it
+  gets: `#nettest` and `#join=CODE` open M0's test screen, `ui/net_spike/`,
+  and everything else goes on to the main menu one frame later. That is why
+  the spike lives in `ui/` and not `tools/` - it ships, in the web build,
+  until M0 is signed off and it is deleted. Changing the game's first scene
+  means changing it in BOTH places.
 - **The loading screen is the icon.** The boot splash is `splash.png`,
   written by build_icon.gd beside `icon.svg` from the same picture at 4x,
   because a boot splash takes only a PNG and says so at startup

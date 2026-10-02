@@ -968,7 +968,9 @@ one that FEELS best rather than the one that is safest.
         layers above do not change. Deliverable: the server stack running.
         **Built and proved on one machine (2026-10-02)**: `server/` (signaling
         + coturn + optional Caddy, in Docker, 12 checks green) and
-        `tools/net_spike/`. The plugin runs on 4.7.2; two processes meet by
+        `ui/net_spike/` (moved from tools/ to ship in the web build behind
+        `#nettest` / `#join=CODE`, so a phone can be the second machine). The
+        plugin runs on 4.7.2; two processes meet by
         code and connect DIRECT with a measured ping; a forced relay with no
         TURN running FAILS, as it must. That last check caught the design's
         one mistake: filtering only the guest's candidates is not enough,
