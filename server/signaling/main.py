@@ -9,9 +9,10 @@ reported gone.
 
 The protocol is JSON text frames, each with an `op`. Client to server:
 
-    {"op": "host", "v": 1, "name": "Mayar", "max": 4}
-    {"op": "join", "v": 1, "name": "Ivo", "code": "K7Q2PX"}
+    {"op": "host", "v": 2, "name": "Mayar", "max": 4}
+    {"op": "join", "v": 2, "name": "Ivo", "code": "K7Q2PX"}
     {"op": "signal", "to": 1, "data": {...}}       # opaque to this service
+    {"op": "start"}                                # the host only: no more joins
     {"op": "leave"}
 
 Server to client:
@@ -27,6 +28,12 @@ Server to client:
 `max` is the game's own MAX_PARTY, sent by the host, so the party size stays
 ONE number in the game rather than a second one here; PARTY_CEILING only
 stops a modified client asking this box to carry a hundred.
+
+Version 2 added `start`: a party is joined in the lobby and never mid-run, so
+once the host starts the run a `join` for that room is refused with
+`started`. Everyone already in it stays, so their leaving is still reported.
+A client speaking any other version is refused with `version`, which is why
+dev runs a copy of this service of its own (server/README.md).
 """
 
 import asyncio
@@ -43,7 +50,7 @@ from websockets.exceptions import ConnectionClosed
 import turn
 from rooms import Refused, Rooms
 
-PROTOCOL = 1
+PROTOCOL = 2
 MAX_MESSAGE = 64 * 1024
 MAX_NAME = 24
 # Per connection: a burst of candidates is ~20 messages, so this is generous
@@ -117,6 +124,10 @@ async def dispatch(ws, msg: dict) -> None:
         if found is None or target is None or not isinstance(data, dict):
             raise Refused("no_route")
         await send(target, {"op": "signal", "from": found[1], "data": data})
+
+    elif op == "start":
+        room = ROOMS.start(ws)
+        log.info("room %s: started with %d", room.code, len(room.members))
 
     elif op == "leave":
         await leave(ws)

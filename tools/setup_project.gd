@@ -74,11 +74,16 @@ func _initialize() -> void:
 	ProjectSettings.clear("autoload/Display")
 	ProjectSettings.clear("autoload/Difficulty")
 	ProjectSettings.clear("autoload/Music")
+	ProjectSettings.clear("autoload/Net")
 	ProjectSettings.clear("autoload/UiSound")
 	ProjectSettings.set_setting("autoload/Settings", "*res://autoload/settings.gd")
 	ProjectSettings.set_setting("autoload/Display", "*res://autoload/display.gd")
 	ProjectSettings.set_setting("autoload/Difficulty", "*res://autoload/difficulty.gd")
 	ProjectSettings.set_setting("autoload/Music", "*res://autoload/music.gd")
+	# Online co-op's one door to the network. Reads nothing saved; its node
+	# path, /root/Net, is the same on every machine, which is what its RPCs
+	# need.
+	ProjectSettings.set_setting("autoload/Net", "*res://autoload/net.gd")
 	# Last, and it reads nothing saved: it hooks `node_added`, so it only has
 	# to be ready before the first SCENE is built, not before the other three.
 	ProjectSettings.set_setting("autoload/UiSound", "*res://autoload/ui_sound.gd")

@@ -78,6 +78,18 @@ class RoomsTest(unittest.TestCase):
         self.assertEqual(self.rooms.leave("a"), [("h", {"op": "gone", "id": 2})])
         self.assertEqual(self.rooms.join("b", room.code, "B")[1], 3, "ids are never reused")
 
+    def test_a_started_room_takes_nobody_new(self):
+        room = self.rooms.open("h", "Host", 4)
+        self.rooms.join("a", room.code, "A")
+        with self.assertRaisesRegex(Refused, "not_host"):
+            self.rooms.start("a")
+        self.rooms.start("h")
+        self.rooms.start("h")  # twice is once
+        with self.assertRaisesRegex(Refused, "started"):
+            self.rooms.join("b", room.code, "B")
+        self.assertEqual(self.rooms.leave("a"), [("h", {"op": "gone", "id": 2})],
+                         "whoever is already in still leaves as before")
+
     def test_host_leaving_closes_the_room(self):
         room = self.rooms.open("h", "Host", 4)
         self.rooms.join("a", room.code, "A")
@@ -104,13 +116,13 @@ class SocketTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_host_join_signal_leave(self):
         async with connect(self.url) as host, connect(self.url) as guest:
-            await host.send(json.dumps({"op": "host", "v": 1, "name": "Mayar", "max": 4}))
+            await host.send(json.dumps({"op": "host", "v": main.PROTOCOL, "name": "Mayar", "max": 4}))
             hosted = await self.recv(host)
             self.assertEqual(hosted["op"], "hosted")
             self.assertEqual(hosted["id"], 1)
             self.assertIn("turn", hosted["ice"])
 
-            await guest.send(json.dumps({"op": "join", "v": 1, "name": "Ivo", "code": hosted["code"]}))
+            await guest.send(json.dumps({"op": "join", "v": main.PROTOCOL, "name": "Ivo", "code": hosted["code"]}))
             joined = await self.recv(guest)
             self.assertEqual((joined["op"], joined["id"], joined["host"]), ("joined", 2, "Mayar"))
             self.assertEqual(await self.recv(host), {"op": "peer", "id": 2, "name": "Ivo"})
@@ -127,12 +139,20 @@ class SocketTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_host_closing_ends_room_for_guests(self):
         async with connect(self.url) as host, connect(self.url) as guest:
-            await host.send(json.dumps({"op": "host", "v": 1, "name": "H", "max": 2}))
+            await host.send(json.dumps({"op": "host", "v": main.PROTOCOL, "name": "H", "max": 2}))
             code = (await self.recv(host))["code"]
-            await guest.send(json.dumps({"op": "join", "v": 1, "name": "G", "code": code}))
+            await guest.send(json.dumps({"op": "join", "v": main.PROTOCOL, "name": "G", "code": code}))
             await self.recv(guest)
             await host.close()
             self.assertEqual(await self.recv(guest), {"op": "closed", "reason": "host_left"})
+
+    async def test_start_closes_the_door_over_the_wire(self):
+        async with connect(self.url) as host, connect(self.url) as late:
+            await host.send(json.dumps({"op": "host", "v": main.PROTOCOL, "name": "H", "max": 4}))
+            code = (await self.recv(host))["code"]
+            await host.send(json.dumps({"op": "start"}))
+            await late.send(json.dumps({"op": "join", "v": main.PROTOCOL, "name": "L", "code": code}))
+            self.assertEqual(await self.recv(late), {"op": "error", "reason": "started"})
 
     async def test_health_names_its_stage(self):
         # The live service says "ok"; dev's own copy says so, which is how a

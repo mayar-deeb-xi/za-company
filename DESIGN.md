@@ -1013,6 +1013,16 @@ one that FEELS best rather than the one that is safest.
         **First**, give dev its own signaling and its own server deploy
         (docs/environments.md, #1 and #2): M2 changes the protocol, and dev
         cannot test that against production's service.
+        **Progress (2026-10-02)**: dev's own signaling is built (v0.1.2
+        carried it; `server-dev` in deploy.sh, port 8766, `ok dev` on its
+        /healthz, the `dev` feature on dev builds). `autoload/net.gd` is
+        built: host, join by code, leave, the roster with names, characters,
+        routes and pings, `WIRE` checked in the hello, and START, which is
+        signaling protocol 2's `start` shutting the room. `test_net.gd`
+        (21 checks) runs it over ENet; the WebRTC road was proved against a
+        local signaling service. Still to come: the lobby screen, ONLINE on
+        the main menu, `#join=CODE` opening the lobby, START into the game,
+        and the spike's deletion.
 - [ ] M3. **The world in step.** Players from their owners; enemies, bosses,
         hazards and beats from the host; the damage flow in the table above;
         spawners for what arrives mid-room; travel, health, lives, the boss bar

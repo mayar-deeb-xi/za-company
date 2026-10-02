@@ -28,6 +28,11 @@ class Room:
         self.max_party = max_party
         self.members = {HOST_ID: host}
         self.names = {HOST_ID: host_name}
+        # Set when the host starts the run: a party is joined in the lobby and
+        # never mid-run (DESIGN.md's Multiplayer), so a started room takes
+        # nobody new. Its players stay in it - their leaving still has to be
+        # reported, and the host leaving still closes it.
+        self.started = False
         self._next_id = HOST_ID + 1
 
     @property
@@ -77,6 +82,8 @@ class Rooms:
         room = self._rooms.get(code.strip().upper())
         if room is None:
             raise Refused("no_such_room")
+        if room.started:
+            raise Refused("started")
         if room.full():
             raise Refused("room_full")
         peer_id = room.take_id()
@@ -84,6 +91,15 @@ class Rooms:
         room.names[peer_id] = name
         self._where[conn] = (room, peer_id)
         return room, peer_id
+
+    def start(self, conn) -> Room:
+        """The host has started the run: nobody else may join. Only the host
+        can say so, and saying it twice is saying it once."""
+        found = self._where.get(conn)
+        if found is None or found[1] != HOST_ID:
+            raise Refused("not_host")
+        found[0].started = True
+        return found[0]
 
     def leave(self, conn) -> list[tuple[object, dict]]:
         """Take `conn` out of wherever it is, and say who must be told what.

@@ -164,9 +164,13 @@ before production's service has to move (docs/environments.md, #1 and #2).
 - **`/healthz` says which one answered**: `ok` for the live service, `ok dev`
   for dev's, and the dev deploy checks `https://dev.DOMAIN/healthz` says the
   second - the only proof the dev site's route reaches dev's copy.
-- **The first release that carries it starts it**, from its own copy, so the
-  dev site's route never points at nothing; from then on it moves only with a
-  deploy to dev. By hand: `docker compose -p za-dev ps` in
+- **A release makes sure it exists**: the end of `deploy.sh server` is run by
+  the copy that step has just installed (`settle`), and seeds dev from the
+  live folder if there is no dev yet, so the dev site's route never points at
+  nothing for long; from then on it moves only with a deploy to dev. v0.1.2
+  was released before `settle` existed, and its old installed script put the
+  dev route in the Caddyfile with nothing behind it until the first deploy to
+  dev. By hand: `docker compose -p za-dev ps` in
   `/opt/za-company/dev-server`, and `docker compose -p za-dev logs -f
   signaling`.
 - **A dev desktop build finds it too**: a deploy to dev stamps the custom
@@ -248,8 +252,11 @@ WebRTC through this server.
 ## Changing things later
 
 - **The protocol** is documented at the top of `signaling/main.py`. Bump
-  `PROTOCOL` there and in the game together. An old client is refused with
-  `version` rather than misunderstood.
+  `PROTOCOL` there and in the game (`autoload/net.gd`) together, and play it
+  on dev first: a deploy to dev rebuilds dev's copy of the service, which is
+  what a dev build and the editor talk to. An old client is refused with
+  `version` rather than misunderstood. Version 2 added `start`: the host
+  shuts the room to new joins when the run begins.
 - **The party size** is the game's `MAX_PARTY`, sent by the host when it opens
   a room. `PARTY_CEILING` here is only a safety cap. Raise it if the game ever
   goes past 8.

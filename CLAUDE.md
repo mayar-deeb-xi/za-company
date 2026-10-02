@@ -1219,11 +1219,43 @@ under the menu bed; `VOLUME_DB` stays 0 because there is still no bus layout,
 so a file's own level IS the mix. Too quiet or too loud is ONE number in the
 recipe and a free re-run.
 
+## Online
+
+`autoload/net.gd` (`Net`) is online co-op's one door to the network
+(DESIGN.md's Multiplayer, M2): host a room, join one by its code, leave, and
+keep the party's ROSTER - peer, name, character, route, ping - until the host
+starts the run. It is the ONE place the transport is chosen: online is WebRTC
+introduced through our signaling service, with the spike's three pieces under
+`autoload/net/` (`signal_client.gd`, `rtc_link.gd` - direct first, relay as
+the fallback, and which one it got - and `ping.gd`, the host's own heartbeat);
+`host_local()` / `join_local()` are ENet on a port, which is the same
+MultiplayerAPI with none of the internet in it and what the suites run on;
+offline is Godot's OfflineMultiplayerPeer, a host with no guests.
+
+Four things are load-bearing:
+
+- **The host is the truth.** A guest is in the party once the host has its
+  hello, and the host sends the whole roster to everybody on every change and
+  once a second besides, pings included. The hello carries `WIRE`, the game's
+  own protocol: two builds that do not speak the same game are refused with
+  `version`, the way the signaling service refuses another `PROTOCOL`.
+- **Joined in the lobby, never mid-run.** `start_run()` sends the signaling
+  service `start` (its protocol 2), which refuses every later `join` with
+  `started`, and a hello after the start is refused with `started` too.
+- **It changes no scene and spawns nothing.** `run_started` hands the rows to
+  whoever listens, and nothing in it reaches for the tree's root
+  MultiplayerAPI by name - which is what lets two of it live in one process,
+  each in a SubViewport with an API of its own (tests/test_net.gd).
+- **Which service is one function, `signaling_url()`**: `--signal=URL`, then
+  a web build's own page host, then the LIVE service for a release desktop
+  build (`packaged` and not `dev`), and dev's own for everything else - dev
+  builds and the editor, which is develop.
+
 ## Settings
 
-Three autoloads, split by responsibility - `Music` above is a fourth and
-`UiSound` a fifth, and both are here rather than there because they own no
-setting:
+Three autoloads, split by responsibility - `Music` above is a fourth,
+`UiSound` a fifth and `Net` (Online, below) a sixth, and they are here rather
+than there because they own no setting:
 
 - `autoload/settings.gd` (`Settings`) owns `user://settings.cfg` and nothing
   else - sections, keys, write-through on change. A future audio or controls
@@ -1234,8 +1266,8 @@ setting:
 - `autoload/difficulty.gd` (`Difficulty`) owns the game modes - see Difficulty.
 
 `Settings` must stay registered **before** `Display` and `Difficulty` - both
-read their saved values during `_ready`. `Music` and `UiSound` are appended
-after all three; neither reads anything saved today, and a future volume row is
+read their saved values during `_ready`. `Music`, `Net` and `UiSound` are
+appended after all three; neither reads anything saved today, and a future volume row is
 one more reader of Settings, not a new rule. `UiSound` goes last of all, and
 the only thing its position has to satisfy is that it is ready before the first
 SCENE is built - it hooks `node_added`, so a button that entered the tree ahead
@@ -1412,7 +1444,7 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Thirty suites,
+  They drive the real game with synthesized input and exit 0/1. Thirty-one suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
@@ -1694,6 +1726,20 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     nobody is standing and nobody is about to be. Its own suite because every
     other one is a party of one, and must stay that way to prove solo did not
     move.
+  - `test_net.gd` - the `Net` autoload: a host and its guests in ONE process,
+    each Net in a SubViewport with a MultiplayerAPI of its own, over ENet on
+    localhost. Hosting opens a party of one; a guest's hello puts them in it,
+    with both ends holding the same roster in the same order (name cleaned,
+    character, route) and a ping the host measured reaching the guest; a build
+    on another `wire` is refused with `version` and the party never had it;
+    START reaches everybody with the same rows; a late arrival is refused with
+    `started`; the host leaving is `host_left` at the guest and a guest leaving
+    is a row gone at the host; and the signaling URL and join link an
+    unpackaged build gets. Driven by WAITS with deadlines rather than frame
+    numbers, because a connection takes as long as it takes. The online road -
+    WebRTC through a signaling service - is the same Net with another peer;
+    it is proved by hand against a local `server/signaling`, since a suite
+    cannot count on WebRTC finding a route.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

@@ -11,6 +11,8 @@
 #   web-dev     a dev deploy's web build, the same way into web/dev-game - the
 #               dev site, https://dev.DOMAIN, and nothing the live site reads
 #   server      this folder, minus .env and web/, then the stack brought up to it
+#   settle      the end of `server`, run by the copy it just installed: makes
+#               sure dev's signaling exists. Takes no tar, and is safe alone
 #   server-dev  a dev deploy's copy of this folder, into DEV, and ONLY its
 #               signaling service started from it: dev's own signaling, which
 #               the dev site talks to (README.md, Dev's signaling). Caddy and
@@ -66,13 +68,13 @@ stage_server() {
 	echo "$staging"
 }
 
-# Make <dir> exactly the staged folder - a mirror, so a file deleted from the
+# Make <dest> exactly <source> - a mirror, so a file deleted from the
 # repository goes here too - except the two things that only ever live on
-# this server.
+# this server, which are neither removed from <dest> nor copied from <source>.
 mirror() {
 	mkdir -p "$2"
 	find "$2" -mindepth 1 -maxdepth 1 ! -name .env ! -name web -exec rm -rf {} +
-	cp -a "$1/." "$2/"
+	find "$1" -mindepth 1 -maxdepth 1 ! -name .env ! -name web -exec cp -a {} "$2/" \;
 }
 
 # Dev's own signaling, from whatever is in DEV: a second compose project
@@ -121,16 +123,25 @@ server)
 		$COMPOSE up -d --force-recreate caddy
 	fi
 	install -m 0755 deploy.sh /usr/local/sbin/za-deploy
-	# The first release to carry dev's own signaling starts it from its own
-	# copy, so the dev site's route to it never points at nothing. After that
-	# it is a dev deploy's to move, and a release leaves it alone.
-	if [ ! -f "$DEV/docker-compose.yml" ]; then
-		mirror "$staging" "$DEV"
-		up_dev
-	fi
+	# The rest is the NEW copy's to do, not this one's. The script running
+	# now is whatever the last release installed, so anything this release
+	# taught it would otherwise wait a whole release to happen - which is how
+	# v0.1.2 put the dev route in the Caddyfile and left nothing behind it.
+	SSH_ORIGINAL_COMMAND=settle /usr/local/sbin/za-deploy
 	docker image prune -f >/dev/null
 	cd "$ROOT"
 	$COMPOSE ps --format '{{.Service}}: {{.Status}}'
+	;;
+settle)
+	# The end of a `server`, run by the copy that step just installed. Safe to
+	# ask for on its own, since all it does is make sure of things: dev's
+	# signaling exists, seeded from the live folder the first time, so the
+	# dev site's route never points at nothing. After that it is a dev
+	# deploy's to move, and a release leaves it alone.
+	if [ ! -f "$DEV/docker-compose.yml" ]; then
+		mirror "$ROOT" "$DEV"
+		up_dev
+	fi
 	;;
 server-dev)
 	staging=$(stage_server)
@@ -140,7 +151,7 @@ server-dev)
 	docker image prune -f >/dev/null
 	;;
 *)
-	echo "za-deploy: expected 'web', 'web-dev', 'server' or 'server-dev' with a tar on stdin, got '${SSH_ORIGINAL_COMMAND:-}'" >&2
+	echo "za-deploy: expected 'web', 'web-dev', 'server', 'server-dev' (each with a tar on stdin) or 'settle', got '${SSH_ORIGINAL_COMMAND:-}'" >&2
 	exit 2
 	;;
 esac

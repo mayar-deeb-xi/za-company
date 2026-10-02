@@ -22,8 +22,8 @@ extends Control
 ## skip the direct attempt, which is how the relay is proved on purpose rather
 ## than waited for.
 
-const SignalClient := preload("res://ui/net_spike/signal_client.gd")
-const RtcLink := preload("res://ui/net_spike/rtc_link.gd")
+const SignalClient := preload("res://autoload/net/signal_client.gd")
+const RtcLink := preload("res://autoload/net/rtc_link.gd")
 
 ## The party size is the game's (game/heads.gd's MAX_PARTY, the ONE place it is
 ## written down), so the spike opens a room the size a real party is; the
