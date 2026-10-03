@@ -43,6 +43,12 @@ func apply_net_state(state: Array) -> void:
 	monitoring = bool(state[1])
 
 
+## A heart still in the air, between two snapshots (game/sync/world.gd).
+func net_between(a: Array, b: Array, weight: float) -> void:
+	if a.size() >= 2 and b.size() >= 2:
+		global_position = (a[0] as Vector2).lerp(b[0], weight)
+
+
 func _process(delta: float) -> void:
 	_time += delta
 	# Rounded so the bob steps whole pixels instead of shimmering between them.

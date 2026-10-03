@@ -28,34 +28,65 @@ extends Node
 ##
 ## One player per id, built once: an id retriggered mid-play restarts rather
 ## than stacking, which is exactly what a swing on a mashed combo wants.
+##
+## **Somebody ELSE's player is somewhere** (DESIGN.md's Multiplayer, M4). The
+## argument above is about the body this machine's camera follows; a party
+## brings bodies it does not, and a teammate swinging across the room is a
+## sound from across the room. So a REMOTE body's speakers are built
+## positional, on the enemies' own numbers for the enemies' own reason - the
+## one place the header's first line does not hold, and it is decided once,
+## here, from the body this node belongs to.
 
 ## id -> AudioStream. Filled in player.tscn.
 @export var sounds: Dictionary = {}
 ## Trim for the whole body, over the levels baked into the files themselves.
 @export var volume_db := 0.0
+## A remote body's falloff: game/enemies/enemy_audio.gd's defaults, because a
+## teammate is heard across the same rooms an enemy is.
+const REMOTE_MAX_DISTANCE := 600.0
+const REMOTE_ATTENUATION := 0.2
 
+## id -> AudioStreamPlayer, or AudioStreamPlayer2D on a remote body - the two
+## answer every call below alike.
 var _players := {}
 var _fades := {}
+## How many times each cue was started - a readout, kept where the sound is
+## really started, because headless has no `playing` (UiSound keeps the same).
+var _plays := {}
 
 
 func _ready() -> void:
+	var positional: bool = get_parent() != null and get_parent().get("remote") == true
 	for id in sounds:
 		var stream: AudioStream = sounds[id]
 		if stream == null:
 			continue
-		var player := AudioStreamPlayer.new()
+		var player: Node
+		if positional:
+			var placed := AudioStreamPlayer2D.new()
+			placed.max_distance = REMOTE_MAX_DISTANCE
+			placed.attenuation = REMOTE_ATTENUATION
+			player = placed
+		else:
+			player = AudioStreamPlayer.new()
 		player.name = "Sfx_%s" % id
-		player.stream = stream
-		player.volume_db = volume_db
+		player.set("stream", stream)
+		player.set("volume_db", volume_db)
 		add_child(player)
 		_players[id] = player
 
 
+## How many times `id` has been started on this body.
+func plays(id: String) -> int:
+	return int(_plays.get(id, 0))
+
+
 ## Fire once. An unknown id is silence, deliberately - see the header.
 func play(id: String) -> void:
-	var player: AudioStreamPlayer = _players.get(id)
+	var player = _players.get(id)
 	if player == null:
 		return
+	_plays[id] = plays(id) + 1
 	_cancel_fade(id)
 	player.volume_db = volume_db
 	player.play()
@@ -66,9 +97,10 @@ func play(id: String) -> void:
 ## ready cue (see tools/sfx/player.py). It is here because the day something
 ## does, the `loop_end` trap below is not one anybody should walk into twice.
 func loop(id: String) -> void:
-	var player: AudioStreamPlayer = _players.get(id)
+	var player = _players.get(id)
 	if player == null or player.playing:
 		return
+	_plays[id] = plays(id) + 1
 	# `loop_end` is in FRAMES and must be the real count - 0 does not mean "to
 	# the end". A forward loop ending on frame 0 wraps before it has played
 	# anything, so the sound runs in total silence with its loop flag set and
@@ -87,7 +119,7 @@ func loop(id: String) -> void:
 
 
 func stop(id: String) -> void:
-	var player: AudioStreamPlayer = _players.get(id)
+	var player = _players.get(id)
 	if player == null:
 		return
 	_cancel_fade(id)
@@ -98,7 +130,7 @@ func stop(id: String) -> void:
 ## the charge does when the stance is abandoned: an early release loses
 ## nothing, so it must not sound like something broke.
 func fade_out(id: String, seconds: float) -> void:
-	var player: AudioStreamPlayer = _players.get(id)
+	var player = _players.get(id)
 	if player == null or not player.playing:
 		return
 	_cancel_fade(id)

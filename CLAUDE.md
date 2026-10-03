@@ -1314,9 +1314,10 @@ as `Sync` on every machine so both ends sit at one path, and inert offline.
 The host is the truth for everything but where a body is:
 
 - **A body is its owner's**: a member whose `peer` is not this machine's is
-  REMOTE (player.gd's `remote`) - it runs none of the player, and is drawn
-  where its owner says, thirty times a second (`net_state()` /
-  `apply_net_state()`, `game/sync/bodies.gd`), relayed by the host.
+  REMOTE (player.gd's `remote`) - it runs none of the player, and stands where
+  its owner says, thirty times a second (`net_state()` / `apply_net_state()`,
+  `game/sync/bodies.gd`), relayed by the host. Its PICTURE is drawn a beat
+  behind that (below).
 - **The world reaches nobody on a guest** - player.gd's `_world_reaches()`,
   which makes `take_damage`, `drain`, `apply_slow`, `shove` and `heal` no-ops
   anywhere but the host. It is the one rule that lets a guest run a room's
@@ -1335,7 +1336,8 @@ The host is the truth for everything but where a body is:
   room, the pool, every body's health and who is down.
 - **Nothing pauses online**: the pause menu and the death screen open over a
   running game, and game.gd hands this machine's player still hands while one
-  is up. The true hit-stop is solo-only until M4.
+  is up. The true hit-stop (`Engine.time_scale`) is solo-only: online the stop
+  holds the PICTURE instead (below).
 - **A guest leaving takes their body with them** (`net_left`), and their row.
 - **The room is ONE snapshot** (`game/sync/world.gd`): twenty times a second,
   compressed, every `synced` thing in it by its path - an enemy, a boss - and
@@ -1345,8 +1347,8 @@ The host is the truth for everything but where a body is:
   its scene, so the guest makes one at that path; a thing the guest has and
   the snapshot lacks is gone, and goes. No spawn or despawn message to lose,
   arrive out of order or be missed by a guest still fading in. A guest's
-  swing is reported by the attacker (player.gd's `landed`) and dealt on the
-  host; a beat (`reinforcements.gd`) is the host's alone.
+  swing is reported by the attacker (a player's moment, below) and dealt on
+  the host; a beat (`reinforcements.gd`) is the host's alone.
 - **A room's own moving parts ride the same snapshot** (game/levels/CLAUDE.md's
   *Online*): a CLOCK - the studio, the dolly, the wiring - runs everywhere and
   is put right only when it drifts, DICE - the scrubbers - are the host's and
@@ -1361,8 +1363,52 @@ The host is the truth for everything but where a body is:
 - **Whoever presses the key talks** (game/sync/talk.gd): their machine runs the
   conversation and leads the NPC - lent to them for its length, so HR's tour
   works with a guest at its front - it is busy for everybody else, and they
-  read the lines along on the subtitle. The game's own `WIRE` is 2 from here:
-  a build from before the run was in step is refused rather than let into one.
+  read the lines along on the subtitle.
+
+**And it FEELS like one game (M4)**, which is three things on top of M3:
+
+- **One clock, the host's, a tenth of a second ago.** Every message about the
+  run carries the host's time; a guest reads that clock off the fastest trip it
+  has seen (`game/sync/clock.gd`), and the host turns each guest's stamps into
+  its own. What is DRAWN is drawn `Sync.DELAY` (0.1 s) behind it, gliding
+  between the states either side (`game/sync/timeline.gd`) instead of stepping
+  twenty or thirty times a second: the room's bodies answer `net_between()`,
+  everybody else's player `net_draw()`. **A remote player is in two places on
+  purpose**: its BODY stands at the newest step - that is what the host decides
+  blows, doors and pickups with, so a guest who stepped out of a swing is out
+  of it as soon as the wire allows - and its PICTURE (the sprite's offset) is a
+  beat behind. What the host says ABOUT the room - a blow on you, health,
+  down, up, lives, the end, every boss moment - waits for the same moment of
+  the same clock (`Sync.later()`), so a number comes up as the drawn sword
+  lands; only the welcome and the order to travel are acted on when heard, and
+  travelling plays out everything still waiting first. **A CLOCK is not drawn
+  behind**: the studio, the dolly and the wiring answer no `net_between()` and
+  take their state when heard, or every correction would set a hazard late.
+  Anything faster than 600 px/s between two states JUMPED and is held, not
+  slid.
+- **The stop holds the picture** (`game/picture_hold.gd`): online a blow that
+  lands disables every `AnimatedSprite2D` and every hit-feel effect on THAT
+  machine for the stop and leaves the world running, then catches each
+  animation up by the time it was held - a boss's sprite is his telegraph, and
+  a swing must still end itself (`animation_finished`). Asked by this
+  machine's own blows and by a boss's, whose `froze` is told like his shake;
+  somebody else's blow holds nothing here.
+- **Every blow is seen everywhere.** A blow and a bolt are a player's MOMENTS,
+  told by whoever moves that player and passed through the host
+  (`World.from_player`, player.gd's `_tell` / `net_event`): the host deals a
+  guest's reported blow FIRST, then every other machine draws it with the
+  attacker's body - number, flash, jolt, juggle, static charge, the pieces on a
+  kill, the bolt and its crackle, the impact sound - and the attacker hears
+  back only whether it killed. A blow or a drain on a player is seen on every
+  machine with its grunt (`net_seen()`), and `die` plays wherever health
+  reaches 0. A remote body's own moves are read off its picture: the swing's
+  air, the charge's hum and ring, the heavy's supernova - never the stop, the
+  shake or the flash, which are the attacker's to feel. A remote body's sounds
+  are POSITIONAL (player_audio.gd), because a teammate is somewhere. And static
+  charge is shared: one player's swings charge a body for anybody's arc.
+
+The game's own `WIRE` is 3 from here: a build from before the run was stamped
+with the host's time is refused rather than let into one.
 
 ## Settings
 
@@ -1587,7 +1633,7 @@ the boxes' margins outvote it.
 ## Testing
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Thirty-seven suites,
+  They drive the real game with synthesized input and exit 0/1. Thirty-eight suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu (HOST ONLINE and JOIN ONLINE, no MODE),
@@ -1949,7 +1995,8 @@ the boxes' margins outvote it.
     up on the guest by his name, the line he shouts the line the guest reads,
     the fire he throws thrown on the guest's copy of him, the chair he sits in
     staying under him there (an effect that ends with its attack must not find
-    the guest a snapshot behind), a shake shaking the guest's camera, his
+    the guest a snapshot behind), a shake shaking the guest's camera and his
+    stop holding both machines' pictures and neither's clock, his
     health and his concede following; Big Mo going up; Silverman's copy on the
     guest's floor, the prism's fan the one the host measured, and his crossing
     going through the guest's player there too and solid again after. Each boss
@@ -1962,6 +2009,21 @@ the boxes' margins outvote it.
     her and is the host's again once the guest is done; the host talks to her
     and she is busy on the guest's machine; and a guest who talks Ivan through
     is thrown his hearts by the host, landing on the guest's floor.
+  - `test_coop_feel.gd` - the same two machines, and THE FEEL (M4): the host
+    draws a walking guest's picture a beat behind its body and back on it once
+    it stops; a body the host walks a pixel a frame GLIDES on the guest,
+    moving on nearly every frame where twenty snapshots a second would move it
+    on one in three; a blow that lands holds the host's picture and never
+    `Engine.time_scale`; the host's blow puts its number up on the guest, its
+    swing is heard there off its picture and its impact on its word, and its
+    kill breaks apart there; the guest's whole combo is dealt on the host and
+    drawn there - numbers over the guard, the arc's bolt, the pieces - with
+    its swings and impacts heard, while the host's own picture holds for none
+    of it and the guest's holds for all of it; the guest's charge draws its
+    ring and its supernova on the host with its hum; and a blow on either
+    body is seen, number and grunt, on the other machine. Every staged body
+    stands still on the host, and the glider walks through the furniture, so
+    the room never decides a check.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).

@@ -1093,13 +1093,51 @@ one that FEELS best rather than the one that is safest.
         somebody else's body's; and Ivan's gift stays the host's to throw.
         `WIRE` went to 2: a build from before this would join a run and not
         follow it. `tests/test_coop_talk.gd` (18 checks). Five two-machine
-        suites now stand behind M3, 108 checks between them. What M4 inherits:
-        bodies are drawn at their last word (twenty or thirty a second, no
-        interpolation), the hit-stop is off online, and a third machine sees
+        suites now stand behind M3, 108 checks between them. What M4 inherited:
+        bodies drawn at their last word (twenty or thirty a second, no
+        interpolation), the hit-stop off online, and a third machine seeing
         another's numbers and kill bursts only where M3 already put them.
-- [ ] M4. **The feel.** Remote bodies drawn ~100 ms behind and interpolated;
+- [x] M4. **The feel.** Remote bodies drawn ~100 ms behind and interpolated;
         the hit-stop visual-only online; effects, numbers and sounds fired
         locally on the host's word.
+        **Done (2026-10-03)**, in three parts, solo untouched:
+        (1) **One clock, the host's.** Every message about the run carries the
+        host's time (`WIRE` 3); a guest reads that clock off the fastest trip
+        it has seen (`game/sync/clock.gd`), and the host turns each guest's
+        stamps into its own. What is DRAWN is drawn `DELAY` (0.1 s) behind it,
+        gliding between the states either side (`game/sync/timeline.gd`):
+        the room's bodies through `net_between()`, everybody else's player
+        through `net_draw()`. A remote player is in two places on purpose -
+        its BODY at the newest step, which is what the host decides blows,
+        doors and pickups with, and its PICTURE a beat behind - so a guest who
+        steps out of a swing is out of it on the host as soon as the wire
+        allows. What the host says about the room (a blow on you, health,
+        down, up, lives, the end, every boss moment) is played at the same
+        moment of the same clock (`Sync.later()`), so the number comes up as
+        the drawn sword lands; the welcome and the order to travel are acted
+        on when heard. A CLOCK (studio, dolly, wiring) is not drawn behind:
+        it takes its state when heard, or every correction would set a hazard
+        late. A jump faster than 600 px/s is held, not slid.
+        (2) **The stop holds the picture** (`game/picture_hold.gd`): online a
+        blow that lands disables every animation and every hit-feel effect on
+        that machine for the stop and leaves the world running, then CATCHES
+        UP each animation by the time it was held - a boss's sprite is his
+        telegraph, and a swing must still end itself. Asked by this machine's
+        own blows and by a boss's, which is now told like his shake.
+        (3) **Every blow seen everywhere.** A blow and a bolt are a player's
+        MOMENTS, told through the host (`World.from_player`): the host deals a
+        guest's reported blow first, then every other machine draws it with
+        the attacker's body - number, flash, jolt, juggle, static charge,
+        pieces on a kill, the bolt and its crackle, the impact sound - and the
+        attacker is told back only whether it killed. A blow or drain on a
+        player is seen on every machine with its grunt; `die` plays where
+        health reaches 0. A remote body's own moves are read off its picture:
+        the swing's air, the charge's hum and ring, the heavy's supernova -
+        never the stop, shake or flash, which are the attacker's. A remote
+        body's sounds are positional. Static charge is now shared: one
+        player's swings charge a body for anybody's arc.
+        `tests/test_coop_feel.gd` (40 checks), and the stop told in
+        test_coop_bosses.gd.
 - [ ] M5. **Ping and the connection, on screen.** The Tab scoreboard, the
         corner ping, the relay warning, "player left" / "host left".
 - [ ] M6. **The cracks.** A guest dropping mid-fight, dying during a fade,

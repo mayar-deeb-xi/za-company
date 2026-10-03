@@ -136,8 +136,12 @@ func _to_hub() -> void:
 		func() -> bool: return _level() != null and _level().scene_file_path == HUB)
 
 
+## Within a beat of the host's: the guest draws it a tenth of a second behind
+## (sync.gd's `DELAY`), and the answer takes a frame or two to come back, which
+## at 60 px/s is the best part of ten pixels before the room has done anything
+## wrong.
 func _scrubbers() -> void:
 	_expect("hub: the scrubbers wander where the host's dice send them", "get",
 		["Props/Scrubber1", ["global_position"]], func(a) -> bool:
 			var scrubber := _room_node("Props/Scrubber1") as Node2D
-			return a is Array and (a[0] as Vector2).distance_to(scrubber.global_position) < 10.0)
+			return a is Array and (a[0] as Vector2).distance_to(scrubber.global_position) < 16.0)

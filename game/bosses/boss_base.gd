@@ -126,10 +126,13 @@ func _ready() -> void:
 	# Read once at spawn, like the base's contact_damage: the mode cannot
 	# change mid-fight, and each attack applies it when it is chosen.
 	_damage_scale = Difficulty.damage_scale()
-	# A shake is a moment: online the host's goes to the guests' cameras too.
+	# A shake is a moment: online the host's goes to the guests' cameras too -
+	# and so is a stop, which online holds each machine's picture (game.gd).
 	if _in_charge():
 		shook.connect(func(strength: float, seconds: float) -> void:
 			_tell("shook", [strength, seconds]))
+		froze.connect(func(seconds: float) -> void:
+			_tell("froze", [seconds]))
 	set_deferred("_built", true)
 
 
@@ -198,6 +201,9 @@ func net_event(what: String, args: Array) -> void:
 		"shook":
 			if args.size() >= 2:
 				shook.emit(float(args[0]), float(args[1]))
+		"froze":
+			if not args.is_empty():
+				froze.emit(float(args[0]))
 		"sfx":
 			super._sfx(String(args[0]))
 		"loop":

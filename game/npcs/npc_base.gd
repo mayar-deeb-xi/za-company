@@ -151,6 +151,14 @@ func apply_net_state(state: Array) -> void:
 	_sprite.flip_h = bool(state[3])
 
 
+## Walking between two snapshots, on a guest (game/sync/world.gd) - unless this
+## machine is the one walking them.
+func net_between(a: Array, b: Array, weight: float) -> void:
+	if a.size() < 4 or b.size() < 4 or (led_by != 0 and led_by == multiplayer.get_unique_id()):
+		return
+	global_position = (a[0] as Vector2).lerp(b[0], weight)
+
+
 func _physics_process(_delta: float) -> void:
 	# Walked by the host - or, while somebody is talking to them, by the
 	# talker's machine. Everybody else draws them where they are told.

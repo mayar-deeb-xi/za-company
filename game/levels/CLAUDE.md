@@ -67,8 +67,16 @@ ways by whether a guest can work it out for itself:
   would drag the room back by the trip each one took, twenty times a second,
   which is a stutter; the two clocks agree anyway.
 - **DICE are the host's alone.** A scrubber's turns are thrown on the host, so
-  a guest draws it where the host says and rolls it on along the host's last
-  heading between two snapshots, through nothing.
+  a guest draws it where the host says - a tenth of a second behind, rolled
+  along the line between two snapshots and its scanner swung with it
+  (`net_between()`, M4), through nothing.
+
+The split decides one more thing since M4: **a clock is not drawn behind.**
+Everything else a guest draws waits a tenth of a second for the host's word
+(game/sync/sync.gd's *One clock*); a clock answers no `net_between()`, so it
+takes the host's state the moment it is heard. Held back with the rest, every
+correction would set it that much late, and a hazard drawn late is one that
+hurts before it is seen.
 
 And four things are the host's to DO: a beat walking anybody in
 (`reinforcements.gd`, `relief.gd`), Ivan throwing his hearts, a pickup being

@@ -139,16 +139,17 @@ class_name EnemyBase
 ##
 ## Every machine builds the same room, but only the HOST runs it (DESIGN.md's
 ## Multiplayer, M3). On a guest none of the above happens: no hunt, no steering,
-## no wind-up, nothing dealt and nothing taken (`_in_charge()`). The body stands
-## and plays what the host's last snapshot said (game/sync/world.gd, through
-## net_state() / apply_net_state()) - where it is, which way it faces, which
-## frame, the tint, the phase and how far into it - and the guest's own clocks
-## carry it smoothly to the next one. Because the phase is the host's, every
-## type's own drawing after `super()` - a warden's field, a brute's ring, a
-## wraith's aura - reads exactly what it reads on the host, and a wind-up that
-## lands there lands here (_net_phase()). A guest's blow is reported to the
-## host by the attacker (player.gd's `landed`) and flashes here at once
-## (net_flash()), since the host's own flash is a round trip away.
+## no wind-up, nothing dealt and nothing taken (`_in_charge()`). The body plays
+## what the host's snapshot said a tenth of a second ago (game/sync/world.gd,
+## through net_state() / apply_net_state()) - where it is, which way it faces,
+## which frame, the tint, the phase and how far into it - walks the line to the
+## next one (net_between()), and the guest's own clocks carry the rest smoothly
+## between them. Because the phase is the host's, every type's own drawing
+## after `super()` - a warden's field, a brute's ring, a wraith's aura - reads
+## exactly what it reads on the host, and a wind-up that lands there lands here
+## (_net_phase()). A guest's blow is reported to the host by the attacker (a
+## player's moment, game/sync/world.gd) and flashes here at once (net_flash()),
+## since the host's own flash is a round trip away.
 ##
 ## ## Seams
 ##
@@ -559,6 +560,14 @@ func apply_net_state(state: Array) -> void:
 		_net_phase(was, phase)
 	elif health < before:
 		_net_hurt()
+
+
+## Drawn between two snapshots, on a guest (game/sync/world.gd's *A beat
+## behind*): where it stands, on its way from the one on screen to the next.
+## Everything else it draws is the snapshot on screen's.
+func net_between(a: Array, b: Array, weight: float) -> void:
+	if a.size() >= 9 and b.size() >= 9:
+		global_position = (a[0] as Vector2).lerp(b[0], weight)
 
 
 ## Hurt on the host and not staggered, arriving on a guest: the grunt. A boss

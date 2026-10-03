@@ -86,6 +86,7 @@ const LevelTitleType := preload("res://ui/level_title/level_title.gd")
 const DialogueType := preload("res://game/dialogue/dialogue_director.gd")
 const SubtitleType := preload("res://ui/subtitle/subtitle.gd")
 const SyncType := preload("res://game/sync/sync.gd")
+const PictureHold := preload("res://game/picture_hold.gd")
 const InputSource := preload("res://game/player/input_source.gd")
 const VirtualInput := preload("res://game/player/virtual_input.gd")
 
@@ -137,6 +138,9 @@ var _shake_span := 0.12
 ## Hit-stop: which stop is the latest. Each one's timer lets the world go only
 ## if no later stop has been asked for since - so they extend, never stack.
 var _freeze_token := 0
+## The hit-stop online, which holds the picture rather than the clock - see
+## _freeze.
+var _hold: PictureHold
 
 ## How slow "stopped" is. Not zero: a zero delta is a division waiting to
 ## happen somewhere in every script that measures a speed, and a twentieth of
@@ -154,6 +158,9 @@ func _ready() -> void:
 	_sync = SyncType.new()
 	_sync.name = "Sync"
 	add_child(_sync)
+	_hold = PictureHold.new()
+	_hold.name = "PictureHold"
+	add_child(_hold)
 	_spawn_party()
 	# Pushed once here so the HUD never starts blank.
 	_hud.set_health(_local.health, PlayerType.MAX_HEALTH)
@@ -742,11 +749,15 @@ func _shake(strength: float, seconds: float) -> void:
 ## not weight. Overlapping stops extend rather than stack, and the timer runs
 ## on unscaled time, or the stop would stretch itself twentyfold.
 ##
-## Solo only, for now (DESIGN.md's *Rules that keep it honest*): online the
-## clock is the host's whole world, and stopping it for one player's hit stops
-## it for everybody. M4 brings back a stop that holds only the picture.
+## Solo only (DESIGN.md's *Rules that keep it honest*): online the clock is the
+## host's whole world, and stopping it for one player's hit would stop it for
+## everybody. So online the stop holds the PICTURE - every animation and every
+## effect of the hit feel - and leaves the world running under it
+## (game/picture_hold.gd). Asked by this machine's own player's blows, and by a
+## boss's on every machine.
 func _freeze(seconds: float) -> void:
 	if _sync.active:
+		_hold.hold(seconds)
 		return
 	_freeze_token += 1
 	Engine.time_scale = FREEZE_SCALE
@@ -765,6 +776,8 @@ func _thaw(token: int) -> void:
 func _unfreeze() -> void:
 	_freeze_token += 1
 	Engine.time_scale = 1.0
+	if _hold != null:
+		_hold.release()
 
 
 func _exit_tree() -> void:

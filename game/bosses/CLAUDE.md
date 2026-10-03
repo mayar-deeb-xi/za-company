@@ -1154,6 +1154,17 @@ And Silverman crosses THROUGH the guest's player on the guest too: his drawn
 body is moved there twenty times a second, and without the collision
 exception the host gives him it would shoulder that player aside.
 
+Since M4 all of it happens a tenth of a second after the host (sync.gd's *One
+clock*): his snapshots AND his moments wait for the same moment of the host's
+clock, so a fire he throws still leaves the axe that is drawn throwing it.
+Between two snapshots he walks rather than steps (enemy_base's
+`net_between()`), and Ahmed's leap arcs with him - his height is blended too.
+His STOP is a moment like his shake: `froze` is told, and on every machine it
+holds the picture rather than the clock (game/picture_hold.gd). Big Mo's own
+hit-stop is his sprite's speed and needs nothing: a picture hold catches a
+sprite up at whatever speed it is playing at when the hold lets go, so the
+two stops sit on top of each other without either undoing the other.
+
 Adding a boss, then, adds to his snapshot what his effects read off him, and
 `_tell`s any moment his effects need that the snapshot does not carry.
 

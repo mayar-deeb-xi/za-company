@@ -450,6 +450,14 @@ func apply_net_state(state: Array) -> void:
 	_set_height(float(state[NET_OWN]))
 
 
+## And his height with him, so a leap arcs on a guest rather than climbing in
+## twentieths of a second.
+func net_between(a: Array, b: Array, weight: float) -> void:
+	super(a, b, weight)
+	if not has_conceded and a.size() > NET_OWN and b.size() > NET_OWN:
+		_set_height(lerpf(float(a[NET_OWN]), float(b[NET_OWN]), weight))
+
+
 ## His moments, on a guest: an effect thrown, and the chair going and crashing.
 func net_event(what: String, args: Array) -> void:
 	match what:

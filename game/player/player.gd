@@ -120,15 +120,12 @@ signal died
 ## one instanced alone in a test - simply never pauses anything.
 signal froze(seconds: float)
 signal shook(strength: float, seconds: float)
-## The host only, and only for a REMOTE body: the world reached it, and its
-## owner's machine has to hear - `struck` and `drained` to show the blow and
-## blink, `slowed` and `shoved` because only the owner moves the body. Health
-## itself travels on `health_changed`, which the host sends to everybody.
+## The host's: the world reached this body, and the rest of the party has to
+## hear (game/sync/bodies.gd). `struck` and `drained` are seen by everybody -
+## the owner blinks for them too - while `slowed` and `shoved` are only ever
+## said of a REMOTE body, and only to its owner, who is the one moving it.
+## Health itself travels on `health_changed`, which the host sends to everybody.
 signal reached(what: String, args: Array)
-## A guest only: this body's blow reached `body`, which the host applies -
-## "my swing reached enemy X" is the attacker's to say (DESIGN.md's *Who decides
-## what*), and game/sync/world.gd carries it.
-signal landed(body: Node2D, power: int)
 
 ## Preloaded by path rather than via `class_name`, like the rest of the project.
 const Roster := preload("res://game/player/characters/roster.gd")
@@ -208,9 +205,9 @@ var character := ""
 var peer := 1
 ## Whether ANOTHER machine moves this body (DESIGN.md's Multiplayer, M3). A
 ## remote body runs none of the player below: it stands where its owner last
-## said and plays what its owner last played (`apply_net_state()`), and the
-## owner's machine is the only one that reads its hands. Set before the body
-## enters the tree.
+## said (`apply_net_state()`), its picture plays what its owner played a beat
+## ago (`net_draw()`), and the owner's machine is the only one that reads its
+## hands. Set before the body enters the tree.
 var remote := false
 
 var health := MAX_HEALTH
@@ -278,6 +275,12 @@ var _drain_number: Node2D = null
 var _swing_hits := {}
 ## The thunderclap's and the supernova's white, at CanvasLayer 1.
 var _screen_flash: CanvasLayer = null
+## A remote body's: which move its picture is in - the animation without its
+## facing - so a move is announced once as it starts and never again as the
+## body turns inside it (see net_draw).
+var _drawn_move := ""
+## The physics frame a remote body last made its `hit` on - see net_event.
+var _heard_hit := -1
 
 
 func _ready() -> void:
@@ -429,24 +432,41 @@ func _physics_process(delta: float) -> void:
 
 ## What this body looks like now, for the other machines (game/sync/): where it
 ## stands and what its sprite is drawing - the frame, the facing, the tint a
-## slow or a fall gives it and the grace window's blink. The owner's machine
-## sends it; every other draws it with apply_net_state(). Plain values, because
-## it crosses the wire thirty times a second.
+## slow or a fall gives it, the grace window's blink - and how full a charge
+## is, for the ring at its feet. The owner's machine sends it; every other
+## stands the body where it says (apply_net_state) and draws its picture a beat
+## later (net_draw). Plain values, because it crosses the wire thirty times a
+## second.
 func net_state() -> Array:
 	return [global_position, _sprite.animation, _sprite.frame, _sprite.flip_h,
-		_sprite.modulate.to_rgba32(), _sprite.visible]
+		_sprite.modulate.to_rgba32(), _sprite.visible,
+		clampf(_charge / CHARGE_SECONDS, 0.0, 1.0) if _charging else 0.0]
 
 
-## Draw what the owner sent. The sprite keeps PLAYING between two of these, so
-## its frame is only corrected when it has drifted, and a frame that fits the
-## picture is never yanked back to the one the message was sent on.
+## The newest word on a remote body: where it IS. Only the body moves here - the
+## picture is net_draw's, a beat behind (game/sync/bodies.gd's header says why
+## the two are apart).
 func apply_net_state(state: Array) -> void:
-	if state.size() < 6:
+	if state.size() >= 7:
+		global_position = state[0]
+
+
+## A remote body's picture: what its owner drew `DELAY` ago, standing at
+## `where`, which is on its way between two steps (game/sync/bodies.gd). The
+## body itself is at the newest step, so the picture is the sprite's offset
+## from it, nothing at all once it stands still.
+##
+## The sprite keeps PLAYING between two steps, so its frame is only corrected
+## when it has drifted, and a frame that fits the picture is never yanked back
+## to the one the message was sent on.
+func net_draw(state: Array, where: Vector2) -> void:
+	if state.size() < 7:
 		return
-	global_position = state[0]
+	_sprite.position = where - global_position
 	var anim := StringName(state[1])
 	var frame := int(state[2])
 	if _sprite.animation != anim and _sprite.sprite_frames.has_animation(anim):
+		_drawn(String(anim).get_slice("_", 0))
 		_sprite.play(anim)
 		_sprite.frame = frame
 	elif absi(_sprite.frame - frame) > 1:
@@ -454,8 +474,51 @@ func apply_net_state(state: Array) -> void:
 	if not _sprite.is_playing():
 		_sprite.play()
 	_sprite.flip_h = bool(state[3])
-	_sprite.modulate = Color.hex(int(state[4]))
-	_sprite.visible = bool(state[5])
+	# Down is decided on this machine (game.gd's net_down), and a picture still
+	# a beat behind it must not stand the body back up.
+	if is_down():
+		_sprite.modulate = DOWN_TINT
+		_sprite.visible = true
+	else:
+		_sprite.modulate = Color.hex(int(state[4]))
+		_sprite.visible = bool(state[5])
+	if _ring != null:
+		_ring.progress = float(state[6])
+
+
+## A remote body's picture going into another move: the moments its owner's
+## machine had there, read off what it draws - the air of a swing, the heavy's
+## supernova, the charge's hum and its ring. Not the stop, the shake or the
+## flash: those are the attacker's to feel, on the attacker's screen.
+func _drawn(move: String) -> void:
+	if move == _drawn_move:
+		return
+	var was := _drawn_move
+	_drawn_move = move
+	if was == "charge":
+		if _ring != null:
+			if move == "heavy":
+				_ring.fire()
+			else:
+				_ring.queue_free()
+			_ring = null
+		_sfx_fade("charge", 0.08)
+	match move:
+		"charge":
+			_ring = ChargeRing.new()
+			_ring.setup(_spark)
+			# Under the SPRITE, which is where the picture is.
+			_sprite.add_child(_ring)
+			_sfx_loop("charge")
+		"heavy":
+			_sfx(ATTACK_SOUNDS["heavy"])
+			var nova := Supernova.new()
+			add_child(nova)
+			nova.setup(global_position + _sprite.position, _spark)
+		"wildfire":
+			_sfx("wildfire")
+		_:
+			_sfx(ATTACK_SOUNDS.get(move, ""))
 
 
 ## The world takes the wheel. Any swing, thrust, charge or heavy in flight is
@@ -673,17 +736,33 @@ func _land(body: Node2D, power: int, kind: String) -> void:
 	var before: Variant = body.get("health")
 	body.call("take_damage", power)
 	var after: Variant = body.get("health")
-	if before == null or after == null or int(after) < int(before):
-		var ink := _spark if kind == "jump" else DEALT_INK
-		var edge := _spark.darkened(HEAVY_EDGE_DARKEN) if kind == "heavy" else DEALT_EDGE
-		DamageNumber.spawn_dealt(body, power, ink, edge, 2 if kind == "heavy" else 1)
-	if body.is_queued_for_deletion():
-		KillBurst.shatter(body, away, _spark)
+	var moved := before == null or after == null or int(after) < int(before)
+	var killed := body.is_queued_for_deletion()
+	_show_blow(body, power, kind, moved, killed, away)
+	if killed:
 		# Not on the heavy: game.gd's newest shake REPLACES the last, and the
 		# supernova's bigger one went out the frame the heavy fired. The arc
 		# is safe the other way round - its own shake is asked after its kills.
 		if kind != "heavy":
 			shook.emit(KILL_SHAKE[0], KILL_SHAKE[1])
+	# Online, everybody else sees it land too (net_event's "blow"). Only a blow
+	# that DID something: one a conceded boss took for nothing is nothing.
+	if moved:
+		_tell("blow", [body, power, kind, _attack, killed])
+
+
+## A blow this body landed, drawn: the number over what it hit, and its pieces
+## if it killed it or the jolt if it did not. Everything a blow is but the damage
+## - which is why a machine that only SEES somebody else's blow draws it with
+## this too (net_event), and gets the same blow.
+func _show_blow(body: Node2D, power: int, kind: String, moved: bool, killed: bool,
+		away: Vector2) -> void:
+	if moved:
+		var ink := _spark if kind == "jump" else DEALT_INK
+		var edge := _spark.darkened(HEAVY_EDGE_DARKEN) if kind == "heavy" else DEALT_EDGE
+		DamageNumber.spawn_dealt(body, power, ink, edge, 2 if kind == "heavy" else 1)
+	if killed:
+		KillBurst.shatter(body, away, _spark)
 	elif body.has_method("recoil"):
 		body.call("recoil", away)
 
@@ -692,18 +771,79 @@ func _land(body: Node2D, power: int, kind: String) -> void:
 ## the benefit of the doubt the attacker gets, since waiting a round trip to
 ## see your own hit land is the one lag a player feels in their hands. The
 ## number and the jolt, then; the white flash is the enemy's own (net_flash),
-## and whether it died is the host's to say.
+## and whether it died is the host's to say, and comes back (net_event).
 func _land_for_host(body: Node2D, power: int, kind: String, away: Vector2) -> void:
 	if body.get("has_conceded") == true or int(body.get("health")) <= 0:
 		return
-	landed.emit(body, power)
-	var ink := _spark if kind == "jump" else DEALT_INK
-	var edge := _spark.darkened(HEAVY_EDGE_DARKEN) if kind == "heavy" else DEALT_EDGE
-	DamageNumber.spawn_dealt(body, power, ink, edge, 2 if kind == "heavy" else 1)
+	_tell("blow", [body, power, kind, _attack])
+	_show_blow(body, power, kind, true, false, away)
 	if body.has_method("net_flash"):
 		body.call("net_flash")
-	if body.has_method("recoil"):
-		body.call("recoil", away)
+
+
+## A moment of this body's - a blow it landed, a bolt it threw - for the rest
+## of the party (game/sync/world.gd's *A player's moment*). Through the `sync`
+## group like a boss's `_tell`, so offline nobody is in it to hear.
+func _tell(what: String, args: Array) -> void:
+	if is_inside_tree():
+		get_tree().call_group(&"sync", &"from_player", self, what, args)
+
+
+## Somebody else's moment on this machine, or this body's own told back. A blow
+## shows what it did; on the attacker's own machine it was shown at once, and
+## only whether it KILLED is news (the host's to say). A bolt is drawn where it
+## went, and leaves what it touched crackling.
+func net_event(what: String, args: Array) -> void:
+	match what:
+		"blow":
+			if args.size() < 5 or not is_instance_valid(args[0]):
+				return
+			var body: Node2D = args[0]
+			var attack := String(args[3])
+			var killed := bool(args[4])
+			var away := body.global_position - global_position
+			if not remote:
+				if killed:
+					KillBurst.shatter(body, away, _spark)
+					if String(args[2]) != "heavy":
+						shook.emit(KILL_SHAKE[0], KILL_SHAKE[1])
+				return
+			# The host flashed it dealing it; a guest's copy is drawn.
+			if not _world_reaches() and not killed and body.has_method("net_flash"):
+				body.call("net_flash")
+			_show_blow(body, int(args[1]), String(args[2]), true, killed, away)
+			if not killed:
+				if attack == "attack" or attack == "attack2":
+					StaticCharge.add_to(body, _spark)
+				if attack == "attack2" and body.has_method("launch"):
+					body.call("launch")
+			# Once for the frame, as on the attacker's own: four bodies under
+			# one heavy are one impact.
+			if _heard_hit != Engine.get_physics_frames():
+				_heard_hit = Engine.get_physics_frames()
+				_sfx("hit")
+		"bolt":
+			if args.size() < 2 or not remote:
+				return
+			var chains: Array[PackedVector2Array] = []
+			for chain in args[0]:
+				chains.append(PackedVector2Array(chain))
+			var bolt := Arc.new()
+			bolt.setup(chains, _spark)
+			get_parent().add_child(bolt)
+			_thunder(args[1])
+
+
+## Every body a bolt went through: its charge set off, and crackling.
+func _thunder(touched: Array) -> void:
+	for body in touched:
+		if not is_instance_valid(body) or not body is Node2D:
+			continue
+		var charge := StaticCharge.of(body)
+		if charge != null:
+			charge.discharge()
+		if not body.is_queued_for_deletion():
+			Shock.apply(body, _spark)
 
 
 ## The arc's lightning. From each body the blade reached it jumps to the
@@ -743,12 +883,10 @@ func _arc(struck: Array[Node2D]) -> void:
 	# light hits left on them goes off. The stop is the frame's own (HIT_STOP).
 	shook.emit(ARC_SHAKE[0], ARC_SHAKE[1])
 	_screen_flash.flash(ARC_FLASH)
-	for body in touched:
-		var charge := StaticCharge.of(body)
-		if charge != null:
-			charge.discharge()
-		if not body.is_queued_for_deletion():
-			Shock.apply(body, _spark)
+	_thunder(touched)
+	# The bolt on everybody else's screen - not the shake or the flash, which
+	# are the thrower's to feel.
+	_tell("bolt", [chains, touched])
 
 
 ## The nearest enemy the arc may still jump to, or null. Group + method, never
@@ -857,25 +995,37 @@ func _world_reaches() -> bool:
 	return not is_inside_tree() or multiplayer.is_server()
 
 
-## A blow: metered by the grace window, and it opens a fresh one.
+## A blow: metered by the grace window, and it opens a fresh one. Online it is
+## decided here, on the host, and the rest of the party hears of it (`reached`):
+## the owner to blink and carry it, everybody else to see it land.
 func take_damage(amount: int) -> void:
 	if not _world_reaches() or _grace > 0.0 or health <= 0:
 		return
 	_grace = _grace_window
 	_lose_health(amount)
-	if remote:
-		# Decided here, on the host; shown where the body is played.
-		reached.emit("struck", [amount, _grace_window])
-		return
-	# The number off the head. Past the grace check on purpose: a blow the
-	# window swallowed cost nothing, and a number for it would say otherwise.
-	DamageNumber.spawn(self, amount)
-	# Metered for free by the window above, so a crowd cannot stack gasps. Only
-	# on a blow that was SURVIVED: `_lose_health` plays `die` at zero, and a
-	# gasp laid over the death breath in one frame is one muddy sound rather
-	# than two clear ones.
+	reached.emit("struck", [amount, _grace_window])
+	_struck(amount)
+
+
+## A blow landing, shown: the number off the head and the grunt. Past the grace
+## check on purpose: a blow the window swallowed cost nothing, and a number for
+## it would say otherwise.
+##
+## The grunt is metered for free by the window, so a crowd cannot stack gasps.
+## Only on a blow that was SURVIVED: `die` plays at zero, and a gasp laid over
+## the death breath in one frame is one muddy sound rather than two clear ones.
+func _struck(amount: int) -> void:
+	_number(amount)
 	if health > 0:
 		_sfx("hurt")
+
+
+## The number for a blow or a drain of `amount`, over the picture - which on a
+## remote body is a beat behind where the body stands.
+func _number(amount: int) -> Node2D:
+	var number := DamageNumber.spawn(self, amount)
+	number.global_position += _sprite.position
+	return number
 
 
 ## Health lost to a continuous effect rather than a blow - an aura, a poison,
@@ -895,9 +1045,7 @@ func drain(amount: int) -> void:
 	if not _world_reaches() or health <= 0:
 		return
 	_lose_health(amount)
-	if remote:
-		reached.emit("drained", [amount])
-		return
+	reached.emit("drained", [amount])
 	_show_drain(amount)
 
 
@@ -905,7 +1053,7 @@ func _show_drain(amount: int) -> void:
 	if is_instance_valid(_drain_number) and _drain_number.call("absorbs"):
 		_drain_number.call("add", amount)
 	else:
-		_drain_number = DamageNumber.spawn(self, amount)
+		_drain_number = _number(amount)
 
 
 ## A status the player CARRIES, which is a third thing again: take_damage() and
@@ -1005,8 +1153,13 @@ func heal(amount: int) -> bool:
 func net_health(value: int) -> void:
 	if value == health:
 		return
+	var was := health
 	health = clampi(value, 0, MAX_HEALTH)
 	health_changed.emit(health, MAX_HEALTH)
+	# The one sound a death makes, here where nothing else ever kills anybody -
+	# `_lose_health` plays it on the host.
+	if was > 0 and health == 0:
+		_sfx("die")
 
 
 ## What the host's world did to this body, on the owner's machine - `reached`'s
@@ -1018,9 +1171,7 @@ func net_reached(what: String, args: Array) -> void:
 			if args.size() < 2:
 				return
 			_grace = float(args[1])
-			DamageNumber.spawn(self, int(args[0]))
-			if health > 0:
-				_sfx("hurt")
+			_struck(int(args[0]))
 		"drained":
 			if not args.is_empty():
 				_show_drain(int(args[0]))
@@ -1030,6 +1181,18 @@ func net_reached(what: String, args: Array) -> void:
 		"shoved":
 			if args.size() >= 2:
 				_push(args[0], float(args[1]))
+
+
+## The same blow or drain on somebody else's body, on a machine that only draws
+## it: the number and the grunt, and nothing to carry.
+func net_seen(what: String, args: Array) -> void:
+	if args.is_empty():
+		return
+	match what:
+		"struck":
+			_struck(int(args[0]))
+		"drained":
+			_show_drain(int(args[0]))
 
 
 ## Back to full, called by game.gd when it respawns the player after a death -

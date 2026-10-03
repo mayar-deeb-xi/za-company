@@ -131,9 +131,12 @@ that drift.
 Every machine builds the same room and only the HOST runs it (DESIGN.md's
 Multiplayer, M3). `_in_charge()` is the line: on a guest `_physics_process`
 hands over to `_drawn_step()` and nothing is decided - no hunt, no steering, no
-wind-up, and `take_damage` takes nothing. The body stands and plays what the
-host's last snapshot said (`net_state()` / `apply_net_state()`, carried by
-`game/sync/world.gd`), and that is the whole of a guest's copy. Three things
+wind-up, and `take_damage` takes nothing. The body plays what the host's
+snapshot said (`net_state()` / `apply_net_state()`, carried by
+`game/sync/world.gd`) a tenth of a second after the host said it, and walks
+between two snapshots rather than stepping twenty times a second
+(`net_between()`, M4) - which is where a guest's swing hits it, since that is
+where the guest sees it. That is the whole of a guest's copy. Three things
 make it look right rather than merely be in the right place:
 
 - **The PHASE is the host's, and so is how far into it.** Every type's own
@@ -148,8 +151,10 @@ make it look right rather than merely be in the right place:
   flag, because a tint brighter than white does not fit in one.
 - **A guest's own blow flashes at once** (`net_flash()`) and reels at once (the
   reel is the sprite's and always local), because the host's flash for it is a
-  round trip away. The blow itself is reported by the attacker (player.gd's
-  `landed`) and dealt on the host.
+  round trip away. The blow itself is reported by the attacker (a player's
+  moment, game/sync/world.gd) and dealt on the host - and then drawn on every
+  other machine with the attacker's body, so somebody else's blow flashes,
+  reels, juggles and breaks a body apart here too (M4).
 
 A boss is the same body and three of his own on top - he adds his health and
 his concede to the snapshot, so the bar and the end follow; his attacks'

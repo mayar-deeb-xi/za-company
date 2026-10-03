@@ -20,6 +20,11 @@ var _since := 0
 var _frames := 0
 ## Frames of attack-mashing left, on the guest - helpers.gd's rhythm.
 var _mash := 0
+## A trace being taken: a node in the room by its path, where it stood on each
+## frame, and how many frames are left to take.
+var _trace_path := ""
+var _trace: Array = []
+var _trace_left := 0
 
 
 func _ready() -> void:
@@ -39,6 +44,12 @@ func _process(_delta: float) -> void:
 		elif _mash % 8 == 4:
 			_press(KEY_SPACE, false)
 		_mash -= 1
+	if _trace_left > 0:
+		var level := _level(get_tree().current_scene)
+		var node := level.get_node_or_null(NodePath(_trace_path)) as Node2D if level != null else null
+		if node != null:
+			_trace.append(node.global_position)
+			_trace_left -= 1
 
 
 ## Ask the machine `peer` something; its answer lands in `answers` under the
@@ -179,6 +190,37 @@ func _answer(what: String, args: Array) -> Variant:
 				return false
 			node.callv(String(args[1]), args[2])
 			return true
+		"trace":
+			# Where a node in the room stands on each of the next N frames -
+			# read back with "traced" once they are taken.
+			_trace_path = String(args[0])
+			_trace = []
+			_trace_left = int(args[1])
+			return true
+		"traced":
+			return _trace if _trace_left == 0 else []
+		"count":
+			# How many nodes run one script, under a body (by peer) or in the
+			# room when the peer is 0.
+			var under: Node = _level(game)
+			if int(args[1]) != 0:
+				under = _body(sync, int(args[1]))
+			var count := 0
+			if under != null:
+				for node in under.find_children("*", "", true, false):
+					var script: Script = node.get_script()
+					if script != null and script.resource_path == String(args[0]):
+						count += 1
+			return count
+		"plays":
+			# How many times a body (by peer) has started one of its sounds.
+			var body := _body(sync, int(args[0]))
+			var audio := body.get_node_or_null("Audio") if body != null else null
+			return int(audio.call("plays", String(args[1]))) if audio != null else -1
+		"holds":
+			# How many stops have held this machine's picture.
+			var hold := game.get_node_or_null("PictureHold") if game != null else null
+			return int(hold.get("held")) if hold != null else -1
 		"quit":
 			return true
 	return null

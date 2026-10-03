@@ -419,6 +419,36 @@ function take_damage" on a CharacterBody2D. And **a landed hit now costs
 frames**: a suite that checks the end of an attack that lands, by frame number,
 needs slack (test_arc.gd moved its later checks by 6).
 
+### Online: the same feel on every machine (M4)
+
+All of the above was one machine's until M4. Three rules carry it across:
+
+- **The stop holds the picture, not the clock.** `froze` online asks game.gd's
+  `_freeze`, which holds every animation and every effect above on THIS
+  machine (game/picture_hold.gd) while the host's world runs on, then catches
+  each animation up - so a swing still ends itself, on time. Only this
+  machine's own blows ask; a teammate's swing is theirs to feel.
+- **A blow and a bolt are MOMENTS** (`_tell`, game/sync/world.gd's *A player's
+  moment*). `_land()` tells the party what a blow it dealt came to; a guest's
+  `_land_for_host()` shows its blow at once and tells the host, which deals it
+  and then tells everybody. Every other machine draws it with this body's
+  `net_event()` - `_show_blow()`, the same function `_land()` draws with, in
+  this body's spark colour, plus the static charge, the juggle and the `hit`
+  sound (once a frame). The attacker only hears back whether it killed. The
+  shake, the screen flash and the stop are never sent: they are the swinger's.
+  Static charge is therefore SHARED - anybody's swing charges a body for
+  anybody's arc.
+- **A remote body's own moves are read off its picture** (`net_draw()` ->
+  `_drawn()`): the picture going into a swing is its air, into `charge` its hum
+  and its ring (under the sprite, where the picture is), into `heavy` its
+  noise and the supernova. Its blows on a player are seen everywhere too: the
+  host draws the number and the grunt over a remote body it hurts, every guest
+  draws them over a body somebody else owns (`net_seen()`), and `die` plays
+  wherever health reaches 0 (`net_health()`).
+
+And a remote body is HEARD from where it stands: player_audio.gd builds its
+speakers positional, the one exception to that file's first line.
+
 ## Scripted control - when the world has the wheel
 
 `take_control()` / `release_control()` / `lead_to()` are how a cutscene moves

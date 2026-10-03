@@ -8,7 +8,8 @@ extends "res://tests/coop.gd"
 ##   the line the guest reads, the fire he throws is thrown on the guest's copy
 ##   of him, the chair he sits in stays under him there - an effect that ends
 ##   with its attack must not find the guest a snapshot behind - a shake shakes
-##   the guest's camera, and his health and his concede follow.
+##   the guest's camera, his stop holds both machines' pictures and neither's
+##   clock (M4), and his health and his concede follow.
 ## - **Big Mo**: going up is the guest's to see too - the fire he keeps.
 ## - **Silverman**: the copy he casts walks on the guest's floor, the prism's
 ##   fan is the one the host measured, and he crosses through the guest's
@@ -32,7 +33,7 @@ func _init() -> void:
 
 func _plan() -> Array[Callable]:
 	return [_together, _ahmed_bar, _ahmed_says, _ahmed_throws, _ahmed_sits,
-		_ahmed_shakes, _ahmed_hurt, _ahmed_gives_in, _to_big_mo, _arrived,
+		_ahmed_shakes, _ahmed_stops, _ahmed_hurt, _ahmed_gives_in, _to_big_mo, _arrived,
 		_big_mo_bar, _big_mo_rages, _to_silverman, _arrived, _silverman_copies,
 		_silverman_prism, _silverman_crosses, _silverman_lands]
 
@@ -90,6 +91,16 @@ func _ahmed_shakes() -> void:
 	_boss().emit_signal("shook", 3.0, 0.4)
 	_expect("ahmed: a shake shakes the guest's camera too", "shaking", [],
 		func(left: float) -> bool: return left > 0.0)
+
+
+## And his stop, which online holds each machine's picture rather than the
+## host's clock (game/picture_hold.gd).
+func _ahmed_stops() -> void:
+	_boss().emit_signal("froze", 0.1)
+	_check("ahmed: his stop holds the host's picture, never its clock",
+		int(current_scene.get_node("PictureHold").get("held")) >= 1 and Engine.time_scale == 1.0)
+	_expect("ahmed: and holds the guest's picture too", "holds", [],
+		func(n: int) -> bool: return n >= 1)
 
 
 func _ahmed_hurt() -> void:

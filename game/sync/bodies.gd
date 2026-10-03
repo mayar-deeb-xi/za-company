@@ -6,13 +6,25 @@ extends Node
 ##   times a second (player.gd's net_state), to the host, which draws it and
 ##   passes it on to everybody else - a star, like everything online here.
 ##   Unreliable and ordered: a step that arrives late is worth nothing once the
-##   next is in, and a lost one is replaced a frame later.
+##   next is in, and a lost one is replaced a frame later. Each step carries its
+##   owner's time, which the host turns into its own before passing it on, so
+##   every guest reads every body on the one clock (sync.gd's header).
+## - **A body is in two places, on purpose** (M4): its BODY stands at the newest
+##   step there is, and its PICTURE is drawn `DELAY` behind, gliding between two
+##   steps (game/sync/timeline.gd, player.gd's net_draw). The body is what the
+##   host decides with - an enemy's blow, a door, a pickup - so a guest who
+##   stepped out of a swing is out of it on the host as soon as the wire allows,
+##   and not a tenth of a second later. The picture is only looked at.
 ## - **Health** is the host's: every change to any body's goes to every guest.
-## - **What the world did to a body** the host does not own - a blow to show, a
-##   slow or a shove to carry - goes to the one machine that owns it
-##   (player.gd's `reached`, and net_reached() at the far end).
+## - **What the world did to a body** - a blow to show, a slow or a shove to
+##   carry - goes to the one machine that owns it (player.gd's `reached`, and
+##   net_reached() at the far end), and a blow or a drain is SEEN by everybody
+##   else: the number over that body, and its grunt (net_seen()). Both on the
+##   clock, so they land as the drawn blow does.
 
 const PlayerType := preload("res://game/player/player.gd")
+const Timeline := preload("res://game/sync/timeline.gd")
+const Clock := preload("res://game/sync/clock.gd")
 
 ## How many physics frames between two of a body's steps: 30 a second.
 const SEND_EVERY := 2
@@ -20,6 +32,8 @@ const SEND_EVERY := 2
 var _sync
 ## peer id -> body, for every member of the party.
 var _bodies := {}
+## peer id -> Timeline, for every body another machine moves.
+var _steps := {}
 var _frame := 0
 
 
@@ -33,12 +47,14 @@ func track(party: Array) -> void:
 	for body: PlayerType in party:
 		_bodies[body.peer] = body
 		body.health_changed.connect(_on_health_changed.bind(body))
+		body.reached.connect(_on_reached.bind(body))
 		if body.remote:
-			body.reached.connect(_on_reached.bind(body))
+			_steps[body.peer] = Timeline.new()
 
 
 func forget(peer: int) -> void:
 	_bodies.erase(peer)
+	_steps.erase(peer)
 
 
 func body_of(peer: int) -> PlayerType:
@@ -49,6 +65,7 @@ func body_of(peer: int) -> PlayerType:
 func _physics_process(_delta: float) -> void:
 	if not _sync.active:
 		return
+	_draw_bodies()
 	_frame += 1
 	if _frame % SEND_EVERY != 0:
 		return
@@ -56,34 +73,55 @@ func _physics_process(_delta: float) -> void:
 	if mine == null:
 		return
 	if _sync.is_host():
-		_relay(1, mine.net_state())
+		_relay(1, _sync.now(), mine.net_state())
 	elif _sync.welcomed:
-		rpc_id(1, &"_step", Net.my_id(), _sync.room, mine.net_state())
+		rpc_id(1, &"_step", Net.my_id(), _sync.room, Clock.local(), mine.net_state())
+
+
+## Every body another machine moves, drawn as it was `DELAY` ago - see the
+## header.
+func _draw_bodies() -> void:
+	var at: float = _sync.drawn()
+	for peer in _steps:
+		var body := body_of(peer)
+		var pick: Array = (_steps[peer] as Timeline).at(at)
+		if body == null or pick.is_empty():
+			continue
+		var before: Array = pick[1]
+		var where: Vector2 = before[0]
+		if pick[2] != null:
+			where = Timeline.point(before[0], pick[2][0], pick[3], pick[4])
+		body.net_draw(before, where)
 
 
 ## The host passes a body's step on to every guest but its owner.
-func _relay(peer: int, state: Array) -> void:
+func _relay(peer: int, stamp: float, state: Array) -> void:
 	for id in _sync.guests():
 		if id != peer:
-			rpc_id(id, &"_step", peer, _sync.room, state)
+			rpc_id(id, &"_step", peer, _sync.room, stamp, state)
 
 
 ## One body's step, on any machine but its owner's. Dropped if it was taken in
-## another room, or claims a body its sender does not own.
+## another room, or claims a body its sender does not own. The host hears it in
+## the owner's time and passes it on in its own.
 @rpc("any_peer", "call_remote", "unreliable_ordered")
-func _step(peer: int, room: int, state: Array) -> void:
+func _step(peer: int, room: int, stamp: float, state: Array) -> void:
 	var sender := multiplayer.get_remote_sender_id()
 	if room != _sync.room:
 		return
 	if _sync.is_host():
 		if sender != peer:
 			return
-		_relay(peer, state)
+		stamp = _sync.from_guest(peer, stamp)
+		_relay(peer, stamp, state)
 	elif sender != 1:
 		return
+	else:
+		_sync.heard(stamp)
 	var body := body_of(peer)
 	if body != null and body.remote:
 		body.apply_net_state(state)
+		(_steps[peer] as Timeline).add(stamp, state)
 
 
 # --- the host's word ---------------------------------------------------------------
@@ -92,23 +130,40 @@ func _step(peer: int, room: int, state: Array) -> void:
 func _on_health_changed(health: int, _max_health: int, body: PlayerType) -> void:
 	if _sync.active and _sync.is_host():
 		for id in _sync.guests():
-			rpc_id(id, &"_health", body.peer, health)
+			rpc_id(id, &"_health", body.peer, _sync.now(), health)
 
 
+## The world reached a body, on the host: its owner carries it, and everybody
+## else sees a blow or a drain land on it.
 func _on_reached(what: String, args: Array, body: PlayerType) -> void:
-	if _sync.active and _sync.is_host() and _sync.guests().has(body.peer):
-		rpc_id(body.peer, &"_reached", body.peer, what, args)
+	if not _sync.active or not _sync.is_host():
+		return
+	for id in _sync.guests():
+		if id == body.peer:
+			rpc_id(id, &"_reached", body.peer, _sync.now(), what, args)
+		elif what == "struck" or what == "drained":
+			rpc_id(id, &"_seen", body.peer, _sync.now(), what, args)
 
 
 @rpc("authority", "call_remote", "reliable")
-func _health(peer: int, health: int) -> void:
-	var body := body_of(peer)
-	if body != null:
-		body.net_health(health)
+func _health(peer: int, stamp: float, health: int) -> void:
+	_sync.later(stamp, func() -> void:
+		var body := body_of(peer)
+		if body != null:
+			body.net_health(health))
 
 
 @rpc("authority", "call_remote", "reliable")
-func _reached(peer: int, what: String, args: Array) -> void:
-	var body := body_of(peer)
-	if body != null and not body.remote:
-		body.net_reached(what, args)
+func _reached(peer: int, stamp: float, what: String, args: Array) -> void:
+	_sync.later(stamp, func() -> void:
+		var body := body_of(peer)
+		if body != null and not body.remote:
+			body.net_reached(what, args))
+
+
+@rpc("authority", "call_remote", "reliable")
+func _seen(peer: int, stamp: float, what: String, args: Array) -> void:
+	_sync.later(stamp, func() -> void:
+		var body := body_of(peer)
+		if body != null and body.remote:
+			body.net_seen(what, args))

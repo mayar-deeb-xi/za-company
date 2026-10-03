@@ -132,16 +132,19 @@ func apply_net_state(state: Array) -> void:
 	_left = float(state[5])
 
 
+## A guest's copy between two snapshots (game/sync/world.gd): rolled along the
+## line from one to the next, its scanner swung the same way - through nothing,
+## since it bumps nobody here.
+func net_between(a: Array, b: Array, weight: float) -> void:
+	if a.size() < 6 or b.size() < 6:
+		return
+	global_position = (a[0] as Vector2).lerp(b[0], weight)
+	_aim = (a[2] as Vector2).slerp(b[2], weight)
+
+
 func _physics_process(delta: float) -> void:
-	# A guest's copy rolls on along the host's last heading between two
-	# snapshots - through nothing, since it bumps nobody here - and swings
-	# its scanner through a turn the same way the host's does.
+	# A guest's copy is drawn from the host's snapshots - see net_between.
 	if not multiplayer.is_server():
-		if _state == TURN:
-			_left -= delta
-			_aim = _aim.slerp(_next, clampf(delta / maxf(_left, 0.001), 0.0, 1.0))
-		else:
-			global_position += _heading * speed * delta
 		queue_redraw()
 		return
 	if _state == TURN:
