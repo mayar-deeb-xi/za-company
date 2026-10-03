@@ -13,6 +13,7 @@ extends "res://tests/helpers.gd"
 const ReleaseCheck := preload("res://ui/update/release_check.gd")
 const PRESETS := "res://export_presets.cfg"
 const DESKTOP := ["Windows Desktop", "macOS"]
+const WEBRTC := "res://addons/webrtc_native/webrtc_native.gdextension"
 
 
 func _tick(frame: int) -> void:
@@ -112,6 +113,29 @@ func _presets() -> void:
 			not exclude.contains("addons/*") and not exclude.contains("webrtc"))
 	_check("project: a packaged build is called The New Hire",
 		ProjectSettings.get_setting("application/config/name.packaged", "") == "The New Hire")
+	_plugin_binaries(cfg, by_name)
+
+
+## The WebRTC plugin's LIBRARY for each desktop build, which Godot's export
+## copies by the .gdextension's own line for that platform and architecture -
+## next to the exe, or into the .app's Frameworks. A preset can keep the plugin
+## and still ship a game that cannot play online, if the architecture it
+## exports names a line with no file behind it; release.yml then looks inside
+## the real builds (tools/release/check_plugin.sh).
+func _plugin_binaries(cfg: ConfigFile, by_name: Dictionary) -> void:
+	var ext := ConfigFile.new()
+	_check("plugin: its .gdextension reads", ext.load(WEBRTC) == OK)
+	for preset in DESKTOP:
+		if not by_name.has(preset):
+			continue
+		var arch := String(cfg.get_value(by_name[preset] + ".options",
+			"binary_format/architecture", ""))
+		var key := "windows.release.%s" % arch if preset == "Windows Desktop" else "macos.release"
+		var lib := String(ext.get_value("libraries", key, ""))
+		var path := WEBRTC.get_base_dir().path_join(lib)
+		_check("plugin: %s (%s) has a library line, %s" % [preset, arch, key], lib != "")
+		_check("plugin: and the library is there (%s)" % lib.get_file(),
+			lib != "" and (FileAccess.file_exists(path) or DirAccess.dir_exists_absolute(path)))
 
 
 ## A deploy to dev builds a DIFFERENT app, "The New Hire (dev)": prepare.sh

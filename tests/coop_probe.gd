@@ -25,6 +25,13 @@ var _mash := 0
 var _trace_path := ""
 var _trace: Array = []
 var _trace_left := 0
+## A stall on the way: how many frames until it, and how long it holds this
+## whole machine still - a lagging guest, as the host sees one.
+var _stall_in := -1
+var _stall_ms := 0
+## Conversations this machine has begun since "watch_talks" - so a suite can
+## see one that began and was closed again between two of its questions.
+var _talks := 0
 
 
 func _ready() -> void:
@@ -44,6 +51,15 @@ func _process(_delta: float) -> void:
 		elif _mash % 8 == 4:
 			_press(KEY_SPACE, false)
 		_mash -= 1
+	if _stall_in == 0:
+		OS.delay_msec(_stall_ms)
+		# Back on the wall clock from here, rather than racing to catch up
+		# the frames the stall cost - a stalled machine resumes, it does not
+		# fast-forward.
+		_since = Time.get_ticks_msec()
+		_frames = 0
+	if _stall_in >= 0:
+		_stall_in -= 1
 	if _trace_left > 0:
 		var level := _level(get_tree().current_scene)
 		var node := level.get_node_or_null(NodePath(_trace_path)) as Node2D if level != null else null
@@ -236,9 +252,35 @@ func _answer(what: String, args: Array) -> Variant:
 						words.append((label as Label).text)
 			return [hud.call("ping_text"), hud.call("notice_text"),
 				game.call("scoreboard_up"), words]
+		"stall":
+			# This whole machine held still for args[0] ms, args[1] frames
+			# from now: nothing sent, nothing heard, nothing drawn.
+			_stall_ms = int(args[0])
+			_stall_in = int(args[1])
+			return true
+		"watch_talks":
+			var dialogue: Node = game.get_node("Dialogue")
+			if not dialogue.is_connected(&"started", _on_talk_started):
+				dialogue.connect(&"started", _on_talk_started)
+			_talks = 0
+			return true
+		"talks":
+			return _talks
+		"hands":
+			# This machine's own player: whether it is under a script, moving
+			# under its own physics, down, and in the fight.
+			var mine := _body(sync, multiplayer.get_unique_id())
+			if mine == null:
+				return []
+			return [mine.call("scripted"), mine.is_physics_processing(), mine.call("is_down"),
+				mine.is_in_group("player")]
 		"quit":
 			return true
 	return null
+
+
+func _on_talk_started(_npc: Node) -> void:
+	_talks += 1
 
 
 func _press(code: int, pressed: bool) -> void:

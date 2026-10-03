@@ -158,11 +158,13 @@ the fallback, and which one it got - and `ping.gd`, the host's own heartbeat);
 MultiplayerAPI with none of the internet in it and what the suites run on;
 offline is Godot's OfflineMultiplayerPeer, a host with no guests.
 
-Four things are load-bearing:
+Five things are load-bearing:
 
 - **The host is the truth.** A guest is in the party once the host has its
-  hello, and the host sends the whole roster to everybody on every change and
-  once a second besides, pings included. The hello carries `WIRE`, the game's
+  hello, and the host sends the whole roster to everybody IN it on every
+  change and once a second besides, pings included - to the roster's rows, not
+  to every peer on the line, which a guest being cut off still is for a while.
+  The hello carries `WIRE`, the game's
   own protocol: two builds that do not speak the same game are refused with
   `version`, the way the signaling service refuses another `PROTOCOL`.
 - **Joined in the lobby, never mid-run.** `start_run()` sends the signaling
@@ -172,6 +174,18 @@ Four things are load-bearing:
   whoever listens, and nothing in it reaches for the tree's root
   MultiplayerAPI by name - which is what lets two of it live in one process,
   each in a SubViewport with an API of its own (tests/test_net.gd).
+- **A line that goes dead is given up on by the game, not the transport**
+  (M6). A guest whose game crashed says nothing on its way out, and ENet and
+  WebRTC each take their own long while to notice. So `ping.gd`'s heartbeat
+  doubles as a watchdog (`silent()`): the host drops a guest it has not heard
+  for `drop_seconds()` (`DROP_SECONDS`, 15) exactly as if they had left -
+  asking the transport to let go the way a refusal does, never forced, which
+  would leave the MultiplayerAPI still sending to them - and a guest that has
+  not heard the host for as long ends its party with `host_left`. Long on
+  purpose: a browser stops a hidden tab's game dead, and looking away to
+  answer a message is not leaving. The wait costs the run nothing, because
+  game/sync/bodies.gd takes a silent body out of the fight after a second. A
+  suite shortens it with `za/test/drop_seconds`.
 - **Which service is one function, `signaling_url()`**: `--signal=URL`, then
   a web build's own page host, then the LIVE service for a release desktop
   build (`packaged` and not `dev`), and dev's own for everything else - dev

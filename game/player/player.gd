@@ -90,6 +90,10 @@ const SLOW_TINT := Color(0.6, 0.75, 1.0)
 ## How a body that is DOWN reads (knock_down): still there, so the party can
 ## see where they fell, and plainly not in the fight.
 const DOWN_TINT := Color(0.55, 0.55, 0.65, 0.45)
+## How a body whose machine has gone silent reads (`away`): its own colours,
+## frozen where it last was, see-through - somebody who is not here, rather
+## than somebody who fell.
+const AWAY_TINT := Color(1.0, 1.0, 1.0, 0.4)
 
 ## Ceiling on a single shove, in pixels per second. Below the walking speed of
 ## 90 on purpose: a push has to be something you feel and then walk out of, not
@@ -209,8 +213,17 @@ var peer := 1
 ## ago (`net_draw()`), and the owner's machine is the only one that reads its
 ## hands. Set before the body enters the tree.
 var remote := false
+## Online, a remote body whose machine has gone SILENT - nothing heard from it
+## for a second (game/sync/bodies.gd). It is out of the fight while it lasts,
+## by the same group `knock_down` uses, but it is not down: no life is spent and
+## nothing waits to get it up. It comes back the moment its owner is heard
+## again, or goes with them when the line is given up on (M6's *The cracks*).
+var away := false
 
 var health := MAX_HEALTH
+## Whether this body is DOWN - see knock_down(). Kept apart from being in the
+## `player` group, which `away` takes a body out of too.
+var _down := false
 ## The movement multiplier currently in force and how long is left of it. Public
 ## because they are a readout: the sprite tint reads them now and a HUD status
 ## icon would read the same pair.
@@ -478,6 +491,9 @@ func net_draw(state: Array, where: Vector2) -> void:
 	# a beat behind it must not stand the body back up.
 	if is_down():
 		_sprite.modulate = DOWN_TINT
+		_sprite.visible = true
+	elif away:
+		_sprite.modulate = AWAY_TINT
 		_sprite.visible = true
 	else:
 		_sprite.modulate = Color.hex(int(state[4]))
@@ -993,7 +1009,7 @@ func _on_animation_finished() -> void:
 ## a player is a no-op, and what the host decided arrives by net_reached() and
 ## net_health() instead (DESIGN.md's Multiplayer, *Who decides what*).
 func _world_reaches() -> bool:
-	return not is_inside_tree() or multiplayer.is_server()
+	return (not is_inside_tree() or multiplayer.is_server()) and not away
 
 
 ## A blow: metered by the grace window, and it opens a fresh one. Online it is
@@ -1208,9 +1224,8 @@ func revive() -> void:
 	_drop_hands()
 	_sprite.visible = true
 	_sprite.modulate = Color.WHITE
-	if not is_in_group("player"):
-		add_to_group("player")
-		$CollisionShape2D.set_deferred("disabled", false)
+	_down = false
+	_belong()
 	health_changed.emit(health, MAX_HEALTH)
 
 
@@ -1225,7 +1240,8 @@ func revive() -> void:
 ## A SOLO death never comes here. With nobody else in the room the room fades
 ## over it and the body is put back at the door (game.gd), as it always was.
 func knock_down() -> void:
-	remove_from_group("player")
+	_down = true
+	_belong()
 	set_physics_process(false)
 	velocity = Vector2.ZERO
 	_shove_seconds = 0.0
@@ -1235,15 +1251,38 @@ func knock_down() -> void:
 	_drop_hands()
 	_sprite.visible = true
 	_sprite.modulate = DOWN_TINT
-	# Deferred: a death lands inside somebody's physics step - a strike, an
-	# area, a drain - and a shape cannot change while queries are flushing.
-	# Off at all because a body nobody can see must not still stand in a doorway.
-	$CollisionShape2D.set_deferred("disabled", true)
 
 
-## Whether this body is out of the fight - see knock_down().
+## Whether this body is down - see knock_down(). Not whether it is in the
+## fight, which `away` decides too: that is the `player` group.
 func is_down() -> bool:
-	return not is_in_group("player")
+	return _down
+
+
+## Online: the machine that moves this body has gone silent, or been heard
+## again (game/sync/bodies.gd) - see `away`.
+func set_away(on: bool) -> void:
+	if on == away:
+		return
+	away = on
+	_belong()
+
+
+## In the fight - the `player` group, which is how the whole world finds a
+## player - while neither down nor away, and out of it otherwise. The shape
+## goes with it, because a body nobody can see must not still stand in a
+## doorway; deferred, because a death lands inside somebody's physics step - a
+## strike, an area, a drain - and a shape cannot change while queries are
+## flushing.
+func _belong() -> void:
+	var standing := not _down and not away
+	if standing == is_in_group("player"):
+		return
+	if standing:
+		add_to_group("player")
+	else:
+		remove_from_group("player")
+	$CollisionShape2D.set_deferred("disabled", not standing)
 
 
 ## Whatever the player was mid-way through with the attack button, dropped.

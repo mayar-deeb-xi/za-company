@@ -502,8 +502,19 @@ func _go_down(body: PlayerType) -> void:
 		# Paused with the game: the pause menu must not be a way to skip it.
 		get_tree().create_timer(GET_UP_SECONDS, false).timeout.connect(
 			_get_up.bind(body, _wait))
-	elif _getting_up.is_empty() and get_tree().get_nodes_in_group("player").is_empty():
+	elif _getting_up.is_empty() and _nobody_standing():
 		_game_over()
+
+
+## Whether every body in the party is down. Asked of the bodies rather than of
+## the `player` group, which a body whose machine has gone silent is out of too
+## (player.gd's `away`) - and somebody who is only not answering has not lost
+## the run for everybody.
+func _nobody_standing() -> bool:
+	for body in _players:
+		if not body.is_down():
+			return false
+	return true
 
 
 ## A body down where it fell, on whichever machine is drawing it.
@@ -953,6 +964,15 @@ func net_line(speaker: String, text: String) -> void:
 		_subtitle.show_line(speaker, text, maxf(2.0, text.length() / 13.0))
 
 
+## Somebody else reached this NPC first - two pressed on one frame, and the
+## host says it was not this machine (game/sync/talk.gd's *Two at once*). The
+## conversation begun here closes, and this machine's player has its hands
+## back; whatever the other one is told goes up on the subtitle like any.
+func net_refused(npc: Node) -> void:
+	if _dialogue.talking_to() == npc:
+		_dialogue.stop()
+
+
 ## A member gone from the party, mid-run - on the host when they drop, and on
 ## every guest when the host says so. Their body leaves with them; the rows
 ## under the hearts close up; and if they were the last one standing, nobody is.
@@ -978,6 +998,5 @@ func net_left(body: PlayerType) -> void:
 		_hud.set_member_health(i, _others[i].health, PlayerType.MAX_HEALTH)
 		_hud.set_member_down(i, _others[i].is_down())
 	body.queue_free()
-	if _sync.is_host() and _getting_up.is_empty() \
-			and get_tree().get_nodes_in_group("player").is_empty():
+	if _sync.is_host() and _getting_up.is_empty() and _nobody_standing():
 		_game_over()

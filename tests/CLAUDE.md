@@ -6,7 +6,7 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
 ## The suites
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Forty suites,
+  They drive the real game with synthesized input and exit 0/1. Forty-one suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu (HOST ONLINE and JOIN ONLINE, no MODE),
@@ -273,7 +273,10 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     the VERSION file, an unpackaged run never asks GitHub, a newer release
     raises the notice while an older, equal, junk or non-GitHub answer does
     not, `1.0.0` beats `1.0.0-rc.1`, and the export presets still ship VERSION,
-    still mark the desktop builds `packaged` and still keep the WebRTC plugin.
+    still mark the desktop builds `packaged` and still keep the WebRTC plugin -
+    and that the architecture each desktop preset exports has a library line
+    in the plugin's .gdextension with the file behind it (release.yml then
+    looks inside the real builds, tools/release/check_plugin.sh).
     And that a dev build can still be made a different app: the fields
     prepare.sh renames are where it looks for them, and the installer has a
     second `AppId`. No network: the answers are handed to the check directly.
@@ -312,7 +315,10 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     `started`; the host leaving is `host_left` at the guest and a guest leaving
     is a row gone at the host; the host's public switch, which a guest cannot
     work; KICK - their seat empty at once and `kicked` at their end, and on a
-    LAN free to come back, since there is no service to remember them by;
+    LAN free to come back, since there is no service to remember them by; a
+    line gone dead both ways (M6) - each end told the other was last heard a
+    minute ago, re-told every frame so a ping landing in between cannot undo
+    it: a guest ends its party `host_left`, a host drops the guest;
     and the signaling URL, join link and time zone an unpackaged build gets.
     Driven by WAITS with deadlines rather than frame
     numbers, because a connection takes as long as it takes. The online road -
@@ -420,6 +426,27 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     column; and the guest quitting is said across the host's screen by name.
     The host leaving is not here: a guest whose line to the host just went
     cannot be asked anything, so the panel is test_lobby.gd's.
+  - `test_coop_cracks.gd` - the same two machines, and THE CRACKS (M6), each
+    made to happen on purpose; a LAGGING guest is the probe's `stall`, which
+    holds the guest's whole process still - nothing sent, heard or drawn -
+    for as long as it is asked. Two press interact by HR on one frame (a
+    press is acted on at the start of the next frame and a message sent then
+    lands at the other end's next poll, so each machine has begun its own
+    before it can hear of the other's - the probe's `talks` counts the
+    guest's): one conversation, the host's, the guest's closed again with its
+    hands back and HR busy there, and free on both once the host is done. The
+    guest's body leaves the doorway and comes back while the host is fading
+    through it, and the party still arrives once, in one room. The guest's
+    body and then the host's die mid-fade: a life each, up on the far side at
+    full health with working hands on both. A guest frozen as the host goes
+    through, whose body dies once the host is there: down on both when it
+    catches up, up three seconds later. A frozen guest's swing finishes Ahmed:
+    he concedes once, bar down on both, and the swings still arriving are
+    nothing to him. And the guest's process KILLED with a guard on it: away a
+    second later - out of the `player` group, not down, nobody's target and
+    untouched - then dropped once the host gives up on the line (the suite
+    shortens that with `za/test/drop_seconds`), said across the top, the pool
+    untouched, and nothing sent down the dead line after.
 
 ## Writing a check
 

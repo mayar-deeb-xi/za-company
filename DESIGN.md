@@ -959,12 +959,16 @@ one that FEELS best rather than the one that is safest.
   stagger, Silverman's picks, a pickup's choice); cosmetic dice (sparks, bursts)
   stay local.
 - **A guest leaving takes their body with them**; the pool is untouched. The
-  host leaving puts everyone back on the menu with "the host left".
+  host leaving puts everyone back on the menu with "the host left". A guest
+  whose line goes dead without a word is AWAY a second into the silence - out
+  of the fight, costing nothing - and gone once the line is given up on (M6).
 
 ### Still to decide, with the default until then
 
 - **Talking**: whoever presses interact is the one talking and the one HR tows;
-  everyone else keeps their hands and reads along. **Built that way in M3.**
+  everyone else keeps their hands and reads along. **Built that way in M3**,
+  and two pressing at once is the host's to settle: whoever reached it first
+  (M6).
   Whether HR's induction and the contract are the whole party's, or the first
   player's, is still open: today they are whoever talked to her.
 - **Reconnecting** to a run after a drop: not in the first version.
@@ -1157,10 +1161,34 @@ one that FEELS best rather than the one that is safest.
         `ui/ping.gd`, shared with the lobby's seats. `tests/
         test_coop_screen.gd` (20 checks), the panel in test_lobby.gd, and
         test_party.gd proving a game offline shows none of it.
-- [ ] M6. **The cracks.** A guest dropping mid-fight, dying during a fade,
+- [x] M6. **The cracks.** A guest dropping mid-fight, dying during a fade,
         two players reaching a door during one, a boss conceding to a lagging
         guest, an NPC talked to by two people at once; and the export presets
         carrying the plugin's binaries.
+        **Done (2026-10-03)**, each crack made to happen on purpose in
+        `tests/test_coop_cracks.gd` (a lagging guest is its whole machine
+        held still): three held as built and two did not.
+        **Held**: a death mid-fade is one life and up on the far side on both
+        machines, a guest frozen through the door whose body dies there
+        included; a door fired again mid-fade still moves the party once; and
+        a boss finished by a hitching guest concedes once on both, the swings
+        still arriving after nothing to him.
+        **Two at one NPC** began two conversations and left the NPC lent to
+        the guest for good: the host's word now decides who got there first,
+        and the loser's conversation closes with the NPC busy on its screen.
+        **A guest dropping** left a frozen body in the fight that the room
+        beat down - the shared pool paying for somebody not there - and a
+        line the transport could take half a minute to give up. Now a body
+        unheard for a second is AWAY: out of the fight like a body that is
+        down (nobody's target, nothing lands, no door waits) but not down -
+        no life, and the run not over - drawn see-through, and back when its
+        owner is heard; and Net drops a guest unheard for `DROP_SECONDS` (15:
+        a hidden browser tab stops dead, and looking away is not leaving),
+        while a guest unheard-from host ends the party as "host left". The
+        presets already carried the plugin - the DLL beside the exe, the
+        framework inside the .app, both checked in the dev build - and
+        release.yml now looks inside every build for it. A macOS build has
+        still never played online on a real Mac.
 
 ## Build order — each step ships playable
 

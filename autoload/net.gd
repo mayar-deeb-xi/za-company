@@ -34,6 +34,17 @@ extends Node
 ## (`set_public()`), and may KICK a guest there, which online also refuses
 ## their address that room for good.
 ##
+## ## A line that goes dead
+##
+## A guest whose game crashed, or whose cable was pulled, says nothing on its
+## way out, and the transport can take half a minute to notice - ENet and
+## WebRTC each on their own timetable. So the game watches the ping it already
+## sends (net/ping.gd's `silent()`): the host drops a guest it has not heard
+## from in `drop_seconds()`, exactly as if they had left, and a guest that has
+## not heard the host in as long ends the party with "host_left". Until then
+## the run copes on its own - game/sync/bodies.gd takes a silent guest's body
+## out of the fight after a second, so the wait costs the party nothing.
+##
 ## ## What it does NOT do
 ##
 ## It changes no scene and spawns nothing. `run_started` hands the roster to
@@ -91,6 +102,13 @@ const LIST_OFF := "za/test/no_room_list"
 ## How long the host leaves a refused guest connected, so the refusal it is
 ## sent arrives before the line goes.
 const REFUSE_GRACE := 0.5
+## How long a line may go unheard before it is given up on - see *A line that
+## goes dead*. Long, on purpose: a browser stops a hidden tab's game dead, and a
+## guest who looked away to answer a message is not a guest who left.
+const DROP_SECONDS := 15.0
+## A suite's shorter wait, so a test of a dropped guest need not sit through
+## the real one. Never set outside tests/.
+const DROP_SETTING := "za/test/drop_seconds"
 
 enum State { OFFLINE, OPENING, LOBBY, IN_RUN }
 
@@ -157,9 +175,30 @@ func _process(delta: float) -> void:
 			if moved:
 				roster_changed.emit()
 			_broadcast()
+	if state == State.LOBBY or state == State.IN_RUN:
+		_watch_the_line()
+
+
+## Anybody this machine has stopped hearing for good - see *A line that goes
+## dead*.
+func _watch_the_line() -> void:
+	var limit := drop_seconds()
+	if is_host():
+		for id: int in _rows.keys():
+			if id != 1 and float(_ping.call("silent", id)) > limit:
+				_cut(id)
+	elif _mp != null and float(_ping.call("silent", 1)) > limit:
+		_end("host_left")
 
 
 # --- the questions --------------------------------------------------------------
+
+
+## How long a line may go unheard before it is given up on: `DROP_SECONDS`, or
+## a suite's own (`DROP_SETTING`).
+static func drop_seconds() -> float:
+	return float(ProjectSettings.get_setting(DROP_SETTING, DROP_SECONDS))
+
 
 
 func is_online() -> bool:
@@ -432,6 +471,7 @@ func _hello(their_wire: int, player_name: String, character: String, route: Stri
 	if not row.has("route") or row["route"] == "...":
 		row["route"] = route
 	_rows[id] = row
+	_ping.call("watch", id)
 	roster_changed.emit()
 	_broadcast()
 
@@ -463,9 +503,16 @@ func _begin_run(rows: Array) -> void:
 	run_started.emit(rows)
 
 
+## The roster to everybody in it - not to everybody on the line, which a guest
+## being cut off (`_cut`) still is until the transport lets go of them.
 func _broadcast() -> void:
-	if is_host() and not multiplayer.get_peers().is_empty():
-		_roster.rpc(roster())
+	if not is_host():
+		return
+	var rows := roster()
+	var peers := multiplayer.get_peers()
+	for id: int in _rows:
+		if id != 1 and peers.has(id):
+			_roster.rpc_id(id, rows)
 
 
 func _refuse(id: int, reason: String) -> void:
@@ -494,6 +541,7 @@ func _on_connected_to_server() -> void:
 	if not _local:
 		var link: RtcLink = _links.get(1)
 		route = link.route if link != null else ""
+	_ping.call("watch", 1)
 	_hello.rpc_id(1, wire, _me["name"], _me["character"], route)
 
 
@@ -623,6 +671,18 @@ func _open_lobby(route: String) -> void:
 	roster_changed.emit()
 
 
+## A guest whose line went dead: out of the party as if they had left - which,
+## as far as anybody can tell, they have - and asked off the transport, the
+## way a refusal is (`_refuse`). Not forced: a forced disconnect drops the peer
+## without telling the MultiplayerAPI, which would go on sending to it. A guest
+## that was only frozen hears the line go when it wakes, and its party ends.
+func _cut(id: int) -> void:
+	_ping.call("cut", id)
+	if _mp != null and multiplayer.get_peers().has(id):
+		_mp.disconnect_peer(id)
+	_drop(id)
+
+
 func _drop(id: int) -> void:
 	var link: RtcLink = _links.get(id)
 	if link != null:
@@ -662,6 +722,7 @@ func _reset() -> void:
 		_mp.close()
 		_mp = null
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_ping.call("clear")
 	_rows.clear()
 	_order.clear()
 	_arrived.clear()

@@ -151,7 +151,11 @@ of them had to learn what down means. The pool pays a life at once, and the
 body gets up at the room's `start` door `GET_UP_SECONDS` (3) later through the
 same `revive()` a solo respawn uses, which puts it back in the group. With the
 pool empty it stays down, and the run ends when nobody is standing and nobody
-is about to be. `is_down()` is the readout.
+is about to be. `is_down()` is the readout - a flag of its own, not the group,
+because online a body can be out of the fight without being down: AWAY, when
+the machine that moves it has gone silent (`away`, `set_away()`, game/sync/
+CLAUDE.md's M6). `_belong()` is the one rule for the group and the collision
+shape: in the fight while neither down nor away.
 
 The HUD (`ui/hud/`, instanced by game.tscn) is deliberately dumb: game.gd wires
 `health_changed` to it, pushes starting values and pushes the pool whenever it

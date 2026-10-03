@@ -109,6 +109,12 @@ func listener() -> Node2D:
 	return _player if _running else null
 
 
+## Who is doing the talking, or null. Online, a conversation this machine
+## began can be refused by the host (game/sync/talk.gd).
+func talking_to() -> Node2D:
+	return _npc if _running else null
+
+
 ## Start `npc`'s conversation, with `player` as the one being talked at.
 ## Silently declines when one is already running or has only just ended, which
 ## is the whole of the re-entry guard: the box consumes its own keypresses, and

@@ -247,6 +247,7 @@ func entered(level_path: String, spawn: StringName, as_room := 0) -> void:
 	room = room + 1 if is_host() else as_room
 	# The last room's pictures are not this one's.
 	_world.forget()
+	_bodies.new_room()
 
 
 func lives_changed(lives: int) -> void:

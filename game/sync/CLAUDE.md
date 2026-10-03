@@ -136,3 +136,43 @@ puts it up only when the run is online, so a solo HUD is what it always was.
   pause menu can hear it, focus on its one button - and MAIN MENU is the only
   way out. game.gd keeps the host's name from the party it was built from,
   because Net has forgotten everybody by the time it says `host_left`.
+
+**And it holds at THE CRACKS (M6)** - the moments two machines' pictures of
+one run could come apart, each made to happen on purpose in
+tests/test_coop_cracks.gd. Three already held as built: a death mid-fade (the
+host carries the body through and stands it up on the far side, and the
+guest's `_down` and `_up` play in stamp order around its own fade), a door
+fired a second time mid-fade (`_travel` is latched, so the party arrives once),
+and a boss conceding to a guest whose machine hitched (the snapshot carries
+`has_conceded`, and a swing that arrives after it finds him out of `enemies`).
+Two did not:
+
+- **Two people talk to one NPC at once.** A guest never waits on the host to
+  begin a conversation, so two presses on one frame began two, and the NPC
+  stayed lent to the guest for good. Now the HOST's word decides
+  (talk.gd's *Two at once*): whoever reached it first - its own press, or a
+  guest's word - and a guest who lost is told `_refused`, its conversation
+  closes (game.gd's `net_refused`) and the NPC is busy on its screen. Only
+  whoever leads an NPC can hand it back, so the refused guest's goodbye frees
+  nothing.
+- **A guest dropping mid-fight.** A crashed guest says nothing, its body stood
+  frozen in the fight, the guard beat it down and the POOL paid for somebody
+  who was not there - and the line itself was never given up on. Now a body
+  not heard from for a second is AWAY (bodies.gd, player.gd's `away`): out of
+  the `player` group exactly as a body that is down, so nothing targets it,
+  nothing lands on it and no door waits for it - but it is not down, so no life
+  is spent and the run is not over while only somebody away is standing
+  (game.gd's `_nobody_standing()`, which asks the bodies, not the group). It
+  is drawn see-through in its own colours (`AWAY_TINT`), and back the moment
+  its owner is heard. Counted in this machine's physics frames, so a hitch
+  here never makes anybody else away, and a new room restarts every count. And
+  Net gives a dead line up (autoload/CLAUDE.md's *Net*): dropped after
+  `DROP_SECONDS` of silence, exactly as if they had left. `is_down()` is a flag
+  of its own now, because the group answers "in the fight", which away is
+  not.
+
+A new room also forgets the last room's steps (`Bodies.new_room()`), so a
+remote picture never glides across the room from where its body stood
+downstairs. And the export presets were found already carrying the plugin -
+the DLL beside the exe, the framework in the .app - which release.yml now
+checks inside every build (tools/release/check_plugin.sh).

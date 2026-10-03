@@ -176,6 +176,11 @@ jobs:
       - name: Export
         run: bash tools/release/export.sh "$GODOT" "Windows Desktop" build/windows/TheNewHire.exe
 
+      - name: The WebRTC library is in it
+        # Without it the game plays solo and cannot play online, and nothing
+        # else in the build would say so.
+        run: bash tools/release/check_plugin.sh windows build/windows
+
       - name: Licences beside the binaries
         # The WebRTC library ships next to the exe, so its licences do too
         # (CREDITS.md). They are also inside the game's data on both platforms.
@@ -243,6 +248,9 @@ jobs:
           bash tools/release/export.sh "$GODOT" "macOS" build/macos/TheNewHire.dmg
           mkdir -p dist
           cp build/macos/TheNewHire.dmg "dist/TheNewHire-${VERSION}-macos.dmg"
+
+      - name: The WebRTC library is in it
+        run: bash tools/release/check_plugin.sh macos build/macos/TheNewHire.dmg
 
       - uses: actions/upload-artifact@v7
         with:

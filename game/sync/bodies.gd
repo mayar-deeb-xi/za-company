@@ -21,6 +21,16 @@ extends Node
 ##   net_reached() at the far end), and a blow or a drain is SEEN by everybody
 ##   else: the number over that body, and its grunt (net_seen()). Both on the
 ##   clock, so they land as the drawn blow does.
+## - **A body nobody is hearing from is AWAY** (M6): a second with no step from
+##   its owner and it is out of the fight (player.gd's `away`) - nobody's
+##   target, nothing lands on it, no door waits for it - until its owner is
+##   heard again. A machine that crashed or lost its line says nothing, and
+##   the line itself can take many seconds to be given up on (`Net`); a body
+##   standing in a fight all that time would be beaten down, and the pool
+##   would pay for somebody who is not even there. Counted in this machine's
+##   physics frames rather than read off a clock, so a hitch HERE - which
+##   stops the frames as well as the hearing - never makes anybody else away.
+##   And a new room starts everybody's count again, so loading one never does.
 
 const PlayerType := preload("res://game/player/player.gd")
 const Timeline := preload("res://game/sync/timeline.gd")
@@ -28,12 +38,17 @@ const Clock := preload("res://game/sync/clock.gd")
 
 ## How many physics frames between two of a body's steps: 30 a second.
 const SEND_EVERY := 2
+## How long without a step before a body is away - see the header. Thirty
+## steps' worth: nothing a line merely having a bad moment loses.
+const AWAY_SECONDS := 1.0
 
 var _sync
 ## peer id -> body, for every member of the party.
 var _bodies := {}
 ## peer id -> Timeline, for every body another machine moves.
 var _steps := {}
+## peer id -> the physics frame its newest step in this room was heard on.
+var _heard := {}
 var _frame := 0
 
 
@@ -55,6 +70,16 @@ func track(party: Array) -> void:
 func forget(peer: int) -> void:
 	_bodies.erase(peer)
 	_steps.erase(peer)
+	_heard.erase(peer)
+
+
+## A new room: the last one's steps are not drawn in it - a picture gliding
+## from where somebody stood upstairs would cross this room to get here - and
+## nobody is away for the time it took anybody to load it.
+func new_room() -> void:
+	for timeline: Timeline in _steps.values():
+		timeline.clear()
+	_heard.clear()
 
 
 func body_of(peer: int) -> PlayerType:
@@ -82,10 +107,15 @@ func _physics_process(_delta: float) -> void:
 ## header.
 func _draw_bodies() -> void:
 	var at: float = _sync.drawn()
+	var quiet := roundi(AWAY_SECONDS * Engine.physics_ticks_per_second)
+	var frame := Engine.get_physics_frames()
 	for peer in _steps:
 		var body := body_of(peer)
+		if body == null:
+			continue
+		body.set_away(_heard.has(peer) and frame - int(_heard[peer]) > quiet)
 		var pick: Array = (_steps[peer] as Timeline).at(at)
-		if body == null or pick.is_empty():
+		if pick.is_empty():
 			continue
 		var before: Array = pick[1]
 		var where: Vector2 = before[0]
@@ -120,6 +150,7 @@ func _step(peer: int, room: int, stamp: float, state: Array) -> void:
 		_sync.heard(stamp)
 	var body := body_of(peer)
 	if body != null and body.remote:
+		_heard[peer] = Engine.get_physics_frames()
 		body.apply_net_state(state)
 		(_steps[peer] as Timeline).add(stamp, state)
 

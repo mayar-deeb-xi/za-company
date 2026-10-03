@@ -72,7 +72,7 @@ load when files there are touched:
   the 64px cell, the ground line and their voices
 - `game/dialogue/CLAUDE.md` - the beat format, why the runner holds no
   variables, the escort, and where audio plugs in
-- `game/sync/CLAUDE.md` - one run on several machines (M3 and M4)
+- `game/sync/CLAUDE.md` - one run on several machines (M3 to M6)
 - `ui/lobby/CLAUDE.md` - the way into online play
 - `autoload/CLAUDE.md` - `Music`, `UiSound` and `Net`
 - `assets/music/CLAUDE.md` - the tracks, and what a generated one needs before
@@ -600,7 +600,10 @@ ONLINE, the list, the room and its four seats) - ui/lobby/CLAUDE.md; keeping a
 run in step (M3: snapshots, moments, who talks), making it feel like one
 game (M4: one clock, the held picture, every blow seen) and putting the
 connection on screen (M5: the corner ping, the Tab scoreboard, the relay line,
-somebody leaving and the host-left panel) - game/sync/CLAUDE.md.
+somebody leaving and the host-left panel) and holding at the cracks (M6: two
+people at one NPC, and a guest whose line goes dead - AWAY, out of the fight
+and costing nothing, a second into the silence, and dropped once Net gives the
+line up) - game/sync/CLAUDE.md.
 
 ## Settings
 

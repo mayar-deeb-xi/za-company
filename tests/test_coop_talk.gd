@@ -17,6 +17,9 @@ extends "res://tests/coop.gd"
 const CALL := "res://game/levels/call_center/call_center.tscn"
 const HR := "Props/HrLady"
 
+## The frame the guest last tried to talk to Ivan on.
+var _tried := 0
+
 
 func _init() -> void:
 	port = 47981
@@ -124,11 +127,15 @@ func _ivan() -> void:
 func _guest_talks_to_ivan() -> void:
 	var ivan := _room_node("Props/Ivan") as Node2D
 	_deadline = 600
-	_since = _f
+	_tried = -30
 	_expect("ivan: the guest walks up to him and talks him through", "talking", [],
 		func(on: bool) -> bool:
-			# Up beside wherever he has got to, then the key, until he answers.
-			if not on and (_f - _since) % 30 == 0:
+			# Up beside wherever he has got to, then the key, until he answers -
+			# every half second. Counted from the last try rather than tested
+			# for a multiple of 30: this only runs on a frame an answer lands on,
+			# and those can miss every multiple there is.
+			if not on and _f - _tried >= 30:
+				_tried = _f
 				_tell("teleport", [ivan.global_position + Vector2(0, 14)])
 				_tell("key", [KEY_E, true])
 				_tell("key", [KEY_E, false])

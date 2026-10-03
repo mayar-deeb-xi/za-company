@@ -16,7 +16,16 @@ extends Node
 ## - **Everybody else reads along**: each line the talker is shown goes up on
 ##   the other machines' subtitles, which take nobody's hands.
 ##
-## Who talks to whom first, when two press at once, is M6's.
+## ## Two at once (M6)
+##
+## Two people can press on one frame, and each machine begins its own
+## conversation before it can hear of the other's - a guest never waits on the
+## host to open one, so the key answers at once. The HOST's word decides who
+## got there first: whatever reached it first, its own press or a guest's word.
+## A guest who lost is told so (`_refused`) and its conversation closes again
+## with the NPC busy on its screen, and only whoever is leading an NPC can hand
+## it back - a refused talker's own goodbye frees nothing from under the one
+## who is actually talking.
 
 ## How many physics frames between two of a led NPC's steps: 20 a second.
 const SEND_EVERY := 3
@@ -87,13 +96,21 @@ func _physics_process(_delta: float) -> void:
 
 
 ## A guest began or ended a conversation: the NPC is theirs to lead, or the
-## host's again, and busy or free for everybody else.
+## host's again, and busy or free for everybody else - unless somebody got
+## there first (see *Two at once*).
 @rpc("any_peer", "call_remote", "reliable")
 func _talking(room: int, path: String, on: bool) -> void:
 	var npc := _npc(room, path)
 	if npc == null or not _sync.is_host():
 		return
 	var who := multiplayer.get_remote_sender_id()
+	var leader := int(npc.get("led_by"))
+	if on and npc.get("_talking") == true and leader != who:
+		# Busy already - the host is talking to them, or another guest is.
+		rpc_id(who, &"_refused", room, path)
+		return
+	if not on and leader != who:
+		return
 	npc.set("led_by", who if on else 0)
 	npc.call("set_talking", on)
 	for id in _sync.guests():
@@ -118,6 +135,21 @@ func _on_peer_left(id: int) -> void:
 			var path := _path(npc)
 			if path != "":
 				_sync.to_guests(&"_busy", [_sync.room, path, false], self)
+
+
+# --- a guest's side --------------------------------------------------------------
+
+
+## Somebody else got to this NPC first: the conversation this machine began is
+## closed, and the NPC is busy here like anybody's being talked to.
+@rpc("authority", "call_remote", "reliable")
+func _refused(room: int, path: String) -> void:
+	var npc := _npc(room, path)
+	if npc == null:
+		return
+	_game.net_refused(npc)
+	npc.set("led_by", 0)
+	npc.call("set_talking", true)
 
 
 # --- everybody's ---------------------------------------------------------------

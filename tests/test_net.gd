@@ -15,6 +15,9 @@ extends "res://tests/helpers.gd"
 ##   `host_left` at the guest.
 ## - The host's say over the room: the public switch, and KICK - their seat
 ##   empty at once, and `kicked` at their end.
+## - A line that goes dead (M6): a guest that stops hearing its host ends the
+##   party with `host_left`, and a host that stops hearing a guest drops them as
+##   if they had left.
 ## - Which signaling service a build talks to, and the join link it hands out.
 ##
 ## Driven by WAITS rather than frame numbers: a connection takes as long as it
@@ -45,7 +48,8 @@ func _tick(frame: int) -> void:
 		_net_script = load(NET)
 		_steps = [_host_one, _join_one, _ping_one, _wrong_wire, _start, _late_comer,
 			_host_leaves, _host_two, _public_switch, _kick, _kicked_out, _come_back,
-			_guest_leaves, _addresses]
+			_guest_leaves, _back_in, _host_unheard, _back_in, _guest_unheard,
+			_addresses]
 	if frame < 3:
 		return
 	if _waiting.is_valid():
@@ -236,6 +240,41 @@ func _guest_leaves() -> void:
 	_guest.call("leave")
 	_wait("leave: a guest going is a row gone at the host",
 		func() -> bool: return (_host.call("roster") as Array).size() == 1)
+
+
+func _back_in() -> void:
+	_heard.clear()
+	_guest.call("join_local", "127.0.0.1", PORT_2, "Ivo", "anas")
+	_wait("quiet: the guest joins the host's party again",
+		func() -> bool:
+			return _heard_of("GuestView", "joined") != null \
+				and (_host.call("roster") as Array).size() == 2)
+
+
+## A LINE THAT GOES DEAD is the game's to give up on (net.gd's header): each
+## end hears the other once a second through the ping, and one that has not
+## been heard for `drop_seconds()` is gone. Made so by telling one end the other
+## was last heard a minute ago - again every frame, so a ping landing between
+## the telling and the looking cannot undo it.
+func _host_unheard() -> void:
+	_wait("quiet: a guest that stops hearing its host ends the party, `host_left`",
+		func() -> bool:
+			var heard: Dictionary = _guest.get_node("Ping").get("_heard")
+			if heard.has(1):
+				heard[1] = Time.get_ticks_msec() - 60000
+			return _heard_of("GuestView", "ended") == "host_left" and _guest.get("state") == 0)
+
+
+func _guest_unheard() -> void:
+	var guest_id: int = _guest.call("my_id")
+	_wait("quiet: a host that stops hearing a guest drops them as if they had left",
+		func() -> bool:
+			var heard: Dictionary = _host.get_node("Ping").get("_heard")
+			if heard.has(guest_id):
+				heard[guest_id] = Time.get_ticks_msec() - 60000
+			return (_host.call("roster") as Array).size() == 1 \
+				and _heard_of("HostView", "peer_left") == guest_id \
+				and _heard_of("GuestView", "ended") == "host_left")
 
 
 func _addresses() -> void:
