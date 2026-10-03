@@ -5,6 +5,16 @@
     [ ] Part C - macOS install (teammate, needs a Mac) - can start now
     [ ] Part D - test both, then switch it on (owner + teammate)
 
+[ ] Playtest notes (2026-10-03)
+    [ ] Player movement feels odd, as if it lags - investigate
+    [ ] Dodge incoming attacks (Ctrl)
+    [ ] A dead player's camera follows the players still standing
+    [ ] A teammate can revive a dead player, who gets up with 50% health
+    [ ] Silverman's attacks hit harder - he is too weak now
+    [ ] New attacks for the player after beating a boss
+    [ ] A reward for fighting normal enemies, like extra health
+    [ ] Web build: the health bar sticks up to the top right
+
 # In-game updater: Windows and macOS
 
 **For the agent doing one of these parts.** Read the common sections
