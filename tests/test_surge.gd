@@ -4,9 +4,9 @@ extends "res://tests/helpers.gd"
 ##
 ## Its own suite for the reason test_studio.gd is: a cycle takes 2.4 seconds and
 ## the interesting checks are two periods apart, which is not a wait to put in
-## the middle of test_flow.gd's walk through twelve floors. The room's
+## the middle of test_chain.gd's walk through twelve floors. The room's
 ## composition - eighteen dividers, the ranks of desks, the five enemies - is
-## test_flow.gd's and is not re-checked here.
+## test_chain.gd's and is not re-checked here.
 ##
 ## ## What it is actually asking
 ##

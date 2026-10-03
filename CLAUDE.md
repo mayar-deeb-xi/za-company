@@ -55,19 +55,34 @@ Placement rules:
 4. Don't pre-create empty folders - create one when its first real file exists.
 
 **Deep documentation lives with its subject**, in nested CLAUDE.md files that
-load when files there are touched: `game/levels/CLAUDE.md` (the host, the
-camera, room anatomy, doors and spawns, and the studio's clock),
-`game/enemies/CLAUDE.md` (the attack cycle, the types, the enemy art
-pipeline), `game/bosses/CLAUDE.md` (multiple
-attacks on that cycle, conceding, the poses-painter-fire contract, boss
-floors), `game/player/CLAUDE.md` (characters,
-health, the combo and the heavy), `game/npcs/CLAUDE.md` (why an NPC is twice
-the player's height, the robe, the 64px cell and the ground line),
-`game/dialogue/CLAUDE.md` (the beat format, why the runner holds no variables,
-the escort, and where audio plugs in) and
-`tools/CLAUDE.md` (furnishing rooms from
-data, the prop catalogue, adding a floor). This file keeps what must be known
-BEFORE touching anything: the maps, the invariants and the gotchas.
+load when files there are touched:
+
+- `game/levels/CLAUDE.md` - the host, the camera, room anatomy, doors and
+  spawns, the moving hazards and the later beats
+- `game/enemies/CLAUDE.md` - the attack cycle, the leash, the types, the noise
+  and the enemy art pipeline
+- `game/bosses/CLAUDE.md` - what every boss shares: several attacks on that
+  cycle, conceding, boss floors, the bar, the noise and the mouth - and one
+  file per fight beside his scene: `game/bosses/ahmed/CLAUDE.md` (the
+  poses-painter-fire contract), `game/bosses/big_mo/CLAUDE.md`,
+  `game/bosses/silverman/CLAUDE.md`
+- `game/player/CLAUDE.md` - characters, health, the combo, the heavy and the
+  hit feel
+- `game/npcs/CLAUDE.md` - why an NPC is twice the player's height, the robe,
+  the 64px cell, the ground line and their voices
+- `game/dialogue/CLAUDE.md` - the beat format, why the runner holds no
+  variables, the escort, and where audio plugs in
+- `game/sync/CLAUDE.md` - one run on several machines (M3 and M4)
+- `ui/lobby/CLAUDE.md` - the way into online play
+- `autoload/CLAUDE.md` - `Music`, `UiSound` and `Net`
+- `assets/music/CLAUDE.md` - the tracks, and what a generated one needs before
+  it can loop
+- `tools/CLAUDE.md` - furnishing rooms from data, the prop catalogue, adding a
+  floor, and what every generator writes
+- `tests/CLAUDE.md` - what every suite owns, and how to write a check
+
+This file keeps what must be known BEFORE touching anything: the maps, the
+invariants and the gotchas.
 
 ## Levels
 
@@ -104,32 +119,21 @@ full-screen a fight draws goes in at 1 - above the room, under the bars, since
 a flash that washes out the health bar hides the number the player is reading
 while it lands. game.gd also owns **camera shake**, applied as an offset so
 `_camera_target()` stays the only thing framing a room; a boss asks for it by
-emitting `shook` (see game/bosses/CLAUDE.md).
+emitting `shook` (see game/bosses/big_mo/CLAUDE.md's *The Bell*).
 
-**A floor is a SHAPE now, and eight of the twelve decline to be one.** The
-34 x 19 room the building was designed around is what a biome gets by saying
-nothing; a `shape` key changes the size, CUTS rectangles out of the result, or
-hands in a floor plan drawn as ASCII, and everything else follows from that one
-predicate - the wall ring is grown around whatever is left, the shadow course
-hugs it, a doorway is cut where its own column meets the wall, and a colonnade
-skips the pillars that would land in masonry. Only the FACE of that ring is
-painted, one tile of it, so what a cut leaves behind is the same black void the
-camera leaves around a small room rather than a slab of the level's own rock.
-It lives in `tools/plan.gd`
-rather than in the generator, because the generator's job is putting things in
-a room and a floor plan is a subject with its own vocabulary: a shape nobody
-has drawn yet is a new key there and no branch anywhere else. **Two floors are not
-rectangles at all.** The call floor is a hall with an arm off its north-east
-corner, its two doors out of line with each other, and the first room in the
-game you cannot see the exit from. The INNOVATION LAB is the S: three halls
-of 30 x 15 stacked up the building and joined at alternating ends by two
-6-tile links, so the walk crosses each hall in the opposite direction to the
-last and you cannot see out of any of them. It is the biggest floor in the
-game at 512 x 1008, and the reason is arithmetic rather than ambition - a
-crossing spends the hall's DEPTH, so a hall has to hold the 54 px band plus
-the biggest sight radius standing off it. What that cost, and the two things a
-shaped room can break that a rectangular one cannot, is
-game/levels/CLAUDE.md's *The shape of a floor*.
+**A floor is a SHAPE, and most floors are not the 34 x 19 room** - never assume
+it. A biome's `shape` key changes the size, CUTS rectangles out of it, or hands
+in a floor plan drawn as ASCII, and everything else follows from that one
+predicate: the wall ring is grown around whatever is left (only its one-tile
+FACE is painted, so a cut leaves the same black void the camera leaves around a
+small room), the shadow course hugs it, a doorway is cut where its column meets
+the wall, and a colonnade skips the pillars that would land in masonry. It lives
+in `tools/plan.gd`, so a shape nobody has drawn yet is a new key there and no
+branch anywhere else. The call floor is a hall with an arm off its north-east
+corner and its two doors out of line; the innovation lab is an S of three halls
+joined at alternating ends, the biggest floor in the game at 512 x 1008. What
+that cost, and the two things a shaped room can break that a rectangular one
+cannot: game/levels/CLAUDE.md's *The shape of a floor*.
 
 **A level owns everything in it**: its own tileset, doorway art, `door.tscn`
 and its own copy of every prop it places, palette baked in - no level borrows
@@ -150,49 +154,28 @@ on the next visit - rooms keep no state yet. Doors are found through the `door`
 group and levels are typed via `preload`, never `class_name`: global class
 names live in an editor-written cache a fresh headless checkout does not have.
 
-**One floor also keeps a CLOCK, and it is the first room that is not the same
-room on every frame.** The content studio's biome carries a `studio` key, which
-buys one node counting rest / cue / take, and three things read it: its five
-ring lights go hot, its camera dolly runs a rail, and its neon sign says which
-of the two the room is in. The reason is not damage but MEMORY - every other
-threat in the game stands where it was placed, so a routing floor is solved
-exactly once - and the three rules that generalize are one number (`heat()`)
-driving every consumer, a cue phase that is visible and harmless because a
-hazard which merely switches on is a hazard you cannot have avoided, and the
-`studio` group being the only way anything finds the clock, so a floor without
-one leaves every one of those props exactly the furniture it always was. The
-dolly is also the first thing that could threaten the door lane without being
-placed in it, and deliberately does not: its rail stops at x 228. All of it:
-game/levels/CLAUDE.md's *The clock*.
+**Three floors have a hazard that MOVES, and the rules they share are the ones
+to carry to a fourth** (game/levels/CLAUDE.md's *The clock*, *The wiring* and
+*The machines*):
 
-**The call floor is WIRED, and it is that idea turned inside out.** Its `surge`
-key buys four runs of cable trunking that flare end to end and then put
-something very fast down their length, every 2.4s, staggered so the room fires
-about every six tenths of a second. The dolly asks for patience, which is the
-wrong question on the floor whose whole lesson is that your movement gets taken
-away - so this one is small, fast and comes in fours. Three things generalize:
-it **draws its own conduit** from the same two points it burns along, so the
-lane the player reads and the lane that hurts cannot come apart (and it is the
-one hazard in the game with no art file); the **whole run charges** rather than
-one end of it, so a warning does not also have to teach a direction; and **one
-pass is exactly one hit**, because the head crosses a player in a tenth of a
-second against a far longer grace window - which is the entire reason four of
-them is fair. The lane rule holds here too and pays for itself: cutting each
-aisle in two at the walk is what made four runs out of two.
-game/levels/CLAUDE.md's *The wiring*.
-
-**And the hub WANDERS.** Its `scrubbers` key buys two floor scrubbers, one per
-half, and nothing about where they go is authored at all - they pick a heading,
-run until the room stops them, and pick another, so the FURNITURE is what
-decides the route. Two floors teaching "learn where the danger is, then time it"
-is one lesson twice; this one cannot be learned and asks you to keep looking
-instead. It is also the first hazard that is not fire or sparks: it takes your
-POSITION, with a low damage and a real `shove()` - the fourth way the world
-reaches the player - which is why its scanner is cold. Warm burns, cold moves
-you. Being random, it keeps the door lane clear the only way a routeless thing
-can: `within` pens each machine into its own half. And it is a solid BODY rather
-than a trigger, because being in the way is half of what an obstacle is.
-game/levels/CLAUDE.md's *The machines*.
+- **The content studio keeps a CLOCK** (`studio` key): one node counting rest /
+  cue / take, read by its five ring lights, its camera dolly and its neon sign.
+  One number (`heat()`) drives every consumer; the cue phase is visible and
+  harmless, because a hazard that merely switches on is one you could not have
+  avoided; and the `studio` group is the only way anything finds the clock, so
+  on a floor without one those props are exactly the furniture they always
+  were. The dolly's rail stops at x 228, off the door lane.
+- **The call floor is WIRED** (`surge` key): four runs of cable trunking that
+  charge end to end and then put a head down their length, staggered. It draws
+  its own conduit from the same two points it burns along, so the lane the
+  player reads and the lane that hurts cannot come apart, and one pass is
+  exactly one hit, which is what makes four of them fair.
+- **The hub WANDERS** (`scrubbers` key): two floor scrubbers with no authored
+  route, which run until the room stops them, so the FURNITURE decides where
+  they go. `within` pens each into its own half, which is how a routeless thing
+  keeps the door lane clear. It takes your POSITION through a real `shove()`
+  and its scanner is cold: warm burns, cold moves you. It is a solid body,
+  because being in the way is half of what an obstacle is.
 
 Adding a floor is a data file in `tools/biomes/` plus a `CHAIN` entry;
 **inserting** one mid-chain also stales its NEIGHBOURS' baked door targets -
@@ -228,95 +211,41 @@ while it is fresh rather than stacking a "-1" each.
 Full rationale, the HUD, the combo and the heavy: game/player/CLAUDE.md.
 
 **The heavy is a HOLD and nothing else.** `CHARGE_SECONDS` (0.75) counts from
-the PRESS, so the opening swing is inside the charge rather than a tax before
-it, and it fires ITSELF at the end rather than waiting for a release - the two
-together are why the hold stopped being hard to do, since what the player has
-to get right is now only holding the button down. The cue moved off the eyes
-(the animation doubling speed, two pixels on a 32 px body) and onto the floor:
-`game/player/charge_ring.gd` is a ring at the feet that tightens as the charge
-fills and flares as the heavy leaves, dropped rather than flared where the
-player let go early. The number is bounded by a RATIO and not by taste - the
-heavy's single-target rate must stay under the light combo's, which at 0.75 is
-21.9/s against 28/s. game/player/CLAUDE.md's *The heavy is the hold*.
+the PRESS, so the opening swing is inside the charge, and the heavy fires
+ITSELF at the end - there is no release to time. The cue is a ring at the feet
+that tightens as the charge fills (`game/player/charge_ring.gd`). The number is
+bounded by a RATIO and not by taste: the heavy's single-target rate must stay
+under the light combo's, which at 0.75 is 21.9/s against 28/s.
 
 **The combo is three hits and the third is the ARC.** Swing 5, rising slash 7,
 then `attack3` - 12 to whatever the blade reaches, and lightning that jumps to
-the nearest untouched enemy within 40 px and once more from there, 5 each. The
-cycle is 5 + 7 + 12 = 24, which is exactly a guard and exactly the heavy, so
-the breakpoints below still hold: guard 3 hits, wraith 3, warden 5, security 6.
-The jump is a SWING's worth on purpose - a body the bolt reached stays on the
-same lattice as one the blade did - and the arc ends the chain. The bolt is
-`game/player/arc.gd`, drawn live in the character's spark colour, and
-`Roster.spark_hex()` is the one rule the sheet's sparks and the bolt both read,
-because the game must never load a `tools/` script. Its three rows (21-23) are
-the one part of the cast sheet a generator seeded: `tools/arc_pose.gd`, run by
-build_characters.gd only while the sheet was too short to hold them; the PNG is
-the truth from then on. It has no sound of its own yet and opens on `swing`.
-The whole design, and the three candidates it beat: game/player/CLAUDE.md's
-Combat.
+the nearest untouched enemy within 40 px and once more from there, 5 each
+(`game/player/arc.gd`). 5 + 7 + 12 = 24, exactly a guard and exactly the heavy,
+so the breakpoints below hold: guard 3 hits, wraith 3, warden 5, security 6.
+`Roster.spark_hex()` is the one colour rule the sheet's sparks and the bolt both
+read, because the game must never load a `tools/` script. The arc's sheet rows
+(21-23) were seeded once by `tools/arc_pose.gd`; the PNG is the truth from then
+on.
 
-**A blow that lands now FEELS like one, and not one damage number moved.**
-Picked from the Combo Lab preview, one option per attack plus the hit feel
-under all four. Every landed blow holds the room still (`HIT_STOP`, 0.04 s on
-a swing to 0.1 on the heavy, asked of game.gd's `_freeze` by a `froze` signal
-exactly as a boss asks), flashes the body white for three frames before its red
-tint, jolts its sprite 2 px away, and puts its amount over the enemy - white
-for the blade, the spark colour for a jump, double size for the heavy. A body
-that dies breaks into its own pixels instead of vanishing. On top of that:
-**static charge** (the swing and the slash leave one charge each, the arc's jump
-prefers a charged body inside the same 40 px, and the charge goes off when the
-arc reaches it - the one pick that changes logic, and it changes WHO, never how
-much), the **juggle** (the slash pops the sprite 7 px up; the body never leaves
-its spot), the **thunderclap** (a forked bolt, a flash at CanvasLayer 1, a shake,
-every body it touched left crackling) and the **supernova** (embers into the
-charge ring, then shockwaves and floor cracks as the heavy fires). Two rules
-hold all of it up: everything that moves a body moves only its SPRITE, which is
-why no placement band, leash or steering check had to change; and a boss never
-reels (`_reels()`, beside `_leashes()`), because he moves his own sprite.
-game/player/CLAUDE.md's *The hit feel*.
+**A blow that lands FEELS like one, and not one damage number moved for it**:
+the room holds still (`HIT_STOP`, asked of game.gd by a `froze` signal exactly
+as a boss asks), the body flashes white and jolts, its amount goes up over it,
+a body that dies breaks into its own pixels, and on top of that static charge
+(which changes WHO the arc jumps to, never how much), the juggle, the
+thunderclap and the supernova. Two rules hold it all up: everything that moves
+a body moves only its SPRITE, which is why no placement band, leash or steering
+check had to change; and a boss never reels (`_reels()`). Combat and *The hit
+feel*: game/player/CLAUDE.md.
 
 **The player makes noise on the bestiary's exact terms: by owning the files.**
-An `Audio` child holds id -> stream and player.gd fires eight names at it -
-`swing`, `swing2`, `charge`, `heavy`, `wildfire`, `hit`, `hurt`, `die` - so a
-cue arrives by having the WAV and nothing else, and a missing one is silent
-with no branch anywhere. One set serves all ten characters, which is the
-cast's SHEET rule applied to the other sense, and it decides the one thing
-about the audio that could not be discovered later: `hurt` and `die` cannot
-commit to a gender, because nine of the ten are not whoever a grunt would
-sound like. The node is `game/player/player_audio.gd` and is deliberately NOT
-`game/enemies/enemy_audio.gd` bubbled up - it does a neighbouring job with a
-different first line. An enemy is somewhere, and which corner a wind-up came
-from is the whole of what panning is for; the player is never anywhere, since
-the camera is on them, so their pan is 0 on every frame of every room and the
-positional node buys an attenuation curve to produce silence's exact twin. It
-is smaller than its counterpart rather than a copy of it, and drops
-`play_detached` outright: that exists because an enemy plays `die` on the frame
-it is freed, and the player is REVIVED, never freed.
-
-Three splits are worth keeping straight, and two of them are the enemies' rules
-arriving from the other side:
-
-- **A swing is air; `hit` is a blow that LANDED.** The two lights announce
-  themselves when they START, and `hit` fires from `_strike()` only on a frame
-  something was actually reached - once for the frame, not once per enemy, so a
-  heavy landing on four bodies is one impact rather than four copies of one clip
-  started together, which is a click.
-- **`drain()` is deliberately silent**, and it is the one absence anybody will
-  call a bug. A drain runs every physics frame and already knows its own rate, so
-  a gasp on each is sixty a second - and metering it through the grace window to
-  thin them out is exactly the mistake `drain()` exists to not make. The thing
-  draining you is already making the noise. A DEATH is not a drain tick, so
-  `die` sits with `_lose_health()` and a drain kills as audibly as a blow does.
-- **The charge is the one loop**, and it stayed one after the stance grew an
-  end. It was specced as a one-shot capped at `CHARGE_SECONDS` so that running
-  out would be the ready cue; that was wrong on its own terms, and it is still
-  wrong now that the heavy fires itself, because the stance has an end without
-  having a LENGTH - it runs for `CHARGE_SECONDS` minus whatever part of the
-  opening swing was already held through, and an early release cuts it anywhere.
-  The ready cue is the ring at the player's feet.
-
-The sounds are `tools/sfx/make.py player` off `tools/sfx/player.py`, the
-bestiary's pipeline unchanged.
+An `Audio` child (`game/player/player_audio.gd` - a neighbour of
+`enemy_audio.gd`, deliberately not it bubbled up) and eight cues: `swing`,
+`swing2`, `charge`, `heavy`, `wildfire`, `hit`, `hurt`, `die`. One set serves
+all ten characters, so `hurt` and `die` cannot commit to a gender. A swing is
+air and `hit` is a blow that LANDED, once per frame rather than per enemy;
+`drain()` is deliberately silent; and the charge is the one loop - the ring at
+the feet, not the sound, is the ready cue. The sounds are `tools/sfx/make.py
+player`; the reasons are game/player/CLAUDE.md's *The noise*.
 
 ## Enemies
 
@@ -324,7 +253,11 @@ bestiary's pipeline unchanged.
 `stop_distance`, and hurt by FINISHING an attack (CHASE -> WINDUP -> STRIKE ->
 RECOVER), never by mere contact. Damage interrupts a wind-up, bounded by
 `commit_fraction` and `interrupt_cooldown`; the player is deliberately not
-interruptible in return.
+interruptible in return. game/enemies/CLAUDE.md has all of it - the cycle, the
+leash, the furniture, the types, the noise, the mutters, the sheets and
+placement - and game/bosses/ has the bosses: the shared rules in its CLAUDE.md,
+each fight in a CLAUDE.md beside his scene. What must be known before
+touching any of it:
 
 **`sight_radius` is how an enemy NOTICES the player and nothing more, and that
 is load-bearing**: every authored position is placed to keep it off the door
@@ -332,306 +265,98 @@ lane, so widening it breaks all twelve floors and two suites at once. What
 happens AFTER seeing you is the leash - `patience_seconds` (2.5) keeps it
 coming that long after losing sight, `leash_factor` (2.0) stops it following
 further than that multiple of its sight FROM ITS POST, and then it walks back
-and stands on its mark. The second half is the one that matters: an enemy that
-halted wherever it gave up let a player walk one body out of position and
-leave, and a room is an ARRANGEMENT. A boss opts out of all of it
-(`_leashes()` - an arena has no arrangement); a reinforcement opts out of the
-POST only (`unleash()` - it is the one enemy with no authored position, so it
-still gives up, it just has no mark to be held near or to return to). Full rationale:
-game/enemies/CLAUDE.md's The leash.
+and stands on its mark, because a room is an ARRANGEMENT. A boss opts out of
+all of it (`_leashes()`); a reinforcement opts out of the POST only
+(`unleash()`).
 
-**The one other way to be noticed is the ROOM ALERT, and it fires once per
-visit.** The first frame ANY player stands more than 3 tiles (48 px,
-`ALERT_RADIUS`) from where they came in - their place at the spawn marker the
-door put them on, not the door itself, which every marker stands 3.5+ tiles
-inside - game.gd
-calls `alert()` on every enemy in the room: a sighting without the sight, so
-each one walks the player's way and then the leash above decides everything,
-unchanged. **The doorway is the only safe ground; the walk between the doors
-is not.** Walking door to door wakes the room exactly as wandering into the
-furniture does, so no floor is crossed unnoticed. The placement rule below is
-untouched - it is still what keeps a body from SEEING the walk - but it no
-longer means a room can be walked through in silence. **A reinforcement
-walking in after the alert is told on arrival** (game.gd's `_on_node_added`),
-and having no post it does not run out of patience - it keeps coming for the
-rest of the visit rather than stopping dead where 2.5 s ran out.
+**The one other way to be noticed is the ROOM ALERT, once per visit**: the
+first frame ANY player stands more than 48 px (`ALERT_RADIUS`) from where they
+came in, game.gd calls `alert()` on every enemy in the room, and the leash
+decides the rest. The doorway is the only safe ground; the walk between the
+doors is not. A reinforcement walking in after the alert is told on arrival
+(game.gd's `_on_node_added`) and keeps coming for the rest of the visit.
 
-**An enemy gets round the furniture, and there is still no pathfinding.**
-Steering is *walk at the player*; what that cannot do is the thing it creates -
-a body sliding along a desk turns to face the player ever more squarely until
-the sideways part of the walk is gone, and it parks flat against the desk
-forever. It presented as an enemy that would not attack, because the attack
-cycle starts on contact. `_steer` commits to ONE side when it stops making
-ground and holds it until a ray says the way is open, and after three fruitless
-tries it gives up and walks home - only a body with a POST does that, which is
-what keeps a boss and a reinforcement out of it without a list. Putting the
-small furniture on its own collision layer so the enemies could walk through it
-was tried on the same day and thrown out: the arithmetic works and an enemy
-walking through a chair tells the player the room is a backdrop.
-game/enemies/CLAUDE.md's *Getting round the furniture*.
+**There is no pathfinding, and an enemy still gets round the furniture**:
+`_steer` commits to ONE side when it stops making ground, holds it until a ray
+says the way is open, and after three fruitless tries a body with a POST gives
+up and walks home. Putting small furniture on its own collision layer so
+enemies could walk through it was tried and thrown out: an enemy walking
+through a chair tells the player the room is a backdrop.
 
 **Enemy HP (24 / 17 / 36 / 48) are exact breakpoints on the player's combo** -
 "dies in exactly N hits" - and `HEAVY_POWER` equals a guard's health by design.
 Never retune one side without the other, and difficulty must never scale any of
 them. A reskin (`office_boy`, `social_media`, `call_center`) is a new sheet,
 name and folder with the archetype's numbers and no script - nothing else, or
-the interrupt tuning breaks. Six of the seven enemies are three archetypes twice
-over, so each archetype's script lives at `game/enemies/` beside
-`enemy_base.gd` - `wraith_base.gd`, `warden_base.gd` and `brute_base.gd`, plus
-the three effects they draw with - and a type's own folder holds only its sheet,
-frames and scene.
+the interrupt tuning breaks. Each archetype's script lives at `game/enemies/`
+beside `enemy_base.gd` (`wraith_base.gd`, `warden_base.gd`, `brute_base.gd`),
+and a type's own folder holds only its sheet, frames and scene. The fourth
+archetype, `security` (48 HP - two full combos and exactly two heavies - and a
+ring around its feet that SHOVES), has no reskin yet and is the first enemy on
+a 64 px cell. The reskins hold floors 1-9 and 12; the originals appear only
+from hellfire up. Enemies are levelled UNDER the bosses, and that is
+arithmetic: a boss floor holds one boss, hellfire holds seven bodies.
 
-**The seventh is the FOURTH archetype and has no reskin yet.** `security` is
-48 HP, 20 damage, speed 35, sight 90, a 0.9s wind-up and a blow that lands as a
-28 px ring around its own feet, damaging everyone in it and **shoving** them
-out. The other three take your health, your time and your speed; this one takes
-your POSITION, which is the fourth way the world reaches the player
-(`shove()`) finally being used by something that fights back rather than only by
-the hub's machines. Two numbers are load-bearing and are the reason it exists at
-that size: 48 is the sixth rung of the combo (two full 5 + 7 + 12 cycles) AND
-exactly two heavies, so it is
-the one body in the game the charged spin was made for and cannot one-shot; and
-its 90 px sight gives it its own placement band (below). It is also **the first
-enemy that is not the size of the cast** - a 64px cell, which cost one `frame`
-key in the roster and one new seeder, `tools/enemy_art.gd`. All of it, including
-the three overrides it deliberately does not take and why its ring is warm where
-the scrubber's scanner is cold: game/enemies/CLAUDE.md's *The types*.
+**Which enemies a room gets is per-biome data (type + position), and every
+sight radius stays clear of the WALK**, the spawns and both stands - the way
+between the doors stays safe in every biome, and the chain and combat
+tests depend on it. On a floor that says nothing about its shape the walk is
+the band x 246-300 at every y, and clearing its EDGE by the type's own radius
+gives a hard band per archetype: a guard (80) needs x <= 166 or x >= 380, a
+brute (90) x <= 156 or x >= 390, a wraith (120) x <= 126 or x >= 420, a warden
+(130) x <= 116 or x >= 430. Four floors carry their own walk, so ASK the room
+(`level.lane_clearance(at)`, `level.walk_lane()`) rather than writing 246 down
+again. `tests/test_slam.gd` and `tests/test_dogleg.gd` sweep the whole chain
+off disk for it. A boss floor is an arena: his sight reaching the spawn is the
+one deliberate exception.
 
-Bosses (`game/bosses/`) run the same cycle with several attacks and concede
-instead of dying; a floor names its boss in `tools/biomes/<level>.gd` under
-`boss`, which also shuts that floor's north door until he concedes
-(game/levels/boss_door.gd) - except on the last floor, which has no north door
-to shut, because build_levels.gd only cuts one where the chain continues. Every boss also gets a HUD bar
-(`ui/hud/boss_bar.gd`) without asking for one: game.gd finds him by the
-`bosses` group when it builds the room, so a new boss needs no HUD work - and
-the same wiring hands him a **camera shake** if he emits `shook`, which is why
-`boss_base` declares it and no boss has to implement it. It hands him his
-**theme** on those same terms: a boss names a track in `music` on his scene
-root and game.gd plays it where it raises his bar and fades it where it clears
-it, so a boss floor is the only floor with music and every other floor is
-silent without saying so. A boss floor is an
-arena: his sight reaching the spawn is the one deliberate exception to the rule
-below.
+**Bosses** (`game/bosses/`) run the same cycle with several attacks and concede
+instead of dying - never freed, so a boss never counts as a kill. A floor names
+its boss under `boss` in its biome, which shuts that floor's north door until he
+concedes (`game/levels/boss_door.gd`; the last floor has no north door to
+shut). game.gd finds him by the `bosses` group and gives him a HUD bar, a
+camera shake if he emits `shook`, and his theme if his scene root names a
+`music` - so a new boss needs no HUD, camera or music work.
 
-**A boss's health is the one enemy health that scales, and only with HEADS,
-only by adding.** Solo he is Ahmed 144, Big Mo 216, Silverman 288 - six, nine
-and twelve full combos - and every head beyond the first adds his
-`health_per_head` (48 / 72 / 96, a third of him) in boss_base's `_ready`. His
-adds alone could not cover a party: two players are two sets of swings on one
-body. It is a SUM of whole 24s rather than a multiplier, so he still dies on a
-whole combo, and difficulty still never touches it. Everything keyed to how
-hurt he is - Big Mo's rage, Silverman's phases, a floor's `at_boss_fraction`
-beats - is a fraction of `max_health`, so it moves with him; an absolute
-threshold would fire on a party's boss at the start of the fight.
+- **His health is the one enemy health that scales, and only with HEADS, only
+  by adding**: solo Ahmed 144, Big Mo 216, Silverman 288, and every head beyond
+  the first adds his `health_per_head` (a third of him), so he still dies on a
+  whole combo. Everything keyed to how hurt he is is a FRACTION of
+  `max_health`; an absolute threshold would fire on a party's boss at the start
+  of the fight.
+- **He draws his effects live from his poses**, and four lessons carry to the
+  next boss: a full-screen effect draws at TWO scales (a piece of the FRAME is a
+  fraction of the viewport, a thing in the ROOM is world pixels); an effect
+  timed in seconds agrees with an animation only while every beat is a frame
+  boundary; fire is shared in shape and the RAMP says whose it is; and the
+  base's amber wind-up tint is wrong for a palette with no hue in it, which is
+  why Silverman overrides `_windup_tint()`. The first three were learned on Big
+  Mo (game/bosses/big_mo/CLAUDE.md's *The Bell*, *The Rage* and *brush.gd*),
+  the last on Silverman.
+- **The three fights are three SHAPES on the one cycle**: Ahmed a menu, Big Mo
+  a rhythm, Silverman a ladder. All three talk and are voiced, and Silverman
+  says every line twice, Swedish then English, in ONE clip - so anything added
+  to his file has to be short in both languages
+  (game/bosses/silverman/CLAUDE.md's *He says everything twice*).
 
-Bosses draw their own effects live from their poses rather than baking them
-into a sheet - Ahmed's fire, Big Mo's **Bell** (his punches) and **Rage** (he
-catches fire at half health, once, and never comes back down), Silverman's
-**Smear**, **Glare**, **Prism** (a white beam swept 140 degrees off his chest
-in his last phase), **Chill** and the **copy** his split casts. Four things
-generalize out of them:
+**Sound and speech are OWNED, never wired.** An enemy or a boss makes noise by
+carrying an `Audio` child (`game/enemies/enemy_audio.gd`) holding id -> stream,
+so a cue arrives by having the WAV, and a missing or unimported one is silence
+with no branch anywhere. Sound is per enemy, never per archetype. **A `.wav`
+needs an import pass, and an import pass needs the editor CLOSED.** Two enemies
+and every boss also carry a `Lines` child (`game/enemies/enemy_lines.gd`): a
+boss is addressing you and goes on the subtitle, an enemy is being overheard
+and never does.
 
-- A boss effect that goes full-screen draws at TWO scales and confusing them is
-  the trap: a piece of the FRAME (a vignette, a chevron) must be sized as a
-  fraction of the viewport, or it is invisible at 640 px wide and changes size
-  with the zoom; a thing in the ROOM is world pixels.
-- An effect keyed to fixed seconds and an animation keyed to frames agree only
-  while every beat is a **frame boundary**. Big Mo's rage has a test that says
-  so, because nothing else would notice a retimed `dur` sliding the fire off
-  the picture.
-- **Fire is per boss on purpose.** The shapes are shared so the game has one
-  fire; the RAMP is what says whose it is - Ahmed yellow and amber, Big Mo
-  crimson and white. Nobody should have to check which boss they are fighting.
-- **A boss's wind-up tint is the base's, until his palette says otherwise.**
-  enemy_base fades a winding enemy towards amber, which is free legibility for
-  anything with hue in it and wrong for anything without: Silverman is six exact
-  greyscale values, so a multiply lands between two rungs of the only thing he
-  is made of. He overrides `_windup_tint()` to white and draws his telegraph on
-  the SHEET instead, in `dull` steps. His idle already rests at the brightest
-  rung, so a wind-up can only ever dim him - worth knowing before designing an
-  attack for a boss whose ramp runs one way.
-
-**A boss can also TALK, and it is the same deal a third time.** He carries a
-`Lines` child naming a file of them (`game/bosses/ahmed/taunts.gd`), boss_base
-fires the cues off moments the fight already has - an attack beginning, a hit
-landing, the end - plus two it does not: the frame he first sees the player,
-and the player refusing to come near him, which is the taunt. He emits `said`
-and game.gd puts it on `ui/subtitle/`, which is deliberately NOT the dialogue
-box: that one types, waits for a keypress and takes the player's hands, and in
-a fight a line that eats the attack key is a line that gets you hit. **All
-three talk, and all three are VOICED** - Ahmed twenty-three clips, Big Mo
-twenty-two, Silverman twenty - cut by `tools/voice/` with the read tagged per
-cue, and the subtitle holds for as long as the recording runs. Nothing in the
-game changed to make that work - a line always carried its clip path - see
-game/bosses/CLAUDE.md's The mouth.
-
-**Silverman says everything twice: Swedish, then the same thing in English.**
-It is one `text` with a `\n` in it, one clip and one generation - the subtitle
-draws two rows and the recording runs through both, and `enemy_lines.gd` never
-learns a second language exists. That is the point rather than a detail: a
-second field, a second clip or a second timer would have been a rewrite of a
-node three bosses and two enemies share, for one boss, and the only thing that
-changed anywhere was `cut.py` turning that `\n` into a real break on its way to
-the API. What it COSTS is length - his lines run twice as long and stand three
-rows tall - so he says fewer of them (`cue_seconds` 12 against the default 9,
-14 on both attack cues), and anything added to his file has to be short in both
-languages. He is Silverman on the bar, on the floor card and in the lines that
-pass you up to him, and nothing in his own lines says what he is to the other
-two, on the rule that a name passed up the stairs is the whole threat. He has
-ONE name - id, folder, floor, bar and every line agree - so unlike Ivo and
-Domimi he is not in *Names on screen are not the ids*.
-
-**A boss makes noise the way he gets a health bar: by owning the files.**
-`game/enemies/enemy_audio.gd` is an `Audio` child holding id -> stream, and
-boss_base fires `hurt`, `stagger` and `concede` on whichever of them exist -
-Ahmed adds his burning axe and his beaten breath himself. Sound is the first
-thing in this project that is NOT generated from data, so it brings back the
-one thing everything else was built to avoid: **a `.wav` needs an import pass,
-and an import pass needs the editor CLOSED.** Every miss is therefore legal by
-design - a missing sound plays nothing and the fight is unaffected - so a
-fresh checkout and the headless suites both work before anyone has imported
-anything. Levels are baked into the files themselves; there is no bus layout
-and no volume setting yet, so a file's own level IS the mix.
-
-His sounds are positional and live in his scene because they are HIS; the
-tracks are neither, and live on the `Music` autoload - see Music below for the
-half of the audio that is not standing anywhere in particular.
-
-game/bosses/CLAUDE.md has all of it, and the three fights are three different
-SHAPES on the one cycle: Ahmed a menu (the attack suits the range), Big Mo a
-rhythm (jab, jab, then a hook OR an uppercut, which want opposite answers -
-plus a shell, a clinch and a raging flurry that each punish a kind of greed),
-Silverman a ladder (three phases, each adding a mechanic, interrupts
-narrowing to none).
-
-Which enemies a room gets is per-biome data (type + position), and positions
-keep every sight radius clear of the WALK, spawns and both stands - the way
-between the doors stays safe in every biome, and the flow and combat tests
-depend on it. On the ten floors that say nothing about their shape the walk is
-the straight band x 246-300 at every y, and clearing its EDGE by the type's own
-radius is the rule, which gives a hard band per archetype: a guard (80) needs
-x <= 166 or x >= 380, a brute (90) x <= 156 or x >= 390, a wraith (120)
-x <= 126 or x >= 420, a warden (130) x <= 116 or x >= 430. The rule never
-changes and those NUMBERS are only its answer for one room: the call floor's
-walk has two turns in it and the marble hall's is 64 px west of every other
-floor's, so both carry their own `lane` and both are asked rather than assumed
-(`level.lane_clearance(at)`).
-
-**Four floors carry their own walk.** The call floor is not a rectangle - three
-legs with two turns in them, authored as `lane` in its biome and baked into the
-level scene beside its title. The rule is unchanged and the ARITHMETIC is what
-moved: a body clears the walk by its sight radius, and on a shaped floor that is
-a distance from three rectangles rather than a number either side of one. Ask
-the room (`level.lane_clearance(at)`, `level.walk_lane()`) rather than writing
-246 down again - a floor that says nothing still answers with the band every
-floor kept. The innovation lab is the one that spends the most on this: six
-legs and five corners, each crossing hugging the wall its link arrives at, so
-the body of every hall is left for the fight rather than cut in half. `tests/test_slam.gd` enforces the brute's band across the whole
-chain by reading the built level scenes off disk, and `tests/test_dogleg.gd`
-enforces the thing underneath it: that every floor's walk is floor end to end,
-so a room nobody can cross fails there rather than in play.
-
-**The reskins hold floors 1-9 and 12; the originals appear only from hellfire
-up**, where the building stops pretending to be an office and the people in it
-stop looking like colleagues. Types, seams, tuning and the art pipeline:
-game/enemies/CLAUDE.md.
-
-**And every enemy makes noise on the bosses' exact terms: by owning the
-files.** The `Audio` child that gives a boss his grunts is the same node -
-`game/enemies/enemy_audio.gd`, which moved here from `game/bosses/` the day a
-second feature wanted it, the placement rule doing its job for the third time
-in this folder. enemy_base fires five cues off moments the cycle already had -
-`windup`, `hit`, `hurt`, `stagger`, `die` - so an enemy gets them by having the
-WAVs and nothing else, and one that has none is silent with no branch anywhere.
-Sound is per enemy, never per archetype: a reskin is no more a recolour here
-than in its sheet, and the office boy's wrench must not ring like the guard's
-sword.
-
-Three things generalize out of it, and two are traps the bosses never hit:
-
-- **A death cannot be played the ordinary way.** `die` fires on the frame the
-  body is `queue_free`d and every player under it is freed too, so the normal
-  path starts a sound and destroys it in the same frame. It is handed to the
-  enemy's PARENT instead. No boss has this problem - he concedes rather than
-  dying and is never freed.
-- **`hit` fires only on a blow that landed.** A swing through empty air already
-  said its piece on the wind-up, and an impact over nothing teaches the player
-  that the sound does not mean they were hit.
-- **The wraith's drain is the one sound that is a STATE**, and the one enemy
-  that needs one: nothing is swung and nothing lands, so it is otherwise the
-  only threat in the game you cannot hear. It is a sealed loop, with both of
-  the two ways a loop ships broken guarded against - see Music below, and
-  game/enemies/CLAUDE.md's The noise for the rest.
-
-Enemies are levelled UNDER the bosses and that is arithmetic, not deference: a
-boss floor holds one boss, hellfire holds seven bodies.
-
-**And two of them TALK, on the third pass of the same deal.** `social_media`
-and `call_center` carry a `Lines` child naming a file of mutters, and
-`game/bosses/boss_lines.gd` moved to `game/enemies/enemy_lines.gd` to serve
-them - unchanged, because the second user needed exactly the node the first
-one had. `_lines` and `_say` are enemy_base's now; a boss's override adds only
-the SUBTITLE, which is the one part of talking that was ever his. **A boss is
-addressing you; an enemy is being overheard**, so a mutter deliberately never
-reaches the subtitle box - four of them would fight over one box, and putting
-a grumble on screen turns eavesdropping into being spoken to.
-
-The cue is POLLED rather than fired, which no other line in the game is: it
-answers to no moment, so enemy_base asks every 2 s and is refused most times,
-and the `Lines` child's own `cue_seconds` does the real pacing. The first ask
-is scattered across a whole cooldown or a room speaks in chorus. Both mutter
-at -31 dBFS - under the warden's own telegraph at -29, because a wind-up is
-information and this is decoration.
-
-The joke is that the line and the mechanic are the same thing: she is a wraith
-draining your health and every line is about having no time, and he is a
-warden who takes your speed and every line is a call centre asking you to
-hold. `tools/voice/cut.py <id>` cuts both, the bosses' pipeline unchanged.
-
-**Every floor but the lobby has at least one later beat, and the ordinary
-floors have two or three** - `reinforcements` in its biome, a finite authored
-list of groups, each walking in through a named door at a known cue. More than
-one is pacing rather than population: a floor with a single beat has one
-surprise in it and the player walks the rest of the room, and beats alternating
-between the two doors are what keep a room from being finished early. Floor 1 is the exception for one reason and it is not squeamishness: a beat
-is cued by kills, and a room deliberately empty of enemies can never reach one,
-so an `after_kills` there would sit in the data forever without firing. The
-lobby staying crossable without a fight and the lobby having no beat are the
-same decision. It is
-deliberately not waves: **a room is an ARRANGEMENT, not a population**, and
-respawns flatten every floor's fight into the same one because a room's shape
-only matters while its enemies are placed. A beat fires ONCE, and once the room
-is clear it stays clear. **What happens once it is clear is the THIRD
-beat** - `relief`, the only one that is not a fight: Ivan walks in with a heart
-per head (see NPCs). It is a separate node beside the second because the two ask
-opposite questions of the same room - is the fight far enough along, and is it
-over - and "over" has to skip a conceded boss, who is in the `enemies` group and
-is never freed.
-
-Reinforcements are the only enemies in the game with no authored position -
-they name a spawn marker instead - and three things follow that are worth
-knowing before touching a beat:
-
-- **It is the one place head count lives.** A beat's `enemies` is a base group
-  that never scales; `per_head` is added once per head beyond the first. The
-  split exists because multiplying one list gave every extra player a second
-  `call_center`, and two slowers do not stack a slow, they refresh it - a
-  permanently slowed player cannot sidestep a telegraph. `call_center` is in no
-  floor's `per_head`. The only other things that scale with players are Ivan's
-  hearts and a boss's health (see Enemies' boss paragraph); for enemies the
-  rule is Difficulty's: more bodies, never a worse one.
-- **A boss floor's cue is `at_boss_fraction`, not `after_kills`** - a share of
-  his max health, because that max grows per head. A boss is in
-  the `enemies` group and is never freed, so he never counts as a kill and the
-  count can only ever reach 0 there. His adds all live in his beat and his
-  `enemies` list stays empty: an add arriving at a threshold is a PHASE of the
-  one fight, where the same add placed in the arena is furniture standing in it
-  from the first frame.
-- **A beat is the only legal way to put a body on the door line.** Placements
-  must keep every sight radius off it (see above); an arrival has no position to
-  check. The executive floor's chokepoint is the case - the gap is on the line -
-  which is what the biome `spawns` key is for.
-
+**Every floor but the lobby has at least one later beat** - `reinforcements` in
+its biome, a finite authored list of groups, each walking in through a named
+door at a known cue. A beat fires ONCE and a cleared room stays clear: **a room
+is an ARRANGEMENT, not a population**, so there are no respawns. A beat's
+`enemies` never scales and `per_head` is added once per head beyond the first
+(`call_center` is in no floor's `per_head` - two slows refresh rather than
+stack); a boss floor's cue is `at_boss_fraction`, never `after_kills`; and a
+beat is the only legal way to put a body on the door line. The third beat
+(`relief`, Ivan) and the fourth (`briefing`, Dominique) are the NPCs'.
 game/levels/CLAUDE.md has the rest.
 
 ## Names on screen are not the ids
@@ -690,226 +415,60 @@ an NPC never learns that a subtitle box exists. HR stands in the lobby and her
 induction is the first one built: a tour she walks and tows the player through,
 ending in a contract that cannot be refused.
 
-**She is also VOICED** - twenty-three clips out of the same `tools/voice/`
-Ahmed's barks come from - and, as with him, nothing was rewritten to allow it:
-a beat always carried its clip path, and the dialogue box always took one. What
-the clip buys is the TYPING RATE, which is now the line's length over the
-clip's, so the subtitle finishes as she stops rather than racing her. A beat
-with no clip, or one not yet imported, is silent and types at the flat rate, so
-every unwritten conversation in this game still reads. Dialogue:
-game/dialogue/CLAUDE.md.
+**All three are VOICED**, out of the same `tools/voice/` the bosses' barks come
+from, and nothing was rewritten to allow it: a beat always carried its clip
+path. What a clip buys is the typing rate - the line's length over the clip's -
+so a beat with no clip, or one not yet imported, is silent and types at the
+flat rate. Who sounds like what: game/npcs/CLAUDE.md's *Their voices*.
 
 **Ivan heals, and he is the only healing in the game from floor 2 up.** He is
-also the only person in it who ARRIVES: a floor with `relief` in its biome walks
-him in through the door the player came by once the room is finally clear, and
-he crosses to an authored spot and waits there (`game/levels/relief.gd`, the
-third beat - see Enemies). At the end of his lines he throws **one heart per
-head**, once per visit, and the count is `game/heads.gd` - the same function a
-second beat's `per_head` reads, which is why that function is a file rather than
-a line in either of them. Six floors have him: call_center, ahmed_office,
-conflict_resolution, asset_recovery, executive_floor and silverman_office - the
-floor before the first boss, and then after every big fight to the roof.
-Everything else about him is npc_base, and `ivan.gd` is the only NPC script in
-the folder.
+the third beat (`relief`): once the room is finally clear he walks in by the
+door the player came by, crosses to an authored spot, and at the end of his
+lines throws **one heart per head** (`game/heads.gd`), once per visit. Six
+floors have him, and each names its own conversation
+(`game/npcs/ivan/after_<floor>.gd`), because one shared set read as a vending
+machine with a voice. Every one ends on "Eat.", the word his gift lands on.
 
-**He says a different thing on every one of those six floors**, and that cost
-six files and no code: `conversation` is placement, so each floor's biome names
-its own (`game/npcs/ivan/after_<floor>.gd`). One shared set of lines was the
-first version and it was wrong in a way only repetition shows - a man who walks
-in after a fight and says something that fits no fight in particular reads as a
-vending machine with a voice, and a player who has heard it three times has
-stopped reading the box he cannot skip. What keeps six files one character is a
-ROUTINE rather than a script: he talks about the room he has just walked into,
-he knows everybody in it by what they order - Ahmed complains about his soup,
-the office boys fix his ovens - and the last word is "Eat." every time, because
-that is the word ivan.gd's gift lands on. The rest, including why the finale
-names nobody, is `after_call_center.gd`'s header.
-
-**He is VOICED too** - eighteen clips out of the same `tools/voice/`, three per
-floor, in English with an Eastern-European accent, which is the only direction
-his lines needed: he is the one man in the building who is glad to see you, and
-he is heard over a room the player has just finished fighting in, so an accent
-that ever costs a word would cost the moment it was written for. His clip names
-are namespaced by floor (`call_eat`, `ahmed_axe`) because all six conversations
-cut into one folder and nothing dedupes across them - and every floor really
-does end on the same word.
-
-**Dominique is the FOURTH beat, and the only one that hands over information.**
-A floor with `briefing` in its biome walks him in once the room is clear to say
-what is standing on the floor above - and it is the three floors that sit under
-a boss, which is the rule rather than the list: `tests/test_dominique.gd` reads
-the whole chain off disk and fails if a boss ever gets one without a warning
-under it. He comes down the NORTH door, the one the player is about to go up,
-where Ivan comes up the south one - two of the three floors have both, and one
-doorway cannot take two 64px bodies on one cue. It is the same
-`game/levels/relief.gd` doing both, because that file has never named anybody:
-the beats are told apart by node name and biome key, the way the prop shelves
-are told apart by role. His lines are one file per boss
-(`game/npcs/dominique/before_<boss>.gd`) and he is voiced too - twelve clips,
-bold and Slavic and impatient, deliberately not Ivan's warmth: he is glad to see
-you, and Dominique has given this speech before to people who did not come back.
+**Dominique is the FOURTH beat** (`briefing`), and the only one that hands over
+information: on the three floors under a boss he comes down the NORTH door once
+the room is clear and says what is standing upstairs, one file per boss
+(`game/npcs/dominique/before_<boss>.gd`). `tests/test_dominique.gd` reads the
+chain off disk and fails if a boss ever ships without one.
 
 The rest - the pipeline's three steps, why the robe goes down before the head,
-and what a third NPC would need: game/npcs/CLAUDE.md.
+and what a third NPC would need: game/npcs/CLAUDE.md; the two beats themselves:
+game/levels/CLAUDE.md's *Relief* and *Briefing*.
 
 ## Generated resources - regenerate, don't hand-edit
 
-- `ui/theme/menu_theme.tres`        <- tools/build_ui_theme.gd
-- `icon.svg`, `splash.png`          <- tools/build_icon.gd: the default
-                                       character's idle frame as a portrait
-                                       in a LinkedIn-style #OPENTOWORK frame,
-                                       64 x 64 pixels written as crisp rects.
-                                       It reads the cast's FRAMES, so a
-                                       redrawn idle row reaches the icon on
-                                       the next run. splash.png is the SAME
-                                       picture at 4x for the boot splash,
-                                       which takes nothing but a PNG
-- `game/player/characters/*_frames.tres`
-                                    <- tools/build_characters.gd, which
-                                       slices whatever is on disk - and
-                                       seeded rows 21-23 (the arc) of
-                                       game/player/src/character_cc0.png
-                                       ONCE by way of tools/arc_pose.gd, on
-                                       the enemies' rule: it paints them only
-                                       while the sheet is too short to hold
-                                       them, and never overwrites a row
-- `game/enemies/*/*_frames.tres`    <- tools/build_enemies.gd, see below
-- `game/npcs/*/*_frames.tres`      <- tools/build_npcs.gd: seeds
-                                       game/npcs/<id>/src/<id>.png ONCE from
-                                       the roster recipe by way of
-                                       tools/npc_art.gd (double height, robe),
-                                       then slices whatever is on disk, 64px
-                                       cells
-- `game/npcs/ivan/heart.tscn`       <- tools/build_npcs.gd, and it is the one
-                                       thing that generator writes which is not
-                                       an NPC: the heart Ivan throws, his and
-                                       not a level's, because a room's heart
-                                       takes the room's palette and his is the
-                                       same red on every floor
-- the NPCs' looks & robes           <- game/npcs/roster.gd (data, edited by
-                                       hand)
-- `game/bosses/*/*_frames.tres`     <- tools/build_bosses.gd: seeds
-                                       game/bosses/<id>/src/<id>.png ONCE from
-                                       the painter tools/bosses/<id>.gd (which
-                                       draws game/bosses/<id>/poses.gd), then
-                                       slices whatever is on disk, 64px cells
-- `game/enemies/*/sfx/*.wav`         <- tools/sfx/make.py enemies, the second
-                                       thing here that talks to a web API and
-                                       the second that costs something to run.
-                                       Mechanism in `make.py` + `wav.py`, the
-                                       prompts, lengths and levels in
-                                       `enemies.py`, on cut.py's exact split.
-                                       Re-shaping is FREE: `--relevel` re-trims
-                                       and re-levels from the untouched exports
-                                       in `game/enemies/<id>/src/sfx/`, so only
-                                       a new PERFORMANCE costs credits
-- `game/player/sfx/*.wav`           <- tools/sfx/make.py player, on the
-                                       bestiary's pipeline unchanged: the
-                                       recipe (prompts, lengths, levels) is
-                                       `tools/sfx/player.py`, the engine is
-                                       shared, and `--relevel` re-shapes from
-                                       `game/player/src/sfx/` for free. ONE set
-                                       for all ten characters, because they
-                                       share one body
-- `ui/sfx/*.wav`                     <- tools/sfx/ui.py, and it is the ONE sound
-                                       in the game that is generated the way
-                                       the tilesets are: three tones and an
-                                       envelope is DATA, so there is no API, no
-                                       key, no cost and no `src/` beside the
-                                       output - run it twice and get the same
-                                       bytes. The recipe (waves, glides,
-                                       envelopes, per-cue peak) is the whole
-                                       truth about what comes out, and the same
-                                       per-sample loop is written a second time
-                                       in JavaScript so the audition page these
-                                       were picked on makes the identical noise
-- `game/enemies/{social_media,call_center}/sfx/voice/*.wav`
-                                    <- tools/voice/cut.py <id>, the bosses'
-                                       pipeline unchanged. WHAT they mutter is
-                                       game/enemies/<id>/mutters.gd and is read
-                                       from there; how it is delivered is
-                                       tools/voice/<id>.py
-- `game/bosses/ahmed/sfx/voice/*.wav`
-  `game/bosses/big_mo/sfx/voice/*.wav`
-  `game/bosses/silverman/sfx/voice/*.wav`
-  `game/npcs/hr_lady/sfx/voice/*.wav`
-  `game/npcs/ivan/sfx/voice/*.wav`
-  `game/npcs/dominique/sfx/voice/*.wav`
-                                    <- tools/voice/cut.py, the only generator
-                                       here that COSTS something to run and the
-                                       only one that is not deterministic: a
-                                       re-cut line is a new performance, so
-                                       takes that were listened to and approved
-                                       are pinned in the recipe's KEEP and
-                                       skipped. Its data is the delivery;
-                                       WHAT is said stays with the mouth that
-                                       says it and is read from there.
-                                       **Two shapes of mouth, one driver**: a
-                                       boss shouts on CUES and his clip is
-                                       named after the cue and the pick
-                                       (`taunt_1.wav`, derived); a conversation
-                                       is a flat list of beats and its clip
-                                       name is AUTHORED - read back out of the
-                                       `voice` path the beat already carries
-                                       for the game to load. That split is not
-                                       tidiness: lines get written into the
-                                       MIDDLE of an induction, and a numbered
-                                       name would renumber every clip after the
-                                       insert and re-cut, and re-bill, lines
-                                       nobody touched.
-                                       A `\n` in a line is a real break by the
-                                       time it reaches the API: Silverman's
-                                       lines are Swedish, a break, then the
-                                       same thing in English, and that is ONE
-                                       generation because v3 changes language
-                                       mid-read. `--verify` collapses
-                                       whitespace before it compares, or the
-                                       words either side of the break weld into
-                                       one and every clip he has reads back as
-                                       a DIFF on a word that was never wrong
-- sheet shaping & slicing engine    <- tools/character_art.gd (shared by both)
-- a BIG enemy's seed                <- tools/enemy_art.gd, the 32 -> 64 doubling
-                                       build_enemies.gd runs when a roster entry
-                                       carries `frame: 64`. Deliberately not
-                                       tools/npc_art.gd bubbled up: that one
-                                       rebuilds the figure into a robe, this one
-                                       doubles it whole so the attack rows
-                                       survive. Both keep the feet's ORIGINAL
-                                       clearance from the bottom of the cell, so
-                                       a 64px body stands on a 32px body's
-                                       ground line
-- playable cast & recipes           <- game/player/characters/roster.gd
-                                       (data, edited by hand)
-- bestiary, sheet paths & seed recipes
-                                    <- game/enemies/roster.gd
-                                       (data, edited by hand)
-- `game/levels/*/tileset.tres`, `doorway_out.tres`, `doorway_back.tres`
-                                    <- tools/build_biomes.gd (the ROOM's art,
-                                       and the only art that is a file)
-- `game/levels/*/<biome>.tscn`, `door.tscn`, `props/<shelf>/*.tscn` (art
-  embedded in each; enemy and prop instances placed in the level scene)
-                                    <- tools/build_levels.gd, see below, which
-                                       asks tools/plan.gd what shape the room
-                                       is and paints what it is told
-- every picture of a thing standing in a room
-                                    <- tools/props/<shelf>/<type>.gd, one file
-                                       per prop shelved by kind (furniture/,
-                                       hardware/, signs/, markings/,
-                                       openings/, fixtures/);
-                                       tools/props.gd is the facade that finds
-                                       them BY FILENAME across the shelves,
-                                       and _brush.gd is the shared painting
-                                       kit + pixel font
-- chain order + per-floor helpers   <- tools/biomes.gd
-- each floor's palette, furniture and enemies
-                                    <- tools/biomes/<level>.gd, one data file
-                                       per floor (edited by hand)
-- project settings & input map      <- tools/setup_project.gd
-- stable ids in regenerated files   <- tools/stable_ids.gd (both level
-                                       generators call it around every save,
-                                       so a re-run with unchanged data is a
-                                       byte-identical file; run it alone to
-                                       normalize scenes without regenerating)
+Almost everything in the repo that is not a script was written by a generator
+in `tools/` and is overwritten by its next run, so change the generator or its
+data, never the output. The full table - every output, what writes it, and what
+each one owns - is tools/CLAUDE.md's *What every generator writes*. In short:
+
+- **Data, edited by hand**: the cast (`game/player/characters/roster.gd`), the
+  bestiary (`game/enemies/roster.gd`), the NPCs (`game/npcs/roster.gd`), the
+  chain order (`tools/biomes.gd`) and each floor's palette, furniture and
+  enemies (`tools/biomes/<level>.gd`).
+- **Frames**: every `*_frames.tres` under `game/player/characters/`,
+  `game/enemies/`, `game/npcs/` and `game/bosses/`, from `build_characters.gd`,
+  `build_enemies.gd`, `build_npcs.gd` and `build_bosses.gd`. Each SLICES the
+  sheet on disk; a sheet under a `src/` folder is seeded ONCE when missing and
+  is hand-owned art after that, never overwritten.
+- **Rooms**: `game/levels/*/tileset.tres` and the doorways from
+  `build_biomes.gd`; level scenes, doors and every prop scene from
+  `build_levels.gd` (below), each prop painted by
+  `tools/props/<shelf>/<type>.gd`.
+- **The rest**: `ui/theme/menu_theme.tres` (`build_ui_theme.gd`), `icon.svg`
+  and `splash.png` (`build_icon.gd`, from the default character's idle frame),
+  project settings and the input map (`setup_project.gd`), and
+  `tools/stable_ids.gd`, which keeps a re-run with unchanged data
+  byte-identical.
+- **Sound**: `ui/sfx/` from `tools/sfx/ui.py`, free and deterministic. The
+  enemies' and the player's SFX (`tools/sfx/make.py`) and every voice clip
+  (`tools/voice/cut.py`) COST money and are not deterministic: `--relevel`
+  re-shapes from the untouched exports in `src/` for free, and approved takes
+  are pinned in a recipe's `KEEP`.
 
 Run: `<godot> --headless --path . --script res://tools/<script>.gd` - or, from
 inside the editor, **Project > Tools > za-build**, which is the same commands
@@ -981,436 +540,64 @@ a MEDIUM number.
 
 ## Music
 
-`autoload/music.gd` (`Music`) is an autoload for one reason: the front end is
-THREE scenes - main menu, character select, and back out of a finished run -
-and `change_scene_to_file` frees the old one. A player living in main_menu.tscn
-would restart the track the moment PLAY is pressed, which is the one seam a
-menu loop exists to hide. Above the tree, it simply keeps playing.
+`autoload/music.gd` (`Music`) plays the tracks, and it is an autoload because
+the front end is three scenes and a track must carry across all of them. Three
+things to know before touching it or adding a track:
 
-`play(path)` is **idempotent on the track**, and that is the whole trick: every
-front-end screen asks for the same track in its `_ready` without knowing which
-screen ran before it, and only the first ask starts anything. No screen has to
-know whether music is already playing. The no-op is decided on the path Music
-itself holds and **never on `AudioStreamPlayer.playing`** - under a dummy audio
-driver, which is every headless run and every test, `playing` is false even
-while a stream is assigned and looping, so a guard that trusted it would
-restart the track on every scene change in exactly the situation nobody can
-hear. `track()` is the readout, for callers and tests alike. game.gd calls
-`fade_out()` in `_ready`, so the menu carries over the load and goes out under
-the first room's fade-in.
+- **`play()` and `fade_to()` are idempotent on the PATH Music holds, never on
+  `AudioStreamPlayer.playing`**, which is false under the dummy driver every
+  headless run uses. That one rule is why a door between two ordinary floors
+  does not restart the bed.
+- **Every floor plays something, and a boss is the only thing that interrupts
+  it**: `Music.DEFAULT` is the bed, a boss's theme comes up with his bar and
+  goes with it, and three floors name their own track with a `music` key in
+  their biome - the lobby, and the finale on the last two floors.
+  `tests/test_music.gd` reads that rule off disk.
+- **A generated track does not loop, and is not levelled, until it has been
+  made to**: a click at the seam, an export that fades or dries up at its end,
+  and a theme that buries the boss talking over it. Every track and voice clip
+  also imports at 24 kHz, which a NEW clip does not get by default.
 
-**Every floor plays something, and a boss is the only thing that interrupts
-it.** `Music.DEFAULT` (`assets/music/level_loop.wav`) is the bed, and game.gd
-asks for it in exactly the place it used to ask for silence: after the hunt for
-a boss with a `music` on him, where a floor with no boss and a boss floor whose
-boss has already conceded both land. A conceded boss hands it back on the same
-signal that used to take his theme away - the fight ending is not the floor
-ending, and Ivan walks in on half of those rooms.
-
-The ask is `fade_to()` rather than `play()`, and it is the same idempotence
-trick one level up: **a door between two ordinary floors must not restart the
-bed**, so asking for the track already playing is a no-op and the music crosses
-the building with the player. What `fade_to` adds is the handoff - there is ONE
-player, so no crossfade is possible, and a track that is on its way out has to
-finish leaving before the next one starts. That queue is why the first room
-does not cut the menu off mid-fade: `_ready` asks the menu to leave, the lobby
-asks for the bed, and the bed comes up when the fade lands. An explicit `play()`
-or `stop()` always beats a queued handoff.
-
-The loop flag is set on the stream in code, not trusted to the `.import`, for
-the same reason `game/enemies/enemy_audio.gd` sets it - and unlike a boss's
-sounds, which are HIS and live in his scene, the track paths are a short
-catalogue of constants on Music, because a path spelled out in three screens is
-the one that goes stale when a file moves.
-
-**Audio lives in `assets/music/`** - the one folder, on the `assets/` rule that
-names audio outright as a thing shared across features. A track that needed
-work before it could loop keeps its untouched export beside it in
-`assets/music/src/`, on the enemies' and bosses' exact terms: `src/` is the
-hand-owned original, the file above it is what the game plays.
-
-**Every track and every voice clip imports at 24 kHz**, not the 48 they are
-exported at: `force/max_rate` on in each `.wav.import`, which halves 23 MB of
-audio to 11.5 in every build. It is Godot's own resampler AS-IS, and that
-resampler has no low-pass - at 48 -> 24 it keeps every other sample, so
-treble above 12 kHz folds down rather than being cut. That was measured
-(about -21 dB on Domimi and the social media mutter, under -40 on most) and
-then judged by ear on an A/B page, and as-is won; a pre-filter is the fix if a
-future line ever sounds gritty. Godot gives a NEW clip a fresh `.import` at its
-48 kHz default, so a line cut tomorrow ships at twice the size and plays fine -
-`tests/test_music.gd` sweeps every `sfx/voice/` and `assets/music/` import off
-disk and fails on it. SFX and the menu's `ui/sfx/` stay at 48 kHz.
-
-**Three floors are the exception to all of that, and a floor's track is not a
-boss's.** A biome may carry a `music` key, which the generator writes into the
-level scene beside its title and game.gd reads where it used to say
-`Music.DEFAULT`. Two of the three are the end: the executive floor and the
-penthouse both name `finale_loop.wav`, so the finale comes up as the lift doors
-open on floor 11 and is still playing through the last fight. It had to hang on the
-floor and not on Silverman for the reason a theme is HIS: a boss's track starts
-where his bar goes up and leaves where it clears, so it can never cover the
-floor below him, and one on him here would interrupt this twice in the last
-four minutes of the game. He therefore declares no `music` at all - the one
-boss in the building who doesn't - and `tests/test_music.gd` checks that
-absence, because nothing else would notice a line being added to his scene.
-Crossing the door costs nothing because `fade_to` is idempotent on the path,
-which is the same trick the bed already relied on, one level up.
-
-**The third is floor 1, and it is the same mechanism used for the opposite
-reason.** The lobby names `lobby_loop.wav`, which is the slower of the two beds
-- the building above runs on a hard 128 BPM thing, and floor 1 is where a
-player is still finding out which key swings. Music that insists on a pace is
-music arguing with the room. It costs one line in `tools/biomes/lobby.gd` and
-nothing anywhere else, which is the whole point of the key existing.
-
-What it DOES cost is the one door in the first half of the chain that is a real
-handoff: there is one player, so the lobby's track has to finish leaving before
-the bed can start, and the bed is therefore still coming up when the studio is
-already standing. Anything checking the bed at the studio's own door is
-checking it a fade too early - `tests/test_flow.gd` reads it a floor further
-on, and its no-restart pair moved to the hub's door, where the bed has been
-playing since Ahmed gave in. Every other ordinary door in the building is
-still the no-op it always was.
-
-And the RULE is now three floors rather than two: `tests/test_music.gd` reads
-the whole chain off disk and fails if any other floor names a track, if the
-finale's two are not the LAST two, or if the lobby's is not floor 1.
-
-**A generated loop does not loop**, and it fails in THREE different ways. The
-first is the seam: an ElevenLabs export ends mid-waveform, so the last sample
-steps straight to the first and clicks once per pass - on `menu_loop.wav` that
-step was 22376 of 32768, and every 30 seconds. The fix is a 12 ms equal-power
-crossfade of the tail over the head, which costs 12 ms of length (0.04% across
-a 30 s loop, well under a 32nd note) and takes the step to 33.
-
-The second is worse and is what `lobby_loop.wav` arrived with - floor 1's
-track, which was the building's bed when this was written: **the export
-ENDS**, fading out over its last 3.75 s, so the loop dies away to silence and
-then restarts at full level - a hole once a minute rather than a click. A
-crossfade cannot fix that, because there is nothing left at the end to fade.
-The music has to be cut back to the last whole BAR before the fade begins, and
-only then crossfaded. That is the one measurement worth taking on a new track
-before anything else: the tempo, so the cut lands on the grid. That track is
-90 BPM, so a bar is 2.667 s and the loop is 20 of them. Two traps sit in that
-sentence. The BPM is the one the generator was ASKED for and not the one it
-delivered - this export runs at 90.019, which is 11 ms of drift by the
-twentieth bar and therefore longer than the crossfade - and the thing being
-matched at a loop point is waveform PHASE, which is sharp at the millisecond:
-cutting at the nominal 53.333 s rather than the measured 53.322 took the
-tail-against-head correlation from 0.875 to -0.12. So the bar count picks WHICH
-peak to cut at and the measurement says where it is - correlate the tail's last
-second against the head's first, swept at sample resolution.
-
-The third is the one `finale_loop.wav` arrived with, and it hides from both of
-the checks the first two taught. **The export ends by drying up rather than by
-fading down**: the hits keep landing at full level to the last bar - the
-on-beat quarter-seconds measure +2.0 dB against the track's own body at 59.5 s,
-which is to say nothing whatever is fading - while the SPACE between them
-empties out, the off-beats falling -3.0, -4.6, -6.1, -11.6, -20.9 dB across the
-last four seconds as the reverb tail is pulled away. Peak level says the track
-is fine. The waveform's outline says the track is fine. What loops is a room
-that goes dry for two seconds once a minute and then snaps back wet, which
-reads as a skip rather than as a fade. The measurement that finds it is an
-envelope in quarter-second buckets with the ON-beat and OFF-beat buckets read
-SEPARATELY; the fix is the second failure's fix - cut back to the last whole
-bar before the off-beats start to move (56.0 s, bar 28, where they part
-at 56.75).
-
-And a measurement that works on a sparse track does not work on a dense one.
-The tail-against-head correlation above is how `lobby_loop` was placed, and on
-this track it is noise: a broadband sweep peaked at +0.20 on a cut 40 ms off
-the grid - a third of a 16th note, an audible stumble - because hats and noise
-are uncorrelated between two passes of the same music and drown the alignment
-they are averaged into. Swept on the LOW BAND alone (one-pole at 300 Hz, the
-kick and the sub, which is what carries the grid) the same track gives a single
-sharp peak of +0.86, falling to +0.32 sixty samples either side. **Correlate
-the band that keeps the beat, not the whole mix.**
-
-Check all three on any new music before wiring it up: the click is obvious once
-heard and invisible in a waveform view, the fade is invisible in the waveform's
-shape until you look at where the last seconds of level went, and the dry-up is
-invisible in both, because the hits never move.
-
-**Two of the three are avoidable in the ASK, and the current bed is the proof.**
-It was asked for at 128 BPM as "a single continuous 32-bar groove at constant
-intensity - no intro, no build, no drop, no fade, and the last bar as loud and
-as busy as the first". 32 bars at 128 BPM is 60.000 s, which is exactly the
-length ElevenLabs exports, so the generator had nowhere to put an ending: it
-came back with no fade and no dry-up (its last 8 s alternate +2.0 / -2.3 dB
-about the body, on-beat against off-beat, right up to 59.75 s) and measured
-128.00 BPM to within a millisecond over 30 bars. Nothing had to be cut back to
-a bar line - the whole file WAS the loop - and only the seam needed the 12 ms
-crossfade, which took the step from 39526 of 32768 to 706, the same size as
-this track's own mean sample-to-sample step. **Pick a tempo whose bar count
-lands on the export length and say the last bar must be as loud as the first,
-and the only failure left is the one that is always there.**
-
-**A track a MOUTH plays over is levelled in the speech band, not broadband,
-and Ahmed's theme is why that sentence exists.** Every voice in the game is cut
-to -19 dBFS and every track is trimmed by the one number on Music
-(`VOLUME_DB` -8), so a floor's balance is decided entirely by the level baked
-into its track - and his arrived at -12.5 dBFS, 6 dB hotter than the bed and
-the hottest file in `assets/music/`, peaking -0.2. That put his voice 1.1 dB
-over his own theme, which is to say under it. The broadband number is only half
-of what was wrong: measured at 300 Hz - 4 kHz, where intelligibility lives,
-every other track in the building sits 13-15 dB below its own broadband level
-and his sat 7 dB below it - a midrange-heavy fight theme standing exactly where
-he was talking, 9.7 dB hotter in that band than Big Mo's. **The check is the
-75th-percentile window RMS of the track and of a voice clip, both band-limited
-to 300-4000, with the music's -8 applied; the voice wants to clear it by
-something like 8-13 dB, which is where all three bosses now are.** A track that
-measures fine full-band can still bury a boss, so measure the band he speaks in.
-
-He is also the track that proves the seam check is not optional: his was the
-one file in `assets/music/` with no `src/` half, because it had never been
-through any of this. It needed no bar-line cut and had no dry-up - its last 8 s
-alternate about the body right to 59.75 s, the good-ask case above - but it
-stepped 10413 of 32768 across the loop point against a mean step of 554, and
-clicked once a minute for as long as it had been in the game. The 12 ms
-crossfade took that to 184.
+How Music works: autoload/CLAUDE.md's *Music*. **Read assets/music/CLAUDE.md
+before adding or replacing any track.**
 
 ## Menu sound
 
-`autoload/ui_sound.gd` (`UiSound`) is the menu's own noise: `move` when focus
-steps between options, `press` when one is chosen, `back` when you leave. An
-autoload for Music's two reasons, both of which bite - the front end is three
-scenes, so a press started by PLAY would be freed by `change_scene_to_file` in
-the frame it began (`enemy_audio.gd`'s `play_detached` trap, arriving in a
-menu), and the pause menu runs with the tree PAUSED, which stops a player that
-is not `PROCESS_MODE_ALWAYS`. The files live at `ui/sfx/` rather than in
-`assets/`, on the placement rule: four screens under `ui/` share them, so they
-bubble up exactly one level, to where `ui/theme/` already is.
-
-**Nothing wires itself to it, and the reason it can get away with that is a
-fact worth stating outright: nothing outside the four menu screens ever takes
-focus.** The dialogue box draws its choices as Labels and picks them with its
-own index, the HUD is not focusable, and no room holds a Control. So
-`gui_focus_changed` on the root viewport - with no filter on it at all - is
-already exactly the menus, and `node_added` hooking every `BaseButton` on its
-way into the tree covers the presses. A screen added next month makes noise
-without knowing this file exists.
-
-Three splits are the whole design:
-
-- **Focus GRANTED is not focus moved.** Focus also changes when a screen opens
-  and hands it to its first control, when a panel closes and hands it back, and
-  when a dialog pops - none of which the player did, and a menu that chimes at
-  itself on the way in is the first thing anybody reports. So `move` fires only
-  where focus changed on a frame the player pressed a navigation key, which is
-  precise where "had something else been focused?" is a guess.
-- **`back` is the one cue that is NOT automatic**, and it is `hit` firing only
-  on a blow that LANDED, arriving from the other side of the game. A global
-  handler on `ui_cancel` would look right - one key doing one job everywhere -
-  but the death screen swallows Escape, and a chime on a press that did nothing
-  teaches the player the sound does not mean anything happened. Only the screen
-  handling the press knows it was consumed, so the three that handle it say
-  `UiSound.back()` where they act on it.
-- **The cue is named after what the PLAYER did, not what the screen did**,
-  which is why the Back BUTTON plays `press` while Escape plays `back`. Same
-  outcome, different inputs; one sound per key is the version that cannot
-  drift, and the alternative is this file guessing forever which buttons
-  "mean" back, by name.
-
-A dropdown is the one place that needed its own wiring: a `PopupMenu` is not a
-Control and never takes focus, so its `id_focused` and `index_pressed` are
-hooked too, or the settings page goes silent exactly where it has the most
-options. A cue fires at most once per frame (`player.gd`'s rule for `hit`),
-which makes every honest double-up - a panel and the pause menu behind it both
-seeing one Escape - harmless. A missing or unimported WAV is silence with no
-branch anywhere, so a fresh checkout has quiet menus rather than broken ones.
-
-The sounds are `tools/sfx/ui.py` and are the one generator here that costs
-nothing and returns the same bytes twice - see the table above. Levels are
-baked per cue (`move` -22 dBFS, `press` -18, `back` -20) and pitched to sit
-under the menu bed; `VOLUME_DB` stays 0 because there is still no bus layout,
-so a file's own level IS the mix. Too quiet or too loud is ONE number in the
-recipe and a free re-run.
+`autoload/ui_sound.gd` (`UiSound`) is the menu's own noise - `move`, `press`,
+`back` - and nothing wires itself to it: it hooks focus changes on the root
+viewport and every `BaseButton` entering the tree, which works only because
+nothing outside the four menu screens ever takes focus. Keep it that way. The
+one cue that is NOT automatic is `back`, which a screen says itself where it
+acts on Escape. The files are `ui/sfx/`, made by `tools/sfx/ui.py`. Why each of
+those holds: autoload/CLAUDE.md's *Menu sound*.
 
 ## Online
 
 `autoload/net.gd` (`Net`) is online co-op's one door to the network
-(DESIGN.md's Multiplayer, M2): host a room, join one by its code, leave, and
-keep the party's ROSTER - peer, name, character, route, ping - until the host
-starts the run. It is the ONE place the transport is chosen: online is WebRTC
-introduced through our signaling service, with the spike's three pieces under
-`autoload/net/` (`signal_client.gd`, `rtc_link.gd` - direct first, relay as
-the fallback, and which one it got - and `ping.gd`, the host's own heartbeat);
-`host_local()` / `join_local()` are ENet on a port, which is the same
-MultiplayerAPI with none of the internet in it and what the suites run on;
-offline is Godot's OfflineMultiplayerPeer, a host with no guests.
+(DESIGN.md's Multiplayer): host a room, join one by its code or from the list
+of games, leave, and keep the party's ROSTER until the host starts the run. It
+is the ONE place the transport is chosen - WebRTC through our signaling service
+online, ENet on a port for `host_local()` / `join_local()` (what the suites run
+on), OfflineMultiplayerPeer offline. The rules that hold all of it up:
 
-Four things are load-bearing:
+- **The host is the truth** - for the roster, and in a run for everything but
+  where a body is. A body is its OWNER's, and **the world reaches nobody on a
+  guest** (player.gd's `_world_reaches()`), which is what lets a guest run a
+  room's effects for the look of them without any landing twice.
+- **Joined in the lobby, never mid-run**, and a build on another `WIRE` is
+  refused: two builds that do not speak the same game never meet.
+- **Net changes no scene and spawns nothing**, and never reaches for the root
+  MultiplayerAPI by name - which is what lets two of it live in one process
+  (tests/test_net.gd).
+- **No suite ever asks the real service for anything**: tests/helpers.gd holds
+  `za/test/no_room_list` on, and a suite that wants a list hands it to
+  `rooms_listed` itself.
 
-- **The host is the truth.** A guest is in the party once the host has its
-  hello, and the host sends the whole roster to everybody on every change and
-  once a second besides, pings included. The hello carries `WIRE`, the game's
-  own protocol: two builds that do not speak the same game are refused with
-  `version`, the way the signaling service refuses another `PROTOCOL`.
-- **Joined in the lobby, never mid-run.** `start_run()` sends the signaling
-  service `start`, which refuses every later `join` with `started`, and a
-  hello after the start is refused with `started` too.
-- **It changes no scene and spawns nothing.** `run_started` hands the rows to
-  whoever listens, and nothing in it reaches for the tree's root
-  MultiplayerAPI by name - which is what lets two of it live in one process,
-  each in a SubViewport with an API of its own (tests/test_net.gd).
-- **Which service is one function, `signaling_url()`**: `--signal=URL`, then
-  a web build's own page host, then the LIVE service for a release desktop
-  build (`packaged` and not `dev`), and dev's own for everything else - dev
-  builds and the editor, which is develop.
-
-**The list of games is the signaling service's** (its protocol 3,
-server/signaling/rooms.py's header): EVERY room on the asker's `WIRE`, public
-or private, waiting, full or started, each with a status - `open`, `private`,
-`full`, `playing` - and never a code. A row is joined by an opaque id
-(`Net.join_listed()`): a PUBLIC room lets anybody in that way, a private one
-wants its code as well (`wrong_code`), which is the whole of what private
-means. A code alone still joins any room, so the join link and copies of the
-game from before the list keep working: the service still speaks protocol 2,
-and a room that named no wire is never listed. Anybody may look without being
-in a room (`Net.browse()`, `autoload/net/room_list.gd`, its own socket, asked
-again every 3 s); the host chooses public at `host()` and may change it in
-the lobby (`set_public()`), and may `kick()` a guest there, which also refuses
-that guest's address the room for good. **There is no hidden-address option**:
-it was built and taken out on the owner's word - a guest connects straight to
-the host and falls back to the relay only when no direct route exists. And
-**no suite ever asks the real service for a list**: tests/helpers.gd holds
-`za/test/no_room_list` on in memory, so `browse()` does nothing there, and a
-suite that wants a list hands it to `rooms_listed` itself.
-
-**The way in is the main menu's HOST ONLINE and JOIN ONLINE**, under PLAY, as
-the Open Games preview drew it (https://claude.ai/artifact/PTQxvCxkJ1tkncGw2K6bbb):
-the same character select, told by its `next_scene` to go on to the lobby,
-which on that way only also asks YOUR NAME (Settings' `online` section) - then
-`ui/lobby/`, three screens on one scene, which `ui/lobby/opening.gd` says to
-open on. `lobby.gd` only routes - which screen is up, which one a refusal is
-said on, START into the run - and each screen is a script of its own:
-
-- **Join a game** (`join_view.gd`) is the list and NOTHING else: one row per
-  game (`game_row.gd` - the host's character, name, seats as pips, time zone,
-  STATUS), open first then private, full and playing, nearest time zone first,
-  and one line under it saying what Enter will do with the picked game or why
-  it cannot. Rows are kept by game id across each answer, so the picked game
-  stays picked as the list moves; full and playing rows are disabled buttons,
-  pickable but silent. A private game opens `code_box.gd` for its code.
-- **Host a game** (`host_view.gd`): ROOM: PUBLIC / PRIVATE (public by default,
-  remembered under `online`/`public`), DIFFICULTY, OPEN THE ROOM.
-- **The room** (`room_view.gd`) - option A of the lobby preview, FOUR SEATS:
-  its code and join link (C copies it), one seat per `MAX_PARTY` in the
-  character select's own cards (`seat.gd` - your seat walks and is marked YOU,
-  an empty one is dashed, somebody still connecting is a silhouette), the ping
-  in DESIGN.md's colours with the route under it, the relay warning, START,
-  the host's ROOM: PUBLIC / PRIVATE switch between START and LEAVE, and KICK
-  on every guest's seat - it asks once (KICK?) and goes on a second press
-  inside 3 s.
-
-The lobby is a VIEW of Net and holds no party state; START is Net's `run_started`, and the lobby turns the
-rows into game.gd's `next_party`: this machine's member marked `local` on the
-keyboard, everybody else's carrying its owner's `peer`. The main menu leaves
-any party it finds on arrival, and a party ending under a run (`host_left`)
-takes that machine back to the menu.
-
-**In the run, `game/sync/` keeps the machines in step (M3)**, built by game.gd
-as `Sync` on every machine so both ends sit at one path, and inert offline.
-The host is the truth for everything but where a body is:
-
-- **A body is its owner's**: a member whose `peer` is not this machine's is
-  REMOTE (player.gd's `remote`) - it runs none of the player, and stands where
-  its owner says, thirty times a second (`net_state()` / `apply_net_state()`,
-  `game/sync/bodies.gd`), relayed by the host. Its PICTURE is drawn a beat
-  behind that (below).
-- **The world reaches nobody on a guest** - player.gd's `_world_reaches()`,
-  which makes `take_damage`, `drain`, `apply_slow`, `shove` and `heal` no-ops
-  anywhere but the host. It is the one rule that lets a guest run a room's
-  effects for the look of them without any landing twice. On the host a blow
-  on a remote body is decided there and its health sent to everybody; a slow
-  or a shove is sent to the owner, who carries it (`reached` ->
-  `net_reached()`).
-- **The run is the host's**: deaths, the pool, getting up, the doors (a
-  guest's count but never go) and the end of the run, told to the guests and
-  run there by game.gd's `net_*` functions. Every arrival is a ROOM the host
-  counts, carried on everything only true in one, so a step from the last
-  floor is never drawn on the next.
-- **When to speak**: two machines load at their own speed, so a guest's game
-  tells the host it is up through `Net.arrived()` - Net being the one node both
-  ends always have - and the host opens with a welcome holding the floor, the
-  room, the pool, every body's health and who is down.
-- **Nothing pauses online**: the pause menu and the death screen open over a
-  running game, and game.gd hands this machine's player still hands while one
-  is up. The true hit-stop (`Engine.time_scale`) is solo-only: online the stop
-  holds the PICTURE instead (below).
-- **A guest leaving takes their body with them** (`net_left`), and their row.
-- **The room is ONE snapshot** (`game/sync/world.gd`): twenty times a second,
-  compressed, every `synced` thing in it by its path - an enemy, a boss - and
-  what it looks like. A guest draws each one where the host says
-  (game/enemies/CLAUDE.md's *Online*), and the same message is the only word
-  on what EXISTS: an entry the guest lacks was spawned on the host and carries
-  its scene, so the guest makes one at that path; a thing the guest has and
-  the snapshot lacks is gone, and goes. No spawn or despawn message to lose,
-  arrive out of order or be missed by a guest still fading in. A guest's
-  swing is reported by the attacker (a player's moment, below) and dealt on
-  the host; a beat (`reinforcements.gd`) is the host's alone.
-- **A room's own moving parts ride the same snapshot** (game/levels/CLAUDE.md's
-  *Online*): a CLOCK - the studio, the dolly, the wiring - runs everywhere and
-  is put right only when it drifts, DICE - the scrubbers - are the host's and
-  drawn, and the host alone walks Ivan and Dominique in, throws the hearts and
-  spends a pickup.
-- **A MOMENT is told, not pictured**: what a snapshot cannot carry because it
-  is over by the next one - a boss's line, his every sound and shake, a fire he
-  throws, Silverman's copy and his prism's fan - the host `_tell()`s, and the
-  same thing on each guest hears it in `net_event()` (game/bosses/CLAUDE.md's
-  *Online*). The host picks a line and tells WHICH, so every machine reads the
-  same words and plays the same clip.
-- **Whoever presses the key talks** (game/sync/talk.gd): their machine runs the
-  conversation and leads the NPC - lent to them for its length, so HR's tour
-  works with a guest at its front - it is busy for everybody else, and they
-  read the lines along on the subtitle.
-
-**And it FEELS like one game (M4)**, which is three things on top of M3:
-
-- **One clock, the host's, a tenth of a second ago.** Every message about the
-  run carries the host's time; a guest reads that clock off the fastest trip it
-  has seen (`game/sync/clock.gd`), and the host turns each guest's stamps into
-  its own. What is DRAWN is drawn `Sync.DELAY` (0.1 s) behind it, gliding
-  between the states either side (`game/sync/timeline.gd`) instead of stepping
-  twenty or thirty times a second: the room's bodies answer `net_between()`,
-  everybody else's player `net_draw()`. **A remote player is in two places on
-  purpose**: its BODY stands at the newest step - that is what the host decides
-  blows, doors and pickups with, so a guest who stepped out of a swing is out
-  of it as soon as the wire allows - and its PICTURE (the sprite's offset) is a
-  beat behind. What the host says ABOUT the room - a blow on you, health,
-  down, up, lives, the end, every boss moment - waits for the same moment of
-  the same clock (`Sync.later()`), so a number comes up as the drawn sword
-  lands; only the welcome and the order to travel are acted on when heard, and
-  travelling plays out everything still waiting first. **A CLOCK is not drawn
-  behind**: the studio, the dolly and the wiring answer no `net_between()` and
-  take their state when heard, or every correction would set a hazard late.
-  Anything faster than 600 px/s between two states JUMPED and is held, not
-  slid.
-- **The stop holds the picture** (`game/picture_hold.gd`): online a blow that
-  lands disables every `AnimatedSprite2D` and every hit-feel effect on THAT
-  machine for the stop and leaves the world running, then catches each
-  animation up by the time it was held - a boss's sprite is his telegraph, and
-  a swing must still end itself (`animation_finished`). Asked by this
-  machine's own blows and by a boss's, whose `froze` is told like his shake;
-  somebody else's blow holds nothing here.
-- **Every blow is seen everywhere.** A blow and a bolt are a player's MOMENTS,
-  told by whoever moves that player and passed through the host
-  (`World.from_player`, player.gd's `_tell` / `net_event`): the host deals a
-  guest's reported blow FIRST, then every other machine draws it with the
-  attacker's body - number, flash, jolt, juggle, static charge, the pieces on a
-  kill, the bolt and its crackle, the impact sound - and the attacker hears
-  back only whether it killed. A blow or a drain on a player is seen on every
-  machine with its grunt (`net_seen()`), and `die` plays wherever health
-  reaches 0. A remote body's own moves are read off its picture: the swing's
-  air, the charge's hum and ring, the heavy's supernova - never the stop, the
-  shake or the flash, which are the attacker's to feel. A remote body's sounds
-  are POSITIONAL (player_audio.gd), because a teammate is somewhere. And static
-  charge is PER PLAYER (the owner's call): your swings set up only your own
-  arc, a body two players have tagged carries one charge of each, in each
-  one's colour, and an arc prefers and sets off only its thrower's.
-
-The game's own `WIRE` is 3 from here: a build from before the run was stamped
-with the host's time is refused rather than let into one.
+Where the rest lives: Net itself, the list of games and which signaling service
+a build talks to - autoload/CLAUDE.md's *Net*; the screens (HOST ONLINE, JOIN
+ONLINE, the list, the room and its four seats) - ui/lobby/CLAUDE.md; keeping a
+run in step (M3: snapshots, moments, who talks) and making it feel like one
+game (M4: one clock, the held picture, every blow seen) - game/sync/CLAUDE.md.
 
 ## Settings
 
@@ -1634,398 +821,13 @@ the boxes' margins outvote it.
 
 ## Testing
 
-- `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Thirty-eight suites,
-  each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
-  settings backup, node getters) and overriding `_tick(frame)`:
-  - `test_menu.gd` - main menu (HOST ONLINE and JOIN ONLINE, no MODE),
-    character select, the settings panel from the main menu - its DIFFICULTY
-    row and the scaling it decides, and the pause menu's copy hiding that row
-    - and the menu music holding ONE player across all three front-end scenes
-    (checked by object id, since a headless run has no audio device to ask).
-    Never enters the game.
-  - `test_flow.gd` - select -> game -> movement -> pause -> zoom -> blow ->
-    heart -> death -> wall -> doors (a hazard en route) -> lives -> game over.
-    It walks the whole chain on foot, so inserting a floor means renumbering
-    the frames after the new leg (~80 frames per door) and it asserts each
-    room's own composition and dressing as it passes through.
-  - `test_combat.gd` - guard telegraph and interrupts, wraith, warden, heavy,
-    and the leash: that losing sight of the player does not stop a chase, that
-    it ends 2.5s later, that the body walks back to the spot it was placed on,
-    and that kiting drags it exactly 160 px and no further.
-  - `test_hit_feel.gd` - what a landed blow does besides the damage: the
-    hit-stop, the white flash, the recoil, the numbers over the enemies, the
-    kill burst, the static charge and the arc preferring a charged body, the
-    juggle with the BODY never moving, the thunderclap's flash and crackle, the
-    supernova's embers, blast and stop, the room back at full speed after, and
-    a boss never reeling. It LATCHES rather than reading frame numbers - every
-    effect is brief and the hit-stop itself stretches time, so it asks every
-    frame "was it seen" and answers at the end. Note for every frame-numbered
-    suite: a landed hit now stops the room for a few frames, so a check timed
-    to the end of an attack that LANDS needs slack (test_arc.gd moved by 6).
-  - `test_slam.gd` - the fourth archetype: that the ring draws the Touch
-    shape's own reach (a retune that moves the hitbox and leaves the drawing
-    behind is a bug nobody can see), that the wind-up telegraphs without
-    hurting, that the blow costs EXACTLY the node's own scaled damage rather
-    than merely something, that it throws the player and that the push then
-    wears off, that a committed slam still lands on air when the ring is empty,
-    and that 48 is a combo breakpoint and exactly two heavies - read off
-    player.gd's own constants, so retuning either side fails here. Its headline
-    check is the placement band swept across the whole chain off disk: a 90 px
-    sight has its own bracket around each room's OWN walk, asked of the level
-    rather than written down here - so the shaped floor is measured where its
-    walk really is - and a brute is found by
-    having `shove_force` rather than by its type, so a second one is covered the
-    day it exists. Its own suite because everything else in combat measures a
-    player who stays put, and this one moves them.
-  - `test_bosses.gd` - Ahmed's attacks, the order he picks them in, the
-    interrupt and the concede.
-  - `test_ahmed_moves.gd` - Ahmed's attacks one at a time, each staged with a
-    FRESH Ahmed so no cooldown or alternation leaks between them: backing
-    straight off a chop is caught by the fissure's pillars (8, not 16), the
-    sweep pushes you out of his reach, the leap's ring goes down where you
-    stand as he jumps and he comes down on it, the gap between two of the
-    fan's waves is safe, and three seconds of keeping away earns the chair -
-    spun, rolled, landed, dizzy for its 1.55 s. Plus the weight: the hit-stop
-    really slows the room, really lets it go, and is asked for by signal like
-    the shake. Its own suite because every stage needs him fighting ONE way,
-    which is the opposite of test_bosses.gd running the fight he picks.
-  - `test_big_mo_moves.gd` - Big Mo's four later additions on the same
-    terms, a FRESH Big Mo per stage: a string is jab, jab, then a hook or an
-    uppercut and never three of one running; the uppercut reaches 30 px down
-    his line and misses one step aside, while the hook is the other way round;
-    three quick hits shell him, a hit on the shell is blocked (no health off)
-    and countered for 12 by an attack that cannot be mashed out of, and a
-    shell waited out opens his guard to hits and does not come back inside its
-    cooldown; pressed against him he clinches, costs 8 and throws you clear of
-    his reach; raging, every other string is the flurry, the breath is 0.4,
-    and the flurry walks you back while he marches after you.
-  - `test_rage.gd` - Big Mo going up at 72 and staying up: that it fires at
-    half health and not before, fires once, roots and silences him without
-    letting him be staggered, never comes back down, and that every beat of
-    the fire still lands on a frame boundary. Its own suite because it needs
-    him FIGHTING and then taken across the line on a chosen frame, which
-    threaded through the three-boss file made one boss's timing decide
-    another's.
-  - `test_silverman.gd` - his whole ladder: the glare opening at range with no
-    contact, the crossing that passes THROUGH the player for one blow, the
-    split's copy walking you down, the cold room draining outside the grace
-    window, and the third phase refusing to be staggered. Its own suite because
-    the fight walks him down three phases, so every check after the first
-    depends on how much health he has left - a file that does that cannot also
-    hand the room to a next section unchanged. test_bosses.gd keeps the art
-    invariants that hold at any health. It isolates by GEOMETRY rather than by
-    frame number: his band is a 20 px lane and his crossing only moves along x,
-    so a player parked 30 px off his line is untouchable by both while the copy,
-    which homes in two dimensions, still reaches them.
-  - `test_barks.gd` - what Ahmed shouts: the hello, the taunt when he is
-    kited, an attack announcing itself on the wind-up, being interrupted and
-    being merely hurt saying different things, the concede line jumping the
-    queue, and the subtitle taking itself down. Its own suite because a taunt
-    needs a boss who never reaches anybody, which is the exact opposite of the
-    fight test_bosses.gd runs. It also keeps the two checks that are about
-    talking rather than about Ahmed: that a boss whose `Lines` child is TORN
-    OFF is silent and still fights (it used to ask this of whichever boss was
-    still mute, and there is no longer one), and the sweep of Silverman's file
-    off disk - every line said twice with the halves differing, every clip
-    really on disk, no two lines sharing one, and every cue he speaks on a cue
-    something fires. An English-only line is legal everywhere else in the game,
-    so nothing but that sweep would notice him stopping.
-  - `test_reinforcements.gd` - a later beat's trigger, its single-file
-    arrival, the door it uses, the hold while the player stands in that door,
-    that a beat fires once, and the head count. Builds the beat by hand in the
-    empty lobby rather than walking nine floors to the one biome that has one.
-  - `test_ivan.gd` - the third beat: that he waits for a fight and not
-    merely for a quiet room, that he comes in by the door and crosses to his
-    spot, that a late arrival can still be talked to (game.gd wires NPCs as
-    they arrive, which is the failure that would be silent on six floors),
-    that the hearts land on the last word and heal, one per head, once. Builds
-    the beat by hand in the empty lobby, then checks the six floors off disk -
-    that each carries the beat, sends him to its own spot, and gives him its OWN
-    conversation. It also sweeps all six of those: every line names a clip,
-    every clip is on disk, no two floors share a clip (they cut into one folder,
-    so a collision silently plays another floor's read) and no two floors say
-    the same line, which is the whole reason there are six files.
-  - `test_dominique.gd` - the fourth beat, the one that hands over information
-    rather than a heart: that they wait for a fight and not merely for a quiet
-    room, that they come down the NORTH door while Ivan comes up the south one,
-    that they cross to the spot and can be talked to after arriving late, and
-    that nothing is healed by any of it. Its own suite because test_ivan.gd
-    ends by hurting the player and counting hearts, and this one has to prove
-    no heart is ever thrown. It also checks the RULE the three floors are only
-    an instance of - a briefing under every boss floor and under no other - by
-    reading the whole chain off disk, so a fourth boss cannot ship unannounced.
-  - `test_enemy_sfx.gd` - the bestiary's noise: that all six own the cues
-    their archetype can actually reach and no cue it can never reach, that
-    every declared stream resolves, that the wraith's drain is a sealed loop
-    rather than a one-shot with a flag on it, and that a death sound outlives
-    the body that made it. Its own suite because that last one is destructive
-    - it kills an enemy and counts what the room is left holding. What it
-    deliberately does NOT check is that a one-shot is audible: headless has no
-    `playing` and `--fixed-fps` makes `get_playback_position()` a coin flip
-    (see test_menu.gd's note), so the evidence is structure plus the two calls
-    that leave a visible mark - the loop flag, and the detached player. It
-    also keeps the two mutterers: that each names its OWN lines file, that
-    every line has a clip that really resolves (a missing one is legal and
-    silent, so a typo is an enemy who moves their lips), that the poll gets a
-    line out, that six spawned together do not share one countdown, and that
-    none of it reaches the subtitle.
-  - `test_dialogue.gd` - HR's whole induction: the prompt, the typewriter, a
-    dead stick while she talks, the choices and the branch one takes, the
-    escorted tour, the contract, and the wheel coming back. Driven by what is
-    on screen rather than by frame numbers - a line's LENGTH is its duration,
-    so numbered frames would need re-timing every time one is reworded. It also
-    keeps her VOICE, and the check that matters there is not that audio is
-    playing (see the wall-clock note below) but that the line is typed at the
-    CLIP's rate rather than the flat one: that is arithmetic the game did on
-    the stream's own length, so it can only pass if the clip was really found,
-    loaded and applied, and it does not depend on the wall clock at all. Plus
-    the sweep a silent-by-design miss needs: every line she speaks names a
-    clip, and every clip named is on disk.
-  - `test_player_sfx.gd` - the player's own noise: that the body declares
-    every cue player.gd can fire and no cue it never will, that each resolves,
-    that the charge stance is a sealed LOOP rather than a one-shot with a flag
-    on it, and - the part that is not test_enemy_sfx.gd over again - that a
-    body with its `Audio` child torn off still swings, still charges and still
-    takes a hit. That last one is the promise the whole design rests on and is
-    destructive, which is why this is its own suite. It measures a loop seam
-    against the clip's WORST internal step where the bestiary's suite uses the
-    mean, because the charge bed is quiet in the export and takes a large
-    make-up gain: its samples land on a coarse quantization grid with a median
-    step of zero, and a mean no actual step is near fails a perfect join.
-  - `test_studio.gd` - floor 2's clock and the two things that read it: that a
-    lamp with no clock in the room is furniture (checked in the LOBBY, because
-    a promise about absence has to be tested where the thing is absent), that
-    the cue warms the pools and the sign without hurting anybody, that the
-    take then burns and the rig runs, and that a rig being pushed back to its
-    mark is harmless even parked on top of you. Its own suite because checking
-    a rhythm means standing still in one room for eleven seconds, which is the
-    opposite of every other file here; test_flow.gd keeps only that the
-    dressing still carries the clock. It also guards the one invariant a
-    moving hazard could break without ever being placed: the rail's span
-    against the door lane.
-  - `test_scrubber.gd` - floor 5's wandering machines, and the shove they
-    arrived with. Every check is a PROPERTY rather than a position, because
-    there is no authored route to compare against: neither machine left its pen
-    in 420 sampled frames, neither was ever on the door lane, both covered
-    ground rather than wedging in a corner, and a staged bump costs health and
-    position together. Then the push on its own terms - it moves you, it wears
-    off, and three at once move you no further than one. The bump is STAGED (a
-    machine placed beside the player and aimed) rather than waited for: standing
-    about hoping to be found is a check that passes on a seed, and starting the
-    machine far away makes the contact frame depend on the travel, which is what
-    made the first version flaky.
-  - `test_music.gd` - the finale across a door: that an ordinary floor plays
-    the bed, that floor 11 gets the track its biome names, that the stream
-    really resolved and its loop is sealed to the stream's real length, that
-    the door into the penthouse does not restart it, that the boss standing
-    there names no theme of his own, and the RULE those two floors are only an
-    instance of - read off disk, so a `music` line pasted onto a room in the
-    middle of the building fails here. Its own suite because it is the first
-    check in this project that spans a DOOR rather than sitting in one room.
-    The no-restart check SEEKS the playhead to 30 s before travelling rather
-    than reading the position twice: headless mixing crawls (0.09 s across 160
-    frames), so "the position advanced" is a coin flip that would pass a
-    restart on a quiet frame, while a playhead parked where no fresh `play()`
-    could leave it either survives the door or does not.
-  - `test_ui_sound.gd` - the menu's noise, and mostly the half that is about
-    SILENCE: that opening the menu does not chime at itself, that arrowing
-    between options ticks exactly once, that a panel taking focus is not a
-    move, that a dropdown's own list ticks too (a PopupMenu never takes focus,
-    so nothing else would notice it going quiet), that three plays on one frame
-    are one sound, and - the one that pays for `back` not being a global
-    `ui_cancel` handler - that Escape on the death screen is swallowed AND
-    silent, while the same key in the same screen chimes when it does
-    something. Its own suite because every check is a DELTA on a play count, so
-    it has to own the focus state of the screen for its whole length, which is
-    exactly what test_menu.gd's later sections are busy moving about. It reads
-    a count kept where the sound is really started rather than `playing` or
-    `get_playback_position()`, for that file's stated reasons - and a
-    SUPPRESSED play is invisible in every other way. It builds the death screen
-    by hand rather than by dying, the way test_reinforcements.gd builds its
-    beat.
-  - `test_surge.gd` - floor 3's wiring: that a charging line warns without
-    hurting, that the head then crosses whoever stood on it, that the drop is
-    exactly the node's own scaled damage rather than merely non-zero (one pass
-    is one hit, which is what makes four runs fair), that the head parks off
-    the line between runs, and that the cycle comes round again. Its headline
-    check is the walk swept along all four runs - a surge is the second thing
-    that could threaten the route between the doors without being placed on it,
-    and unlike the dolly there are four. It samples ALONG a run rather than
-    comparing two numbers, because two of this floor's four are vertical and a
-    check that knew the lane was a band of x would pass them without looking.
-  - `test_steering.gd` - getting round the furniture: that a guard with two
-    desks between it and the player arrives anyway and swings, that it got
-    there by going AROUND rather than by some accident of the geometry, that a
-    body with no way round stops trying and walks home instead of grinding,
-    that an enemy with nothing in its way still walks a dead straight line, and
-    that the smallest prop in the game gets the same treatment as the biggest.
-    Its own suite because it needs
-    a room arranged WRONG - every floor in the game is dressed so the fight
-    works, so none of them can ask this - and it builds the bad case by hand in
-    the empty lobby, the way test_reinforcements.gd builds its beat.
-  - `test_dogleg.gd` - the floor that is not a rectangle, and the two things a
-    shaped room can break that a rectangular one never could. The one that
-    generalizes is swept across the whole chain off disk: every floor's walk is
-    floor END TO END, and it runs between the two DOORS rather than past them -
-    a prop moved twenty pixels or a cut redrawn a tile lower is a floor nobody
-    can finish, and it looks fine in the data. The other is the corner: a body
-    in the arm with the building between it and the player gets round it, which
-    is test_steering.gd's question asked about eight tiles of masonry instead of
-    a desk. What it deliberately does NOT treat as a failure is a beat that
-    arrives and then stands there - a reinforcement has no post and therefore no
-    patience, so it hunts only what it can see, on this floor exactly as on the
-    other eleven. Staging that wrong looks identical to a wedge, which is why
-    the suite measures its own premise before it measures the answer.
-  - `test_alert.gd` - the room alert: that the doorway wakes nobody, that
-    walking on towards the far door sets a guard far out of sight hunting, that
-    a reinforcement arriving after it keeps coming, that the leash
-    then runs unchanged (same patience, no further than 2x sight from the post,
-    back onto its mark), that a second trip out in the same visit is nothing
-    and a new visit gets its own.
-  - `test_level_select.gd` - the development floor picker: that switched off
-    the character select still goes straight to the game, that the door walk
-    finds the whole CHAIN in order with each floor's own title, that the screen
-    fits 640x360, backs out by Escape, starts the run on the floor picked and
-    then forgets it. It is the one suite that switches the dev setting ON,
-    in memory only.
-  - `test_release.gd` - the game's half of a release: the menu's footer shows
-    the VERSION file, an unpackaged run never asks GitHub, a newer release
-    raises the notice while an older, equal, junk or non-GitHub answer does
-    not, `1.0.0` beats `1.0.0-rc.1`, and the export presets still ship VERSION,
-    still mark the desktop builds `packaged` and still keep the WebRTC plugin.
-    And that a dev build can still be made a different app: the fields
-    prepare.sh renames are where it looks for them, and the installer has a
-    second `AppId`. No network: the answers are handed to the check directly.
-  - `test_updater.gd` - the in-game updater (todo.md Parts A and B): the
-    switch is off and a feed turns it on, an installed Windows copy may update
-    itself and a portable one keeps the link, the right file is picked per
-    platform, `SHA256SUMS.txt` parses in both of sha256sum's modes, a hash
-    match passes and one changed byte is refused, the release file names
-    agree with release.yml and installer.iss, and the panel's states. Nothing
-    is downloaded or installed: what would really install is Part D's, on
-    real machines. It writes its scratch files under `user://test_updater`
-    and removes them.
-  - `test_party.gd` - a party of two on one machine: the keyboard drives this
-    machine's player and `virtual_input.gd` drives the second. One body per
-    member, each its own character, in a row across the marker; the keyboard
-    moves only its own and a synthesized press is dated like a key's (a tap
-    shorter than a frame still swings); the SECOND player walking out wakes the
-    room; an enemy takes the nearest, holds through a near-tie, turns for
-    somebody clearly closer and then sticks; the second's HUD row and a boss
-    counting both heads; a death in company going down with no fade, paying the
-    one pool and getting up at the door; the door saying "1/2", then going when
-    the one still out in the room goes down, with the body waiting to get up
-    getting up on the far side and the overtaken wait doing nothing; and the
-    end - the pool empty, a death staying down, and the run over only when
-    nobody is standing and nobody is about to be. Its own suite because every
-    other one is a party of one, and must stay that way to prove solo did not
-    move.
-  - `test_net.gd` - the `Net` autoload: a host and its guests in ONE process,
-    each Net in a SubViewport with a MultiplayerAPI of its own, over ENet on
-    localhost. Hosting opens a party of one; a guest's hello puts them in it,
-    with both ends holding the same roster in the same order (name cleaned,
-    character, route) and a ping the host measured reaching the guest; a build
-    on another `wire` is refused with `version` and the party never had it;
-    START reaches everybody with the same rows; a late arrival is refused with
-    `started`; the host leaving is `host_left` at the guest and a guest leaving
-    is a row gone at the host; the host's public switch, which a guest cannot
-    work; KICK - their seat empty at once and `kicked` at their end, and on a
-    LAN free to come back, since there is no service to remember them by;
-    and the signaling URL, join link and time zone an unpackaged build gets.
-    Driven by WAITS with deadlines rather than frame
-    numbers, because a connection takes as long as it takes. The online road -
-    WebRTC through a signaling service - is the same Net with another peer;
-    it is proved by hand against a local `server/signaling`, since a suite
-    cannot count on WebRTC finding a route.
-  - `test_lobby.gd` - the way into online play through the real screens:
-    HOST ONLINE and JOIN ONLINE under PLAY in the four-button height; the
-    character select asking the name on the way online; the list of games -
-    looking before any answer, the order, every status, the line under it for
-    an open, full and started game, the picked game staying picked as the list
-    moves and the focus going where a vanished one was; a private game's code
-    box (a short code asked again, capitals, the join going with the game's id,
-    `wrong_code` keeping the box up, Escape closing only the box); a refusal on
-    the line, the server unreachable, nobody hosting, Escape to the menu; then
-    the host screen (public by default and remembered, the difficulty stepped
-    round and saved) and a room hosted on ENet: a local game has no code and
-    no PUBLIC switch, one seat per MAX_PARTY with the host's own marked HOST
-    and no KICK; a guest from a SubViewport taking the second seat with KICK
-    on it, KICK asking once and going on the second press, the guest told why
-    and free to come back on a LAN; the relay line, the code, the join link,
-    C copying it, the PUBLIC switch and its line; and START putting the party
-    into the game - this machine's body as its own pick, the guest's as
-    theirs on still hands, their HUD row by the name they typed - and the
-    party ending sending the run back to a menu that has left it. Nothing in
-    it reaches the internet: the list is handed to Net's `rooms_listed`, a
-    join from the list is caught before it leaves, and a relay and a code are
-    told to Net directly, which ENet has neither of.
-  - `test_coop.gd` - TWO machines in one run (M3), and the first suite that is
-    two processes: it hosts, and starts a second Godot (`coop_guest.gd`) that
-    joins over ENet on localhost through the real lobby. Two games in one tree
-    would share every group, so a SubViewport cannot do it. The harness is
-    `tests/coop.gd`: the guest is asked what its machine shows and told what to
-    press through `coop_probe.gd`, at /root/CoopProbe in both, which also holds
-    both processes to the wall clock so their seconds agree, and what the guest
-    prints comes back under `guest|`. It checks the party half: both welcomed
-    to one floor and room, each body walking from its owner, a blow, slow,
-    shove and heal decided on the host and landing on the guest while the
-    guest's own world hurts nobody, down and up on both with one pool, the door
-    waiting for both and the guest arriving in the same room, the pause menu
-    opening over a running game, the end of the run on both, and the guest's
-    body leaving with them. `coop_guest.gd` is not in run_all.gd's list: it is
-    a suite's second machine, never a suite.
-  - `test_coop_world.gd` - the same two machines, and the ENEMIES: on
-    hellfire, which the guest is welcomed to from the lobby, every body the host
-    has the guest has where the host has it, a body the host moves moves there,
-    a warden winding up on the host fills its field on the guest's screen and
-    the slow it lands is the guest's own body's, the guard's blow hurts the
-    guest and the guest's swing hurts the guard, a body the host kills is gone
-    on the guest, and a reinforcement the host lets in appears there - made
-    from the scene its snapshot entry carries - and goes when it dies. Every
-    enemy but the one a step is about stands still, so a crowd never decides a
-    check.
-  - `test_coop_rooms.gd` - the same two machines, and the ROOMS: the studio's
-    clock keeping the host's time on the guest and the dolly rolling where the
-    host's does; the call floor's wiring on the host's count, Ivan walking in
-    on the host and in on the guest with his lines, the hearts he throws there
-    landing on the guest's floor, and one the guest walks onto healing the
-    guest - decided on the host, gone everywhere; and the hub's scrubbers
-    wandering where the host's dice send them. Floors change by the host's own
-    travel, since the walk is test_coop.gd's.
-  - `test_coop_bosses.gd` - the same two machines, and the BOSSES: Ahmed's bar
-    up on the guest by his name, the line he shouts the line the guest reads,
-    the fire he throws thrown on the guest's copy of him, the chair he sits in
-    staying under him there (an effect that ends with its attack must not find
-    the guest a snapshot behind), a shake shaking the guest's camera and his
-    stop holding both machines' pictures and neither's clock, his
-    health and his concede following; Big Mo going up; Silverman's copy on the
-    guest's floor, the prism's fan the one the host measured, and his crossing
-    going through the guest's player there too and solid again after. Each boss
-    is made to do the thing under test, the way test_ahmed_moves.gd stages a
-    move.
-  - `test_coop_talk.gd` - the same two machines, and TALKING: a prompt comes up
-    only for the player at that keyboard; the guest talks to HR, she is the
-    guest's to lead and busy on the host, the host reads her lines along on its
-    subtitle, she walks on the host's screen where the guest's machine walks
-    her and is the host's again once the guest is done; the host talks to her
-    and she is busy on the guest's machine; and a guest who talks Ivan through
-    is thrown his hearts by the host, landing on the guest's floor.
-  - `test_coop_feel.gd` - the same two machines, and THE FEEL (M4): the host
-    draws a walking guest's picture a beat behind its body and back on it once
-    it stops; a body the host walks a pixel a frame GLIDES on the guest,
-    moving on nearly every frame where twenty snapshots a second would move it
-    on one in three; a blow that lands holds the host's picture and never
-    `Engine.time_scale`; the host's blow puts its number up on the guest, its
-    swing is heard there off its picture and its impact on its word, and its
-    kill breaks apart there; the guest's whole combo is dealt on the host and
-    drawn there - numbers over the guard, the arc's bolt, the pieces - with
-    its swings and impacts heard, while the host's own picture holds for none
-    of it and the guest's holds for all of it; the guest's charge draws its
-    ring and its supernova on the host with its hum; and a blow on either
-    body is seen, number and grunt, on the other machine. Every staged body
-    stands still on the host, and the glider walks through the furniture, so
-    the room never decides a check.
+- `tests/` holds SceneTree-script tests: no framework, no dependencies. They
+  drive the real game with synthesized input and exit 0/1, each suite
+  extending `tests/helpers.gd` (checks, key synthesis, settings backup, node
+  getters) and overriding `_tick(frame)`. **What every suite owns, and the
+  gotchas of writing a check** - synthesized keys, looping sounds, `user://`,
+  `current_scene`, `OptionButton` - are `tests/CLAUDE.md`: read it before
+  adding a check or a suite.
 - Run all after any change to scenes, input, or scene flow:
   `<godot> --headless --path . --script res://tests/run_all.gd`
   (or one suite with `--fixed-fps 60 --script res://tests/test_<area>.gd`).
@@ -2036,39 +838,10 @@ the boxes' margins outvote it.
   geometry, an enemy spawned into a still-resolving swing. Keep new checks in
   the suite whose world they need; start a new suite rather than making one
   file's sections depend on each other.
-- When synthesizing key events set BOTH `keycode` and `physical_keycode`
-  (custom actions match physical, built-in ui_* match keycode).
-- **A looping sound proves nothing by having `loop_mode` set.** `AudioStreamWAV`
-  seals a loop with `loop_begin`/`loop_end` in FRAMES, and `loop_end` 0 does
-  NOT mean "to the end" - a forward loop ending on frame 0 wraps before it has
-  played anything, so the playback position stays pinned at 0.000s and the bus
-  receives exact silence. Every track and every looping effect in the game
-  shipped mute that way while a green check watched `loop_mode`, which was set
-  the whole time. The real end is `get_length() * mix_rate` (not `data.size()`
-  - these import as QOA, so `data` is compressed bytes rather than frames), and
-  the check with teeth is that `get_playback_position()` has MOVED between two
-  frames. That works headless: the dummy driver still mixes, so audio is
-  testable here rather than something only ears can confirm.
-- Level checks read the swapped-in child through `has_method("spawn_position")`
-  rather than by class, for the same class-cache reason as game.gd. Leave slack
-  around a door transition: two fades plus travel is ~40 frames.
 - Autoloads are NOT identifiers in the script passed to `--script` - that file
   is compiled before the autoload list reaches the compiler. Reach them with
   `root.get_node("/root/Settings")` and `call()`. Ordinary game scripts, loaded
   later as part of a scene, use the names normally.
-- Anything touching `user://` must put it back. helpers.gd backs up
-  `settings.cfg` before each suite, clears it so the run is a clean install,
-  and restores it at the end - so running tests never changes how the
-  developer's own game opens, and their own saved zoom never decides whether a
-  check about framing passes.
-- Setting `current_scene` is NOT enough to make `/root/<Autoload>` resolvable;
-  it works from `_process`, not from `_initialize`, and the null that comes
-  back there fails quietly enough to look like a logic bug.
-- `OptionButton.select()` does not emit `item_selected`; simulate a click by
-  emitting it too, or the handler never runs.
-- Adopt gdUnit4 only once there is real unit-testable logic beyond what the
-  suites cover in passing (inventory, save data) - not for scene wiring, which
-  is the hard part here and which no framework drives.
 - `tests/` and `tools/` are excluded from every export preset, and so is every
   `.wav` under a `src/` folder - the untouched exports, 125 MB that nothing in
   the game loads. Of `addons/`, `za_build` is always excluded (it preloads

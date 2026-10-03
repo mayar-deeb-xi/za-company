@@ -44,7 +44,7 @@ boss floor holds one boss; hellfire holds four guards, two wraiths and a
 warden, and seven bodies mixed at a boss's level is a wall rather than a
 fight.
 
-    boss ordinary blow   -19 RMS      (game/bosses/CLAUDE.md, The noise)
+    boss ordinary blow   -19 RMS      (game/bosses/ahmed/CLAUDE.md, What he sounds like)
     enemy hit            -22 RMS      3 under it, and there are seven of them
     enemy telegraph      -29 RMS      7 under its own impact, the boss's ratio
     the drain loop       -30 RMS      continuous, so it lives near the floor

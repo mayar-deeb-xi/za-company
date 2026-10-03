@@ -22,7 +22,7 @@ extends "res://game/levels/hazard_base.gd"
 ## The studio's rail runs the WEST half of the room only. Every floor in this
 ## game keeps x 246-300 walkable top to bottom - no enemy's sight reaches it and
 ## nothing is placed on it - so that the straight walk between the two doors is
-## safe in every biome, and the flow tests lean on that. A moving hazard is the
+## safe in every biome, and the chain test leans on that. A moving hazard is the
 ## first thing that could cross a lane without ever being placed in one, and the
 ## answer is that it does not: it tracks across the SET, which is where a dolly
 ## belongs anyway, and the set is the north-west quarter.

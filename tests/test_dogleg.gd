@@ -43,7 +43,7 @@ extends "res://tests/helpers.gd"
 ## between.
 ##
 ## What is deliberately NOT here: the floor's composition, its wiring and its
-## dressing, which are test_flow.gd's and test_surge.gd's and have not changed
+## dressing, which are test_chain.gd's and test_surge.gd's and have not changed
 ## their address just because the room changed shape.
 
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",

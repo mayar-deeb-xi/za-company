@@ -4,7 +4,7 @@ extends RefCounted
 ## of a briefing is in before_ahmed.gd, which is the first one and carries the
 ## reasoning for all three.
 ##
-## Big Mo is a RHYTHM (game/bosses/CLAUDE.md), so the briefing is about
+## Big Mo is a RHYTHM (game/bosses/big_mo/CLAUDE.md), so the briefing is about
 ## counting rather than about reading him: two fast, one slow, always in that
 ## order. That is a thing a player can be told once and then use for the whole
 ## fight, which is exactly what a signpost is for - and it is the one boss whose

@@ -495,7 +495,7 @@ names the room, and the fiction carries which floor it is.
   somewhere you can be SEEN standing - the same lesson the dividers on asset
   recovery taught the hard way.
   **Still to add**: its people. `call_center` and `social_media` are both
-  build step 2, so the room is deliberately empty of enemies and test_flow
+  build step 2, so the room is deliberately empty of enemies and test_chain
   asserts that it stays that way until they exist. When they land they should
   stay light: this floor lands just past Ahmed and before the innovation
   lab, and its job is to be a breather rather than a test of anything.
@@ -757,7 +757,7 @@ unlocks.
   - Corner rush: dash gap-closer if the player kites to the ring edge.
   - Defeated: takes the gloves off, nods once, points at the ceiling.
   **Built**: all of the above except the concede, plus two things that are
-  his alone and are documented in game/bosses/CLAUDE.md. He is the one boss
+  his alone and are documented in game/bosses/big_mo/CLAUDE.md. He is the one boss
   drawn FRONT ON — a boxer squares up to you — which costs nothing against
   boss_base's side-only facing because the figure is symmetric enough that
   `flip_h` is invisible on it. And he is drawn at 2x DENSITY: 70 source rows
@@ -822,7 +822,7 @@ unlocks.
   he crosses into phases two and three - the phase names above, spoken. His
   concede is "Du har jobbet. Det har du haft hela tiden. / You have the job.
   You always did.", which is the handoff into the ending below: the job was
-  never the thing being fought over. See game/bosses/CLAUDE.md's
+  never the thing being fought over. See game/bosses/silverman/CLAUDE.md's
   *He says everything twice*.
 
 ## Ending — two codes, two jobs
@@ -1163,7 +1163,7 @@ one that FEELS best rather than the one that is safest.
         `hellfire` between F8 and F9, so a run walks all ten floors in
         DESIGN.md's own order and ends where the story ends, in Silverman's
         office. Both are still demo rooms and both still hold the only fights
-        above asset recovery, which is what keeps the flow suite's enemy checks
+        above asset recovery, which is what keeps the chain suite's enemy checks
         somewhere real while the reskins are unbuilt.
         Moving hellfire mid-chain cost it a placement: it gained a north door,
         and its enemies had been lined along the north wall on the assumption
@@ -1220,5 +1220,5 @@ one that FEELS best rather than the one that is safest.
         summons; multi-hit rhythm; phases). Ahmed is built, less his summon.
 - [ ] 7. Ending: sticky-note screen, discount code constant, credits.
 - [x] 8. Tests: new `tests/test_bosses.gd` suite (one suite = one world);
-        test_flow checks the locked door and concedes Ahmed to walk on.
+        test_chain checks the locked door and concedes Ahmed to walk on.
 - [ ] 9. Online co-op: M0-M6 under Multiplayer above.

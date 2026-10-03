@@ -12,7 +12,7 @@ extends "res://game/levels/door_base.gd"
 ## **DEV: off, so a boss floor can be walked straight through.** Flip to true
 ## and the lock is back with nothing else to change - the door still asks the
 ## boss, the fight is still built, and every check that cares reads THIS, so the
-## walk in tests/test_flow.gd follows the switch rather than needing an edit
+## walk in tests/test_chain.gd follows the switch rather than needing an edit
 ## alongside it. Set true before shipping; the whole point of a boss floor is
 ## that it is a gate.
 const LOCKED := false

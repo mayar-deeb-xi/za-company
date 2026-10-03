@@ -7,10 +7,10 @@ extends "res://tests/helpers.gd"
 ## Its own suite because it is the first thing in this project that is checked
 ## ACROSS a door rather than inside a room: the whole claim is that one file
 ## plays continuously from the executive floor into the penthouse, and there is
-## no single frame anywhere at which that is visible. test_flow.gd walks the
+## no single frame anywhere at which that is visible. test_chain.gd walks the
 ## same doors, but it walks all twelve and asserts each room's composition as it
 ## passes - a music check threaded into it would have to survive every future
-## renumbering of a chain it does not care about.
+## change to a chain it does not care about.
 ##
 ## ## What makes this worth a suite at all
 ##

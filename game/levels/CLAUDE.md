@@ -450,7 +450,7 @@ off it.
 
 `tests/test_studio.gd` owns the rhythm, and it is its own suite for one reason -
 checking a rhythm means standing still in a room for eleven seconds, which is
-the exact opposite of every other suite here. `tests/test_flow.gd` keeps only
+the exact opposite of every other suite here. `tests/test_chain.gd` keeps only
 that the dressing still carries the clock, because a biome that lost the key
 would leave a room that looks right, passes every other check, and never
 switches on.

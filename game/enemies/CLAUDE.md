@@ -167,7 +167,7 @@ base's on a guest, since everything after its `super()` decides something.
 Every authored position in `tools/biomes/` is placed so no sight radius reaches
 the door lane, so **entering the circle has to stay the only way to be seen
 from the lane** - widen it and every floor in the game breaks at once, along
-with the flow and combat tests. That half does not move. (Stepping OFF the
+with the chain and combat tests. That half does not move. (Stepping OFF the
 lane is the one other way, once per visit - see the end of this section.)
 
 What was wrong was everything after it. The chase was gated on the player
@@ -784,7 +784,7 @@ radii at once, so every fight was a duel and the heavy was never the right
 answer. An AoE needs a crowd to be an argument. Positions are chosen so
 no enemy's sight reaches the door line, the spawns or the torch and heart stands
 - the straight walk between the two doors stays safe in every biome, and the
-flow and combat tests depend on nothing aggroing until a check deliberately
+chain and combat tests depend on nothing aggroing until a check deliberately
 walks into range. The leash does not loosen that rule and it does not tighten
 it either: **the lane is a promise about being NOTICED, not about being safe**.
 Nothing sees a player who walks it, so nothing follows them into it - but a

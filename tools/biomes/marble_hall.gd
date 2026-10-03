@@ -170,7 +170,7 @@ const BIOME := {
 		# (372, 224) is legal on the one placement rule that binds here: his
 		# sight is 90, the walk is x 182-236, and 372 - 236 = 136, clear of the
 		# lane's east edge by 46 px more than he needs. The straight walk
-		# between the doors is still safe, which is what the flow suite checks.
+		# between the doors is still safe, which is what the chain suite checks.
 		{"type": "security", "at": Vector2(372, 224)},
 	],
 	# Two beats rather than one, and they arrive from opposite doors. The first

@@ -85,8 +85,9 @@ const BIOME := {
 	#
 	# `greets` is off on purpose. A tour that starts itself would take the wheel
 	# off a player who has not pressed anything yet - and off test_flow.gd,
-	# which walks out of this room on foot. The prompt over her head is the
-	# invitation; taking it is the player's.
+	# which walks about this room, and test_chain.gd, which walks out of it on
+	# foot. The prompt over her head is the invitation; taking it is the
+	# player's.
 	"npcs": [
 		{
 			"id": "hr_lady",

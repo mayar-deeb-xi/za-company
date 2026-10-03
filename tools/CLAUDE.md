@@ -434,3 +434,165 @@ this generator crosses into build_levels.gd's territory. The reason is the rule
 the hearts follow: a room's own heart is dressing and takes the room's palette
 with it, while his is the same red on every floor he walks onto. One file, not
 six identical ones in six level folders.
+
+## What every generator writes
+
+The root CLAUDE.md keeps the short version; this is every output, its
+generator, and what each one owns.
+
+- `ui/theme/menu_theme.tres`        <- tools/build_ui_theme.gd
+- `icon.svg`, `splash.png`          <- tools/build_icon.gd: the default
+                                       character's idle frame as a portrait
+                                       in a LinkedIn-style #OPENTOWORK frame,
+                                       64 x 64 pixels written as crisp rects.
+                                       It reads the cast's FRAMES, so a
+                                       redrawn idle row reaches the icon on
+                                       the next run. splash.png is the SAME
+                                       picture at 4x for the boot splash,
+                                       which takes nothing but a PNG
+- `game/player/characters/*_frames.tres`
+                                    <- tools/build_characters.gd, which
+                                       slices whatever is on disk - and
+                                       seeded rows 21-23 (the arc) of
+                                       game/player/src/character_cc0.png
+                                       ONCE by way of tools/arc_pose.gd, on
+                                       the enemies' rule: it paints them only
+                                       while the sheet is too short to hold
+                                       them, and never overwrites a row
+- `game/enemies/*/*_frames.tres`    <- tools/build_enemies.gd, see below
+- `game/npcs/*/*_frames.tres`      <- tools/build_npcs.gd: seeds
+                                       game/npcs/<id>/src/<id>.png ONCE from
+                                       the roster recipe by way of
+                                       tools/npc_art.gd (double height, robe),
+                                       then slices whatever is on disk, 64px
+                                       cells
+- `game/npcs/ivan/heart.tscn`       <- tools/build_npcs.gd, and it is the one
+                                       thing that generator writes which is not
+                                       an NPC: the heart Ivan throws, his and
+                                       not a level's, because a room's heart
+                                       takes the room's palette and his is the
+                                       same red on every floor
+- the NPCs' looks & robes           <- game/npcs/roster.gd (data, edited by
+                                       hand)
+- `game/bosses/*/*_frames.tres`     <- tools/build_bosses.gd: seeds
+                                       game/bosses/<id>/src/<id>.png ONCE from
+                                       the painter tools/bosses/<id>.gd (which
+                                       draws game/bosses/<id>/poses.gd), then
+                                       slices whatever is on disk, 64px cells
+- `game/enemies/*/sfx/*.wav`         <- tools/sfx/make.py enemies, the second
+                                       thing here that talks to a web API and
+                                       the second that costs something to run.
+                                       Mechanism in `make.py` + `wav.py`, the
+                                       prompts, lengths and levels in
+                                       `enemies.py`, on cut.py's exact split.
+                                       Re-shaping is FREE: `--relevel` re-trims
+                                       and re-levels from the untouched exports
+                                       in `game/enemies/<id>/src/sfx/`, so only
+                                       a new PERFORMANCE costs credits
+- `game/player/sfx/*.wav`           <- tools/sfx/make.py player, on the
+                                       bestiary's pipeline unchanged: the
+                                       recipe (prompts, lengths, levels) is
+                                       `tools/sfx/player.py`, the engine is
+                                       shared, and `--relevel` re-shapes from
+                                       `game/player/src/sfx/` for free. ONE set
+                                       for all ten characters, because they
+                                       share one body
+- `ui/sfx/*.wav`                     <- tools/sfx/ui.py, and it is the ONE sound
+                                       in the game that is generated the way
+                                       the tilesets are: three tones and an
+                                       envelope is DATA, so there is no API, no
+                                       key, no cost and no `src/` beside the
+                                       output - run it twice and get the same
+                                       bytes. The recipe (waves, glides,
+                                       envelopes, per-cue peak) is the whole
+                                       truth about what comes out, and the same
+                                       per-sample loop is written a second time
+                                       in JavaScript so the audition page these
+                                       were picked on makes the identical noise
+- `game/enemies/{social_media,call_center}/sfx/voice/*.wav`
+                                    <- tools/voice/cut.py <id>, the bosses'
+                                       pipeline unchanged. WHAT they mutter is
+                                       game/enemies/<id>/mutters.gd and is read
+                                       from there; how it is delivered is
+                                       tools/voice/<id>.py
+- `game/bosses/ahmed/sfx/voice/*.wav`
+  `game/bosses/big_mo/sfx/voice/*.wav`
+  `game/bosses/silverman/sfx/voice/*.wav`
+  `game/npcs/hr_lady/sfx/voice/*.wav`
+  `game/npcs/ivan/sfx/voice/*.wav`
+  `game/npcs/dominique/sfx/voice/*.wav`
+                                    <- tools/voice/cut.py, the only generator
+                                       here that COSTS something to run and the
+                                       only one that is not deterministic: a
+                                       re-cut line is a new performance, so
+                                       takes that were listened to and approved
+                                       are pinned in the recipe's KEEP and
+                                       skipped. Its data is the delivery;
+                                       WHAT is said stays with the mouth that
+                                       says it and is read from there.
+                                       **Two shapes of mouth, one driver**: a
+                                       boss shouts on CUES and his clip is
+                                       named after the cue and the pick
+                                       (`taunt_1.wav`, derived); a conversation
+                                       is a flat list of beats and its clip
+                                       name is AUTHORED - read back out of the
+                                       `voice` path the beat already carries
+                                       for the game to load. That split is not
+                                       tidiness: lines get written into the
+                                       MIDDLE of an induction, and a numbered
+                                       name would renumber every clip after the
+                                       insert and re-cut, and re-bill, lines
+                                       nobody touched.
+                                       A `\n` in a line is a real break by the
+                                       time it reaches the API: Silverman's
+                                       lines are Swedish, a break, then the
+                                       same thing in English, and that is ONE
+                                       generation because v3 changes language
+                                       mid-read. `--verify` collapses
+                                       whitespace before it compares, or the
+                                       words either side of the break weld into
+                                       one and every clip he has reads back as
+                                       a DIFF on a word that was never wrong
+- sheet shaping & slicing engine    <- tools/character_art.gd (shared by both)
+- a BIG enemy's seed                <- tools/enemy_art.gd, the 32 -> 64 doubling
+                                       build_enemies.gd runs when a roster entry
+                                       carries `frame: 64`. Deliberately not
+                                       tools/npc_art.gd bubbled up: that one
+                                       rebuilds the figure into a robe, this one
+                                       doubles it whole so the attack rows
+                                       survive. Both keep the feet's ORIGINAL
+                                       clearance from the bottom of the cell, so
+                                       a 64px body stands on a 32px body's
+                                       ground line
+- playable cast & recipes           <- game/player/characters/roster.gd
+                                       (data, edited by hand)
+- bestiary, sheet paths & seed recipes
+                                    <- game/enemies/roster.gd
+                                       (data, edited by hand)
+- `game/levels/*/tileset.tres`, `doorway_out.tres`, `doorway_back.tres`
+                                    <- tools/build_biomes.gd (the ROOM's art,
+                                       and the only art that is a file)
+- `game/levels/*/<biome>.tscn`, `door.tscn`, `props/<shelf>/*.tscn` (art
+  embedded in each; enemy and prop instances placed in the level scene)
+                                    <- tools/build_levels.gd, see below, which
+                                       asks tools/plan.gd what shape the room
+                                       is and paints what it is told
+- every picture of a thing standing in a room
+                                    <- tools/props/<shelf>/<type>.gd, one file
+                                       per prop shelved by kind (furniture/,
+                                       hardware/, signs/, markings/,
+                                       openings/, fixtures/);
+                                       tools/props.gd is the facade that finds
+                                       them BY FILENAME across the shelves,
+                                       and _brush.gd is the shared painting
+                                       kit + pixel font
+- chain order + per-floor helpers   <- tools/biomes.gd
+- each floor's palette, furniture and enemies
+                                    <- tools/biomes/<level>.gd, one data file
+                                       per floor (edited by hand)
+- project settings & input map      <- tools/setup_project.gd
+- stable ids in regenerated files   <- tools/stable_ids.gd (both level
+                                       generators call it around every save,
+                                       so a re-run with unchanged data is a
+                                       byte-identical file; run it alone to
+                                       normalize scenes without regenerating)

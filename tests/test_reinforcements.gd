@@ -6,7 +6,7 @@ extends "res://tests/helpers.gd"
 ## Boots into the empty lobby like test_combat.gd and test_bosses.gd and builds
 ## the beat by hand rather than walking nine floors to the one biome that has
 ## one: what is under test is reinforcements.gd's counting, not asset recovery's
-## dressing - test_flow.gd already walks that room and asserts its four.
+## dressing - test_chain.gd already walks that room and asserts its four.
 ##
 ## Every enemy PLACED here has its sight zeroed, so nobody chases and nobody
 ## swings; the arrivals keep their own sight, and the player is parked 140 px up

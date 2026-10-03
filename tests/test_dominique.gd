@@ -27,7 +27,7 @@ const SAY := "res://game/npcs/dominique/before_ahmed.gd"
 const OFFICE_BOY := "res://game/enemies/office_boy/office_boy.tscn"
 
 ## The chain, in order, so `_chain()` can ask what is on the floor ABOVE each
-## one. Hard-coded like test_flow.gd's walk for the same reason: a floor
+## one. Hard-coded like test_chain.gd's walk for the same reason: a floor
 ## inserted into the middle of the building is a thing a test should be made to
 ## notice, not something it should quietly absorb.
 const CHAIN := ["lobby", "content_studio", "call_center", "ahmed_office",

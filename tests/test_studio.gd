@@ -6,11 +6,11 @@ extends "res://tests/helpers.gd"
 ## clock's whole contract is a rhythm - five seconds of rest, a second and a
 ## half of warning, four and a half of danger - and the only way to check a
 ## rhythm is to stand still in it and watch, which is the exact opposite of
-## every other suite in this project. Threaded into test_flow.gd it would have
+## every other suite in this project. Threaded into test_chain.gd it would have
 ## put a 660-frame wait in the middle of a walk through twelve floors.
 ##
 ## The room's own composition - five lights, the fallen sixth, three drains and
-## the boy - is test_flow.gd's and is not re-checked here. What IS checked here
+## the boy - is test_chain.gd's and is not re-checked here. What IS checked here
 ## is everything that only exists while the room is running.
 ##
 ## ## The one check that happens before the studio
@@ -25,7 +25,7 @@ extends "res://tests/helpers.gd"
 ##
 ## Three drain fields reach most of this room and a drain sits outside the grace
 ## window in both directions, so a health check inside one is measuring two
-## things. The fight is test_flow.gd's and test_combat.gd's; what is under test
+## things. The fight is test_chain.gd's and test_combat.gd's; what is under test
 ## here is whether a lamp burns at the right moment, which needs health to have
 ## exactly one cause. The second beat goes with them - clearing the room is four
 ## kills, and a beat firing would walk two more drains back in.

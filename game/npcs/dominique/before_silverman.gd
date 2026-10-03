@@ -4,7 +4,7 @@ extends RefCounted
 ## game/dialogue/dialogue_director.gd, and the shape of a briefing is in
 ## before_ahmed.gd, which carries the reasoning for all three.
 ##
-## Silverman is a LADDER (game/bosses/CLAUDE.md): three phases, each keeping
+## Silverman is a LADDER (game/bosses/silverman/CLAUDE.md): three phases, each keeping
 ## what the last one had, and the interrupts narrowing to none. That last part
 ## is the only thing in the three briefings that is about the player's clock
 ## rather than about the boss - everything they have been saving stops working

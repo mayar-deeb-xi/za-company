@@ -76,7 +76,7 @@ a crowd.
     wildfire             -21
     player hit           -22          level with an enemy's hit - one blow
                                       landing is one blow landing
-    boss ordinary blow   -19          (game/bosses/CLAUDE.md, The noise)
+    boss ordinary blow   -19          (game/bosses/ahmed/CLAUDE.md, What he sounds like)
     enemy hit            -22          (enemies.py)
     swing2               -26          heard on every combo
     swing                -27          heard MORE than anything else in the

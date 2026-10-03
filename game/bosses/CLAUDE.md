@@ -3,6 +3,27 @@
 Deep dive for `game/bosses/`. The root CLAUDE.md has the one-paragraph
 version; `game/enemies/CLAUDE.md` has the cycle every boss runs on.
 
+## The bosses
+
+Three, and the three fights are three different SHAPES on the one cycle. Each
+keeps his own fight, art, sounds and lines in a CLAUDE.md beside his scene, so
+touching one boss does not load the other two; this file keeps what all three
+obey.
+
+- **Ahmed** - a MENU: the attack suits the range. `game/bosses/ahmed/CLAUDE.md`
+- **Big Mo** - a RHYTHM: jab, jab, then a hook OR an uppercut, which want
+  opposite answers. `game/bosses/big_mo/CLAUDE.md`
+- **Silverman** - a LADDER: three phases, each adding a mechanic, the
+  interrupts narrowing to none. `game/bosses/silverman/CLAUDE.md`
+
+Some rules every boss keeps were written up where the first boss to need them
+is, and stay there: the hit-stop (`froze`) in Ahmed's; in Big Mo's, the camera
+shake (`shook`), CanvasLayer 1 and the two-scales trap (*The Bell*), an effect
+on fixed seconds agreeing with its frames only on frame boundaries (*The
+Rage*), and one fire with a ramp per boss (*brush.gd, and the second fire in
+the game*); in Silverman's opening, the wind-up tint a greyscale palette has
+to refuse.
+
 ## What a boss is
 
 A boss is an enemy with more than one attack that concedes instead of dying.
@@ -42,87 +63,6 @@ Each boss folder holds everything that is his: scene, script, `poses.gd`,
 them, and each entry names its own painter and cell size. There is no shared
 body, no shared sheet, no shared layout - the three bosses are heading three
 different places.
-
-## Ahmed
-
-`ahmed/` is the template. His pieces, and what agrees with what:
-
-- **`poses.gd` is the single source of truth for his shape.** Body as ASCII
-  (35 rows, the feet on row 34), leg variants, and every frame of every
-  animation as data: arm targets, the axe's hand/angle/length, body nudges,
-  phase, and fire descriptors. Two consumers read it and must agree pixel for
-  pixel: the painter that seeds the sheet and the fire that is drawn live.
-  Change a pose here and both move.
-- **A leg variant's ROW COUNT is the body drop it pairs with**, and getting
-  this wrong is what split him at the hips for two commits. The painter
-  anchors a leg block's last row to row 34 - the floor - whatever the frame's
-  `dy` is, so the torso and the legs meet only when `dy = 7 - rows`: brace is
-  7 rows at dy 0, `crouch` 6 at dy 1, `knee_one` 5 at dy 2, `kneel` 3 at dy 4,
-  `kneel_low` 2 at dy 5. The old painter added `dy` to the legs as well, which
-  meant a 3-row kneel at dy 4 drew its legs four rows BELOW the torso and four
-  pixels under the floor. There is a separate key for the other thing a frame
-  might mean: **`lift` takes both feet off the ground** and moves body and legs
-  together, which is what the walk's bob and the slam's rear-back use.
-- **`tools/bosses/ahmed.gd` paints the sheet** from the poses: body, arm, axe,
-  outline. It runs only when `src/ahmed.png` is missing (see Sheets below).
-  Cells are 64 px; body column 0 / row 0 sits at cell (25, 22), which centres
-  him so a flipped frame stays put and stands his feet on row 56 - the scene's
-  sprite offset of -24 is what puts row 56 on the boss's origin.
-- **`axe_fire.gd` draws the fire live**, pixel by pixel, from the same poses,
-  in two instances: `FloorFire` (first child, under the body: the slam's ring
-  and cracks) and `AirFire` (over the body: everything else, the glow on the
-  blade included). It reads the sprite's animation, frame and flip, so nothing
-  tells it anything. A left-facing frame is drawn mirrored about the origin:
-  local x lands at -1 - x. The sheet stays a clean body to draw into because
-  the fire is not on it.
-- **Five attacks, chosen by range and behaviour** (`ahmed.gd`), picked from
-  an animated preview and built to it: each asks for a different move.
-  - In reach, chop and sweep alternate. The chop is a **fissure** - a crack
-    runs 73 px on ahead of the blade and seven pillars burst out of it, 8 more
-    to anyone on the line, so backing straight off is the wrong answer. The
-    sweep **shoves** (`shove()` at the player's own cap of 70, ~18 px of
-    skid): far enough to put you out of reach and in front of him, which is
-    where the wave goes - a combo you can see coming.
-  - The slam is a **leap**: two crouch frames, then the frame marked `air` is
-    the jump (0.6 s), carrying him to where the player stood as he left the
-    ground, up to 100 px. In reach it is every third swing or two hits inside
-    2 s, as before, and is a hop; out of reach it is how he follows you. The
-    sprite and AirFire rise (`_set_height`); his body, shadow and Ring stay on
-    the floor.
-  - In front of him and out of reach, the **fan**: three waves 0.42 rad apart,
-    14 each. Between two of them is safe - sidestep a little, not a lot.
-  - Kept out of his reach for 3 s, **the enormous chair**: he sits in it (the
-    `chair` row, painted last onto the sheet by build_bosses' `_extend`),
-    spins it up for a second - the sprite flipping fourteen times a second -
-    and rolls at 255 px/s until he hits something, 18 to whoever the Touch
-    area meets on the way, then sits dizzy for 1.55 s. The charge frame's
-    `dur` is the longest the run may last; the recover the base counts is the
-    dizzy spell alone, and the clock is held while he rolls.
-  - The three ranged answers share a 1.5 s `ranged_gap`, so keeping away is a
-    fight and not a barrage. Damage is MEDIUM data in `DAMAGE`, scaled once
-    when chosen.
-- **Every impact lands with weight** (`_jolt`): a 0.08 s hit-stop, a shake and
-  a white star. The stop is the `froze` signal on boss_base, wired by game.gd
-  like `shook`; game.gd drops `Engine.time_scale` to 0.05 (never 0 - a zero
-  delta is a division waiting to happen) and lets it go on an unscaled timer,
-  extending rather than stacking, and on every room change and exit.
-- **Two reaches, two Area2Ds, and the rest is geometry.** `Touch` (r 24) is the
-  axe, the chair's bumper, and what the base uses to decide he has arrived -
-  so his wind-up starts at ~29 px from the player, before `stop_distance` (20)
-  ever applies. `Ring` (r 40) is the slam: everyone in it with a
-  `take_damage()`, office boys included. The old 64x16 `Lane` is gone: the
-  fan and the fissure carry their own lanes, measured in their own nodes, so
-  the line you see is the line that burns.
-- **What an attack throws off is a child of his pinned to the floor**
-  (`fx_node.gd`): fissure, fan, leap mark, landing, shove dust, chair run,
-  impact star. A child, so it draws in his slot in the room's y-sort like the
-  axe fire; re-pinned to its `anchor` every frame, so it stays where it fell
-  while he walks away; on its own clock, because most of them outlast the
-  frames that made them. They draw with `fx_kit.gd`, the preview's own pixel
-  functions ported line for line (JavaScript's half-up rounding included), so
-  a number tuned on the preview means the same thing here. The landing and
-  the leap mark are CIRCLES where the old slam drew an ellipse: the Ring is a
-  circle, and the drawing that says get out must be the shape that hits.
 
 ## Sheets: seed once, slice always
 
@@ -164,7 +104,7 @@ opens. The door's `Seal` body is what makes "shut" solid.
 **The lock is currently OFF for development**: `boss_door.gd`'s `LOCKED` const
 is false, so a boss floor can be walked straight through while the floors above
 it are being built. Everything else is untouched - the door still asks the boss,
-the fight is still placed - and the boss-floor check in tests/test_flow.gd reads
+the fight is still placed - and the boss-floor check in tests/test_chain.gd reads
 that same const, so flipping it back to true is the only edit. It has to go back
 before shipping: a boss floor that is not a gate is just a room with a big man
 standing in it.
@@ -174,8 +114,8 @@ to the new script's defaults, so setting them first only loses them.
 
 Ahmed's sight reaches the south spawn on purpose. Every other floor keeps the
 door-to-door walk out of every sight radius; a boss floor is an arena and the
-walk goes through him. test_flow.gd concedes him the short way
-(`take_damage(96)`) to carry the chain on; the fight itself is
+walk goes through him. test_chain.gd concedes him the short way
+(`take_damage` for 36, then the 108 left) to carry the chain on; the fight itself is
 `tests/test_bosses.gd`'s, which places him in the empty lobby like
 test_combat.gd does and records the order he attacks in rather than betting
 on frames.
@@ -253,25 +193,9 @@ Four things are load-bearing:
   and no volume setting yet, so a file's own level IS the mix. Re-generating
   one sound means re-levelling it against the others.
 
-Ahmed's own two are his, for the same reason his fire is: `axe` starts in his
-`_ready` and never stops, because the blade burns for as long as he holds it,
-and `breath` starts when the concede hands off to `beaten_side`. The axe fades
-rather than cuts, over `Poses.glow_out_of("concede")` - the span the poses
-actually draw fire for, derived beside `windup_of` and `recover_of` so a
-retimed concede takes the sound with it rather than leaving the room silent
-with the blade still lit.
-
-**And the breath ENDS, which it did not used to.** The `beaten` row loops for
-good and must - he is still there and still alive when you walk back out - but
-the panting is an event with an end, and left running it was the only sound on
-the floor for as long as the player stayed: his theme fades on the concede and
-Ivan walks in to talk over the top of it. `_settle()` winds both halves down
-together, the sound fading after `BREATH_HARD` and the row slowing to
-`BREATH_CALM` across the whole span, so the picture and the sound tell the same
-story at every moment - the thing the axe fade above already had to get right.
-Fading the sound alone would have read as the audio breaking while his chest
-still heaved. What is left is a man kneeling and breathing slowly, which is
-what the row was drawn for.
+Ahmed's and Big Mo's own sets, and how each was levelled, are in their own
+files under *What he sounds like* - Ahmed's with the two only he has, the axe
+that burns for as long as he holds it and the breath once he is down.
 
 His sounds sit in `ahmed/sfx/`, and their untouched exports in `ahmed/src/`
 next to his sheet - the same split `src/` means everywhere else in this repo.
@@ -289,25 +213,7 @@ telegraphs the day he owns the files. The IMPACT is said in Ahmed's own
 `_strike` rather than the base's, and that asymmetry is the fight's fault
 rather than an oversight - the slam sweeps a ring, the wave hands its lanes to
 a fan, the chair's blow is its crash; none calls `super()`, so the base never
-sees three of his five blows land. The chair has no `chair_windup` or
-`chair_hit` yet: both are legal misses, and it is silent until they are cut.
-
-They are levelled by RMS against the sounds he already had, not by peak.
-Peak-normalising all eight to a flat -4 dBFS left 13 dB of spread in how loud
-they actually sound and inverted the fight: `chop`, the basic alternating
-swing, came out louder than `slam`, which is the blow the camera shakes for. A
-short transient and a dense fire whoosh are not the same loudness at the same
-peak. So the ordinary blows sit with his own one-shots (-19 RMS, beside hurt at
--18.8 and stagger at -19.8), the wave a shade forward because it travels, and
-the slam alone above the pack at -16. Telegraphs run 7 dB under their own
-impact - clearly over the -34 dB idle fire, never mistakable for the blow they
-are warning about - and each is shorter than the wind-up it plays under, the
-tightest being `sweep_windup` at 0.48 s against a 0.52 s wind-up.
-
-The slam needed a soft limiter (tanh at the ceiling) rather than a gain cut to
-get there: pulling the whole sound down to fit its tallest transient under the
-ceiling is what held it 2 dB under target in the first place, and on an impact
-the harmonics a soft knee adds read as punch.
+sees three of his five blows land.
 
 ### The theme is not one of his sounds
 
@@ -334,31 +240,12 @@ worth knowing before adding a second theme:
 
 `Music.fade_out()` deliberately does NOT restart a fade already running,
 because these exits stack: conceding starts one and the door off his floor
-asks for another while it is still going. Ahmed's is
-`assets/music/ahmed_theme_loop.wav`, 60 s at 48 kHz, and the one thing to
-listen for is its seam - a generated track is rendered to a time, not to a
-bar, so the loop point is where it will show.
+asks for another while it is still going.
 
-Big Mo's is `assets/music/big_mo_theme_loop.wav`, and adding it was the
-claim above being tested: one line on his scene root, no code anywhere. Two
-things about it are worth carrying to the third theme. Its **tempo is chosen
-against his cycle** rather than against the room - 120 BPM is a beat every 30
-frames, so his 0.25 s jab is an eighth note and his combo sits on the grid
-instead of drifting through it. And it is **one unbroken loop with no build**,
-because a boss gets exactly one file: the theme starts where his bar goes up
-and fades where it clears, and nothing switches at half health, so a track
-that saves itself for a drop is a track that is quiet for the half of the
-fight he spends on fire.
-
-And the level a theme is mixed at is decided against HIS sounds, never against
-the other theme. Big Mo's was first matched to Ahmed's loudness, which was the
-wrong question - masking is per band, and his rage and his fire both live under
-250 Hz where a techno track keeps its kick, so they were arriving level with
-the bed while every one of his impacts had 16 dB of room. Three more dB off the
-track fixed both without touching a single sound of his, which is the order to
-do it in: `enemy_audio`'s ladder is hand-levelled and internally consistent
-(a telegraph is quieter than the blow it warns about, on purpose), so the music
-is what moves. The numbers are in CREDITS.md.
+Each theme's own story is in its boss's file under *His theme*: Ahmed's seam,
+and from Big Mo two things worth carrying to the next theme - a tempo chosen
+against his cycle, one unbroken loop with no build - and why a theme is
+levelled against HIS sounds and never against another boss's theme.
 
 ## The mouth
 
@@ -489,633 +376,13 @@ direction in `ahmed.py`):
   leaves them 13 dB apart in the only thing anybody hears, which is how the
   quietest and most important line in the fight gets buried.
 
+How `cut.py` levels the speech itself, and `--relevel` carrying a boss cut
+under an older leveller onto a newer one for nothing, was settled on Big Mo:
+`game/bosses/big_mo/CLAUDE.md`'s *What he says*.
+
 `tests/test_barks.gd` is the suite, and it has its own file for the reason
 every suite here does: the headline cue needs a boss who never reaches anybody,
 which is the exact opposite of the fight test_bosses.gd has to run.
-
-## Big Mo
-
-`big_mo/` is the second boss, and he breaks two of Ahmed's assumptions on
-purpose. Both are load-bearing, so read them before touching his art.
-
-- **He is drawn FRONT ON.** Every other boss is a profile. A boxer squares up
-  to you, and that is the pose. It costs nothing against the side-only rule
-  above: the figure is symmetric enough that the `flip_h` the base uses to turn
-  him is invisible - only the lit forearm swaps sides, which is what Ahmed's
-  does too. No override was needed anywhere; `_face()` and `_apply_animation`
-  are untouched and his rows are still named `*_side`.
-- **He is drawn at 2x DENSITY.** 70 source rows across 35 world px, where Ahmed
-  spends 35 rows on the same 35 px. His cell is therefore `128` in roster.gd
-  and his scene halves it back with `scale 0.5` and `offset -48`, so the two
-  bosses stand the same height in the room and only Big Mo's pixels are finer.
-  The cost is real: his pixels do not line up with the room's at odd window
-  scales. It was chosen deliberately, because the style pass that shaped him
-  had no range to work in at 1x - a 35px-tall body gives a head-width slider
-  four usable steps.
-
-His pieces:
-
-- **`poses.gd` is measurements, not a picture.** Where Ahmed's is body ASCII
-  with an arm drawn over it, Big Mo's is thirteen numbers (head, shoulders,
-  taper, torso, glove, shorts, legs, boots) plus a per-frame pose: body and
-  head offsets, leg offsets, stance, and two arms each given as an elbow and a
-  glove. That is what let him be shaped with sliders, and it is why a new frame
-  here is six numbers rather than seventy rows. The **vertical stack those
-  measurements add up to** lives there too, `BOOT_TOP` up to `HEAD_TOP`, and
-  with it `SHOULDER` - the row every pose's `ey`/`gy` is measured down from.
-  The painter reads them rather than deriving its own, because the moment a
-  second thing draws a glove from pose data there must be one shoulder line
-  and not two.
-- **`tools/bosses/big_mo.gd` paints from those measurements.** Same seed-once
-  contract as Ahmed's. The canvas lands at a FIXED offset in the cell, never
-  centred per frame, or the body jitters between frames of a row.
-- **A RHYTHM rather than a menu** (`big_mo.gd`): jab, jab, then the big one,
-  then `breath_seconds`. The corner rush breaks the pattern for a player who
-  kites - and the dash IS its wind-up, with the blow on the last running
-  frame, so he connects on arrival rather than swinging halfway there. There
-  is no STRIKE phase to hang travel on: enemy_base fires the blow at the end of
-  WINDUP and goes straight to RECOVER.
-- **Commit is per attack.** `COMMIT` sets `commit_fraction` as each attack
-  begins - the base has one dial. Read the dial the right way round: it is how
-  much of the wind-up can STILL be interrupted, so 0.0 is committed from the
-  first frame and 1.0 is interruptible the whole way. The jab and the rush sit
-  at 1.0 under an older comment calling them uninterruptible; they are short
-  enough that it rarely shows, but the number says the opposite of the note.
-
-### The reads - what was added after the first fight was played
-
-The fight as first built was one string thrown forever, and a recording of it
-showed the whole of it in six seconds: step back from the hook, hit him in the
-breath, repeat. Four additions changed that, picked from an artifact that
-recorded the real fight and previewed each candidate with his real painter.
-**Every damage number on the original three attacks is unchanged**, and so is
-his health: the additions are questions, not numbers.
-
-- **Hook OR uppercut.** The third beat is a slot `_finisher()` fills, random
-  but never more than `FINISHER_RUN` (2) of one running. Same 0.70 s, same 18,
-  same commit, so neither guess is the safe one - and opposite ANSWERS: the
-  hook is his `Touch` circle (wide and short, step BACK), the uppercut is a
-  lane straight out the way he faces (`UPPERCUT_REACH` 44 by
-  `UPPERCUT_HALF_WIDTH` 8 - narrow and long, step ASIDE). The tell is the rear
-  glove (up and out, or down to the hip with a sink) and the Bell: a ring on
-  the floor and side chevrons for the hook, a LANE on the floor and chevrons
-  arriving from top and bottom, in bone rather than hot white, for the
-  uppercut. The lane the Bell draws is read off the boss's own constants.
-- **Shell Up**, for mashing. `SHELL_HITS` (3) hits inside `SHELL_WINDOW` (1.2
-  s), landed while he is not mid-wind-up, and he covers for `SHELL_SECONDS`
-  (0.8). A hit on the shell never reaches boss_base - no health, no flash, no
-  stagger - throws `block_spark.gd`, and starts the **counter**: a hook cut to
-  a 0.15 s wind-up, its own row, 12, commit 0.0. A shell nobody hits drops his
-  guard for `OPEN_SECONDS`, rooted and hittable. `SHELL_COOLDOWN` 6 s. Shell
-  and open are STANCES, not attacks - `attack` is "" through both, which is
-  why the interrupt economy never sees them and the Bell stays dark. He says
-  a `shell` line if he has one and borrows `hurt` ("Noted.") until he does.
-- **Clinch & Throw**, for standing on him. Feet within `CLINCH_RANGE` (14 px,
-  closer than any punch needs) for `CLINCH_AFTER` (0.8 s) and the next beat is
-  the clinch: arms thrown wide is the 0.30 s tell, 8 damage, commit 0.0. The
-  timer keeps counting THROUGH his punches, because his breath alone is
-  shorter than 0.8 s and a hug that only counted between strings could never
-  be caught. The throw is a shove HELD for `THROW_SECONDS` rather than one
-  shove, because player.gd caps one push at 70 (about 17 px) and refreshes
-  rather than stacks - held, it is about 45 px, clear of his reach.
-- **Burning Flurry**, raging only. Every other string is five straight
-  punches `FLURRY_GAP` (0.2 s) apart, each one a frame boundary in poses.gd:
-  the first lands on the impact frame like any blow and `_run_flurry` lands
-  the other four through the recover while he marches at `FLURRY_MARCH` (55 -
-  faster than his walk, or he punches himself out of reach by the third). Each
-  shoves you back; the grace window decides how many of the 4s hurt. Then the
-  big one with no breath between, and the breath itself drops to
-  `RAGE_BREATH` (0.4) - the lever the rage note always named. No hit-stop on
-  the flurry: five holds in a second would slide the punches off their frames.
-
-The six new rows went on the END of `ORDER`, so build_bosses.gd painted rows
-7-12 onto the sheet and left 0-6 alone. The new attacks have no sounds of
-their own yet: his scene's `sounds` map points each new id at the nearest
-existing clip (the uppercut at the hook's, the clinch at the rush's, the
-flurry and the block at the jab's), which keeps every cue audible and
-test_bosses.gd's "every attack has a telegraph and an impact" true without an
-import pass. Bespoke takes are `tools/sfx/make.py`'s job and cost credits. The
-same goes for lines: `uppercut`, `counter`, `clinch`, `flurry` and `shell` have
-none and are silent, which is legal. `tests/test_big_mo_moves.gd` is the
-suite.
-
-One consequence worth knowing: the player's grace window is 0.5 s on MEDIUM
-and his two jabs are closer together than that, so the second one is often
-eaten. That is the crowd dial doing its job, not a bug - but it is why his
-test asserts the ORDER he throws in rather than the health that comes off.
-
-### The Bell - his punches, announced
-
-`bell.gd`. Front on, a punch has no sideways travel to read: the jab's whole
-animation is the glove growing `gs 5` to `gs 9` and back, four source pixels.
-The Bell supplies what the camera angle takes away, and it does it at the scale
-of the room rather than on his fist, because the fist is the one part that
-cannot move on screen.
-
-It is Ahmed's `axe_fire.gd` contract - a node that reads the sprite's
-animation, frame and flip and draws from `poses.gd`, told nothing by anyone -
-with one addition: it reads `frame_progress` too, so a chevron crossing the
-screen has something smoother than ten frames a second to move on. Time into
-the attack is summed from the same `dur` list the boss script derives
-`windup_seconds` from, so **no timing moved to fit any of this** and none can
-drift.
-
-Three instances of the one script, and **the split is by SPACE**:
-
-- **`BellGround`**, under the body: the floor ring tightening as he loads.
-- **`BellBurst`**, over it: the ring and twelve spokes off the glove on impact,
-  reaching ~54 px - three times his own height.
-- **`BellScreen`**, on a CanvasLayer: the red vignette, the two chevrons that
-  cross the screen through the wind-up, the flash, and the rush's speed lines.
-
-That layer is `layer = 1`, which is why **game.tscn now states `layer = 2` on
-the HUD**: a flash that washes out his own health bar hides the one number the
-player is watching while it lands. The stack, explicit at last, is -1
-background, 0 world, 1 his screen effects, 2 HUD, 5 transition, 6 title.
-
-**The screen layer draws at TWO scales and getting this wrong is the whole
-trap.** `chunk` is a piece of the frame (`view.x / CHUNK`, ~7 px at 640) and
-builds the vignette, the chevrons and the jab's bar: furniture of the frame
-sized in world pixels is a nine-pixel arrow on a 640-pixel screen, and it would
-change size with the zoom, which is the one thing something pinned to the edge
-of the screen must never do. `world` is a world pixel as seen, and places the
-things that belong to the ROOM even when they span the frame - where the
-chevrons MEET (his chest, 13 world px up) and where the rush's streaks sit.
-The mockup this was ported from previewed at a zoom the game does not have, so
-every number in it had to be read as one or the other.
-
-Two dials beyond the drawing, both in `big_mo.gd`:
-
-- **`HIT_STOP`** holds the sprite still for 0.08 s on the frame a blow lands
-  (the hook gets half again), which is most of what tells a player the attack
-  is OVER. It pauses the SPRITE only - `_phase_time` runs on, so the wind-up,
-  the recover and the punish window are exactly what poses.gd says. The cost is
-  the last 0.08 s of the recover animation being clipped, which is the right
-  way round.
-- **`SHAKE`** throws the camera, per attack, through `shook` on `boss_base` -
-  a capability every boss now has and none has to implement. game.gd connects
-  it in `_watch_boss()` beside the bar, and applies it as a camera OFFSET
-  quantized to whole world pixels, so `_camera_target()` stays the only thing
-  deciding framing and a shaken room does not crawl.
-
-### The Rage - he goes up at half
-
-`rage.gd`, and `big_mo.gd` decides when. At half health he catches fire, once,
-and never comes back down. **Half was already a moment**: his floor cues
-`at_boss_fraction: 0.5`, so a `call_center` and a `social_media` come in through
-the south door on the same frame the fire does.
-
-**One flip, not a ladder**, because DESIGN.md gives the ladder to Silverman and
-two bosses making the same argument is one boss too many.
-
-The eruption is 0.95 s and **every beat of the fire is a frame boundary** in
-poses.gd - pulses at 0.16 / 0.40 / 0.62, the blast at 0.51. That is not a
-coincidence to preserve by hand: `tests/test_rage.gd` asserts it, because
-rage.gd fires on fixed seconds while poses.gd decides when frames change, and
-retiming a `dur` would slide the fire off the picture with nothing else to warn
-you.
-
-What happens, in order: he plants and sinks TWICE, the second deeper than the
-first - which is what sells the third as the one that gives - blows a ring out
-of the crouch behind a white flash on an already-dark room, and comes up
-through his own column with his arms flung open. Then the fire settles: a skirt
-at his boots, eight flames orbiting him split front and back about the
-ellipse, **both gloves burning**, embers, heat, smoke, and a crimson rim along
-his whole silhouette.
-
-Three things worth knowing before touching it:
-
-- **The rim is read off the sheet's own alpha**, cached per cell, so it follows
-  any frame he is ever drawn in and costs the art nothing. It is 16k pixel
-  reads for a 128px cell: fine once, a framerate every frame, which is why
-  `_rims` keeps them.
-- **`is_raging` is public and the effect reads it.** Everything else in this
-  folder is told nothing and works it out from the sprite, but the fire he
-  KEEPS has to outlive the animation that started it - by then the sprite is
-  back on `idle_side` and has nothing left to say.
-- **He does not get stronger.** Not one number moved: 24 / 17 / 36 and the
-  heavy's 24 are exact combo breakpoints. If the rage should bite as well as
-  burn, the cheapest honest lever is `breath_seconds` - the combination he
-  taught you, arriving with less room to answer it.
-
-While it runs he is rooted, throws nothing, and cannot be staggered -
-`_can_advance`, `_advance_phase` and `_interruptible` all defer to
-`_erupting()` - but damage still lands, so the 0.95 s is a free window and the
-reward for being close. The blast holds his sprite for 0.12 s and emits
-`shook` at 6 px, harder than any punch he throws.
-
-### brush.gd, and the second fire in the game
-
-`bell.gd` and `rage.gd` share `brush.gd`: the boss and sprite lookup, `part`,
-the anim clock, and the pixel and flame kit.
-
-Ahmed keeps his own copy of most of those shapes inside `axe_fire.gd`, and that
-stays deliberate. Nothing about the ART is shared between bosses, and a flame is
-art: the shapes here are the same as his, because one game should have one
-fire, but **the ramp is the whole point of drawing it twice** - Ahmed is yellow
-and amber, fuel burning on an axe; Big Mo is crimson and white, a body
-overheating. Nobody should have to check which boss they are fighting. A third
-consumer is the moment these bubble up to `game/bosses/` as a kit taking a
-ramp, and not before.
-
-### His sheet grew a row
-
-`ORDER` is now idle, walk, jab, hook, rush, **rage**, concede - seven rows, and
-`src/big_mo.png` was re-seeded to get it. That was free, and the reason is
-worth keeping: his PNG was still **exactly what the painter paints**, verified
-by repainting and diffing all 896x768 before deleting it. Every old row came
-back byte-identical and the concede moved down a row intact.
-
-That is the seed-once contract working as intended rather than being bent: the
-moment anyone hand-draws into that PNG, adding a row costs a redraw instead of
-a rebuild.
-
-### What he sounds like
-
-Eleven sounds, and the shape of the set is the fight rather than a copy of
-Ahmed's. He gets the same free telegraph - his `_begin_attack` calls `super`,
-so `boss_base` asks for `<id>_windup` without him knowing - and says the impact
-in his own `_strike`, before `super()` because that can clear `attack`.
-
-**His timings are why he cannot borrow Ahmed's sound language.** The jab winds
-up in 0.250 s and recovers in 0.280, so every file is truncated to fit under
-the beat it plays on, with a 12 ms fade so the cut does not click. Ahmed swings
-an axe and can ring out; this is a rhythm - jab, jab, hook - and a tail on any
-of these smears the combination into mush. Dry, close, fast decay, no room.
-
-**The punches carry no fire, on purpose.** He catches fire at half health and
-never comes back down, but the same six files play on both sides of that line:
-fire baked into a jab would be wrong for the first half of the fight and
-redundant in the second. So the fire arrives as a LAYER instead - a `rage`
-one-shot and a `fire` loop - which is exactly what the picture does. His
-punches do not change; the man throwing them is on fire.
-
-Two consequences worth keeping:
-
-- **`rage` is cut so its loudest MOMENT lands on `RAGE_BLAST` (0.51 s)**, which
-  is the same frame the blast holds him still and the camera shakes. Aligned by
-  a 30 ms sliding RMS rather than by the peak sample: the peak is a transient
-  0.12 s in, and aligning to it padded almost half a second of dead air in
-  front of the eruption.
-- **Nothing stops the fire.** Ahmed fades his axe on the concede because he
-  drops the axe; Big Mo IS the fire, and he is still burning when he kneels.
-  Its loop is crossfaded over a 0.5 s seam, because a bed that plays from half
-  health to the end of a fight is heard looping many times.
-
-Levels follow `DAMAGE` - 18 / 10 / 6 - so the fight sounds the way it hits:
-`hook_hit` -16 RMS, `rush_hit` -18.5, `jab_hit` -20, each telegraph about 7 dB
-under its own impact, and `hurt`/`stagger`/`concede` on Ahmed's exact numbers so
-the two bosses live in one mix. The fire bed sits at -34, where Ahmed's idle axe
-is.
-
-### What he says
-
-Twenty-two lines across nine cues in `big_mo/taunts.gd`, cut by
-`tools/voice/cut.py big_mo` off `tools/voice/big_mo.py`, exactly as Ahmed's
-are. Three things about the set are decisions rather than transcription:
-
-- **He is the answer to a line the floor below already set up.** Ahmed asks
-  "Do you know who Big Mo is?" when hurt and goes down saying "I'm telling
-  Big Mo", so the first thing this man says is "So you're the one who upset
-  Ahmed" and the last is "I'm escalating this. To Silverman." The chain of
-  command IS the boss order, and each concede hands you up it.
-
-  **Nobody in the building ever says HOW they are related, and that is the
-  rule rather than an omission.** Big Mo is Ahmed's uncle and Silverman is
-  Big Mo's brother; the family tree is the reason the three of them are the
-  three bosses, and stating it out loud turns a threat into a soap opera. A
-  name passed up the stairs already says everything the player needs - that
-  this man knows the next one and can reach him - so every line about another
-  boss carries the NAME and nothing else. That holds for the NPCs too: no
-  briefing and no kitchen story explains the blood.
-- **He talks like the department he runs, and that is the whole contrast.**
-  Ahmed is entitled and loud - seven of his nine cues are tagged furious or
-  shouting. Big Mo runs CONFLICT RESOLUTION and speaks like it: avoidance is
-  not a resolution, I've booked this room for an hour, meeting you halfway.
-  Seven of HIS nine cues are tagged quiet, and he is cast as Edward against
-  Ahmed's Jack - British both, because they are family, dark and low against
-  loud. Two men of one family tagged the same way would be one boss fought
-  twice.
-- **`rage` is a cue he added himself**, said by `big_mo.gd` on the frame he
-  catches fire - the base fires seven cues and none of them is "the moment the
-  process stops". It has one line, like `concede`, because there is no second
-  thing to say there; and it is the only cue in his file tagged like one of
-  Ahmed's. The quiet everywhere else is what buys it.
-
-`cut.py` levels the SPEECH to target and soft-limits what pokes through, rather
-than capping the gain - which it used to do, and which let one plosive decide a
-whole line's loudness. That barely showed on a man who shouts; it cost Big Mo
-6.5 dB on his first line and his last, both tagged quiet and both therefore
-holding the widest gap between a consonant and a speaking voice.
-
-Ahmed got it too, and without risking a single take, because there is a third
-thing `cut.py` can do: `--relevel` re-trims and re-levels the PLAYED files from
-the untouched exports in `src/`, spending nothing and asking the API for
-nothing. The performance lives in the export, so trimming and levelling it
-again is not a new read - which is exactly what `src/` has been kept for since
-the first grunt. His spread went from 1.2 dB to 0.3, and `concede_1`, his
-quietest and most important line, stopped being pinned at the ceiling. That is
-the way to carry a boss cut under an older leveller onto a better one.
-
-## Silverman
-
-`silverman/` is the third boss and the last man in the building. He breaks the
-other two the same way they broke each other, and the break is the whole
-character: **his body never changes shape.**
-
-- **One picture, moved around.** Ahmed's poses are an arm and an axe swung
-  about a torso; Big Mo's are thirteen measurements restruck per frame.
-  Silverman's are one block of ASCII and two numbers per frame - `dy`, how
-  high he is floating, and `dull`, how many steps down the ramp he is painted.
-  There is no scale, no lean, no clip and no leg variant anywhere in his
-  `poses.gd`. A deforming version was drawn, looked at and dropped: a liquid
-  that stretches while it travels reads as a cartoon, and this one is the
-  final boss.
-- **He does not walk, and he has no melee.** `walk_side` is the hover taken
-  faster, because gliding is all the travel he has. He owns five things and not
-  one of them is thrown with a hand: he crosses through you, blinds you,
-  divides, sweeps the room with light, and freezes the air near him. A player
-  standing on him is answered by the glare, whose band starts inside its own
-  reach.
-- **His telegraph is DRAWN, and it can only ever dim him.** His idle already
-  rests at `dull 0`, the brightest rung he has, so there is nowhere to go but
-  darker on the way to a blow: an attack row takes two rungs out of him and
-  spends the lot on the impact frame, where he snaps back to full. That is also
-  why `silverman.gd` overrides `_windup_tint()` to plain white - the base fades
-  a winding enemy towards amber, and a multiply on a body of six exact
-  greyscale values lands between two rungs of the only thing he is made of.
-- **1x, like Ahmed.** Cell 64, sprite unscaled, offset -24. He was drawn,
-  shown and picked at 35 rows, and the approved picture is the spec -
-  redrawing him at Big Mo's density to gain ramp headroom would be shipping a
-  different character. He needs it least of the three anyway: every frame of
-  every row is the same pixels at a different height.
-- **His toes end on row 32.** The two empty rows under them are the hover, and
-  they are why he never looks like he has landed. The concede spends them: he
-  settles the two pixels onto the floor he has never touched, and the shine
-  goes out of him on the way down. Losing flight IS the defeat. Then `beaten`
-  loops two dull levels slowly, so what is left in the room is a statue still
-  cooling rather than a statue.
-
-### The dash, and why it is one frame
-
-His one piece of real locomotion. `DASH` in `silverman.gd` is a **position
-curve** - six beats over half a second, out to 72 px - and that is all it is.
-The sprite holds `dash_side`'s single frame for the whole crossing.
-
-That single frame is the consequence of the rule above, and it is worth
-stating because it looks like a mistake otherwise: if the body never changes,
-the sheet has nothing to hold but one pose, so the travel is the boss moving
-under an unchanging sprite and the speed is drawn by `smear.gd`. The trail can
-be retuned later without repainting anything.
-
-**The smear is seven copies six pixels apart**, each a step down the ramp and
-fading back, so they overlap into one continuous length of metal with the real
-Silverman at the bright end. Six apart rather than fourteen is what makes it a
-smear instead of three afterimages: at that spacing the eye gets a band rather
-than a count.
-
-`ghost` is a sheet row the boss **never plays**. It holds the dash pose painted
-one step down the ramp, and `smear.gd` pulls its texture straight out of the
-SpriteFrames. The alternative was dulling a live copy with a modulate, which is
-a multiply and lands between two rungs; a boss whose whole look is six exact
-values does not get to approximate one of them. A picture the effect needs is a
-picture, so it lives on the sheet.
-
-Three beats of the six are travel - `moving` - and the first and last two are
-the coil and the arrival: three pixels back before he goes, two past the mark
-on the way in. That is the only anticipation he has, and it is position, so his
-shape is still never touched. The trail draws on the travel beats only.
-
-The cue is **distance alone**, and `dash_range` is the number that matters.
-`_can_advance()` is false while crossing, or the base's own walking fights the
-curve, and the dash drives `velocity` rather than assigning position so the
-arena's walls still stop him.
-
-It is now **locomotion that hurts** - the pass-through - and converting it cost
-exactly what this file promised: `hit` on the three travel beats, a flag to keep
-it to one blow, and nothing else moved. Two things had to be fixed to make it
-true, and both are the kind that only surface once a gap-closer starts dealing
-damage:
-
-- **`dash_range` came down from 96 to 40.** He triggered at 96 and travels 72,
-  so he always stopped 24 px short and could never once pass through anybody. A
-  gap-closer may stop short; a blow may not. At 40 the bands are: inside 40 he
-  glares, 40 to ~86 he crosses THROUGH you, and past that he crosses and lands
-  short - which is the old locomotion, still doing its old job.
-- **He needs a collision exception to pass through at all.** Two solid bodies do
-  not interpenetrate, so his own `move_and_slide()` hit the player and halted
-  him 11 px out: the pass-through was a boss walking into you and stopping.
-  `add_collision_exception_with()` on the one body he is crossing, dropped on
-  arrival and on a concede mid-flight - an exception rather than a collision
-  mask precisely because the walls must still stop him.
-
-The sprite is switched to `dash` in `_consider_dash` rather than waiting for the
-next `_dash_step`, or he spends one frame crossing the room in his idle pose.
-
-### The fight: a ladder, not a menu and not a rhythm
-
-Ahmed is a menu (the attack suits the range) and Big Mo is a rhythm (jab, jab,
-hook). Silverman had to be a third thing or the last fight in the building is
-one you have already had twice, so he is **cumulative**: three phases, each
-ADDING a mechanic and removing nothing, the interrupt window narrowing on every
-step. The fight gets more crowded rather than faster, which is the only
-escalation available to a man who never hurries.
-
-`tier()` is the phase, taken off fractions of his own max health rather than the
-literal 192 and 96, so retuning his HP - or a party adding to it - moves the
-phases with it (solo numbers below):
-
-| phase | HP | adds | interrupts |
-|---|---|---|---|
-| The Handshake | 288-192 | the crossing, the glare | standard (`commit` 0.65) |
-| The Meeting | 192-96 | the split | one, then 3 s (`commit` 0.40) |
-| The Performance Review | 96-0 | the prism, the cold room | none (`commit` 0.0) |
-
-`COMMIT` and `LOCKOUT` are set per phase as each attack begins, because the base
-has one dial for each and that is the only place they can narrow over a fight -
-Big Mo's per-attack trick, applied per phase instead. **`commit_fraction` 0.0
-is never interruptible, not always**: `_interruptible()` asks whether the
-wind-up's progress is still BELOW it, so a lower number is a more committed
-boss, and 0.0 is DESIGN.md's "fully uninterruptible" with no special case
-anywhere to make it so.
-
-A phase is announced by `herald`, a countdown glare.gd draws as two pulses of
-the room. He has no cuffs to adjust, so what he spends on the announcement is a
-rung of his own shine. Crossing a threshold also clears every attack cooldown,
-so an escalation ARRIVES rather than being something you notice a few seconds
-later - which is why the prism is the first thing he does in his last phase.
-
-**The five attacks, and what each is made of:**
-
-- **the glare** (16, 0.80/0.70) - the room whites out and the light leaves him
-  as a CROSS: a 20 px lane along the floor the way he faces, out to 140, and
-  two arms straight up and down, out to 80 (`GLARE_ARM`), all travelling
-  through his recover on Ahmed's wave contract. One glare is still one hit,
-  whichever arm finds you - every arm shares `_glare_hit`. You step off both
-  lines, so diagonal to him is the only safe place near him; you cannot
-  outrun it. The cross and its look were picked off a four-way preview
-  ("Crossfire" on "Mirror flash") and shipped as previewed: light spiralling
-  into him while he dims, a star off his chest and his whole body flashing
-  white as it fires, each arm a wall of light with a dithered wake, flare
-  spikes, floor reflection and dust, sparks where each runs out. `glare.gd`
-  is three parts split by SPACE like the Bell: `band` under the body in world
-  pixels (the walls), `air` over everything at z 1 (the spiral, the star, the
-  flash and the particles) and `screen` on a CanvasLayer at layer 1 in
-  viewport pixels. The white flash is the `flash` row on his sheet - his
-  impact pose with every pixel his brightest rung, never played, the `ghost`
-  row's arrangement - because a modulate can only darken. **Every arm draws
-  exactly its hitbox** - the band's front is the boss's own `glare_front()`
-  and the arms' is `glare_arm_front()`, the functions `Band`, `BandUp` and
-  `BandDown` are moved with, because a sweep you are asked to step out of has
-  to be a sweep whose edges you can see. `pixels.gd` holds the one-pixel
-  drawing both glare.gd and prism.gd were previewed in.
-- **the split** (12, 0.60 wind-up) - he divides, and the copy walks at you while
-  he stands still. `copy.gd` draws the `ghost` row - the dulled body already on
-  the sheet for the smear - so a copy of him is a copy of him by construction
-  and costs **no art at all**. It is deliberately not an add: no group, no
-  health, no bar, no collision, gone in 1.8 s. A boss floor's real adds arrive
-  on `at_boss_fraction`, and two systems that put fighters in a room is one too
-  many, so this one puts a THREAT in the room instead.
-- **the prism** (16, 1.00/1.90, third phase only, 6 s cooldown) - he draws the
-  city's light in off the window and sweeps it across the room as a white
-  beam: 140 degrees in 1.4 s, opening 0.35 rad behind the player on the side
-  it comes from, alternating direction every cast. Picked from a four-way
-  preview and shipped as previewed, with one change asked for: the preview's
-  beam split into a rainbow, and the shipped one is white, his own ramp. Three
-  things about it are load-bearing:
-  - **The fan is the fairness.** For the full second of the wind-up a dithered
-    fan on the floor shows exactly the arc that will sweep, so the arc is FIXED
-    the moment the cast begins (`_aim_prism`) and nothing about it may move.
-    At 100 degrees a second the beam crosses a body 50 px out at about walking
-    speed, so outrunning it at range fails; the answer is the 220 degrees the
-    fan never covers.
-  - **One length function, three consumers.** The arc is raycast against the
-    walls once per cast (48 samples) and `prism_length()` reads it, so the
-    fan, the beam and the hitbox stop at one wall. Furniture and bodies share
-    the walls' collision layer, so the ray skips anything that is not the
-    walls' TileMapLayer: the light goes over a desk the way the band does, and
-    the fan draws over one for the same reason.
-  - **It is a blow every frame it touches you**, metered by the grace window
-    as in the preview - which is one hit for a beam that crosses a body in a
-    tenth of a second, and a second hit for a player who runs WITH it.
-  `prism.gd` is three parts split by space like the glare: `floor` (the fan,
-  under him at z 0, because a negative z draws under the Floor tilemap),
-  `air` (threads off the window, the chest point, the beam with its
-  afterimage and wall sparks, at z 1 over everything standing in the room) and
-  `screen` (one white flash, on his layer 1 under the HUD). Its row is the
-  glare's dim-and-rise with the impact frame HELD for the sweep, because the
-  beam is his shine leaving him.
-- **the cold room** (3.0/s inside r 34, third phase only) - an aura, not an
-  attack, on the wraith's `drain()` path: it knows its own rate, and the grace
-  window neither blocks it nor is opened by it. `chill.gd` draws the EDGE
-  brightest, at exactly the radius the drain uses, because an aura with no
-  telegraph is only fair if you can see how far it reaches.
-- **the crossing** (18) - above.
-
-**Every reach he owns used to point along x, so he had to be given one that
-does not** - and the crossfire's arms are now a second answer, at range. The band is a 20 px lane through his chest, the crossing only travels
-along x, and the split will not fire closer than 34 - so a player standing
-directly north or south of him at arm's length was missed by the lane on BOTH
-axes, slid past by the crossing, and not worth a split. Phases one and two
-landed nothing at all on them, and the last fight in the game was free to
-anyone who hugged him. `_flash_at_source()` is the answer: the glare bursts off
-HIM before it sets out and catches anyone inside `Touch` whatever line they
-stand on, sharing `_glare_hit` with the band so one glare cannot hit twice. It
-needed no new number and no new shape, and standing in the source of the glare
-being the worst place to be is the obvious reading of it. `tests/test_silverman.gd`
-opens with that case, because it is the one a placement can never reveal.
-
-Nothing about the ladder lives in the effects. `chill.gd` asks him `tier()`,
-`glare.gd` reads `herald`, and both walk up to the `bosses` group to find him
-the way `brush.gd` does - so an effect on a CanvasLayer is as able to reach him
-as one under the body, and neither is told anything.
-
-**Placed: floor 12, the penthouse**, at (272, 140) - the centre line, 100 px
-north of where you walk in and inside his 130 sight, so he has seen you before
-you have taken a step. x is `DOOR_CENTRE_X` and that is the load-bearing half:
-his glare sweeps 140 px along x and his crossing travels 72 along x, so he is
-the one boss whose attacks need the room's WIDTH, and centred is the only
-placement that gives him all of it both ways.
-
-**He is the one boss floor with no door to lock.** Every other shuts its north
-door until the boss concedes; the penthouse is the end of the chain, so
-build_levels.gd cuts nothing through that wall and the boss-door swap has
-nothing to swap. Beating him opens no floor - what follows is the ending.
-
-His floor's beat is quarters of whatever he opens at (`at_boss_fraction` 0.75 /
-0.5 / 0.25), which solo is 216 / 144 / 72 of 288. They sit deliberately OFF his
-phase boundaries (two thirds and a third), at any party size:
-one thing to read at a time was the whole argument for the arena being empty,
-and it applies just as much to two clocks running on the same health bar.
-
-**He is Silverman, and it is his office.** That was the open question here and
-it is closed: there is no boss above him and no rename coming. The bar says
-SILVERMAN because `title()` reads the scene's filename, the floor card says
-SILVERMAN'S OFFICE because it reads the biome, and Big Mo's concede passes you
-up to him by the same name - three readers, one name, none of them told about
-the others. What he is to the rest of the family nothing in his lines says, on
-the rule Big Mo's file already set (see What he says).
-
-### He says everything twice
-
-Swedish first, then the same thing in English, and it is the cheapest character
-in the building: **one `text`, one clip, and not a line of shared code.** The
-two halves live in one string with a `\n` between them, so the subtitle draws
-two rows and the recording runs straight through. `enemy_lines.gd` reads a
-string, measures it and holds it for the clip's length, and has no opinion
-about how many languages are in it.
-
-That was the whole test of whether the idea was affordable. A second language
-that wanted a second field, a second clip or a second timer would have been a
-rewrite of a node three bosses and two enemies share, for one boss. It wanted
-none of them, so it is a data file - and the one thing that did change is in
-`cut.py`, which now turns that `\n` into a real break on its way to the API
-rather than sending the two characters a backslash and an `n` actually are.
-
-Three things follow, and the first two are the cost:
-
-- **A line is twice as long, so he says fewer of them.** His clips run 2.7 to
-  9.4 s against Ahmed's 1 to 3, and the subtitle holds for as long as the clip
-  does. The answer is not shorter lines - it is his `Lines` child's
-  `cue_seconds` at 12 against the default 9, and 14 on both attack cues, so a
-  0.5 s wind-up cannot drag a seven-second speech across the fight that
-  follows it. Anything added to his file has to be short in BOTH languages.
-- **Three rows of subtitle, not two.** Speaker, Swedish, English. The block is
-  pinned 46 px off the bottom and grows UPWARD, so it clears the boss bar the
-  way it always did - the check in test_barks.gd that measures that is
-  unaffected, because what moved is the top of the block.
-- **Nothing on screen would notice him stopping.** An English-only line is
-  legal everywhere: the node reads it, the clip is cut from whatever is
-  written, the box draws one row. So test_barks.gd sweeps his file off disk -
-  every line has two halves, the halves differ, every clip resolves, no two
-  lines share one, and every cue he speaks on is a cue something fires.
-
-The voice is a Swedish one reading English rather than an English one
-attempting Swedish, which is Ivan's decision again: the Swedish half has to be
-a native's or the conceit dies on the first line, and the accent the English
-half inherits is free characterisation for a man who has all the time in the
-building. Adam Composer, picked from three auditioned on one line rather than
-from the label on it - `tools/voice/silverman.py` has the rest.
-
-### What he says
-
-Twenty lines across nine cues in `silverman/taunts.gd`, cut by
-`tools/voice/cut.py silverman`. Two things about the set are decisions:
-
-- **He is gracious, and that is what makes him the third boss.** Ahmed is
-  entitled and loud and sure this is HR's fault; Big Mo is procedural, booking
-  the room and noting your feedback; Silverman is PLEASED TO MEET YOU. He
-  compliments you on arriving, he thanks you for hitting him, and he is going
-  to kill you anyway. There is not one insult in the file and the only thing he
-  ever says about himself is how much time he has. Two men of one family
-  shouting would be one boss fought twice; three would be a shame.
-- **`meeting` and `review` are cues he added himself**, said by `silverman.gd`
-  as he crosses into phases two and three - DESIGN.md's own names for them.
-  They are two cues rather than one `herald` cue holding two lines for the
-  reason `_begin_attack` says the attack id: which rung just arrived is the
-  only information in the line, and one cue would pick between them at random
-  and throw it away. The crossing gets no cue at all - it never runs through
-  `_begin_attack`, and a man who announces his own dash is hurrying.
 
 ## Online: drawn from the host, and told the moments
 
@@ -1150,9 +417,8 @@ over - so the host `_tell()`s it and his copy on each guest hears it in
   guest does to anybody is nothing - player.gd's rule - so only the host's
   burns.
 
-And Silverman crosses THROUGH the guest's player on the guest too: his drawn
-body is moved there twenty times a second, and without the collision
-exception the host gives him it would shoulder that player aside.
+Silverman's crossing needs one thing more on a guest:
+`game/bosses/silverman/CLAUDE.md`'s *Online*.
 
 Since M4 all of it happens a tenth of a second after the host (sync.gd's *One
 clock*): his snapshots AND his moments wait for the same moment of the host's
@@ -1181,26 +447,13 @@ Adding a boss, then, adds to his snapshot what his effects read off him, and
    `build_bosses.gd` and `build_levels.gd -- <level>`.
 7. A section in `tests/test_bosses.gd` (one suite, one world: place him in the
    lobby and fight there).
+8. `game/bosses/<id>/CLAUDE.md` for his own notes, and a line for him in The
+   bosses above.
 
 There is deliberately no step for the HUD bar: he is in the `bosses` group and
 over `boss_base.gd`, which is all game.gd looks for. See The bar.
 
 ## Still to build
 
-Big Mo's concede is a single placeholder frame - the animation DESIGN.md
-describes (gloves off, a nod, a point at the ceiling) was drawn and rejected in
-review. `boss_base.gd` plays `concede_side` at zero health so the row has to
-exist; replacing it is adding frames to his poses.gd and nothing else.
-
-Ahmed's concede is done: he lets go of the axe. He straightens up one last
-time, his fingers open, the axe drops and lands flat, and the fire goes out the
-moment it leaves his hand - the painter draws the axe wherever its descriptor
-says regardless of where the arm is, so a dropped axe costs nothing but a hand
-that stopped following it. With nothing left to hold, the far arm comes into
-view and both hands end on his thighs. Then `beaten` loops for the rest of the
-run, which is the point of the whole thing: every other option on the table
-left a statue in the room. It is a kneel rather than the enormous chair. The
-panting that goes with it does NOT loop for ever - see The noise.
-
-DESIGN.md's Ahmed also yells "SECURITY!" at 64 and 32 HP and summons an office
-boy through the door (cap 2). The slam already knows what to do with them.
+Nothing shared. What is left is per boss, at the end of his own file: Ahmed's
+"SECURITY!" and Big Mo's concede.

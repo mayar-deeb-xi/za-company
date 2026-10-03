@@ -251,3 +251,55 @@ that starts itself takes the wheel off a player who has pressed nothing yet.
 - **A conversation cannot be remembered.** HR will induct you again every time
   you walk back into the lobby, because rooms keep no state. That is the same
   decision as a respawned pickup, and it gets fixed when saves do.
+
+## Their voices
+
+**She is also VOICED** - twenty-three clips out of the same `tools/voice/`
+Ahmed's barks come from - and, as with him, nothing was rewritten to allow it:
+a beat always carried its clip path, and the dialogue box always took one. What
+the clip buys is the TYPING RATE, which is now the line's length over the
+clip's, so the subtitle finishes as she stops rather than racing her. A beat
+with no clip, or one not yet imported, is silent and types at the flat rate, so
+every unwritten conversation in this game still reads. Dialogue:
+game/dialogue/CLAUDE.md.
+
+**He is VOICED too** - eighteen clips out of the same `tools/voice/`, three per
+floor, in English with an Eastern-European accent, which is the only direction
+his lines needed: he is the one man in the building who is glad to see you, and
+he is heard over a room the player has just finished fighting in, so an accent
+that ever costs a word would cost the moment it was written for. His clip names
+are namespaced by floor (`call_eat`, `ahmed_axe`) because all six conversations
+cut into one folder and nothing dedupes across them - and every floor really
+does end on the same word.
+
+## Ivan says a different thing on every floor
+
+**He says a different thing on every one of those six floors**, and that cost
+six files and no code: `conversation` is placement, so each floor's biome names
+its own (`game/npcs/ivan/after_<floor>.gd`). One shared set of lines was the
+first version and it was wrong in a way only repetition shows - a man who walks
+in after a fight and says something that fits no fight in particular reads as a
+vending machine with a voice, and a player who has heard it three times has
+stopped reading the box he cannot skip. What keeps six files one character is a
+ROUTINE rather than a script: he talks about the room he has just walked into,
+he knows everybody in it by what they order - Ahmed complains about his soup,
+the office boys fix his ovens - and the last word is "Eat." every time, because
+that is the word ivan.gd's gift lands on. The rest, including why the finale
+names nobody, is `after_call_center.gd`'s header.
+
+## Dominique is the fourth beat
+
+**Dominique is the FOURTH beat, and the only one that hands over information.**
+A floor with `briefing` in its biome walks him in once the room is clear to say
+what is standing on the floor above - and it is the three floors that sit under
+a boss, which is the rule rather than the list: `tests/test_dominique.gd` reads
+the whole chain off disk and fails if a boss ever gets one without a warning
+under it. He comes down the NORTH door, the one the player is about to go up,
+where Ivan comes up the south one - two of the three floors have both, and one
+doorway cannot take two 64px bodies on one cue. It is the same
+`game/levels/relief.gd` doing both, because that file has never named anybody:
+the beats are told apart by node name and biome key, the way the prop shelves
+are told apart by role. His lines are one file per boss
+(`game/npcs/dominique/before_<boss>.gd`) and he is voiced too - twelve clips,
+bold and Slavic and impatient, deliberately not Ivan's warmth: he is glad to see
+you, and Dominique has given this speech before to people who did not come back.
