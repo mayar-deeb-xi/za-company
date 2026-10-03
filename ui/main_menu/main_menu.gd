@@ -1,10 +1,12 @@
 extends Control
 ## Home screen: hands off to the character select - on to the game, or by way
-## of ONLINE on to the lobby - or quits after confirmation.
+## of HOST ONLINE or JOIN ONLINE on to the lobby - or quits after confirmation.
+## The difficulty is chosen in Settings (and by a host, on the host screen).
 
 const CHARACTER_SELECT_SCENE := "res://ui/character_select/character_select.tscn"
 const LOBBY_SCENE := "res://ui/lobby/lobby.tscn"
 const CharacterSelect := preload("res://ui/character_select/character_select.gd")
+const Opening := preload("res://ui/lobby/opening.gd")
 
 ## Typed by preloaded script rather than by `class_name`: global class names come
 ## from a cache the editor writes, which a fresh headless checkout lacks.
@@ -14,8 +16,8 @@ const Updater := preload("res://ui/update/updater.gd")
 const UpdatePanel := preload("res://ui/update/update_panel.tscn")
 
 @onready var _play_button: Button = %PlayButton
-@onready var _online_button: Button = %OnlineButton
-@onready var _mode_button: Button = %ModeButton
+@onready var _host_button: Button = %HostButton
+@onready var _join_button: Button = %JoinButton
 @onready var _settings_button: Button = %SettingsButton
 @onready var _quit_button: Button = %QuitButton
 @onready var _quit_confirm: ConfirmationDialog = %QuitConfirm
@@ -29,15 +31,14 @@ func _ready() -> void:
 	# pause menu, a lobby backed out of - is over by the time it is here.
 	Net.leave()
 	_play_button.pressed.connect(_on_play_pressed)
-	_online_button.pressed.connect(_on_online_pressed)
-	_mode_button.pressed.connect(_on_mode_pressed)
+	_host_button.pressed.connect(_go_online.bind(Opening.View.HOST))
+	_join_button.pressed.connect(_go_online.bind(Opening.View.JOIN))
 	_settings_button.pressed.connect(_on_settings_pressed)
 	_quit_button.pressed.connect(_on_quit_pressed)
 	_quit_confirm.confirmed.connect(_on_quit_confirmed)
 	# A browser tab cannot be quit: the engine stops and leaves the page frozen
 	# on its last frame. Closing the tab is the web build's way out.
 	_quit_button.visible = not OS.has_feature("web")
-	_show_mode()
 
 	# The footer's version is the VERSION file itself, and an installed build
 	# also asks whether a newer release is out (release_check.gd says when).
@@ -76,24 +77,12 @@ func _on_play_pressed() -> void:
 
 
 ## The same character select as PLAY, told to go on to the lobby rather than
-## the game - the pick is made once, on the screen that already makes it.
-func _on_online_pressed() -> void:
+## the game - the pick is made once, on the screen that already makes it - and
+## the lobby told which of its screens to open on.
+func _go_online(view: Opening.View) -> void:
+	Opening.view = view
 	CharacterSelect.next_scene = LOBBY_SCENE
 	get_tree().change_scene_to_file(CHARACTER_SELECT_SCENE)
-
-
-## One button, three states: each press steps EASY -> MEDIUM -> HARD -> round
-## again, and the label always says where you are. A separate screen was not
-## worth it for a three-way choice, and a cycling button keeps the whole
-## decision on the surface. Difficulty saves the pick; what each mode means
-## lives with it in autoload/difficulty.gd.
-func _on_mode_pressed() -> void:
-	Difficulty.cycle()
-	_show_mode()
-
-
-func _show_mode() -> void:
-	_mode_button.text = "MODE: %s" % Difficulty.display_name()
 
 
 func _on_settings_pressed() -> void:

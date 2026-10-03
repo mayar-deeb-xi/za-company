@@ -951,10 +951,15 @@ is one less thing a regeneration can cost you.
 
 ## Difficulty
 
-Three modes - EASY / MEDIUM / HARD - picked by one cycling MODE button on the
-main menu (a separate screen was not worth a three-way choice; the label always
-says where you are). The choice persists through Settings (section `game`, key
-`difficulty`), default MEDIUM, applied-but-never-saved like every default.
+Three modes - EASY / MEDIUM / HARD - picked in two places that are one saved
+choice: the DIFFICULTY row of Settings, and the button on the lobby's host
+screen, which steps round the same mode (`Difficulty.cycle()`). The row is
+HIDDEN, not greyed out, when Settings is opened from the pause menu (the pause
+menu's panel has `offers_difficulty` off), because it is read once per run.
+The choice persists through Settings (section `game`, key `difficulty`),
+default MEDIUM, applied-but-never-saved like every default. **Online the
+host's mode is the party's**: only the host's world reaches anybody
+(player.gd's `_world_reaches()`), so a guest's own mode never lands.
 
 `autoload/difficulty.gd` (`Difficulty`) owns the modes and their numbers.
 **Difficulty scales what the world deals, never enemy health**: the HP numbers
@@ -969,8 +974,8 @@ costs you. Two dials per mode:
   crowd dial - see game/player/CLAUDE.md's Health.
 
 Consumers read their numbers ONCE, where they spawn, never live - the mode is
-only choosable at the main menu, a new run builds a fresh player and fresh
-rooms, so there is no mid-fight rescaling and deliberately no `changed` signal.
+only choosable before a run, a new run builds a fresh player and fresh rooms,
+so there is no mid-fight rescaling and deliberately no `changed` signal.
 MEDIUM is the tuned baseline; every number in enemy scenes and in these docs is
 a MEDIUM number.
 
@@ -1242,8 +1247,8 @@ Four things are load-bearing:
   own protocol: two builds that do not speak the same game are refused with
   `version`, the way the signaling service refuses another `PROTOCOL`.
 - **Joined in the lobby, never mid-run.** `start_run()` sends the signaling
-  service `start` (its protocol 2), which refuses every later `join` with
-  `started`, and a hello after the start is refused with `started` too.
+  service `start`, which refuses every later `join` with `started`, and a
+  hello after the start is refused with `started` too.
 - **It changes no scene and spawns nothing.** `run_started` hands the rows to
   whoever listens, and nothing in it reaches for the tree's root
   MultiplayerAPI by name - which is what lets two of it live in one process,
@@ -1253,18 +1258,52 @@ Four things are load-bearing:
   build (`packaged` and not `dev`), and dev's own for everything else - dev
   builds and the editor, which is develop.
 
-**The way in is the main menu's ONLINE**, under PLAY: the same character
-select (told by its `next_scene` to go on to the lobby rather than the game),
-then `ui/lobby/` - option A of the lobby preview, FOUR SEATS. It is two views
-on one screen. Before a room: your name (kept under Settings' `online`
-section), HOST A ROOM, or a six-letter code and JOIN, with a refusal said in
-words. The room: its code and join link (C copies it), then one seat per
-`MAX_PARTY` in the character select's own cards (`ui/lobby/seat.gd` - your
-seat walks and is marked YOU, an empty one is dashed, somebody still
-connecting is a silhouette), the ping in DESIGN.md's colours with the route
-under it, the relay warning - on the guest's own screen, and against the
-name on the host's - and START for the host. The lobby is a VIEW of Net and
-holds no party state; START is Net's `run_started`, and the lobby turns the
+**The list of games is the signaling service's** (its protocol 3,
+server/signaling/rooms.py's header): EVERY room on the asker's `WIRE`, public
+or private, waiting, full or started, each with a status - `open`, `private`,
+`full`, `playing` - and never a code. A row is joined by an opaque id
+(`Net.join_listed()`): a PUBLIC room lets anybody in that way, a private one
+wants its code as well (`wrong_code`), which is the whole of what private
+means. A code alone still joins any room, so the join link and copies of the
+game from before the list keep working: the service still speaks protocol 2,
+and a room that named no wire is never listed. Anybody may look without being
+in a room (`Net.browse()`, `autoload/net/room_list.gd`, its own socket, asked
+again every 3 s); the host chooses public at `host()` and may change it in
+the lobby (`set_public()`), and may `kick()` a guest there, which also refuses
+that guest's address the room for good. **There is no hidden-address option**:
+it was built and taken out on the owner's word - a guest connects straight to
+the host and falls back to the relay only when no direct route exists. And
+**no suite ever asks the real service for a list**: tests/helpers.gd holds
+`za/test/no_room_list` on in memory, so `browse()` does nothing there, and a
+suite that wants a list hands it to `rooms_listed` itself.
+
+**The way in is the main menu's HOST ONLINE and JOIN ONLINE**, under PLAY, as
+the Open Games preview drew it (https://claude.ai/artifact/PTQxvCxkJ1tkncGw2K6bbb):
+the same character select, told by its `next_scene` to go on to the lobby,
+which on that way only also asks YOUR NAME (Settings' `online` section) - then
+`ui/lobby/`, three screens on one scene, which `ui/lobby/opening.gd` says to
+open on. `lobby.gd` only routes - which screen is up, which one a refusal is
+said on, START into the run - and each screen is a script of its own:
+
+- **Join a game** (`join_view.gd`) is the list and NOTHING else: one row per
+  game (`game_row.gd` - the host's character, name, seats as pips, time zone,
+  STATUS), open first then private, full and playing, nearest time zone first,
+  and one line under it saying what Enter will do with the picked game or why
+  it cannot. Rows are kept by game id across each answer, so the picked game
+  stays picked as the list moves; full and playing rows are disabled buttons,
+  pickable but silent. A private game opens `code_box.gd` for its code.
+- **Host a game** (`host_view.gd`): ROOM: PUBLIC / PRIVATE (public by default,
+  remembered under `online`/`public`), DIFFICULTY, OPEN THE ROOM.
+- **The room** (`room_view.gd`) - option A of the lobby preview, FOUR SEATS:
+  its code and join link (C copies it), one seat per `MAX_PARTY` in the
+  character select's own cards (`seat.gd` - your seat walks and is marked YOU,
+  an empty one is dashed, somebody still connecting is a silhouette), the ping
+  in DESIGN.md's colours with the route under it, the relay warning, START,
+  the host's ROOM: PUBLIC / PRIVATE switch between START and LEAVE, and KICK
+  on every guest's seat - it asks once (KICK?) and goes on a second press
+  inside 3 s.
+
+The lobby is a VIEW of Net and holds no party state; START is Net's `run_started`, and the lobby turns the
 rows into game.gd's `next_party`: this machine's member marked `local` on the
 keyboard, everybody else's carrying its owner's `peer`. The main menu leaves
 any party it finds on arrival, and a party ending under a run (`host_left`)
@@ -1359,8 +1398,9 @@ the scene, since the paused game is still sitting behind it. It runs
 menus skip their own Escape handling while the panel is open, and the panel
 marks the event handled so the press cannot also unpause.
 
-The page has three rows, and the split between the last two is the thing to get
-right - it is the one players get wrong:
+The page has three window rows and DIFFICULTY (see Difficulty - hidden when the
+pause menu opens the panel), and the split between the last two window rows is
+the thing to get right - it is the one players get wrong:
 
 - **WINDOW MODE** - windowed or fullscreen. The game launches windowed at
   1920x1080, which is an exact 3x of the base viewport.
@@ -1395,8 +1435,12 @@ owns a camera; it re-applies on `Display.changed` and repositions immediately
 rather than waiting for `_process`, because the tree is paused while the panel
 is open. Two footer lines on the panel state the split outright.
 
-The panel must fit the 640x360 design viewport - it is at 325px with three rows,
-and test_menu.gd measures it so a fourth row cannot quietly overflow.
+The panel must fit the 640x360 design viewport - it is at 343px with four rows,
+and test_menu.gd measures it so a fifth cannot quietly overflow. Four rows only
+fit because a dropdown is 28px rather than a button's 34: the theme gives
+OptionButton its own boxes, three pixels shorter top and bottom
+(tools/build_ui_theme.gd), and a `custom_minimum_size` cannot do that, since
+the boxes' margins outvote it.
 
 ## Workflow
 
@@ -1546,10 +1590,12 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
   They drive the real game with synthesized input and exit 0/1. Thirty-seven suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
-  - `test_menu.gd` - main menu, MODE button + difficulty scaling, character
-    select, the settings panel from the main menu, and the menu music holding
-    ONE player across all three front-end scenes (checked by object id, since
-    a headless run has no audio device to ask). Never enters the game.
+  - `test_menu.gd` - main menu (HOST ONLINE and JOIN ONLINE, no MODE),
+    character select, the settings panel from the main menu - its DIFFICULTY
+    row and the scaling it decides, and the pause menu's copy hiding that row
+    - and the menu music holding ONE player across all three front-end scenes
+    (checked by object id, since a headless run has no audio device to ask).
+    Never enters the game.
   - `test_flow.gd` - select -> game -> movement -> pause -> zoom -> blow ->
     heart -> death -> wall -> doors (a hazard en route) -> lives -> game over.
     It walks the whole chain on foot, so inserting a floor means renumbering
@@ -1835,27 +1881,37 @@ and test_menu.gd measures it so a fourth row cannot quietly overflow.
     on another `wire` is refused with `version` and the party never had it;
     START reaches everybody with the same rows; a late arrival is refused with
     `started`; the host leaving is `host_left` at the guest and a guest leaving
-    is a row gone at the host; and the signaling URL and join link an
-    unpackaged build gets. Driven by WAITS with deadlines rather than frame
+    is a row gone at the host; the host's public switch, which a guest cannot
+    work; KICK - their seat empty at once and `kicked` at their end, and on a
+    LAN free to come back, since there is no service to remember them by;
+    and the signaling URL, join link and time zone an unpackaged build gets.
+    Driven by WAITS with deadlines rather than frame
     numbers, because a connection takes as long as it takes. The online road -
     WebRTC through a signaling service - is the same Net with another peer;
     it is proved by hand against a local `server/signaling`, since a suite
     cannot count on WebRTC finding a route.
   - `test_lobby.gd` - the way into online play through the real screens:
-    ONLINE between PLAY and MODE with five buttons in the four-button height,
-    ONLINE opening the character select and the pick opening the lobby; the
-    choice before a room (the default name, HOST focused, a missing code
-    asked for, a code in capitals, a refusal said in words, Escape back to the
-    menu); then a room hosted on ENet the way HOST would online: a local game
-    has no code, one seat per MAX_PARTY with the host's own marked HOST and the
-    rest open, the waiting line alone, START focused; a guest from a
-    SubViewport taking the second seat with their name, route and the ping the
-    host measured; the relay line, the code, the join link and C copying it;
-    and START putting the party into the game - this machine's body as its own
-    pick, the guest's as theirs on still hands, their HUD row by the name they
-    typed - and the party ending sending the run back to a menu that has left
-    it. The lobby is a view of Net, so it hosts through `Net.host_local()` and
-    tells Net a relay and a code directly, which ENet has neither of.
+    HOST ONLINE and JOIN ONLINE under PLAY in the four-button height; the
+    character select asking the name on the way online; the list of games -
+    looking before any answer, the order, every status, the line under it for
+    an open, full and started game, the picked game staying picked as the list
+    moves and the focus going where a vanished one was; a private game's code
+    box (a short code asked again, capitals, the join going with the game's id,
+    `wrong_code` keeping the box up, Escape closing only the box); a refusal on
+    the line, the server unreachable, nobody hosting, Escape to the menu; then
+    the host screen (public by default and remembered, the difficulty stepped
+    round and saved) and a room hosted on ENet: a local game has no code and
+    no PUBLIC switch, one seat per MAX_PARTY with the host's own marked HOST
+    and no KICK; a guest from a SubViewport taking the second seat with KICK
+    on it, KICK asking once and going on the second press, the guest told why
+    and free to come back on a LAN; the relay line, the code, the join link,
+    C copying it, the PUBLIC switch and its line; and START putting the party
+    into the game - this machine's body as its own pick, the guest's as
+    theirs on still hands, their HUD row by the name they typed - and the
+    party ending sending the run back to a menu that has left it. Nothing in
+    it reaches the internet: the list is handed to Net's `rooms_listed`, a
+    join from the list is caught before it leaves, and a relay and a code are
+    told to Net directly, which ENet has neither of.
   - `test_coop.gd` - TWO machines in one run (M3), and the first suite that is
     two processes: it hosts, and starts a second Godot (`coop_guest.gd`) that
     joins over ENet on localhost through the real lobby. Two games in one tree

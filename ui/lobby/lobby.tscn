@@ -1,7 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://ui/lobby/lobby.gd" id="1_lobby"]
 [ext_resource type="Theme" path="res://ui/theme/menu_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://ui/lobby/join_view.gd" id="3_join"]
+[ext_resource type="Script" path="res://ui/lobby/host_view.gd" id="4_host"]
+[ext_resource type="Script" path="res://ui/lobby/room_view.gd" id="5_room"]
 
 [sub_resource type="Gradient" id="Gradient_vignette"]
 offsets = PackedFloat32Array(0.35, 1)
@@ -14,6 +17,14 @@ height = 256
 fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_list"]
+bg_color = Color(0.105882, 0.0666667, 0.0980392, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.403922, 0.286275, 0.286275, 1)
 
 [node name="Lobby" type="Control"]
 layout_mode = 3
@@ -47,7 +58,7 @@ mouse_filter = 2
 texture = SubResource("GradientTexture2D_vignette")
 expand_mode = 1
 
-[node name="Entry" type="Control" parent="."]
+[node name="Join" type="Control" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -56,96 +67,275 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("3_join")
 
-[node name="Heading" type="Label" parent="Entry"]
+[node name="Heading" type="Label" parent="Join"]
 layout_mode = 0
-offset_top = 16.0
+offset_top = 10.0
 offset_right = 640.0
-offset_bottom = 52.0
+offset_bottom = 46.0
 theme_type_variation = &"Heading"
-text = "PLAY ONLINE"
+text = "JOIN A GAME"
 horizontal_alignment = 1
 
-[node name="NameLabel" type="Label" parent="Entry"]
+[node name="ListPanel" type="Panel" parent="Join"]
 layout_mode = 0
-offset_left = 232.0
-offset_top = 70.0
-offset_right = 408.0
-offset_bottom = 84.0
+offset_left = 24.0
+offset_top = 48.0
+offset_right = 616.0
+offset_bottom = 300.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_list")
+
+[node name="ListHeaders" type="Control" parent="Join"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 54.0
+offset_right = 640.0
+offset_bottom = 68.0
+mouse_filter = 2
+
+[node name="HostHead" type="Label" parent="Join/ListHeaders"]
+layout_mode = 0
+offset_left = 74.0
+offset_top = 0.0
+offset_right = 260.0
+offset_bottom = 14.0
 theme_type_variation = &"Footer"
-text = "YOUR NAME"
+text = "HOST"
 
-[node name="NameEdit" type="LineEdit" parent="Entry"]
+[node name="SeatsHead" type="Label" parent="Join/ListHeaders"]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 0.0
+offset_right = 390.0
+offset_bottom = 14.0
+theme_type_variation = &"Footer"
+text = "SEATS"
+
+[node name="ZoneHead" type="Label" parent="Join/ListHeaders"]
+layout_mode = 0
+offset_left = 404.0
+offset_top = 0.0
+offset_right = 500.0
+offset_bottom = 14.0
+theme_type_variation = &"Footer"
+text = "TIME ZONE"
+
+[node name="StatusHead" type="Label" parent="Join/ListHeaders"]
+layout_mode = 0
+offset_left = 516.0
+offset_top = 0.0
+offset_right = 600.0
+offset_bottom = 14.0
+theme_type_variation = &"Footer"
+text = "STATUS"
+horizontal_alignment = 1
+
+[node name="ListScroll" type="ScrollContainer" parent="Join"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 232.0
-offset_top = 86.0
-offset_right = 408.0
-offset_bottom = 116.0
-placeholder_text = "YOUR NAME"
-max_length = 24
+offset_left = 32.0
+offset_top = 72.0
+offset_right = 608.0
+offset_bottom = 286.0
+follow_focus = true
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
 
-[node name="HostButton" type="Button" parent="Entry"]
+[node name="ListRows" type="VBoxContainer" parent="Join/ListScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 3
+
+[node name="EmptyTitle" type="Label" parent="Join"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 232.0
-offset_top = 128.0
-offset_right = 408.0
-offset_bottom = 162.0
+offset_left = 24.0
+offset_top = 150.0
+offset_right = 616.0
+offset_bottom = 168.0
+horizontal_alignment = 1
+
+[node name="EmptyNote" type="Label" parent="Join"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 172.0
+offset_right = 616.0
+offset_bottom = 186.0
+theme_type_variation = &"Footer"
+horizontal_alignment = 1
+
+[node name="EmptyAgain" type="Label" parent="Join"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 188.0
+offset_right = 616.0
+offset_bottom = 202.0
+theme_type_variation = &"Footer"
+theme_override_colors/font_color = Color(0.431373, 0.701961, 0.615686, 1)
+horizontal_alignment = 1
+
+[node name="More" type="Control" parent="Join"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 290.0
+offset_top = 288.0
+offset_right = 360.0
+offset_bottom = 300.0
+mouse_filter = 2
+
+[node name="MoreLabel" type="Label" parent="Join/More"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 14.0
+offset_top = -1.0
+offset_right = 70.0
+offset_bottom = 13.0
+theme_type_variation = &"Footer"
+
+[node name="ListLine" type="Label" parent="Join"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 312.0
+offset_right = 528.0
+offset_bottom = 326.0
+theme_type_variation = &"Footer"
+clip_text = true
+
+[node name="JoinBack" type="Button" parent="Join"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 536.0
+offset_top = 306.0
+offset_right = 616.0
+offset_bottom = 332.0
 theme_override_font_sizes/font_size = 16
-text = "HOST A ROOM"
-
-[node name="OrLabel" type="Label" parent="Entry"]
-layout_mode = 0
-offset_left = 232.0
-offset_top = 176.0
-offset_right = 408.0
-offset_bottom = 190.0
-theme_type_variation = &"Footer"
-text = "OR JOIN ONE"
-horizontal_alignment = 1
-
-[node name="CodeEdit" type="LineEdit" parent="Entry"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 232.0
-offset_top = 194.0
-offset_right = 336.0
-offset_bottom = 224.0
-placeholder_text = "CODE"
-max_length = 6
-
-[node name="JoinButton" type="Button" parent="Entry"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 344.0
-offset_top = 194.0
-offset_right = 408.0
-offset_bottom = 224.0
-theme_override_font_sizes/font_size = 16
-text = "JOIN"
-
-[node name="Status" type="Label" parent="Entry"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 20.0
-offset_top = 236.0
-offset_right = 620.0
-offset_bottom = 252.0
-theme_type_variation = &"Footer"
-horizontal_alignment = 1
-
-[node name="BackButton" type="Button" parent="Entry"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 260.0
-offset_top = 262.0
-offset_right = 380.0
-offset_bottom = 296.0
 text = "BACK"
 
-[node name="EntryHint" type="Label" parent="Entry"]
+[node name="JoinHint" type="Label" parent="Join"]
 unique_name_in_owner = true
+layout_mode = 0
+offset_top = 338.0
+offset_right = 640.0
+offset_bottom = 352.0
+theme_type_variation = &"Footer"
+text = "ENTER JOIN    ARROWS CHOOSE    ESC BACK"
+horizontal_alignment = 1
+
+[node name="Host" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_host")
+
+[node name="Heading" type="Label" parent="Host"]
+layout_mode = 0
+offset_top = 14.0
+offset_right = 640.0
+offset_bottom = 50.0
+theme_type_variation = &"Heading"
+text = "HOST A GAME"
+horizontal_alignment = 1
+
+[node name="WhoLabel" type="Label" parent="Host"]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 84.0
+offset_right = 470.0
+offset_bottom = 98.0
+theme_type_variation = &"Footer"
+text = "WHO CAN JOIN"
+
+[node name="PublicChoice" type="Button" parent="Host"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 170.0
+offset_top = 100.0
+offset_right = 470.0
+offset_bottom = 132.0
+theme_override_font_sizes/font_size = 16
+text = "ROOM: PUBLIC"
+
+[node name="PublicLine" type="Label" parent="Host"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 140.0
+offset_right = 640.0
+offset_bottom = 154.0
+theme_type_variation = &"Footer"
+horizontal_alignment = 1
+
+[node name="HardLabel" type="Label" parent="Host"]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 170.0
+offset_right = 470.0
+offset_bottom = 184.0
+theme_type_variation = &"Footer"
+text = "HOW HARD"
+
+[node name="DifficultyChoice" type="Button" parent="Host"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 170.0
+offset_top = 186.0
+offset_right = 470.0
+offset_bottom = 218.0
+theme_override_font_sizes/font_size = 16
+text = "DIFFICULTY: MEDIUM"
+
+[node name="DifficultyLine" type="Label" parent="Host"]
+layout_mode = 0
+offset_top = 226.0
+offset_right = 640.0
+offset_bottom = 240.0
+theme_type_variation = &"Footer"
+theme_override_colors/font_color = Color(0.431373, 0.701961, 0.615686, 1)
+text = "THE WHOLE PARTY PLAYS ON THIS"
+horizontal_alignment = 1
+
+[node name="OpenButton" type="Button" parent="Host"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 170.0
+offset_top = 262.0
+offset_right = 366.0
+offset_bottom = 296.0
+theme_override_font_sizes/font_size = 16
+text = "OPEN THE ROOM"
+
+[node name="HostBack" type="Button" parent="Host"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 374.0
+offset_top = 262.0
+offset_right = 470.0
+offset_bottom = 296.0
+theme_override_font_sizes/font_size = 16
+text = "BACK"
+
+[node name="HostStatus" type="Label" parent="Host"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 306.0
+offset_right = 640.0
+offset_bottom = 320.0
+theme_type_variation = &"Footer"
+horizontal_alignment = 1
+
+[node name="HostHint" type="Label" parent="Host"]
 layout_mode = 0
 offset_top = 338.0
 offset_right = 640.0
@@ -164,6 +354,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("5_room")
 
 [node name="RoomTitle" type="Label" parent="Room"]
 unique_name_in_owner = true
@@ -233,6 +424,13 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 34)
 layout_mode = 2
 text = "START"
+
+[node name="PublicButton" type="Button" parent="Room/ButtonRow/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "ROOM: PUBLIC"
 
 [node name="LeaveButton" type="Button" parent="Room/ButtonRow/Buttons"]
 unique_name_in_owner = true

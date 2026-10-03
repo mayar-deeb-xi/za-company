@@ -79,11 +79,36 @@ columns = 5
 custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 
-[node name="BackButton" type="Button" parent="CenterContainer/Column"]
+[node name="BottomRow" type="HBoxContainer" parent="CenterContainer/Column"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="CenterContainer/Column/BottomRow"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"Footer"
+text = "YOUR NAME"
+
+[node name="NameEdit" type="LineEdit" parent="CenterContainer/Column/BottomRow"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(180, 32)
+layout_mode = 2
+placeholder_text = "YOUR NAME"
+max_length = 24
+
+[node name="NameGap" type="Control" parent="CenterContainer/Column/BottomRow"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(4, 0)
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="CenterContainer/Column/BottomRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 32)
 layout_mode = 2
-size_flags_horizontal = 4
 text = "BACK"
 
 [node name="Footer" type="MarginContainer" parent="."]
@@ -100,6 +125,7 @@ theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 8
 
 [node name="Hint" type="Label" parent="Footer"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Footer"
 text = "ARROWS SELECT   ENTER PLAY   ESC BACK"

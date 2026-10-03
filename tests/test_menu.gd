@@ -1,8 +1,9 @@
 extends "res://tests/helpers.gd"
-## Menu-side test: main menu (focus, theme, quit confirm), the MODE button and
-## its difficulty scaling, the character select screen, and the settings panel
-## as hosted by the main menu. Never enters the game - the pause-menu host and
-## zoom live in test_flow.gd, which owns a running world.
+## Menu-side test: main menu (focus, theme, quit confirm, the two online
+## buttons), the character select screen, and the settings panel as hosted by
+## the main menu - its DIFFICULTY row and the scaling it decides included, and
+## the pause menu's copy leaving that row out. Never enters the game - the
+## pause-menu host and zoom live in test_flow.gd, which owns a running world.
 
 ## The music player's object id, taken on the menu and compared after each
 ## scene change: the autoload exists to keep ONE of them across all three
@@ -55,41 +56,17 @@ func _tick(frame: int) -> void:
 			_check("menu: Quit opens the confirmation dialog",
 				(current_scene.get_node("%QuitConfirm") as ConfirmationDialog).visible)
 			(current_scene.get_node("%QuitConfirm") as ConfirmationDialog).hide()
-			# MODE: one cycling button, three states. All checked in one frame -
-			# everything here is synchronous, including an enemy's _ready reading
-			# its difficulty numbers the moment it is added.
-			var mode := current_scene.get_node("%ModeButton") as Button
-			_check("mode: defaults to MEDIUM without saving (%s)" % mode.text,
-				mode.text == "MODE: MEDIUM"
-					and not _autoload("Settings").call("has", &"game", &"difficulty"))
-			mode.pressed.emit()
-			_check("mode: a press cycles to HARD and saves the pick (%s)" % mode.text,
-				mode.text == "MODE: HARD" and _autoload("Settings").call(
-					"get_value", &"game", &"difficulty", "") == "hard")
-			# Difficulty scales what the world deals, never enemy health - the
-			# health numbers are exact combo breakpoints on every mode.
-			var hard_guard := (load("res://game/enemies/regular/regular.tscn")
-				as PackedScene).instantiate()
-			root.add_child(hard_guard)
-			_check("mode: HARD guards hit half again as hard, same health (%s dmg, %s hp)"
-				% [hard_guard.get("contact_damage"), hard_guard.get("max_health")],
-				hard_guard.get("contact_damage") == 23
-					and hard_guard.get("max_health") == 24)
-			hard_guard.free()
-			mode.pressed.emit()
-			var easy_guard := (load("res://game/enemies/regular/regular.tscn")
-				as PackedScene).instantiate()
-			root.add_child(easy_guard)
-			_check("mode: EASY guards hit softer, same health (%s dmg)"
-				% easy_guard.get("contact_damage"),
-				mode.text == "MODE: EASY" and easy_guard.get("contact_damage") == 9)
-			easy_guard.free()
-			mode.pressed.emit()
-			_check("mode: a third press comes round to MEDIUM (%s)" % mode.text,
-				mode.text == "MODE: MEDIUM")
-			# The rest of the run assumes a clean install; drop what the
-			# cycling just saved.
-			_autoload("Settings").call("clear")
+			# The menu's five: hosting has a button of its own beside joining,
+			# and the difficulty has moved into Settings.
+			var host := current_scene.get_node_or_null("%HostButton") as Button
+			var join := current_scene.get_node_or_null("%JoinButton") as Button
+			_check("menu: HOST ONLINE then JOIN ONLINE, under PLAY",
+				host != null and join != null and host.text == "HOST ONLINE"
+					and join.text == "JOIN ONLINE"
+					and host.get_index() < join.get_index()
+					and (current_scene.get_node("%PlayButton") as Button).get_index() < host.get_index())
+			_check("menu: no MODE button any more",
+				current_scene.get_node_or_null("%ModeButton") == null)
 			(current_scene.get_node("%PlayButton") as Button).pressed.emit()
 		20:
 			_check("play: opens the character select (got %s)"
@@ -146,6 +123,51 @@ func _tick(frame: int) -> void:
 				box.size.x <= _base_viewport().x and box.size.y <= _base_viewport().y)
 			_check("settings: display dropdown offers windowed and fullscreen",
 				_mode_option(current_scene).item_count == 2)
+			# DIFFICULTY is the fourth row. Everything here is synchronous,
+			# including an enemy's _ready reading its numbers the moment it is
+			# added, so it is all checked inside this one frame.
+			var difficulty := _panel(current_scene).get_node("%DifficultyOption") as OptionButton
+			_check("difficulty: EASY, MEDIUM, HARD, on MEDIUM without saving (%s)"
+				% difficulty.get_item_text(difficulty.selected),
+				difficulty.visible and difficulty.item_count == 3
+					and difficulty.get_item_text(difficulty.selected) == "MEDIUM"
+					and not _autoload("Settings").call("has", &"game", &"difficulty"))
+			_pick(difficulty, 2)
+			_check("difficulty: picking HARD saves it",
+				_autoload("Settings").call("get_value", &"game", &"difficulty", "") == "hard")
+			# Difficulty scales what the world deals, never enemy health - the
+			# health numbers are exact combo breakpoints on every mode.
+			var hard_guard := (load("res://game/enemies/regular/regular.tscn")
+				as PackedScene).instantiate()
+			root.add_child(hard_guard)
+			_check("difficulty: HARD guards hit half again as hard, same health (%s dmg, %s hp)"
+				% [hard_guard.get("contact_damage"), hard_guard.get("max_health")],
+				hard_guard.get("contact_damage") == 23
+					and hard_guard.get("max_health") == 24)
+			hard_guard.free()
+			_pick(difficulty, 0)
+			var easy_guard := (load("res://game/enemies/regular/regular.tscn")
+				as PackedScene).instantiate()
+			root.add_child(easy_guard)
+			_check("difficulty: EASY guards hit softer, same health (%s dmg)"
+				% easy_guard.get("contact_damage"),
+				easy_guard.get("contact_damage") == 9 and easy_guard.get("max_health") == 24)
+			easy_guard.free()
+			# The pause menu's copy of the panel says no to the row: the
+			# difficulty is read once, when a run starts.
+			var paused := (load("res://ui/pause_menu/pause_menu.tscn") as PackedScene).instantiate()
+			_check("difficulty: the pause menu's panel leaves it out",
+				paused.get_node("%SettingsPanel").get("offers_difficulty") == false)
+			paused.free()
+			var bare := (load("res://ui/settings/settings_panel.tscn") as PackedScene).instantiate()
+			bare.set("offers_difficulty", false)
+			root.add_child(bare)
+			_check("difficulty: and a panel that leaves it out hides the row, not greys it",
+				not (bare.get_node("%DifficultyOption") as Control).visible
+					and not (bare.get_node("%DifficultyLabel") as Control).visible)
+			bare.free()
+			# The rest of the run assumes a clean install; drop what was picked.
+			_autoload("Settings").call("clear")
 			_check("settings: window size dropdown is populated (%d entries)"
 				% _window_size_option(current_scene).item_count,
 				_window_size_option(current_scene).item_count > 0)

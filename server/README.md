@@ -250,7 +250,15 @@ WebRTC through this server.
   on dev first: a deploy to dev rebuilds dev's copy of the service, which is
   what a dev build and the editor talk to. An old client is refused with
   `version` rather than misunderstood. Version 2 added `start`: the host
-  shuts the room to new joins when the run begins.
+  shuts the room to new joins when the run begins. Version 3 added the list
+  of games (`list`, `public`, `kick`, and joining a listed room by its id);
+  version 2 is still spoken, so copies of the game from before the list keep
+  playing by code. The list carries no codes, and its rooms and bans live in
+  memory only, like every room here.
+- **Rooms per address** is `ROOMS_PER_ADDRESS` (5 by default): how many rooms
+  one IP may host at once, so nobody can fill the list. The address is the
+  last `X-Forwarded-For` entry, which Caddy writes; the service listens on the
+  loopback only, so nothing reaches it without passing Caddy.
 - **The party size** is the game's `MAX_PARTY`, sent by the host when it opens
   a room. `PARTY_CEILING` here is only a safety cap. Raise it if the game ever
   goes past 8.

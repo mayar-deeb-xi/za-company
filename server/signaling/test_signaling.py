@@ -99,6 +99,121 @@ class RoomsTest(unittest.TestCase):
         self.assertEqual(len(self.rooms), 0)
 
 
+class ListingTest(unittest.TestCase):
+    def setUp(self):
+        self.rooms = Rooms(party_ceiling=8, max_rooms=20, rooms_per_address=2)
+
+    def test_every_game_is_listed_with_its_status_and_never_its_code(self):
+        started = self.rooms.open("h3", "Started", 4, public=True, wire=2)
+        self.rooms.start("h3")
+        self.rooms.open("h2", "Private", 4, wire=2)
+        full = self.rooms.open("h4", "Full", 2, public=True, wire=2)
+        self.rooms.join("g4", full.code, "G")
+        shown = self.rooms.open("h1", "Reem", 4, public=True, wire=2, zone=180, character="reem")
+        self.rooms.open("h5", "Other build", 4, public=True, wire=3)
+        rows = self.rooms.listing(2)
+        self.assertEqual([(row["host"], row["status"]) for row in rows],
+                         [("Reem", "open"), ("Private", "private"), ("Full", "full"), ("Started", "playing")],
+                         "joinable first, then what wants a code, then what can only be looked at")
+        self.assertEqual(rows[0], {"id": shown.id, "host": "Reem", "character": "reem",
+                                   "players": 1, "max": 4, "zone": 180, "status": "open"})
+        self.assertTrue(all("code" not in row for row in rows), "a listing never gives a code away")
+        self.assertNotIn(started.code, json.dumps(rows))
+        self.assertEqual([row["host"] for row in self.rooms.listing(3)], ["Other build"])
+        self.assertEqual(self.rooms.listing(None), [], "an ask that names no wire is shown nothing")
+
+    def test_a_game_from_before_the_list_is_never_shown(self):
+        self.rooms.open("old", "Old", 4)
+        self.assertEqual(self.rooms.listing(None), [])
+        self.assertEqual(self.rooms.listing(2), [])
+
+    def test_a_guest_counts_and_leaving_frees_the_seat(self):
+        room = self.rooms.open("h", "Host", 2, public=True, wire=2)
+        self.rooms.join("a", room.code, "A")
+        self.assertEqual(self.rooms.listing(2)[0]["status"], "full")
+        self.rooms.leave("a")
+        self.assertEqual((self.rooms.listing(2)[0]["status"], self.rooms.listing(2)[0]["players"]), ("open", 1))
+
+    def test_only_the_host_switches_it(self):
+        room = self.rooms.open("h", "Host", 4, wire=2)
+        self.rooms.join("a", room.code, "A")
+        with self.assertRaisesRegex(Refused, "not_host"):
+            self.rooms.set_public("a", True)
+        self.rooms.set_public("h", True)
+        self.assertEqual(self.rooms.listing(2)[0]["status"], "open")
+        self.rooms.set_public("h", False)
+        self.assertEqual(self.rooms.listing(2)[0]["status"], "private")
+
+    def test_joining_from_the_list(self):
+        public = self.rooms.open("h1", "Open", 4, public=True, wire=2)
+        private = self.rooms.open("h2", "Shut", 4, wire=2)
+        self.assertEqual(self.rooms.join("a", "", "A", room_id=public.id)[0], public,
+                         "a public game needs no code")
+        with self.assertRaisesRegex(Refused, "wrong_code"):
+            self.rooms.join("b", "", "B", room_id=private.id)
+        with self.assertRaisesRegex(Refused, "wrong_code"):
+            self.rooms.join("b", public.code, "B", room_id=private.id)
+        self.assertEqual(self.rooms.join("b", private.code.lower(), "B", room_id=private.id)[0], private)
+        with self.assertRaisesRegex(Refused, "no_such_room"):
+            self.rooms.join("c", "", "C", room_id="nope")
+        self.assertEqual(self.rooms.join("d", private.code, "D")[0], private,
+                         "a code alone still joins: the join link, and games from before the list")
+        self.rooms.leave("h2")
+        with self.assertRaisesRegex(Refused, "no_such_room"):
+            self.rooms.join("e", private.code, "E", room_id=private.id)
+
+    def test_kick_tells_only_the_guest_and_bans_the_address(self):
+        room = self.rooms.open("h", "Host", 4, address="1.1.1.1")
+        self.rooms.join("a", room.code, "A", address="2.2.2.2")
+        self.rooms.join("b", room.code, "B", address="3.3.3.3")
+        with self.assertRaisesRegex(Refused, "not_host"):
+            self.rooms.kick("b", 2)
+        self.assertEqual(self.rooms.kick("h", 2), [("a", {"op": "closed", "reason": "kicked"})])
+        self.assertIsNone(self.rooms.lookup("a"))
+        self.assertEqual(self.rooms.leave("a"), [], "a kicked guest's own leave is nothing")
+        with self.assertRaisesRegex(Refused, "kicked"):
+            self.rooms.join("a2", room.code, "A again", address="2.2.2.2")
+        self.assertEqual(self.rooms.join("c", room.code, "C", address="4.4.4.4")[1], 4)
+        with self.assertRaisesRegex(Refused, "no_such_peer"):
+            self.rooms.kick("h", 1)
+        with self.assertRaisesRegex(Refused, "no_such_peer"):
+            self.rooms.kick("h", 2)
+
+    def test_one_address_hosts_only_so_many(self):
+        self.rooms.open("h1", "A", 4, address="9.9.9.9")
+        self.rooms.open("h2", "B", 4, address="9.9.9.9")
+        with self.assertRaisesRegex(Refused, "too_many_rooms"):
+            self.rooms.open("h3", "C", 4, address="9.9.9.9")
+        self.rooms.open("h4", "D", 4, address="8.8.8.8")
+        self.rooms.leave("h1")
+        self.rooms.open("h5", "E", 4, address="9.9.9.9")
+
+
+class CleaningTest(unittest.TestCase):
+    def test_character_zone_and_address(self):
+        self.assertEqual(main.clean_character("mayar"), "mayar")
+        self.assertEqual(main.clean_character("<b>Mayar</b>"), "")
+        self.assertEqual(main.clean_character(7), "")
+        self.assertEqual(main.clean_zone(180), 180)
+        self.assertEqual(main.clean_zone(99999), 14 * 60)
+        self.assertEqual(main.clean_zone(True), 0)
+        self.assertEqual(main.clean_zone("180"), 0)
+
+        class Request:
+            def __init__(self, headers):
+                self.headers = headers
+
+        class Socket:
+            def __init__(self, headers, remote):
+                self.request = Request(headers)
+                self.remote_address = remote
+
+        # The last entry is the one Caddy wrote; anything before it the client did.
+        self.assertEqual(main.address_of(Socket({"X-Forwarded-For": "6.6.6.6, 5.5.5.5"}, ("127.0.0.1", 1))),
+                         "5.5.5.5")
+        self.assertEqual(main.address_of(Socket({}, ("127.0.0.1", 1))), "127.0.0.1")
+
+
 class SocketTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         main.ROOMS = Rooms(party_ceiling=8, max_rooms=10)
@@ -177,8 +292,77 @@ class SocketTest(unittest.IsolatedAsyncioTestCase):
         async with connect(self.url) as ws:
             await ws.send(json.dumps({"op": "host", "v": 99, "name": "H", "max": 2}))
             self.assertEqual(await self.recv(ws), {"op": "error", "reason": "version"})
+            await ws.send(json.dumps({"op": "list", "v": 2, "wire": 2}))
+            self.assertEqual(await self.recv(ws), {"op": "error", "reason": "version"},
+                             "the list is version 3's")
             await ws.send("not json")
             self.assertEqual(await self.recv(ws), {"op": "error", "reason": "bad_json"})
+
+    async def host(self, ws, **extra):
+        await ws.send(json.dumps({"op": "host", "v": main.PROTOCOL, "name": "Mayar", "max": 4,
+                                  "wire": 2, "zone": 180, "character": "mayar", **extra}))
+        return (await self.recv(ws))["code"]
+
+    async def listing(self, ws, wire=2):
+        await ws.send(json.dumps({"op": "list", "v": main.PROTOCOL, "wire": wire}))
+        answer = await self.recv(ws)
+        self.assertEqual(answer["op"], "rooms")
+        return answer["rooms"]
+
+    async def test_the_list_over_the_wire(self):
+        async with connect(self.url) as host, connect(self.url) as looker:
+            code = await self.host(host, public=True)
+            rows = await self.listing(looker)
+            self.assertEqual(len(rows), 1)
+            self.assertEqual({k: v for k, v in rows[0].items() if k != "id"}, {
+                "host": "Mayar", "character": "mayar", "players": 1, "max": 4,
+                "zone": 180, "status": "open"})
+            self.assertNotIn(code, json.dumps(rows), "the code never goes out in the list")
+            self.assertEqual(await self.listing(looker, wire=3), [], "another build sees nothing")
+            await host.send(json.dumps({"op": "public", "on": False}))
+            self.assertEqual((await self.listing(looker))[0]["status"], "private")
+            await host.send(json.dumps({"op": "public", "on": True}))
+            self.assertEqual((await self.listing(looker))[0]["status"], "open")
+            await host.send(json.dumps({"op": "start"}))
+            self.assertEqual((await self.listing(looker))[0]["status"], "playing")
+
+    async def test_a_room_is_private_unless_it_asks(self):
+        async with connect(self.url) as host, connect(self.url) as looker:
+            await self.host(host)
+            self.assertEqual((await self.listing(looker))[0]["status"], "private")
+
+    async def test_a_private_game_from_the_list_wants_its_code(self):
+        async with connect(self.url) as host, connect(self.url) as guest, connect(self.url) as looker:
+            code = await self.host(host)
+            room_id = (await self.listing(looker))[0]["id"]
+            await guest.send(json.dumps({"op": "join", "v": main.PROTOCOL, "name": "G",
+                                         "room": room_id, "code": "WRONG2"}))
+            self.assertEqual(await self.recv(guest), {"op": "error", "reason": "wrong_code"})
+            await guest.send(json.dumps({"op": "join", "v": main.PROTOCOL, "name": "G",
+                                         "room": room_id, "code": code.lower()}))
+            self.assertEqual((await self.recv(guest))["op"], "joined")
+
+    async def test_version_two_still_plays_and_is_never_listed(self):
+        async with connect(self.url) as host, connect(self.url) as guest, connect(self.url) as looker:
+            await host.send(json.dumps({"op": "host", "v": 2, "name": "Old", "max": 4, "public": True}))
+            code = (await self.recv(host))["code"]
+            await guest.send(json.dumps({"op": "join", "v": 2, "name": "G", "code": code}))
+            self.assertEqual((await self.recv(guest))["op"], "joined")
+            self.assertEqual(await self.listing(looker, wire=None), [])
+
+    async def test_kick_over_the_wire(self):
+        async with connect(self.url) as host, connect(self.url) as guest, connect(self.url) as again:
+            code = await self.host(host, public=True)
+            await guest.send(json.dumps({"op": "join", "v": main.PROTOCOL, "name": "G", "code": code}))
+            await self.recv(guest)
+            await self.recv(host)  # the peer note
+            await host.send(json.dumps({"op": "kick", "id": 2}))
+            self.assertEqual(await self.recv(guest), {"op": "closed", "reason": "kicked"})
+            # Every socket here is 127.0.0.1, so the second one is the same address.
+            await again.send(json.dumps({"op": "join", "v": main.PROTOCOL, "name": "G", "code": code}))
+            self.assertEqual(await self.recv(again), {"op": "error", "reason": "kicked"})
+            await guest.send(json.dumps({"op": "kick", "id": 1}))
+            self.assertEqual(await self.recv(guest), {"op": "error", "reason": "not_host"})
 
 
 if __name__ == "__main__":

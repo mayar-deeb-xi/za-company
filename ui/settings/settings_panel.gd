@@ -5,14 +5,23 @@ extends Control
 ## scene - the game is still sitting behind it, paused. One panel serves both,
 ## so the two can never drift apart.
 ##
-## It only drives Display; the saving lives there, next to the applying, so a
-## change made with F11 is remembered the same way as one made here.
+## It drives Display and Difficulty; the saving lives there, next to the
+## applying, so a change made with F11 is remembered the same way as one made
+## here, and a difficulty picked here is the one a host's screen shows.
 
 signal closed
+
+## The pause menu's copy says no: the difficulty is read once, when a run
+## starts, so a row offering it mid-run would change nothing anybody could see.
+## Hidden rather than greyed out - it is set before a run, here from the main
+## menu or on the host screen.
+@export var offers_difficulty := true
 
 @onready var _mode: OptionButton = %ModeOption
 @onready var _window_size: OptionButton = %WindowSizeOption
 @onready var _zoom: OptionButton = %ZoomOption
+@onready var _difficulty_label: Label = %DifficultyLabel
+@onready var _difficulty: OptionButton = %DifficultyOption
 @onready var _back_button: Button = %BackButton
 
 ## Parallel to the window-size dropdown's items.
@@ -28,7 +37,10 @@ func _ready() -> void:
 	_mode.item_selected.connect(_on_mode_selected)
 	_window_size.item_selected.connect(_on_window_size_selected)
 	_zoom.item_selected.connect(_on_zoom_selected)
+	_difficulty.item_selected.connect(_on_difficulty_selected)
 	_back_button.pressed.connect(close)
+	_difficulty_label.visible = offers_difficulty
+	_difficulty.visible = offers_difficulty
 
 
 func _input(event: InputEvent) -> void:
@@ -85,6 +97,12 @@ func _refresh() -> void:
 		_zoom.add_item(_zoom_label(Display.ZOOMS[i]), i)
 	_zoom.select(maxi(Display.ZOOMS.find(Display.zoom()), 0))
 
+	_difficulty.clear()
+	for i in Difficulty.MODES.size():
+		_difficulty.add_item(Difficulty.MODES[i]["name"], i)
+		if Difficulty.MODES[i]["id"] == Difficulty.mode_id():
+			_difficulty.select(i)
+
 	_update_window_size_availability()
 
 
@@ -132,3 +150,8 @@ func _on_window_size_selected(index: int) -> void:
 func _on_zoom_selected(index: int) -> void:
 	if index >= 0 and index < Display.ZOOMS.size():
 		Display.set_zoom(Display.ZOOMS[index])
+
+
+func _on_difficulty_selected(index: int) -> void:
+	if index >= 0 and index < Difficulty.MODES.size():
+		Difficulty.select(Difficulty.MODES[index]["id"])

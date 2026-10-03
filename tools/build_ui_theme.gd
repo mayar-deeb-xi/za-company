@@ -115,6 +115,15 @@ func _initialize() -> void:
 	theme.set_font("font", "OptionButton", mini)
 	theme.set_font_size("font_size", "OptionButton", 16)
 	theme.set_constant("arrow_margin", "OptionButton", 6)
+	# A Button's own boxes, three pixels shorter top and bottom: a dropdown
+	# lives only in a settings row, and four rows of a button's 34 px - with
+	# DIFFICULTY joining the window rows - make a panel taller than the screen.
+	for pair in [["normal", normal], ["hover", hover], ["pressed", pressed],
+			["focus", focus], ["disabled", disabled]]:
+		var row: StyleBoxFlat = pair[1].duplicate()
+		row.content_margin_top -= 3
+		row.content_margin_bottom -= 3
+		theme.set_stylebox(pair[0], "OptionButton", row)
 
 	var popup := _flat(SURFACE.darkened(0.35), ACCENT)
 	popup.content_margin_left = 6

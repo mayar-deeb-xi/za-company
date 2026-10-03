@@ -22,10 +22,13 @@ extends Node
 ##   a whole room's damage at about one guard's no matter how many were on you.
 ##
 ## Consumers read their numbers ONCE, where they spawn (enemies, hazards, the
-## player) - never live. The mode is only choosable from the main menu, and a
-## new run instantiates a fresh player and fresh rooms, so a change always
-## lands cleanly on the next run with no mid-fight rescaling to reason about.
-## That is also why there is no `changed` signal.
+## player) - never live. The mode is only choosable before a run - in Settings
+## opened from the main menu (the pause menu's copy hides the row), or by a host
+## on the lobby's host screen - and a new run instantiates a fresh player and
+## fresh rooms, so a change always lands cleanly on the next run with no
+## mid-fight rescaling to reason about. That is also why there is no `changed`
+## signal. Online the host's mode is the party's: only the host's world reaches
+## anybody (player.gd's `_world_reaches()`), so a guest's own mode never lands.
 ##
 ## Registered in project.godot AFTER Settings, for the same read-during-_ready
 ## reason as Display; tools/setup_project.gd enforces the order.
@@ -68,7 +71,7 @@ func select(id: String) -> void:
 		Settings.set_value(SECTION, KEY, id)
 
 
-## The menu button's whole behaviour: step to the next mode, round the loop.
+## The host screen's button: step to the next mode, round the loop.
 func cycle() -> void:
 	select(MODES[(_find(mode_id()) + 1) % MODES.size()]["id"])
 

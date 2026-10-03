@@ -22,6 +22,8 @@ extends SceneTree
 ## must never decide whether a check about framing passes.
 
 const SETTINGS_PATH := "user://settings.cfg"   # keep in step with autoload/settings.gd
+## autoload/net.gd's switch for the list of games - keep the two in step.
+const LIST_OFF := "za/test/no_room_list"
 
 var _f := 0
 var _checks := 0
@@ -53,6 +55,10 @@ func _initialize() -> void:
 	# nothing here calls ProjectSettings.save(). test_level_select.gd switches
 	# it back on for itself.
 	ProjectSettings.set_setting("za/dev/level_select", false)
+	# And the lobby's list of games is never asked of the real service: a suite
+	# must not reach the internet, and one that wants a list hands it to Net's
+	# `rooms_listed` itself (test_lobby.gd). In memory only, as above.
+	ProjectSettings.set_setting(LIST_OFF, true)
 	var menu := (load("res://ui/main_menu/main_menu.tscn") as PackedScene).instantiate()
 	root.add_child(menu)
 	current_scene = menu

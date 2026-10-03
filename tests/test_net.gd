@@ -13,6 +13,8 @@ extends "res://tests/helpers.gd"
 ## - START: everybody hears `run_started` with the same rows.
 ## - Leaving: a guest leaving is a row gone at the host; the host leaving is
 ##   `host_left` at the guest.
+## - The host's say over the room: the public switch, and KICK - their seat
+##   empty at once, and `kicked` at their end.
 ## - Which signaling service a build talks to, and the join link it hands out.
 ##
 ## Driven by WAITS rather than frame numbers: a connection takes as long as it
@@ -42,7 +44,8 @@ func _tick(frame: int) -> void:
 	if frame == 2:
 		_net_script = load(NET)
 		_steps = [_host_one, _join_one, _ping_one, _wrong_wire, _start, _late_comer,
-			_host_leaves, _host_two, _guest_leaves, _addresses]
+			_host_leaves, _host_two, _public_switch, _kick, _kicked_out, _come_back,
+			_guest_leaves, _addresses]
 	if frame < 3:
 		return
 	if _waiting.is_valid():
@@ -78,7 +81,7 @@ func _spawn_net(view_name: String) -> Node:
 	var net: Node = _net_script.new()
 	net.name = "Net"
 	view.add_child(net)
-	for event in ["hosted", "joined", "failed", "ended", "run_started"]:
+	for event in ["hosted", "joined", "failed", "ended", "run_started", "peer_left"]:
 		net.connect(event, _hear.bind(view_name, event))
 	return net
 
@@ -190,6 +193,45 @@ func _host_two() -> void:
 		func() -> bool: return _heard_of("GuestView", "joined") != null)
 
 
+func _public_switch() -> void:
+	_check("public: a room is private unless the host opens it",
+		_host.call("is_public") == false and _guest.call("is_public") == false)
+	_host.call("set_public", true)
+	_check("public: the host opens it", _host.call("is_public") == true)
+	_guest.call("set_public", true)
+	_check("public: a guest cannot", _guest.call("is_public") == false)
+	_host.call("set_public", false)
+	_check("public: and the host makes it private again", _host.call("is_public") == false)
+
+
+func _kick() -> void:
+	_guest.call("kick", 1)
+	_check("kick: a guest kicks nobody", (_host.call("roster") as Array).size() == 2)
+	_host.call("kick", 1)
+	_check("kick: the host cannot kick itself", (_host.call("roster") as Array).size() == 2)
+	var guest_id: int = _guest.call("my_id")
+	_host.call("kick", guest_id)
+	_check("kick: their seat is empty at once (%d)" % (_host.call("roster") as Array).size(),
+		(_host.call("roster") as Array).size() == 1 and _heard_of("HostView", "peer_left") == guest_id)
+	_wait("kick: and they are told why",
+		func() -> bool: return (_heard_of("GuestView", "failed") == "kicked"
+			and _guest.get("state") == 0))
+
+
+func _kicked_out() -> void:
+	_wait("kick: the line to them goes too",
+		func() -> bool: return (_host.get("multiplayer") as MultiplayerAPI).get_peers().is_empty())
+
+
+## There is no signaling service on ENet to remember them by, so on a LAN they
+## may come back; online the service refuses their address (its own suite).
+func _come_back() -> void:
+	_heard.erase("GuestView:joined")
+	_guest.call("join_local", "127.0.0.1", PORT_2, "Ivo", "anas")
+	_wait("kick: on a LAN they may come back",
+		func() -> bool: return _heard_of("GuestView", "joined") != null)
+
+
 func _guest_leaves() -> void:
 	_guest.call("leave")
 	_wait("leave: a guest going is a row gone at the host",
@@ -208,6 +250,10 @@ func _addresses() -> void:
 	_check("link: a code is a page on the same domain (%s)" % _host.call("join_link"),
 		_host.call("join_link") == "https://dev.za-company.mayar-deeb.dev/#join=K7Q2PX")
 	_host.set("_code", "")
+	# Godot's bias is minutes EAST of UTC, which is the sign the list prints.
+	var bias := int(Time.get_time_zone_from_system().get("bias", 0))
+	_check("zone: a room says its clock's minutes from UTC (%d)" % _host.call("zone_minutes"),
+		_host.call("zone_minutes") == bias)
 
 
 static func _ids(rows: Array) -> Array:

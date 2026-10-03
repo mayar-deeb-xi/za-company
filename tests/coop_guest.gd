@@ -21,6 +21,9 @@ var _port := 0
 
 func _initialize() -> void:
 	ProjectSettings.set_setting("za/dev/level_select", false)
+	# The lobby's list of games is never asked of the real service from a
+	# suite (helpers.gd says why); this machine joins by address anyway.
+	ProjectSettings.set_setting("za/test/no_room_list", true)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with(PORT_ARG):
 			_port = int(arg.trim_prefix(PORT_ARG))

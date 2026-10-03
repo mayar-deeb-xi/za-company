@@ -95,25 +95,25 @@ text = "PLAY"
 custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
-[node name="OnlineButton" type="Button" parent="CenterContainer/Menu"]
+[node name="HostButton" type="Button" parent="CenterContainer/Menu"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(176, 36)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "ONLINE"
+text = "HOST ONLINE"
 
-[node name="OnlineGap" type="Control" parent="CenterContainer/Menu"]
+[node name="HostGap" type="Control" parent="CenterContainer/Menu"]
 custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
-[node name="ModeButton" type="Button" parent="CenterContainer/Menu"]
+[node name="JoinButton" type="Button" parent="CenterContainer/Menu"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(176, 36)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "MODE: MEDIUM"
+text = "JOIN ONLINE"
 
-[node name="ModeGap" type="Control" parent="CenterContainer/Menu"]
+[node name="JoinGap" type="Control" parent="CenterContainer/Menu"]
 custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 

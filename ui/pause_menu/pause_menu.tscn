@@ -99,3 +99,4 @@ dialog_text = "Really quit?"
 
 [node name="SettingsPanel" parent="Root" instance=ExtResource("3_settings")]
 unique_name_in_owner = true
+offers_difficulty = false

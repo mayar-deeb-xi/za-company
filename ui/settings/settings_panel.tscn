@@ -68,7 +68,7 @@ text = "WINDOW MODE"
 
 [node name="ModeOption" type="OptionButton" parent="CenterContainer/Panel/Menu/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 32)
+custom_minimum_size = Vector2(180, 28)
 layout_mode = 2
 
 [node name="WindowSizeLabel" type="Label" parent="CenterContainer/Panel/Menu/Rows"]
@@ -79,7 +79,7 @@ text = "WINDOW SIZE"
 
 [node name="WindowSizeOption" type="OptionButton" parent="CenterContainer/Panel/Menu/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 32)
+custom_minimum_size = Vector2(180, 28)
 layout_mode = 2
 
 [node name="ZoomLabel" type="Label" parent="CenterContainer/Panel/Menu/Rows"]
@@ -90,7 +90,19 @@ text = "ZOOM"
 
 [node name="ZoomOption" type="OptionButton" parent="CenterContainer/Panel/Menu/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 32)
+custom_minimum_size = Vector2(180, 28)
+layout_mode = 2
+
+[node name="DifficultyLabel" type="Label" parent="CenterContainer/Panel/Menu/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 1
+theme_type_variation = &"SettingLabel"
+text = "DIFFICULTY"
+
+[node name="DifficultyOption" type="OptionButton" parent="CenterContainer/Panel/Menu/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 28)
 layout_mode = 2
 
 [node name="NoteSize" type="Label" parent="CenterContainer/Panel/Menu"]

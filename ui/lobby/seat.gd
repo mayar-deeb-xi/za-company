@@ -6,6 +6,12 @@ extends Control
 ##
 ## It is told what to show and draws it; it never asks Net anything, so the
 ## lobby stays the one place that reads the roster.
+##
+## A host sees KICK in the far corner of every guest's seat, the YOU tag's
+## mirror. A press only says so (`kick_pressed`); what it means - ask once,
+## kick on the second - is the room's (room_view.gd), which `arm()`s the tag.
+
+signal kick_pressed(peer: int)
 
 const Roster := preload("res://game/player/characters/roster.gd")
 
@@ -28,9 +34,15 @@ const SILHOUETTE := Color(0.15, 0.1, 0.15, 0.7)
 const PING_GOOD := Color("6fdc6f")
 const PING_MID := Color("e8b84a")
 const PING_BAD := Color("e85a4a")
+const RAISED := Color("45434c")
+const WARM := Color("ec773d")
+const KICK_SIZE := Vector2(38, 14)
+const KICK_ARMED_SIZE := Vector2(44, 14)
 
 ## Read by tests: "open", "connecting" or "player".
 var kind := "open"
+## Whose seat this is, while somebody is in it.
+var peer := 0
 var _mine := false
 var _frames: SpriteFrames = null
 var _walk := 0
@@ -41,6 +53,9 @@ var _you: ColorRect
 var _name: Label
 var _line_1: Label
 var _line_2: Label
+var _kick: Button
+var _kick_idle: StyleBoxFlat
+var _kick_hot: StyleBoxFlat
 
 
 func _init() -> void:
@@ -73,12 +88,37 @@ func _init() -> void:
 	you_text.position = Vector2(0, -1)
 	_you.add_child(you_text)
 	add_child(_you)
+	_kick_idle = _box(BG, BORDER, 1)
+	_kick_hot = _box(RAISED, WARM, 2)
+	_kick = Button.new()
+	_kick.name = "Kick"
+	_kick.text = "KICK"
+	_kick.visible = false
+	_kick.add_theme_font_size_override(&"font_size", 12)
+	_kick.add_theme_constant_override(&"outline_size", 0)
+	for state in [&"normal", &"hover", &"pressed", &"disabled"]:
+		_kick.add_theme_stylebox_override(state, _kick_idle)
+	_kick.add_theme_stylebox_override(&"focus", _kick_hot)
+	_kick.add_theme_color_override(&"font_color", DIM)
+	_kick.add_theme_color_override(&"font_hover_color", TEXT)
+	_kick.add_theme_color_override(&"font_focus_color", TEXT)
+	_kick.add_theme_color_override(&"font_pressed_color", TEXT)
+	_kick.pressed.connect(func() -> void: kick_pressed.emit(peer))
+	add_child(_kick)
+	arm(false)
 	show_open()
+
+
+func _ready() -> void:
+	# The menu's small type, which a Button is not given by the theme.
+	_kick.add_theme_font_override(&"font", get_theme_font(&"font", &"Footer"))
 
 
 ## Nobody here yet.
 func show_open() -> void:
 	kind = "open"
+	peer = 0
+	_kick.visible = false
 	_mine = false
 	_frames = null
 	_sprite.texture = null
@@ -91,8 +131,11 @@ func show_open() -> void:
 	queue_redraw()
 
 
-## A row of Net's roster. `mine` is this machine's player, whose card walks.
-func show_row(row: Dictionary, mine: bool) -> void:
+## A row of Net's roster. `mine` is this machine's player, whose card walks;
+## `kickable` puts KICK on it, which the room asks for on a host's screen.
+func show_row(row: Dictionary, mine: bool, kickable := false) -> void:
+	peer = int(row.get("peer", 0))
+	_kick.visible = kickable
 	_mine = mine
 	_you.visible = mine
 	_name.text = String(row.get("name", "")).to_upper()
@@ -116,6 +159,24 @@ func show_row(row: Dictionary, mine: bool) -> void:
 		_set_line(_line_1, "..." if ping < 0 else "%d MS" % ping, ping_colour(ping))
 		_set_line(_line_2, route, PING_MID if route == "RELAY" else DIM)
 	queue_redraw()
+
+
+## KICK asking "are you sure": wider, in the focus colour whether focused or
+## not, so the question stays on screen while the player looks at the line
+## under the seats that asks it in words.
+func arm(asking: bool) -> void:
+	_kick.text = "KICK?" if asking else "KICK"
+	var size := KICK_ARMED_SIZE if asking else KICK_SIZE
+	_kick.size = size
+	_kick.custom_minimum_size = size
+	_kick.position = Vector2(SIZE.x - size.x - 3, 3)
+	_kick.add_theme_stylebox_override(&"normal", _kick_hot if asking else _kick_idle)
+	_kick.add_theme_color_override(&"font_color", TEXT if asking else DIM)
+
+
+## Read by tests.
+func kick_button() -> Button:
+	return _kick
 
 
 static func ping_colour(ms: int) -> Color:
@@ -153,6 +214,15 @@ func _draw() -> void:
 	var edge := 2 if _mine else 1
 	draw_rect(Rect2(Vector2.ZERO, SIZE), ACCENT if _mine else BORDER)
 	draw_rect(Rect2(Vector2(edge, edge), SIZE - Vector2(edge, edge) * 2), SURFACE)
+
+
+static func _box(fill: Color, edge: Color, width: int) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = fill
+	box.border_color = edge
+	box.set_border_width_all(width)
+	box.set_content_margin_all(0)
+	return box
 
 
 func _label(y: float, font_size: int) -> Label:

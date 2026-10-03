@@ -24,6 +24,16 @@ extends Node
 ## two builds that do not speak the same game are refused there, the way the
 ## signaling service refuses a client on another `PROTOCOL`.
 ##
+## ## The list of games
+##
+## Every room is in the list of games (server/signaling/rooms.py's header),
+## and anybody may look at it without being in a room (`browse()`,
+## net/room_list.gd). A row is joined by its id (`join_listed()`): a PUBLIC
+## room lets anybody in that way, a private one wants its code as well. The
+## host says which when it opens the room and may change its mind in the lobby
+## (`set_public()`), and may KICK a guest there, which online also refuses
+## their address that room for good.
+##
 ## ## What it does NOT do
 ##
 ## It changes no scene and spawns nothing. `run_started` hands the roster to
@@ -52,15 +62,20 @@ signal run_started(rows: Array)
 signal peer_arrived(peer: int)
 ## The host only: a guest has left the party, mid-run or not.
 signal peer_left(peer: int)
+## While browsing: the open games, whole, every time the list is asked for.
+signal rooms_listed(rooms: Array)
+## While browsing: the list could not be had this time.
+signal rooms_unreachable
 
 const SignalClient := preload("res://autoload/net/signal_client.gd")
 const RtcLink := preload("res://autoload/net/rtc_link.gd")
 const Ping := preload("res://autoload/net/ping.gd")
+const RoomList := preload("res://autoload/net/room_list.gd")
 const Heads := preload("res://game/heads.gd")
 
 ## The signaling service's protocol (server/signaling/main.py), which refuses
-## any other with `version`.
-const PROTOCOL := 2
+## any other with `version`. 3 is the list of open games.
+const PROTOCOL := 3
 ## The game's own: what a guest says in its hello, and what the host refuses
 ## when it differs. Bump it with anything that changes what the two ends say to
 ## each other once they are connected. 2 is M3: the run itself in step
@@ -70,6 +85,8 @@ const WIRE := 2
 ## own copy is what dev builds and the editor talk to - see signaling_url().
 const LIVE_SIGNALING := "wss://za-company.mayar-deeb.dev"
 const DEV_SIGNALING := "wss://dev.za-company.mayar-deeb.dev"
+## The suites' switch for the list of games (see `browse()`), in memory only.
+const LIST_OFF := "za/test/no_room_list"
 ## How long the host leaves a refused guest connected, so the refusal it is
 ## sent arrives before the line goes.
 const REFUSE_GRACE := 0.5
@@ -94,6 +111,9 @@ var _mp: MultiplayerPeer = null
 var _links := {}  # peer id -> RtcLink, online only
 var _ice := {}
 var _force_relay := false
+## The host only: the room can be joined from the list without its code.
+var _public := false
+var _browser: RoomList = null
 var _local := false
 var _clock := 0.0
 var _ping: Node
@@ -118,6 +138,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _signal != null:
 		_signal.poll()
+	if _browser != null:
+		_browser.poll(delta)
 	for link: RtcLink in _links.values():
 		link.poll()
 	if is_host() and state != State.OFFLINE:
@@ -154,6 +176,17 @@ func my_id() -> int:
 ## The room's code, or "" when there is none (offline, or a local game).
 func code() -> String:
 	return _code
+
+
+## The host only: this room can be joined from the list without its code.
+func is_public() -> bool:
+	return is_host() and _public
+
+
+## Minutes from UTC by this machine's own clock - what a listed room says
+## about where it is, and what the list is sorted nearest to.
+static func zone_minutes() -> int:
+	return int(Time.get_time_zone_from_system().get("bias", 0))
 
 
 ## The party in its order - the host first, then guests in the order they
@@ -204,11 +237,15 @@ static func signaling_url() -> String:
 
 
 ## Open a room on the signaling service. `hosted` comes with its code.
-func host(player_name: String, character: String) -> void:
+## `public` lets the list join it without the code - the host's to choose, so
+## it has no default here.
+func host(player_name: String, character: String, public: bool) -> void:
 	if not _begin(player_name, character):
 		return
+	_public = public
 	_open_signaling()
-	_signal.send({"op": "host", "v": PROTOCOL, "name": player_name, "max": Heads.MAX_PARTY})
+	_signal.send({"op": "host", "v": PROTOCOL, "name": player_name, "max": Heads.MAX_PARTY,
+		"public": public, "wire": wire, "zone": zone_minutes(), "character": character})
 
 
 ## Join the room with this code. `joined` once the host has us, `failed` if it
@@ -220,6 +257,16 @@ func join(room_code: String, player_name: String, character: String,
 	_force_relay = force_relay
 	_open_signaling()
 	_signal.send({"op": "join", "v": PROTOCOL, "name": player_name,
+		"code": room_code.strip_edges().to_upper()})
+
+
+## Join a row of the list by its `id`. A private room wants its `room_code`
+## too, and is refused with `wrong_code` without it; a public one ignores it.
+func join_listed(room_id: String, room_code: String, player_name: String, character: String) -> void:
+	if not _begin(player_name, character):
+		return
+	_open_signaling()
+	_signal.send({"op": "join", "v": PROTOCOL, "name": player_name, "room": room_id,
 		"code": room_code.strip_edges().to_upper()})
 
 
@@ -260,6 +307,59 @@ func leave() -> void:
 	if _signal != null:
 		_signal.send({"op": "leave"})
 	_reset()
+
+
+## Start looking at the list of games: `rooms_listed` every few seconds until
+## `stop_browsing()`. Nothing to do with being in a room, so it may run at any
+## time, and asking twice is asking once.
+##
+## Never from a suite: tests/helpers.gd sets `LIST_OFF` so no test reaches the
+## internet for a list, and one that wants a list hands it to `rooms_listed`.
+func browse() -> void:
+	if _browser != null or ProjectSettings.get_setting(LIST_OFF, false):
+		return
+	_browser = RoomList.new(signaling_url(), PROTOCOL, wire)
+	_browser.listed.connect(rooms_listed.emit)
+	_browser.unreachable.connect(rooms_unreachable.emit)
+	_browser.open()
+
+
+func stop_browsing() -> void:
+	if _browser != null:
+		_browser.close()
+		_browser = null
+
+
+## The host only, waiting in the lobby: joinable from the list, or only with
+## the code.
+func set_public(on: bool) -> void:
+	if not is_host() or state != State.LOBBY:
+		return
+	_public = on
+	if _signal != null:
+		_signal.send({"op": "public", "on": on})
+
+
+## The host only, in the lobby: a guest out of the party. Online the signaling
+## service also refuses their address this room from now on, so they cannot
+## walk straight back in from the list.
+##
+## Their seat empties at once; their line goes once the refusal has had time
+## to reach them, the way a hello on the wrong wire is turned away.
+func kick(peer: int) -> void:
+	if not is_host() or state != State.LOBBY or peer == 1 or not _rows.has(peer):
+		return
+	if _signal != null:
+		_signal.send({"op": "kick", "id": peer})
+	if multiplayer.get_peers().has(peer):
+		_refuse(peer, "kicked")
+	_rows.erase(peer)
+	_order.erase(peer)
+	_arrived.erase(peer)
+	roster_changed.emit()
+	_broadcast()
+	peer_left.emit(peer)
+	get_tree().create_timer(REFUSE_GRACE).timeout.connect(_drop.bind(peer))
 
 
 ## The host only: everybody into the run, in the roster's order. The room is
@@ -451,8 +551,10 @@ func _on_signal(msg: Dictionary) -> void:
 			if link != null:
 				link.receive(msg.get("data", {}))
 		"closed":
+			# `host_left`, or `kicked` - which the host's own line usually says
+			# first, and then this finds the party already over.
 			if state != State.OFFLINE:
-				_end("host_left")
+				_end(String(msg.get("reason", "host_left")))
 		"error":
 			# Before we are in a party a refusal is the end of trying; after, it
 			# is a message we sent that the service did not like, and nothing
@@ -565,6 +667,7 @@ func _reset() -> void:
 	_code = ""
 	_ice = {}
 	_force_relay = false
+	_public = false
 	_local = false
 	_clock = 0.0
 	state = State.OFFLINE

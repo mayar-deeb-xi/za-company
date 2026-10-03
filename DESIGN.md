@@ -917,6 +917,15 @@ one that FEELS best rather than the one that is safest.
 - **Nothing pauses online.** The pause menu and the death screen become
   overlays; `get_tree().paused` is a solo-only thing.
 - **Join in the lobby, not mid-run** — for now.
+- **The list of games** (built 2026-10-03, before M4, from the Open Games
+  preview): the main menu's HOST ONLINE and JOIN ONLINE replace ONLINE, and the
+  difficulty moves into Settings and onto the host screen. JOIN ONLINE is the
+  list and nothing else - every game on your version, public, private, full or
+  started, each saying which - and a private game is in it for everybody to
+  see, joined only with its code. A host opens PUBLIC by default and can switch
+  in the room, and can KICK a guest, who cannot come back to that room. No
+  hidden-address option: guests connect straight to the host, the relay only
+  when there is no direct route.
 
 ### Ping, the Counter-Strike way
 
@@ -930,9 +939,9 @@ one that FEELS best rather than the one that is safest.
   channel, keeps a rolling average, and sends the table round. Every number is
   a player's distance to the HOST, exactly as Counter-Strike shows distance to
   the server; the host's row reads HOST.
-- The player NAME lives in the lobby screen, saved under Settings section
-  `online` — not on the settings panel, which is at 325 of 360 px and has no
-  room for a fourth row.
+- The player NAME is asked on the character select, on the way online only,
+  saved under Settings section `online` — not on the settings panel, whose
+  fourth row went to the difficulty.
 
 ### Rules that keep it honest
 
