@@ -97,7 +97,16 @@ func _tick(frame: int) -> void:
 		150:
 			_player().global_position = AT
 			_stage([Vector2(14, 0), Vector2(32, 0), Vector2(14, 30)])
-			StaticCharge.add_to(_guards[2], Color.WHITE)
+			StaticCharge.add_to(_guards[2], Color.WHITE, _player())
+			# A partner's charge is theirs: one on the NEARER body, laid by
+			# somebody else, must not pull this player's chain to it.
+			var stranger := Node.new()
+			StaticCharge.add_to(_guards[1], Color.RED, stranger)
+			_check("charge: a partner's charge is theirs, and the arc still prefers its own",
+				_player().call("_nearest_enemy", _guards[0].global_position) == _guards[2]
+					and StaticCharge.of(_guards[1], stranger) != null
+					and StaticCharge.of(_guards[1], _player()) == null)
+			stranger.free()
 			_first_jump = Vector2.INF
 		152:
 			_player().call("_start_attack", "attack3")

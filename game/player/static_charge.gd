@@ -17,6 +17,13 @@ extends Node2D
 ## enemy_base names it. player.gd finds it by node name (`of()`), the way the
 ## prop shelves are found by role.
 ##
+## **A charge is the player's who laid it** (`by`). In a party one body can
+## carry two - one per striker, each in its own colour - and an arc prefers,
+## and sets off, only its own thrower's: your swings set up YOUR lightning,
+## never your partner's. Picked over a shared charge, which made one player's
+## light hits steer somebody else's chain. Every machine keeps it the same way,
+## since a teammate's blow lays it there too (player.gd's net_event).
+##
 ## Picked from the Combo Lab preview and shipped as previewed: 1.8 s to fade,
 ## a blink across the last 0.4 s, seven radians a second, 8 px by 3.
 
@@ -31,16 +38,21 @@ const CHEST := Vector2(0.0, -10.0)
 
 var charges := 0
 var colour := Color.WHITE
+## Who laid it: the striker's instance id - an id rather than the node, so a
+## charge outliving a player who left the party holds nothing that is gone.
+var by_id := 0
 var _left := SECONDS
 var _time := 0.0
 
 
-## Adds one charge to `body`, making the node if it has none yet.
-static func add_to(body: Node2D, spark: Color) -> void:
-	var node := of(body)
+## Adds one of `by`'s charges to `body`, making the node if `by` has none on it
+## yet.
+static func add_to(body: Node2D, spark: Color, by: Node) -> void:
+	var node := of(body, by)
 	if node == null:
 		node = (load("res://game/player/static_charge.gd") as GDScript).new()
-		node.name = NAME
+		node.name = "%s_%d" % [NAME, by.get_instance_id()]
+		node.by_id = by.get_instance_id()
 		node.colour = spark
 		node.z_index = 1
 		body.add_child(node)
@@ -48,12 +60,13 @@ static func add_to(body: Node2D, spark: Color) -> void:
 	node._left = SECONDS
 
 
-## The charge on `body`, or null.
-static func of(body: Node) -> Node2D:
-	var node := body.get_node_or_null(NAME)
-	if node == null or node.is_queued_for_deletion():
-		return null
-	return node
+## The charge `by` left on `body`, or null - or anybody's, with no `by`.
+static func of(body: Node, by: Node = null) -> Node2D:
+	for child in body.get_children():
+		if String(child.name).begins_with(NAME) and not child.is_queued_for_deletion() \
+				and (by == null or int(child.get("by_id")) == by.get_instance_id()):
+			return child
+	return null
 
 
 ## The arc reached it. A ring and ten sparks, left in the body's world so they

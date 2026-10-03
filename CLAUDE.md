@@ -1405,7 +1405,9 @@ The host is the truth for everything but where a body is:
   air, the charge's hum and ring, the heavy's supernova - never the stop, the
   shake or the flash, which are the attacker's to feel. A remote body's sounds
   are POSITIONAL (player_audio.gd), because a teammate is somewhere. And static
-  charge is shared: one player's swings charge a body for anybody's arc.
+  charge is PER PLAYER (the owner's call): your swings set up only your own
+  arc, a body two players have tagged carries one charge of each, in each
+  one's colour, and an arc prefers and sets off only its thrower's.
 
 The game's own `WIRE` is 3 from here: a build from before the run was stamped
 with the host's time is refused rather than let into one.

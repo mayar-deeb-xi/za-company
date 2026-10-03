@@ -1134,8 +1134,8 @@ one that FEELS best rather than the one that is safest.
         health reaches 0. A remote body's own moves are read off its picture:
         the swing's air, the charge's hum and ring, the heavy's supernova -
         never the stop, shake or flash, which are the attacker's. A remote
-        body's sounds are positional. Static charge is now shared: one
-        player's swings charge a body for anybody's arc.
+        body's sounds are positional. Static charge is per player, on the
+        owner's word after playing it: your swings set up only your own arc.
         `tests/test_coop_feel.gd` (40 checks), and the stop told in
         test_coop_bosses.gd.
 - [ ] M5. **Ping and the connection, on screen.** The Tab scoreboard, the

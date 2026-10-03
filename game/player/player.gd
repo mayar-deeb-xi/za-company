@@ -707,7 +707,7 @@ func _strike() -> void:
 			# STATIC CHARGE: the two light hits tag what they reach, for the
 			# arc to set off. JUGGLE: the rising slash launches what it reaches.
 			if _attack == "attack" or _attack == "attack2":
-				StaticCharge.add_to(body, _spark)
+				StaticCharge.add_to(body, _spark, self)
 			if _attack == "attack2" and body.has_method("launch"):
 				body.call("launch")
 	if struck.is_empty():
@@ -814,7 +814,7 @@ func net_event(what: String, args: Array) -> void:
 			_show_blow(body, int(args[1]), String(args[2]), true, killed, away)
 			if not killed:
 				if attack == "attack" or attack == "attack2":
-					StaticCharge.add_to(body, _spark)
+					StaticCharge.add_to(body, _spark, self)
 				if attack == "attack2" and body.has_method("launch"):
 					body.call("launch")
 			# Once for the frame, as on the attacker's own: four bodies under
@@ -839,7 +839,7 @@ func _thunder(touched: Array) -> void:
 	for body in touched:
 		if not is_instance_valid(body) or not body is Node2D:
 			continue
-		var charge := StaticCharge.of(body)
+		var charge := StaticCharge.of(body, self)
 		if charge != null:
 			charge.discharge()
 		if not body.is_queued_for_deletion():
@@ -892,9 +892,10 @@ func _arc(struck: Array[Node2D]) -> void:
 ## The nearest enemy the arc may still jump to, or null. Group + method, never
 ## type, like everything else here that reaches across to the enemies.
 ##
-## A body carrying STATIC CHARGE beats an uncharged one anywhere inside the
-## range, and the nearest wins among equals - so the light hits decide where
-## the chain goes. That is the whole of the charge's logic: who, never how much.
+## A body carrying THIS player's static charge beats an uncharged one anywhere
+## inside the range, and the nearest wins among equals - so the light hits
+## decide where the chain goes. That is the whole of the charge's logic: who,
+## never how much. A partner's charge is theirs (static_charge.gd's `by`).
 func _nearest_enemy(at: Vector2) -> Node2D:
 	var best: Node2D = null
 	var best_distance := ARC_JUMP_RANGE
@@ -907,7 +908,7 @@ func _nearest_enemy(at: Vector2) -> Node2D:
 		var distance: float = (node as Node2D).global_position.distance_to(at)
 		if distance > ARC_JUMP_RANGE:
 			continue
-		var charged := StaticCharge.of(node) != null
+		var charged := StaticCharge.of(node, self) != null
 		if (charged and not best_charged) or (charged == best_charged and distance <= best_distance):
 			best_distance = distance
 			best = node

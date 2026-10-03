@@ -387,7 +387,9 @@ charge (two at most, 1.8 s) to the body - static_charge.gd, a CHILD of the
 body, found by node name, invisible to enemy_base. The arc's jump prefers a
 charged body anywhere inside its 40 px over a nearer uncharged one, and a
 charged body the arc reaches discharges (spark_burst.gd). It is the one pick
-that changes logic, and it changes only WHO the chain goes to.
+that changes logic, and it changes only WHO the chain goes to. In a party a
+charge is the player's who laid it (`by`): one body can carry one of each, and
+an arc only prefers and sets off its own thrower's.
 
 **The juggle, on the slash.** `launch()` pops the sprite up at 72 px/s against
 330 of gravity - about 7 px and 0.44 s - with a shadow on the floor and dust on
@@ -436,8 +438,8 @@ All of the above was one machine's until M4. Three rules carry it across:
   this body's spark colour, plus the static charge, the juggle and the `hit`
   sound (once a frame). The attacker only hears back whether it killed. The
   shake, the screen flash and the stop are never sent: they are the swinger's.
-  Static charge is therefore SHARED - anybody's swing charges a body for
-  anybody's arc.
+  Static charge stays PER PLAYER across machines: a teammate's charge is laid
+  by their body's copy, so only their arc - on every machine - sets it off.
 - **A remote body's own moves are read off its picture** (`net_draw()` ->
   `_drawn()`): the picture going into a swing is its air, into `charge` its hum
   and its ring (under the sprite, where the picture is), into `heavy` its
