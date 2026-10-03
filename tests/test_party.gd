@@ -237,6 +237,14 @@ func _spawned() -> void:
 		rows.size() == 1 and (rows[0].get_node("Name") as Label).text == "Anas")
 	_check("hud: three hearts, which are the party's (%s)" % _lives(),
 		_lives() == 3 and _hearts().get_child_count() == 3)
+	# A party on one machine is offline: no connection, so nothing about one on
+	# screen - no corner ping, no notice and no scoreboard, Tab or no Tab.
+	_key(KEY_TAB, true)
+	_check("hud: offline there is no ping, no notice and no scoreboard",
+		_hud().call("ping_text") == "" and _hud().call("notice_text") == ""
+			and current_scene.get_node_or_null("Scoreboard") == null
+			and current_scene.call("scoreboard_up") == false)
+	_key(KEY_TAB, false)
 
 
 func _second() -> CharacterBody2D:

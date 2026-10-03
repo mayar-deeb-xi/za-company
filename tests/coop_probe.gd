@@ -221,6 +221,21 @@ func _answer(what: String, args: Array) -> Variant:
 			# How many stops have held this machine's picture.
 			var hold := game.get_node_or_null("PictureHold") if game != null else null
 			return int(hold.get("held")) if hold != null else -1
+		"screen":
+			# The connection on this machine's screen: what the corner says,
+			# the notice up top, whether the scoreboard is up, and every word
+			# on it.
+			if game == null or not game.has_method("scoreboard_up"):
+				return []
+			var hud := game.get_node("HUD/Hud")
+			var words := []
+			var layer := game.get_node_or_null("Scoreboard")
+			if layer != null:
+				for label in layer.find_children("*", "Label", true, false):
+					if not label.is_queued_for_deletion():
+						words.append((label as Label).text)
+			return [hud.call("ping_text"), hud.call("notice_text"),
+				game.call("scoreboard_up"), words]
 		"quit":
 			return true
 	return null

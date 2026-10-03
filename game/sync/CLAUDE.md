@@ -106,3 +106,33 @@ The host is the truth for everything but where a body is:
 
 The game's own `WIRE` is 3 from here: a build from before the run was stamped
 with the host's time is refused rather than let into one.
+
+**And the connection is ON SCREEN (M5)**, each piece picked from the Ping On
+Screen preview (https://claude.ai/artifact/CHLaYkvrXqXBwJMB3jj1YA) and built
+from the preview's own construction code, pixel-identical to it. Nothing new
+crosses the wire: every number is the ping the host already measures once a
+second and sends round with the roster, and game.gd's `_show_connection()`
+puts it up only when the run is online, so a solo HUD is what it always was.
+
+- **The corner** (option A, the number): this machine's distance to the host
+  top right in the HUD's font and DESIGN.md's colours - `ui/ping.gd`, shared
+  with the lobby's seats - and HOST on the host's own screen, refreshed on
+  every `Net.roster_changed`.
+- **The scoreboard** (option A, the table): `ui/scoreboard/`, on its own
+  CanvasLayer 7 and up only while the `scoreboard` action (Tab) is held, which
+  setup_project.gd adds like every other key. One row per player - the
+  character's idle frame, name, character, ping and route - with this
+  machine's marked YOU. Dumb, like the HUD: game.gd hands it Net's roster.
+- **The relay line**: a guest whose own row says RELAY as its run starts is
+  told so across the top for five seconds (the HUD's `notice()`), in the
+  lobby's words. The owner's call was the line and NOT a RELAY tag on the HUD
+  rows; the scoreboard's route column is where anybody else sees it.
+- **Somebody leaving** (option A): the same strip says "IVO LEFT THE GAME"
+  for three seconds, in the name their row called them, from `net_left()` on
+  every machine still in the run.
+- **The host leaving** (option B, the panel): `ui/host_left/`, a panel on
+  CanvasLayer 10 saying THE HOST LEFT and whose game it was, over a frozen
+  room. It wears the death screen's manners - Escape swallowed before the
+  pause menu can hear it, focus on its one button - and MAIN MENU is the only
+  way out. game.gd keeps the host's name from the party it was built from,
+  because Net has forgotten everybody by the time it says `host_left`.

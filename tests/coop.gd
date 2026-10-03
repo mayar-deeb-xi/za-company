@@ -51,13 +51,21 @@ func _plan() -> Array[Callable]:
 	return []
 
 
+## Steps in the lobby, between the guest joining and START - for a suite that
+## needs the room arranged before the run begins.
+func _in_lobby() -> Array[Callable]:
+	return []
+
+
 func _tick(frame: int) -> void:
 	_hear_guest()
 	if frame == 2:
 		_probe = (load("res://tests/coop_probe.gd") as GDScript).new()
 		_probe.name = "CoopProbe"
 		root.add_child(_probe)
-		_steps = [_open_room, _start]
+		_steps = [_open_room]
+		_steps.append_array(_in_lobby())
+		_steps.append(_start)
 		_steps.append_array(_plan())
 	if frame < 3:
 		return

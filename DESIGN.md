@@ -875,7 +875,8 @@ ones** — 24/17/36/48 are exact combo breakpoints.
   twice: connect with STUN only, and if nothing connects inside ~6 s, connect
   again with TURN added. A guest who only got in on the second try is relayed
   — they see "Connected through relay — expect higher ping", the host sees it
-  against their name, and the scoreboard tags them RELAY.
+  against their name in the lobby, and in the run the scoreboard tags them
+  RELAY (M5: no tag on the HUD rows, the owner's call).
 - **The game never knows which wire it is on.** Everything above the transport
   talks to Godot's `MultiplayerAPI`; the transport is chosen in ONE place
   (`autoload/net.gd`). The suites run on ENet over localhost, which is the
@@ -1138,8 +1139,24 @@ one that FEELS best rather than the one that is safest.
         owner's word after playing it: your swings set up only your own arc.
         `tests/test_coop_feel.gd` (40 checks), and the stop told in
         test_coop_bosses.gd.
-- [ ] M5. **Ping and the connection, on screen.** The Tab scoreboard, the
+- [x] M5. **Ping and the connection, on screen.** The Tab scoreboard, the
         corner ping, the relay warning, "player left" / "host left".
+        **Done (2026-10-03)**, every piece picked from the Ping On Screen
+        preview (https://claude.ai/artifact/CHLaYkvrXqXBwJMB3jj1YA) and
+        built from its own construction code, pixel-identical to it: the
+        scoreboard is the TABLE (`ui/scoreboard/`, CanvasLayer 7, held on the
+        new `scoreboard` action, Tab); the corner is the NUMBER alone, HOST on
+        the host's screen; a relayed guest gets the lobby's warning across the
+        top for five seconds - and, the owner's call, no RELAY tag on the HUD
+        rows, so the host sees a relay in the scoreboard's route column rather
+        than against the name; somebody leaving is the same strip for three
+        seconds ("IVO LEFT THE GAME"); and the host leaving is a PANEL with
+        one button (`ui/host_left/`) over a frozen room, the death screen's
+        manners, MAIN MENU the way out. Nothing new on the wire: the numbers
+        are the ping the host already measures. The ping colours moved up to
+        `ui/ping.gd`, shared with the lobby's seats. `tests/
+        test_coop_screen.gd` (20 checks), the panel in test_lobby.gd, and
+        test_party.gd proving a game offline shows none of it.
 - [ ] M6. **The cracks.** A guest dropping mid-fight, dying during a fade,
         two players reaching a door during one, a boss conceding to a lagging
         guest, an NPC talked to by two people at once; and the export presets

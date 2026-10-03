@@ -114,7 +114,8 @@ game/enemies/CLAUDE.md). `game/heads.gd` counts the standing party and holds
 Its **CanvasLayer stack is now stated rather than defaulted**, because things
 below the HUD have started arriving: -1 background, 0 the world, **1 a boss's
 own screen effects**, 2 HUD, 3 the dialogue box, **4 what a boss is
-shouting**, 5 transition fade, 6 level title. Anything
+shouting**, 5 transition fade, 6 level title, **7 the online scoreboard**,
+10 the pause menu and the host-left panel. Anything
 full-screen a fight draws goes in at 1 - above the room, under the bars, since
 a flash that washes out the health bar hides the number the player is reading
 while it lands. game.gd also owns **camera shake**, applied as an offset so
@@ -596,8 +597,10 @@ on), OfflineMultiplayerPeer offline. The rules that hold all of it up:
 Where the rest lives: Net itself, the list of games and which signaling service
 a build talks to - autoload/CLAUDE.md's *Net*; the screens (HOST ONLINE, JOIN
 ONLINE, the list, the room and its four seats) - ui/lobby/CLAUDE.md; keeping a
-run in step (M3: snapshots, moments, who talks) and making it feel like one
-game (M4: one clock, the held picture, every blow seen) - game/sync/CLAUDE.md.
+run in step (M3: snapshots, moments, who talks), making it feel like one
+game (M4: one clock, the held picture, every blow seen) and putting the
+connection on screen (M5: the corner ping, the Tab scoreboard, the relay line,
+somebody leaving and the host-left panel) - game/sync/CLAUDE.md.
 
 ## Settings
 

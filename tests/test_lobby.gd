@@ -39,7 +39,7 @@ func _tick(frame: int) -> void:
 		_steps = [_menu, _select, _join_screen, _listed, _relisted, _private, _wrong_code,
 			_refusals, _back_to_menu, _host_route, _host_screen, _host_local, _hosted, _join,
 			_seated, _kick_ask, _kick_go, _rejoin, _relay_and_link, _public_switch, _start,
-			_in_game, _host_gone]
+			_in_game, _host_left_escape, _host_left_menu, _host_gone]
 	if frame < 3:
 		return
 	if _waiting.is_valid():
@@ -439,9 +439,31 @@ func _in_game() -> void:
 		_guest_heard.get("run_started") is Array and (_guest_heard["run_started"] as Array).size() == 2)
 	_check("game: the host's Net is in the run", _net().get("state") == 3)
 	# The run ending under this machine - as it does for a guest whose host
-	# goes - is a way back to the menu.
+	# goes - freezes the room under a panel saying so (M5's pick, option B),
+	# naming whoever was hosting.
 	_net().emit_signal("ended", "host_left")
-	_wait("ended: the party ending ends the run, on the main menu", _on(MENU))
+	_wait("ended: the host leaving freezes the run under a panel saying so",
+		func() -> bool:
+			var panel := current_scene.get_node_or_null("HostLeft")
+			return panel != null and panel.call("line") == "MAYAR'S GAME HAS ENDED" \
+				and paused and panel.call("main_menu_button").has_focus())
+
+
+## Escape has nothing to go back to: the panel stays, and the pause menu under
+## it never hears the key.
+func _host_left_escape() -> void:
+	_key(KEY_ESCAPE, true)
+	_key(KEY_ESCAPE, false)
+	_wait("ended: Escape does nothing to it, and opens no pause menu", func() -> bool:
+		return _f - _since > 6 and current_scene.get_node_or_null("HostLeft") != null \
+			and not _pause_menu().call("is_paused"))
+
+
+func _host_left_menu() -> void:
+	var panel := current_scene.get_node("HostLeft")
+	(panel.call("main_menu_button") as Button).pressed.emit()
+	_wait("ended: and its MAIN MENU is the way home, unpaused", func() -> bool:
+		return _on(MENU).call() and not paused)
 
 
 func _host_gone() -> void:

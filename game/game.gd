@@ -87,6 +87,9 @@ const DialogueType := preload("res://game/dialogue/dialogue_director.gd")
 const SubtitleType := preload("res://ui/subtitle/subtitle.gd")
 const SyncType := preload("res://game/sync/sync.gd")
 const PictureHold := preload("res://game/picture_hold.gd")
+const ScoreboardType := preload("res://ui/scoreboard/scoreboard.gd")
+const HostLeftType := preload("res://ui/host_left/host_left.gd")
+const Ping := preload("res://ui/ping.gd")
 const InputSource := preload("res://game/player/input_source.gd")
 const VirtualInput := preload("res://game/player/virtual_input.gd")
 
@@ -141,6 +144,26 @@ var _freeze_token := 0
 ## The hit-stop online, which holds the picture rather than the clock - see
 ## _freeze.
 var _hold: PictureHold
+## The connection on screen, online only (DESIGN.md's Multiplayer, M5): the
+## scoreboard held on Tab, at the top of the canvas stack, and the name of
+## whoever is hosting, which the party's end needs after Net has forgotten it.
+var _scoreboard: ScoreboardType = null
+var _host_name := ""
+## How long the relay line stays up at the start of a run, and how long the
+## line saying somebody left does.
+const RELAY_NOTICE_SECONDS := 5.0
+const LEFT_NOTICE_SECONDS := 3.0
+## The relay line's strip is the preview's: wide enough for the words with
+## room either side, where the line about somebody leaving is as wide as it
+## needs to be and never narrower than this.
+const RELAY_NOTICE_WIDTH := 420.0
+const LEFT_NOTICE_WIDTH := 200.0
+## The scoreboard's canvas layer: over everything a run draws, under nothing.
+const SCOREBOARD_LAYER := 7
+## The menu theme's accent, which the host's corner says HOST in, and its warm
+## colour, which somebody leaving is said in (tools/build_ui_theme.gd).
+const HOST_COLOUR := Color("6eb39d")
+const LEFT_COLOUR := Color("ec773d")
 
 ## How slow "stopped" is. Not zero: a zero delta is a division waiting to
 ## happen somewhere in every script that measures a speed, and a twentieth of
@@ -179,6 +202,7 @@ func _ready() -> void:
 	var first := next_start if not next_start.is_empty() else START_LEVEL
 	next_start = ""
 	_enter_level(first, &"start")
+	_show_connection()
 	# Last: from here this end exists, so the other one may be spoken to.
 	_sync.begin(_players)
 
@@ -212,6 +236,10 @@ func _spawn_party() -> void:
 		body.character = String(member.get("character", ""))
 		if member.get("input") != null:
 			body.input_source = member["input"]
+		# Whoever hosts is peer 1 online; kept for the day they leave, by which
+		# time Net has forgotten everybody's name (_on_party_ended).
+		if int(member.get("peer", 0)) == 1:
+			_host_name = String(member.get("name", ""))
 		# Online, everybody's body but this machine's is somebody else's to
 		# move. A party on ONE machine has no peers, and is all this machine's.
 		body.peer = int(member.get("peer", 1))
@@ -267,6 +295,69 @@ func _process(delta: float) -> void:
 	if not _travelling and not _room_alerted and _anyone_walked_in():
 		_room_alerted = true
 		_alert_room()
+	_hold_scoreboard()
+
+
+# --- the connection on screen (DESIGN.md's Multiplayer, M5) -------------------------
+
+
+## An online run's corner ping and scoreboard, and the relay line for a guest
+## who only got in through the relay - each picked from the Ping On Screen
+## preview. Nothing here offline, which is every solo run: the HUD is exactly
+## what it always was.
+func _show_connection() -> void:
+	if not _sync.active:
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "Scoreboard"
+	layer.layer = SCOREBOARD_LAYER
+	add_child(layer)
+	_scoreboard = ScoreboardType.new()
+	_scoreboard.visible = false
+	layer.add_child(_scoreboard)
+	Net.roster_changed.connect(_on_roster)
+	_on_roster()
+	if String(_my_row().get("route", "")) == "RELAY":
+		_hud.notice("! CONNECTED THROUGH RELAY - EXPECT HIGHER PING", Ping.MID,
+			RELAY_NOTICE_WIDTH, RELAY_NOTICE_SECONDS)
+
+
+## This machine's row of Net's roster, or {} once there is none.
+func _my_row() -> Dictionary:
+	for row: Dictionary in Net.roster():
+		if int(row.get("peer", 0)) == Net.my_id():
+			return row
+	return {}
+
+
+## The roster moved - a ping measured, once a second: the corner says this
+## machine's distance to the host, or HOST on the host's own screen.
+func _on_roster() -> void:
+	var mine := _my_row()
+	if mine.is_empty():
+		return
+	if String(mine.get("route", "")) == "HOST":
+		_hud.set_ping("HOST", HOST_COLOUR)
+	else:
+		var ms := int(mine.get("ping", -1))
+		_hud.set_ping("..." if ms < 0 else "%d MS" % ms, Ping.colour(ms))
+	if _scoreboard != null and _scoreboard.visible:
+		_scoreboard.show_rows(Net.roster(), Net.my_id(), Net.code())
+
+
+## Up for as long as Tab is held, and filled the moment it comes up.
+func _hold_scoreboard() -> void:
+	if _scoreboard == null:
+		return
+	var held := InputMap.has_action(&"scoreboard") and Input.is_action_pressed(&"scoreboard")
+	if held and not _scoreboard.visible:
+		_scoreboard.show_rows(Net.roster(), Net.my_id(), Net.code())
+	_scoreboard.visible = held
+
+
+## Whether the scoreboard is up. For tests.
+func scoreboard_up() -> bool:
+	return _scoreboard != null and _scoreboard.visible
 
 
 ## Online nothing pauses (DESIGN.md's *The rules of a party*): the pause menu
@@ -368,9 +459,18 @@ func _on_player_died(body: PlayerType) -> void:
 		_game_over()
 
 
-## Back to the main menu, unpaused: the run was the host's, and the host has
-## gone. Saying so on screen is M5's.
-func _on_party_ended(_reason: String) -> void:
+## The run was the host's, and the host has gone: the room freezes under a panel
+## saying so (ui/host_left/), and its one button is the way to the main menu.
+## Any other ending under a run goes straight there, unpaused.
+func _on_party_ended(reason: String) -> void:
+	if reason == "host_left" and _sync.active:
+		if _pause_menu.is_paused():
+			_pause_menu.resume()
+		var panel := HostLeftType.new()
+		panel.name = "HostLeft"
+		add_child(panel)
+		panel.open(_host_name)
+		return
 	get_tree().paused = false
 	get_tree().change_scene_to_file(MENU_SCENE)
 
@@ -859,6 +959,11 @@ func net_line(speaker: String, text: String) -> void:
 func net_left(body: PlayerType) -> void:
 	if body == _local:
 		return
+	# Said across the top, in the name everybody's row called them by.
+	var who := String(_names.get(body, ""))
+	if who != "":
+		_hud.notice("%s LEFT THE GAME" % who.to_upper(), LEFT_COLOUR,
+			LEFT_NOTICE_WIDTH, LEFT_NOTICE_SECONDS)
 	body.remove_from_group("player")
 	_players.erase(body)
 	_others.erase(body)

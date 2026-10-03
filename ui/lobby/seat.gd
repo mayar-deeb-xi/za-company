@@ -14,6 +14,8 @@ extends Control
 signal kick_pressed(peer: int)
 
 const Roster := preload("res://game/player/characters/roster.gd")
+## DESIGN.md's ping colours, shared with the run's corner and its scoreboard.
+const Ping := preload("res://ui/ping.gd")
 
 const SIZE := Vector2(128, 160)
 const SPRITE_PX := 96
@@ -30,10 +32,6 @@ const BG := Color("1b1119")
 ## silhouette of the default body, so the seat is visibly taken and visibly
 ## not ready.
 const SILHOUETTE := Color(0.15, 0.1, 0.15, 0.7)
-## DESIGN.md's ping colours: green under 60 ms, amber under 120, red above.
-const PING_GOOD := Color("6fdc6f")
-const PING_MID := Color("e8b84a")
-const PING_BAD := Color("e85a4a")
 const RAISED := Color("45434c")
 const WARM := Color("ec773d")
 const KICK_SIZE := Vector2(38, 14)
@@ -156,8 +154,8 @@ func show_row(row: Dictionary, mine: bool, kickable := false) -> void:
 		_set_line(_line_2, "", DIM)
 	else:
 		var ping := int(row.get("ping", -1))
-		_set_line(_line_1, "..." if ping < 0 else "%d MS" % ping, ping_colour(ping))
-		_set_line(_line_2, route, PING_MID if route == "RELAY" else DIM)
+		_set_line(_line_1, "..." if ping < 0 else "%d MS" % ping, Ping.colour(ping))
+		_set_line(_line_2, route, Ping.MID if route == "RELAY" else DIM)
 	queue_redraw()
 
 
@@ -177,16 +175,6 @@ func arm(asking: bool) -> void:
 ## Read by tests.
 func kick_button() -> Button:
 	return _kick
-
-
-static func ping_colour(ms: int) -> Color:
-	if ms < 0:
-		return DIM
-	if ms < 60:
-		return PING_GOOD
-	if ms < 120:
-		return PING_MID
-	return PING_BAD
 
 
 func _process(delta: float) -> void:

@@ -66,6 +66,9 @@ func _initialize() -> void:
 	# past someone mid-combo must never open one.
 	ProjectSettings.set_setting("input/interact", _action([_key(KEY_E), _key(KEY_ENTER)]))
 	ProjectSettings.set_setting("input/toggle_fullscreen", _action([_key(KEY_F11)]))
+	# The online scoreboard, HELD rather than pressed - Counter-Strike's key for
+	# Counter-Strike's board (DESIGN.md's *Ping, the Counter-Strike way*).
+	ProjectSettings.set_setting("input/scoreboard", _action([_key(KEY_TAB)]))
 
 	# Order matters: autoloads are readied in the order they appear here, and
 	# both display.gd and difficulty.gd read saved values from Settings during

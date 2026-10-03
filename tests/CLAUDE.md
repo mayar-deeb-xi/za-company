@@ -6,7 +6,7 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
 ## The suites
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Thirty-nine suites,
+  They drive the real game with synthesized input and exit 0/1. Forty suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu (HOST ONLINE and JOIN ONLINE, no MODE),
@@ -292,7 +292,8 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     moves only its own and a synthesized press is dated like a key's (a tap
     shorter than a frame still swings); the SECOND player walking out wakes the
     room; an enemy takes the nearest, holds through a near-tie, turns for
-    somebody clearly closer and then sticks; the second's HUD row and a boss
+    somebody clearly closer and then sticks; offline, no corner ping, notice
+    or scoreboard, Tab or no Tab; the second's HUD row and a boss
     counting both heads; a death in company going down with no fade, paying the
     one pool and getting up at the door; the door saying "1/2", then going when
     the one still out in the room goes down, with the body waiting to get up
@@ -336,7 +337,9 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     C copying it, the PUBLIC switch and its line; and START putting the party
     into the game - this machine's body as its own pick, the guest's as
     theirs on still hands, their HUD row by the name they typed - and the
-    party ending sending the run back to a menu that has left it. Nothing in
+    party ending: the run frozen under the host-left panel naming whoever
+    hosted, Escape doing nothing to it and opening no pause menu, and its
+    MAIN MENU the way back to a menu that has left the party. Nothing in
     it reaches the internet: the list is handed to Net's `rooms_listed`, a
     join from the list is caught before it leaves, and a relay and a code are
     told to Net directly, which ENet has neither of.
@@ -406,6 +409,17 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     body is seen, number and grunt, on the other machine. Every staged body
     stands still on the host, and the glider walks through the furniture, so
     the room never decides a check.
+  - `test_coop_screen.gd` - the same two machines, and THE CONNECTION ON SCREEN
+    (M5): the guest put on the relay in the lobby (`_in_lobby()`, coop.gd's
+    hook for arranging a room before START - ENet has no relay, so the host's
+    Net is told, as test_lobby.gd does) is told so across the top as the run
+    starts and the host is told nothing; the host's corner says HOST and the
+    guest's its measured ping; the scoreboard is down until Tab is held and
+    down again when it is let go, on each machine by its OWN Tab, with a row
+    per player, this machine's marked YOU, HOST and RELAY in the route
+    column; and the guest quitting is said across the host's screen by name.
+    The host leaving is not here: a guest whose line to the host just went
+    cannot be asked anything, so the panel is test_lobby.gd's.
 
 ## Writing a check
 

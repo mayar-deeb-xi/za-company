@@ -32,6 +32,21 @@ const TEXT := Color(0.937255, 0.941176, 0.960784, 1)
 ## A row whose player is down: still listed, so nobody wonders where they went.
 const DOWN_ALPHA := 0.4
 const FONT := preload("res://assets/fonts/KenneyPixel.ttf")
+## The connection's two pieces of the HUD, online only (DESIGN.md's *Ping, the
+## Counter-Strike way*), both picked from the Ping On Screen preview and built
+## as previewed: this machine's ping in the top-right corner, where nothing
+## else lives, and a one-line NOTICE across the top for what the connection
+## has to say - the relay, somebody leaving.
+const PING_AT := Vector2(572.0, 8.0)
+const PING_WIDTH := 60.0
+const MINI := preload("res://assets/fonts/KenneyMiniSquare.ttf")
+const NOTICE_BACK := Color(0.105882, 0.0666667, 0.0980392, 0.85)
+const NOTICE_TOP := 40.0
+const NOTICE_HEIGHT := 16.0
+## How much wider than its words a notice is, left and right together.
+const NOTICE_PAD := 24.0
+## The design viewport the notice is centred in.
+const VIEW_WIDTH := 640.0
 
 ## Preloaded rather than reached for by class_name, like every other typed
 ## node in the game: global class names live in an editor-written cache.
@@ -61,6 +76,10 @@ const HEART := [
 
 ## One Control per party row, in slot order; its fill is the child named Fill.
 var _rows: Array[Control] = []
+## The corner ping and the notice up now, each made the first time it is asked
+## for - so a solo HUD never has either.
+var _ping: Label = null
+var _notice: Control = null
 
 
 ## The rest of the party, one row per name, in the order game.gd keeps them.
@@ -123,6 +142,71 @@ func set_boss_health(health: int, max_health: int) -> void:
 
 func clear_boss() -> void:
 	_boss_bar.hide_boss()
+
+
+## This machine's ping in the corner, in its colour - or HOST, on the host's
+## own screen, which has no distance to itself.
+func set_ping(text: String, colour: Color) -> void:
+	if _ping == null:
+		_ping = Label.new()
+		_ping.name = "Ping"
+		_ping.position = PING_AT
+		_ping.size = Vector2(PING_WIDTH, 10.0)
+		_ping.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_ping.add_theme_font_override("font", FONT)
+		_ping.add_theme_font_size_override("font_size", 16)
+		_ping.add_theme_color_override("font_shadow_color", BORDER)
+		_ping.add_theme_constant_override("shadow_offset_x", 1)
+		_ping.add_theme_constant_override("shadow_offset_y", 1)
+		add_child(_ping)
+	_ping.text = text
+	_ping.add_theme_color_override("font_color", colour)
+
+
+## What the corner says, or "" with no ping on screen. For tests.
+func ping_text() -> String:
+	return _ping.text if _ping != null else ""
+
+
+## One line across the top for `seconds`, in `colour`, on a dark strip at least
+## `width` wide - wider if the words need it. A new notice replaces one still
+## up rather than stacking under it.
+func notice(text: String, colour: Color, width: float, seconds: float) -> void:
+	if _notice != null:
+		_notice.queue_free()
+	var w := maxf(width, ceilf(MINI.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x) + NOTICE_PAD)
+	var x := roundf((VIEW_WIDTH - w) / 2.0)
+	var holder := Control.new()
+	holder.name = "Notice"
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(holder)
+	var strip := ColorRect.new()
+	strip.position = Vector2(x, NOTICE_TOP)
+	strip.size = Vector2(w, NOTICE_HEIGHT)
+	strip.color = NOTICE_BACK
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(strip)
+	var line := Label.new()
+	line.name = "Line"
+	line.text = text
+	line.position = Vector2(x, NOTICE_TOP + 1.0)
+	line.size = Vector2(w, 14.0)
+	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	line.add_theme_font_override("font", MINI)
+	line.add_theme_font_size_override("font_size", 12)
+	line.add_theme_color_override("font_color", colour)
+	holder.add_child(line)
+	_notice = holder
+	get_tree().create_timer(seconds).timeout.connect(func() -> void:
+		if is_instance_valid(holder):
+			holder.queue_free())
+
+
+## The notice up now, or "". For tests.
+func notice_text() -> String:
+	if _notice == null or not is_instance_valid(_notice) or _notice.is_queued_for_deletion():
+		return ""
+	return (_notice.get_node("Line") as Label).text
 
 
 ## A small bar in a 1px border with a name beside it - the big bar's colours
